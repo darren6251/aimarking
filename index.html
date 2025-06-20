@@ -14,10 +14,12 @@
             font-family: "Inter", sans-serif;
             background-color: #f7f9fa; /* Very light gray, almost white, like Google's background */
             display: flex;
+            flex-direction: column; /* Allow content and footer to stack */
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
         }
         .container {
             background-color: #ffffff;
@@ -27,6 +29,7 @@
             box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
             max-width: 900px;
             width: 100%;
+            flex-shrink: 0; /* Prevent container from shrinking due to footer */
         }
         textarea {
             resize: vertical;
@@ -60,7 +63,7 @@
             transform: translateY(-1px); /* Slight lift on hover */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
         }
-        #loadingIndicator {
+        .loading-indicator { /* Common class for all loading indicators */
             display: none;
             color: #4f46e5;
             font-weight: 500;
@@ -279,6 +282,54 @@
             display: flex;
             align-items: center;
         }
+
+        /* Specific styles for animated sections */
+        #gradingSection, #chatSection {
+            opacity: 0; /* Start hidden for transition */
+            transition: opacity 0.5s ease-in-out; /* Apply transition effect */
+            height: auto; /* Allow height to adjust */
+        }
+
+        /* Footer styles */
+        footer {
+            margin-top: auto; /* Pushes footer to the bottom */
+            text-align: center;
+            color: #71717a; /* Gray-600 */
+            font-size: 0.875rem; /* text-sm */
+            padding: 20px;
+            width: 100%;
+            max-width: 900px; /* Match container width */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        footer p {
+            margin-bottom: 5px; /* Small space between lines */
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .app-header-content {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            .app-header-logo-text {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .app-header-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            .app-header-buttons button {
+                width: 100%;
+            }
+            #gradingSection, #chatSection {
+                min-height: 500px; /* Ensure sections have some minimum height on small screens */
+            }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -299,9 +350,18 @@
     </div>
 
     <div id="appSection" class="container flex flex-col gap-6" style="display: none;">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
-            <h1 class="text-3xl font-extrabold text-gray-800 mb-4 md:mb-0">Gemini Exam Grader</h1>
-            <div class="flex items-center gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 app-header-content">
+            <!-- Left-aligned Logo and Operated By -->
+            <div class="flex items-center gap-2 app-header-logo-text">
+                <img src="media.jpg" alt="3-SHOT Logo" class="w-auto h-10">
+                <div class="flex flex-col items-start">
+                    <h1 class="text-xl font-extrabold text-gray-800">Gemini Grader</h1>
+                    <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
+                </div>
+            </div>
+
+            <!-- Right-aligned user info and buttons -->
+            <div class="flex items-center gap-4 app-header-buttons">
                 <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
                 <!-- Toggle Buttons for Grading vs Chat -->
                 <button id="toggleGradingButton" class="btn-primary text-sm py-2 px-4">
@@ -317,7 +377,7 @@
         </div>
 
         <!-- Grading Section -->
-        <div id="gradingSection" class="w-full" style="display: block;">
+        <div id="gradingSection" class="w-full" style="display: block; opacity: 0;">
             <div class="mb-4">
                 <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
                 <div class="file-input-wrapper">
@@ -347,7 +407,7 @@
                 Grade Work
             </button>
 
-            <p id="gradingLoadingIndicator" class="text-center mt-4" style="display: none;">Processing files and grading in progress, please wait...</p>
+            <p id="gradingLoadingIndicator" class="loading-indicator"></p>
 
             <div id="resultContainer" class="mt-6 border border-gray-300 rounded-lg p-5">
                 <h2 class="text-2xl font-bold text-gray-800 mb-3">Grading Results:</h2>
@@ -363,7 +423,7 @@
         </div>
 
         <!-- Chat Section -->
-        <div id="chatSection" class="w-full flex flex-col gap-4" style="display: none;">
+        <div id="chatSection" class="w-full flex flex-col gap-4" style="display: none; opacity: 0;">
             <div id="chatDisplay" class="flex-grow">
                 <!-- Chat messages will be appended here -->
                 <div class="chat-message gemini">Hello! I'm Gemini. How can I help you today?</div>
@@ -374,7 +434,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 9l-6 6"/></svg>
                 </button>
             </div>
-            <p id="chatLoadingIndicator" class="text-center text-gray-500 mt-2" style="display: none;">Gemini is typing...</p>
+            <p id="chatLoadingIndicator" class="loading-indicator"></p>
         </div>
     </div>
 
@@ -387,6 +447,12 @@
             <div id="modalButtons" class="flex justify-end gap-2 mt-4"></div>
         </div>
     </div>
+
+    <!-- Global Footer -->
+    <footer>
+        <p>Contact: <a href="mailto:darren_0625@mc-zero.com" class="text-blue-600 hover:underline">darren_0625@mc-zero.com</a></p>
+        <p>Copyright © 2025 Operated by Darren Ng</p>
+    </footer>
 
 
     <!-- Firebase SDKs -->
@@ -527,8 +593,13 @@
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('appSection').style.display = 'flex';
                     currentAuthReady = true;
-                    // Initially show grading section
-                    document.getElementById('gradingSection').style.display = 'block';
+                    
+                    // Initially show grading section with fade-in
+                    const gradingSection = document.getElementById('gradingSection');
+                    gradingSection.style.display = 'block';
+                    gradingSection.style.opacity = '0'; // Start at 0 for fade-in
+                    setTimeout(() => { gradingSection.style.opacity = '1'; }, 50); // Small delay to trigger transition
+
                     document.getElementById('chatSection').style.display = 'none';
                     await loadPastSubmissions();
 
@@ -589,13 +660,31 @@
 
         // --- UI Toggle Functions ---
         document.getElementById('toggleGradingButton').addEventListener('click', () => {
-            document.getElementById('gradingSection').style.display = 'block';
-            document.getElementById('chatSection').style.display = 'none';
+            const gradingSection = document.getElementById('gradingSection');
+            const chatSection = document.getElementById('chatSection');
+
+            if (gradingSection.style.display === 'none') {
+                chatSection.style.opacity = '0'; // Start fading out chat
+                setTimeout(() => {
+                    chatSection.style.display = 'none'; // Hide chat after fade
+                    gradingSection.style.display = 'block'; // Show grading
+                    setTimeout(() => { gradingSection.style.opacity = '1'; }, 50); // Fade in grading
+                }, 400); // Match CSS transition duration
+            }
         });
 
         document.getElementById('toggleChatButton').addEventListener('click', () => {
-            document.getElementById('gradingSection').style.display = 'none';
-            document.getElementById('chatSection').style.display = 'flex'; // Use flex for chat display
+            const gradingSection = document.getElementById('gradingSection');
+            const chatSection = document.getElementById('chatSection');
+
+            if (chatSection.style.display === 'none') {
+                gradingSection.style.opacity = '0'; // Start fading out grading
+                setTimeout(() => {
+                    gradingSection.style.display = 'none'; // Hide grading after fade
+                    chatSection.style.display = 'flex'; // Show chat
+                    setTimeout(() => { chatSection.style.opacity = '1'; }, 50); // Fade in chat
+                }, 400); // Match CSS transition duration
+            }
         });
 
 
@@ -627,9 +716,9 @@
                     const images = [];
 
                     // Show processing message for PDF
-                    const originalLoadingText = loadingIndicator.textContent; // Store original
-                    loadingIndicator.style.display = 'block';
-                    loadingIndicator.textContent = `Rendering PDF pages for AI: Page 1 of ${numPages}`;
+                    const originalLoadingText = gradingLoadingIndicator.textContent; // Use grading-specific indicator
+                    gradingLoadingIndicator.style.display = 'block';
+                    gradingLoadingIndicator.textContent = `Rendering PDF pages for AI: Page 1 of ${numPages}`;
 
                     for (let i = 1; i <= numPages; i++) {
                         const page = await pdf.getPage(i);
@@ -643,14 +732,14 @@
                         images.push({ type: 'image/png', data: canvas.toDataURL('image/png').split(',')[1] });
                         canvas.remove(); // Clean up canvas element
                         if (i < numPages) { // Only update if more pages are coming
-                            loadingIndicator.textContent = `Rendering PDF pages for AI: Page ${i + 1} of ${numPages}`;
+                            gradingLoadingIndicator.textContent = `Rendering PDF pages for AI: Page ${i + 1} of ${numPages}`;
                         }
                     }
-                    loadingIndicator.style.display = 'none'; // Hide after processing
-                    loadingIndicator.textContent = originalLoadingText; // Restore original text
+                    gradingLoadingIndicator.style.display = 'none'; // Hide after processing
+                    gradingLoadingIndicator.textContent = originalLoadingText; // Restore original text
                     return images; // Return array of image data
                 } catch (error) {
-                    loadingIndicator.style.display = 'none'; // Hide on error
+                    gradingLoadingIndicator.style.display = 'none'; // Hide on error
                     throw new Error("Failed to render PDF: " + error.message);
                 }
             } else {
@@ -887,6 +976,7 @@
                     }
 
                     // For Gemini, convert to Base64 images if it's an image or PDF
+                    gradingLoadingIndicator.textContent = `Preparing student file for AI analysis...`;
                     studentInputForGemini = await processFileForGemini(studentFile);
                 } else if (studentAnswerText) {
                     studentInputForGemini = [{ text: studentAnswerText }];
@@ -904,6 +994,7 @@
                     }
 
                     // For Gemini, convert to Base64 images if it's an image or PDF
+                    gradingLoadingIndicator.textContent = `Preparing answer key file for AI analysis...`;
                     answerKeyInputForGemini = await processFileForGemini(answerKeyFileObj);
                 } else if (answerKeyText) {
                     answerKeyInputForGemini = [{ text: answerKeyText }];
