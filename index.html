@@ -89,12 +89,6 @@
             border: none; /* Remove individual border for actual input */
             padding: 0; /* Remove individual padding */
         }
-        .file-input-wrapper input[type="file"]::-webkit-file-upload-button {
-            visibility: hidden;
-            width: 0;
-            padding: 0;
-            margin: 0;
-        }
         .file-input-wrapper input[type="file"]::before {
             content: 'Choose File'; /* Custom button text */
             display: inline-block;
@@ -231,6 +225,60 @@
             background-color: #dc2626; /* Darker red */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
+
+        /* Chat specific styles */
+        #chatDisplay {
+            height: 400px; /* Fixed height for chat history */
+            overflow-y: auto; /* Scrollable */
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: #fcfcfc;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .chat-message.user {
+            background-color: #e0f2f7; /* Light blue for user */
+            align-self: flex-end; /* Align right */
+            border-bottom-right-radius: 4px;
+        }
+        .chat-message.gemini {
+            background-color: #f0f4f8; /* Light gray for Gemini */
+            align-self: flex-start; /* Align left */
+            border-bottom-left-radius: 4px;
+        }
+        #chatInput {
+            border-radius: 20px; /* More rounded chat input */
+            padding-right: 50px; /* Space for send button */
+        }
+        #sendChatButton {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: transparent;
+            color: #4285F4; /* Google blue */
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 24px; /* Larger icon */
+        }
+        #sendChatButton:hover {
+            color: #357ae8;
+        }
+        .chat-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -255,53 +303,78 @@
             <h1 class="text-3xl font-extrabold text-gray-800 mb-4 md:mb-0">Gemini Exam Grader</h1>
             <div class="flex items-center gap-4">
                 <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
+                <!-- Toggle Buttons for Grading vs Chat -->
+                <button id="toggleGradingButton" class="btn-primary text-sm py-2 px-4">
+                    Exam Grader
+                </button>
+                <button id="toggleChatButton" class="btn-primary text-sm py-2 px-4">
+                    Chat with Gemini
+                </button>
                 <button id="logoutButton" class="btn-logout text-sm py-2 px-4">
                     Log Out
                 </button>
             </div>
         </div>
 
-        <div class="mb-4">
-            <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
-            <div class="file-input-wrapper">
-                <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
-                <span id="studentFileName" class="text-gray-500 text-sm">No file chosen</span>
+        <!-- Grading Section -->
+        <div id="gradingSection" class="w-full" style="display: block;">
+            <div class="mb-4">
+                <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                    <span id="studentFileName" class="text-gray-500 text-sm">No file chosen</span>
+                </div>
+                <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
+                <label for="studentAnswer" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Student's Answer:</label>
+                <textarea id="studentAnswer" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter student's answer here..."></textarea>
+                <p id="studentAnswerError" class="error-message"></p>
             </div>
-            <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
-            <label for="studentAnswer" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Student's Answer:</label>
-            <textarea id="studentAnswer" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter student's answer here..."></textarea>
-            <p id="studentAnswerError" class="error-message"></p>
+
+            <div class="mb-6">
+                <label for="answerKeyFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image or PDF):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="answerKeyFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                    <span id="answerKeyFileName" class="text-gray-500 text-sm">No file chosen</span>
+                </div>
+                <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
+                <label for="answerKey" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Answer Key:</label>
+                <textarea id="answerKey" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter the correct answer key here..."></textarea>
+                <p id="answerKeyError" class="error-message"></p>
+            </div>
+
+            <button id="gradeButton" class="btn-primary btn-grade py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                Grade Work
+            </button>
+
+            <p id="gradingLoadingIndicator" class="text-center mt-4" style="display: none;">Processing files and grading in progress, please wait...</p>
+
+            <div id="resultContainer" class="mt-6 border border-gray-300 rounded-lg p-5">
+                <h2 class="text-2xl font-bold text-gray-800 mb-3">Grading Results:</h2>
+                <p id="gradeResult" class="text-gray-900 leading-relaxed">Your grading results will appear here after submission.</p>
+            </div>
+
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Past Submissions:</h2>
+                <div id="pastSubmissions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p id="noSubmissions" class="text-gray-500">No past submissions found.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-6">
-            <label for="answerKeyFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image or PDF):</label>
-            <div class="file-input-wrapper">
-                <input type="file" id="answerKeyFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
-                <span id="answerKeyFileName" class="text-gray-500 text-sm">No file chosen</span>
+        <!-- Chat Section -->
+        <div id="chatSection" class="w-full flex flex-col gap-4" style="display: none;">
+            <div id="chatDisplay" class="flex-grow">
+                <!-- Chat messages will be appended here -->
+                <div class="chat-message gemini">Hello! I'm Gemini. How can I help you today?</div>
             </div>
-            <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
-            <label for="answerKey" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Answer Key:</label>
-            <textarea id="answerKey" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter the correct answer key here..."></textarea>
-            <p id="answerKeyError" class="error-message"></p>
-        </div>
-
-        <button id="gradeButton" class="btn-primary btn-grade py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            Grade Work
-        </button>
-
-        <p id="loadingIndicator" class="text-center mt-4">Processing files and grading in progress, please wait...</p>
-
-        <div id="resultContainer" class="mt-6 border border-gray-300 rounded-lg p-5">
-            <h2 class="text-2xl font-bold text-gray-800 mb-3">Grading Results:</h2>
-            <p id="gradeResult" class="text-gray-900 leading-relaxed">Your grading results will appear here after submission.</p>
-        </div>
-
-        <div class="mt-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Past Submissions:</h2>
-            <div id="pastSubmissions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <p id="noSubmissions" class="text-gray-500">No past submissions found.</p>
+            <div class="chat-input-wrapper flex items-center gap-2">
+                <input type="text" id="chatInput" class="w-full py-3 px-4 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Type your message...">
+                <button id="sendChatButton" class="px-3 py-2 rounded-full text-blue-600 hover:bg-blue-100 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 9l-6 6"/></svg>
+                </button>
             </div>
+            <p id="chatLoadingIndicator" class="text-center text-gray-500 mt-2" style="display: none;">Gemini is typing...</p>
         </div>
     </div>
 
@@ -321,6 +394,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+
 
         // IMPORTANT: Replace these with your actual Firebase project config.
         // Get this from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
@@ -350,10 +425,14 @@
         let app;
         let db;
         let auth;
+        let storage; // Declare storage variable
         let currentUserId = null;
         let currentUserRole = null;
         let currentUserName = null;
         let currentAuthReady = false; // Flag to indicate Firebase auth is ready
+
+        // Gemini API Key for direct calls (not provided by Canvas environment)
+        const GEMINI_API_KEY = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Your Gemini API Key here
 
         // Function to show custom modal for general messages
         function showModal(title, message, buttons = []) {
@@ -397,6 +476,7 @@
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            storage = getStorage(app); // Initialize Firebase Storage
             console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
@@ -447,6 +527,9 @@
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('appSection').style.display = 'flex';
                     currentAuthReady = true;
+                    // Initially show grading section
+                    document.getElementById('gradingSection').style.display = 'block';
+                    document.getElementById('chatSection').style.display = 'none';
                     await loadPastSubmissions();
 
                 } catch (error) {
@@ -504,50 +587,77 @@
             }
         });
 
+        // --- UI Toggle Functions ---
+        document.getElementById('toggleGradingButton').addEventListener('click', () => {
+            document.getElementById('gradingSection').style.display = 'block';
+            document.getElementById('chatSection').style.display = 'none';
+        });
+
+        document.getElementById('toggleChatButton').addEventListener('click', () => {
+            document.getElementById('gradingSection').style.display = 'none';
+            document.getElementById('chatSection').style.display = 'flex'; // Use flex for chat display
+        });
+
 
         // --- File Handling Functions ---
-        async function readFileAsBase64(file) {
-            return new Promise(async (resolve, reject) => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
+        // New function to upload file to Firebase Storage and return URL
+        async function uploadFileToStorage(file, path) {
+            if (!file) return null;
+            const storageRef = ref(storage, path + '/' + file.name + '-' + Date.now()); // Unique filename
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            return downloadURL;
+        }
+
+        // Modified readFileAsBase64 to only handle PDF to image conversion
+        // Direct image files will now be uploaded to Storage
+        async function processFileForGemini(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                return new Promise((resolve, reject) => {
                     reader.onload = () => resolve([{ type: file.type, data: reader.result.split(',')[1] }]);
                     reader.onerror = error => reject(error);
                     reader.readAsDataURL(file);
-                } else if (file.type === 'application/pdf') {
-                    try {
-                        const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
-                        const pdf = await loadingTask.promise;
-                        const numPages = pdf.numPages;
-                        const images = [];
+                });
+            } else if (file.type === 'application/pdf') {
+                try {
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                    const pdf = await loadingTask.promise;
+                    const numPages = pdf.numPages;
+                    const images = [];
 
-                        // Show processing message for PDF
-                        loadingIndicator.style.display = 'block';
-                        loadingIndicator.textContent = `Processing PDF: Page 1 of ${numPages}`;
+                    // Show processing message for PDF
+                    const originalLoadingText = loadingIndicator.textContent; // Store original
+                    loadingIndicator.style.display = 'block';
+                    loadingIndicator.textContent = `Rendering PDF pages for AI: Page 1 of ${numPages}`;
 
-                        for (let i = 1; i <= numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const viewport = page.getViewport({ scale: 2 }); // Scale for better resolution
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({ scale: 2 }); // Scale for better resolution
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
 
-                            await page.render({ canvasContext: context, viewport: viewport }).promise;
-                            images.push({ type: 'image/png', data: canvas.toDataURL('image/png').split(',')[1] });
-                            canvas.remove(); // Clean up canvas element
-                            loadingIndicator.textContent = `Processing PDF: Page ${i + 1} of ${numPages}`; // Update message
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        images.push({ type: 'image/png', data: canvas.toDataURL('image/png').split(',')[1] });
+                        canvas.remove(); // Clean up canvas element
+                        if (i < numPages) { // Only update if more pages are coming
+                            loadingIndicator.textContent = `Rendering PDF pages for AI: Page ${i + 1} of ${numPages}`;
                         }
-                        loadingIndicator.style.display = 'none'; // Hide after processing
-                        resolve(images);
-                    } catch (error) {
-                        loadingIndicator.style.display = 'none'; // Hide on error
-                        reject(new Error("Failed to render PDF: " + error.message));
                     }
-                } else {
-                    reject(new Error("Unsupported file type. Please upload an image or PDF."));
+                    loadingIndicator.style.display = 'none'; // Hide after processing
+                    loadingIndicator.textContent = originalLoadingText; // Restore original text
+                    return images; // Return array of image data
+                } catch (error) {
+                    loadingIndicator.style.display = 'none'; // Hide on error
+                    throw new Error("Failed to render PDF: " + error.message);
                 }
-            });
+            } else {
+                throw new Error("Unsupported file type. Please upload an image or PDF.");
+            }
         }
+
 
         const gradeButton = document.getElementById('gradeButton');
         const studentAnswerInput = document.getElementById('studentAnswer');
@@ -559,7 +669,7 @@
         const studentFilePreview = document.getElementById('studentFilePreview');
         const answerKeyFilePreview = document.getElementById('answerKeyFilePreview');
         const gradeResultDisplay = document.getElementById('gradeResult');
-        const loadingIndicator = document.getElementById('loadingIndicator');
+        const gradingLoadingIndicator = document.getElementById('gradingLoadingIndicator'); // Specific for grading
         const pastSubmissionsContainer = document.getElementById('pastSubmissions');
         const noSubmissionsMessage = document.getElementById('noSubmissions');
 
@@ -679,11 +789,15 @@
                     if (submission.studentAnswerText) {
                         studentWorkHtml += `<p class="text-gray-700"><strong>Student Answer (Text):</strong> ${submission.studentAnswerText.substring(0, 150)}${submission.studentAnswerText.length > 150 ? '...' : ''}</p>`;
                     }
-                    if (submission.studentAnswerImages && submission.studentAnswerImages.length > 0) {
-                        studentWorkHtml += `<p class="text-gray-700 mt-2"><strong>Student Work (Images):</strong></p>`;
-                        submission.studentAnswerImages.forEach((img, index) => {
-                            if (img.data) {
-                                studentWorkHtml += `<img src="data:${img.type};base64,${img.data}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                    // Display images from URLs stored in Firebase Storage
+                    if (submission.studentAnswerFileUrls && submission.studentAnswerFileUrls.length > 0) {
+                        studentWorkHtml += `<p class="text-gray-700 mt-2"><strong>Student Work (Files):</strong></p>`;
+                        submission.studentAnswerFileUrls.forEach(url => {
+                            // Check if it's an image for direct display, otherwise a link
+                            if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { // Simple check for image extensions
+                                studentWorkHtml += `<img src="${url}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                            } else { // Assume PDF or other
+                                studentWorkHtml += `<a href="${url}" target="_blank" class="text-blue-600 hover:underline mt-2 block">${url.substring(url.lastIndexOf('/') + 1).split('?')[0]} (View PDF/File)</a>`;
                             }
                         });
                     }
@@ -692,11 +806,13 @@
                     if (submission.answerKeyText) {
                         answerKeyHtml += `<p class="text-gray-700"><strong>Answer Key (Text):</strong> ${submission.answerKeyText.substring(0, 150)}${submission.answerKeyText.length > 150 ? '...' : ''}</p>`;
                     }
-                    if (submission.answerKeyImages && submission.answerKeyImages.length > 0) {
-                        answerKeyHtml += `<p class="text-gray-700 mt-2"><strong>Answer Key (Images):</strong></p>`;
-                        submission.answerKeyImages.forEach((img, index) => {
-                            if (img.data) {
-                                answerKeyHtml += `<img src="data:${img.type};base64,${img.data}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                    if (submission.answerKeyFileUrls && submission.answerKeyFileUrls.length > 0) {
+                        answerKeyHtml += `<p class="text-gray-700 mt-2"><strong>Answer Key (Files):</strong></p>`;
+                        submission.answerKeyFileUrls.forEach(url => {
+                            if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                                answerKeyHtml += `<img src="${url}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                            } else {
+                                answerKeyHtml += `<a href="${url}" target="_blank" class="text-blue-600 hover:underline mt-2 block">${url.substring(url.lastIndexOf('/') + 1).split('?')[0]} (View PDF/File)</a>`;
                             }
                         });
                     }
@@ -750,38 +866,57 @@
                 return;
             }
 
-            loadingIndicator.style.display = 'block'; // Show loading indicator
+            gradingLoadingIndicator.style.display = 'block'; // Show loading indicator
             gradeButton.disabled = true; // Disable button during grading
 
-            let studentInputParts = []; // Can be text or array of image objects
-            let answerKeyInputParts = []; // Can be text or array of image objects
+            let studentInputForGemini = []; // Base64 images for Gemini
+            let answerKeyInputForGemini = []; // Base64 images for Gemini
+            let studentFileDownloadURLs = []; // URLs to store in Firestore
+            let answerKeyFileDownloadURLs = []; // URLs to store in Firestore
 
             try {
-                // Process student input
+                // Process and upload student file (if any)
                 if (studentFile) {
-                    loadingIndicator.textContent = `Processing student file: ${studentFile.name}...`;
-                    const fileData = await readFileAsBase64(studentFile); // Returns array of {type, data} for images/PDF pages
-                    studentInputParts = fileData;
+                    gradingLoadingIndicator.textContent = `Uploading student file: ${studentFile.name}...`;
+                    const fileExtension = studentFile.name.split('.').pop();
+                    const fileNameForStorage = `student-work-${currentUserId}-${Date.now()}.${fileExtension}`;
+                    const storagePath = `artifacts/${appId}/users/${currentUserId}/submissions_files/${fileNameForStorage}`;
+                    const downloadURL = await uploadFileToStorage(studentFile, storagePath);
+                    if (downloadURL) {
+                        studentFileDownloadURLs.push(downloadURL);
+                    }
+
+                    // For Gemini, convert to Base64 images if it's an image or PDF
+                    studentInputForGemini = await processFileForGemini(studentFile);
                 } else if (studentAnswerText) {
-                    studentInputParts = [{ text: studentAnswerText }];
+                    studentInputForGemini = [{ text: studentAnswerText }];
                 }
 
-                // Process answer key input
+                // Process and upload answer key file (if any)
                 if (answerKeyFileObj) {
-                    loadingIndicator.textContent = `Processing answer key file: ${answerKeyFileObj.name}...`;
-                    const fileData = await readFileAsBase64(answerKeyFileObj); // Returns array of {type, data} for images/PDF pages
-                    answerKeyInputParts = fileData;
+                    gradingLoadingIndicator.textContent = `Uploading answer key file: ${answerKeyFileObj.name}...`;
+                    const fileExtension = answerKeyFileObj.name.split('.').pop();
+                    const fileNameForStorage = `answer-key-${currentUserId}-${Date.now()}.${fileExtension}`;
+                    const storagePath = `artifacts/${appId}/users/${currentUserId}/submissions_files/${fileNameForStorage}`;
+                    const downloadURL = await uploadFileToStorage(answerKeyFileObj, storagePath);
+                    if (downloadURL) {
+                        answerKeyFileDownloadURLs.push(downloadURL);
+                    }
+
+                    // For Gemini, convert to Base64 images if it's an image or PDF
+                    answerKeyInputForGemini = await processFileForGemini(answerKeyFileObj);
                 } else if (answerKeyText) {
-                    answerKeyInputParts = [{ text: answerKeyText }];
+                    answerKeyInputForGemini = [{ text: answerKeyText }];
                 }
 
-                loadingIndicator.textContent = 'Sending to Gemini for grading...';
+
+                gradingLoadingIndicator.textContent = 'Sending to Gemini for grading...';
                 let geminiPromptParts = [];
 
-                // Add student content to prompt
-                if (studentInputParts.length > 0) {
+                // Add student content to prompt (from processed files or text)
+                if (studentInputForGemini.length > 0) {
                     geminiPromptParts.push({ text: "Here is the student's work:" });
-                    studentInputParts.forEach(part => {
+                    studentInputForGemini.forEach(part => {
                         if (part.text) {
                             geminiPromptParts.push({ text: `"${part.text}"` });
                         } else if (part.data) {
@@ -793,10 +928,10 @@
                 }
 
 
-                // Add answer key content to prompt
-                if (answerKeyInputParts.length > 0) {
+                // Add answer key content to prompt (from processed files or text)
+                if (answerKeyInputForGemini.length > 0) {
                     geminiPromptParts.push({ text: "Here is the Answer Key:" }); // Separator for clarity
-                    answerKeyInputParts.forEach(part => {
+                    answerKeyInputForGemini.forEach(part => {
                         if (part.text) {
                             geminiPromptParts.push({ text: `"${part.text}"` });
                         } else if (part.data) {
@@ -819,8 +954,8 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: geminiPromptParts });
                 const payload = { contents: chatHistory };
-                // Using your provided API key directly
-                const apiKey = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Your Gemini API Key
+                // Your Gemini API Key
+                const apiKey = GEMINI_API_KEY; // Use the globally defined API key
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -852,11 +987,10 @@
                     submittedBy: currentUserName,
                     submittedByRole: currentUserRole,
                     studentAnswerText: studentAnswerText || null,
-                    // Store the processed image data from files
-                    studentAnswerImages: studentFile ? studentInputParts : [],
+                    studentAnswerFileUrls: studentFileDownloadURLs, // Store URLs here
                     studentFileName: studentFile ? studentFile.name : null,
                     answerKeyText: answerKeyText || null,
-                    answerKeyImages: answerKeyFileObj ? answerKeyInputParts : [],
+                    answerKeyFileUrls: answerKeyFileDownloadURLs, // Store URLs here
                     answerKeyFileName: answerKeyFileObj ? answerKeyFileObj.name : null,
                     geminiGrade: geminiGrade,
                     timestamp: Date.now()
@@ -870,10 +1004,99 @@
                 gradeResultDisplay.textContent = `An error occurred while grading: ${error.message}. Please check the console for more details.`;
                 showModal('Grading Error', `An unexpected error occurred during grading. Details: ${error.message}`);
             } finally {
-                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                gradingLoadingIndicator.style.display = 'none'; // Hide loading indicator
                 gradeButton.disabled = false; // Re-enable button
             }
         });
+
+        // --- Gemini Chat Logic ---
+        const chatDisplay = document.getElementById('chatDisplay');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatButton = document.getElementById('sendChatButton');
+        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+
+        // Initial chat history with a greeting
+        let geminiChatHistory = [{
+            role: "model",
+            parts: [{ text: "Hello! I'm Gemini. How can I help you today?" }]
+        }];
+
+        async function sendChatMessage() {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            if (!currentUserId || !currentUserRole) {
+                showModal('Authentication Required', 'Please sign in to chat with Gemini.');
+                return;
+            }
+
+            // Display user message
+            appendMessage(userMessage, 'user');
+            chatInput.value = ''; // Clear input
+
+            // Add user message to history
+            geminiChatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+
+            chatLoadingIndicator.style.display = 'block'; // Show typing indicator
+            sendChatButton.disabled = true;
+
+            try {
+                const payload = { contents: geminiChatHistory };
+                const apiKey = GEMINI_API_KEY; // Use the globally defined API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+                }
+
+                const result = await response.json();
+                let geminiResponseText = "Sorry, I couldn't get a response. Please try again.";
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    geminiResponseText = result.candidates[0].content.parts[0].text;
+                }
+
+                // Add Gemini's response to history and display
+                geminiChatHistory.push({ role: "model", parts: [{ text: geminiResponseText }] });
+                appendMessage(geminiResponseText, 'gemini');
+
+            } catch (error) {
+                console.error('Error in Gemini chat:', error);
+                const errorMessage = `An error occurred with the chat: ${error.message}. Please check the console.`;
+                appendMessage(errorMessage, 'gemini'); // Display error in chat
+                showModal('Chat Error', errorMessage);
+            } finally {
+                chatLoadingIndicator.style.display = 'none'; // Hide typing indicator
+                sendChatButton.disabled = false;
+                chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${sender}`;
+            messageElement.textContent = text;
+            chatDisplay.appendChild(messageElement);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to latest message
+        }
+
+        sendChatButton.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) { // Send on Enter, allow Shift+Enter for new line
+                event.preventDefault();
+                sendChatMessage();
+            }
+        });
+
     </script>
 </body>
 </html>
