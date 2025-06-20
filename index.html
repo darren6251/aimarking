@@ -36,6 +36,7 @@
             min-height: 100px;
         }
         input[type="text"],
+        input[type="email"], /* Added email type for consistency */
         input[type="file"],
         textarea {
             border-color: #dadce0; /* Softer, Google-like border color */
@@ -43,6 +44,7 @@
             padding: 12px 16px; /* Increased padding for inputs */
         }
         input[type="text"]:focus,
+        input[type="email"]:focus,
         input[type="file"]:focus,
         textarea:focus {
             border-color: #4285F4; /* Google blue for focus */
@@ -228,6 +230,18 @@
             background-color: #dc2626; /* Darker red */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
+        .btn-secondary { /* For remove student button */
+            background-color: #cbd5e1; /* Gray-300 */
+            color: #334155; /* Slate-700 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        .btn-secondary:hover {
+            background-color: #94a3b8; /* Gray-400 */
+            color: #1e293b; /* Slate-900 */
+        }
+
 
         /* Chat specific styles */
         #chatDisplay {
@@ -284,7 +298,7 @@
         }
 
         /* Specific styles for animated sections */
-        #gradingSection, #chatSection {
+        #gradingSection, #chatSection, #studentManagementSection {
             opacity: 0; /* Start hidden for transition */
             transition: opacity 0.5s ease-in-out; /* Apply transition effect */
             height: auto; /* Allow height to adjust */
@@ -326,7 +340,7 @@
             .app-header-buttons button {
                 width: 100%;
             }
-            #gradingSection, #chatSection {
+            #gradingSection, #chatSection, #studentManagementSection {
                 min-height: 500px; /* Ensure sections have some minimum height on small screens */
             }
         }
@@ -347,6 +361,9 @@
         </button>
 
         <p id="authError" class="error-message text-center"></p>
+        <p id="unauthorizedMessage" class="error-message text-center mt-4" style="display: none;">
+            Your account is not authorized to use this application. Please contact the administrator.
+        </p>
     </div>
 
     <div id="appSection" class="container flex flex-col gap-6" style="display: none;">
@@ -369,6 +386,9 @@
                 </button>
                 <button id="toggleChatButton" class="btn-primary text-sm py-2 px-4">
                     Chat with Gemini
+                </button>
+                <button id="manageStudentsButton" class="btn-primary text-sm py-2 px-4" style="display: none;">
+                    Manage Students
                 </button>
                 <button id="logoutButton" class="btn-logout text-sm py-2 px-4">
                     Log Out
@@ -436,6 +456,23 @@
             </div>
             <p id="chatLoadingIndicator" class="loading-indicator"></p>
         </div>
+
+        <!-- Student Management Section (Teacher Only) -->
+        <div id="studentManagementSection" class="w-full flex flex-col gap-4" style="display: none; opacity: 0;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Manage Authorized Students</h2>
+            <div class="flex flex-col md:flex-row gap-2 mb-4">
+                <input type="email" id="studentEmailInput" class="shadow-sm appearance-none border rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 flex-grow" placeholder="Enter student's Gmail address">
+                <button id="addStudentButton" class="btn-primary py-3 px-6 rounded-lg">
+                    Add Student
+                </button>
+            </div>
+            <p id="studentManagementLoading" class="loading-indicator"></p>
+            <div id="authorizedStudentsList" class="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-80 overflow-y-auto">
+                <p id="noAuthorizedStudents" class="text-gray-500 text-center">No authorized students yet.</p>
+                <!-- Students will be listed here -->
+            </div>
+        </div>
+
     </div>
 
     <!-- Custom Modal for General Messages -->
@@ -459,7 +496,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
 
@@ -556,57 +593,81 @@
                 currentUserId = user.uid;
                 currentUserName = user.displayName || user.email || 'Google User'; // Use Google name/email
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                const unauthorizedMessageElement = document.getElementById('unauthorizedMessage');
+                unauthorizedMessageElement.style.display = 'none'; // Hide by default
 
                 try {
-                    const profileDoc = await getDoc(userProfileRef);
-                    if (profileDoc.exists() && profileDoc.data().role) {
-                        // User has a role stored
-                        const profileData = profileDoc.data();
-                        currentUserRole = profileData.role;
-                        currentUserName = profileData.name || currentUserName; // Prefer stored name if available
-                        console.log(`User profile loaded: Name=${currentUserName}, Role=${currentUserRole}`);
+                    // 1. Check if user is a teacher
+                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
+                    const teacherAuthDoc = await getDoc(authorizedTeacherRef);
+
+                    if (teacherAuthDoc.exists()) {
+                        currentUserRole = 'teacher';
+                        console.log("User is an authorized teacher.");
                     } else {
-                        // New user or existing user without a role, determine role based on authorized_users
-                        console.log("User logged in with Google, checking for pre-authorized role.");
-                        const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
-                        const teacherAuthDoc = await getDoc(authorizedTeacherRef);
+                        // 2. If not a teacher, check if user is an authorized student by email
+                        const studentEmailsRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                        const q = query(studentEmailsRef, where("email", "==", user.email));
+                        const studentAuthSnapshot = await getDocs(q);
 
-                        if (teacherAuthDoc.exists()) {
-                            currentUserRole = 'teacher';
-                            console.log("User is an authorized teacher.");
-                        } else {
+                        if (!studentAuthSnapshot.empty) {
                             currentUserRole = 'student';
-                            console.log("User is not an authorized teacher, assigning student role.");
+                            console.log("User is an authorized student.");
+                        } else {
+                            currentUserRole = 'unauthorized';
+                            console.log("User is unauthorized.");
                         }
-
-                        // Save the determined role to the user's profile
-                        await setDoc(userProfileRef, {
-                            role: currentUserRole,
-                            name: currentUserName,
-                            lastLogin: Date.now()
-                        }, { merge: true }); // Merge to update, not overwrite
-                        showModal('Role Assigned', `You are logged in as a ${currentUserRole}!`);
                     }
 
-                    // Update UI and load submissions
-                    document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
-                    document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('appSection').style.display = 'flex';
-                    currentAuthReady = true;
-                    
-                    // Initially show grading section with fade-in
-                    const gradingSection = document.getElementById('gradingSection');
-                    gradingSection.style.display = 'block';
-                    gradingSection.style.opacity = '0'; // Start at 0 for fade-in
-                    setTimeout(() => { gradingSection.style.opacity = '1'; }, 50); // Small delay to trigger transition
+                    // Save or update user profile in their private collection
+                    await setDoc(userProfileRef, {
+                        role: currentUserRole,
+                        name: currentUserName,
+                        email: user.email, // Store email for future checks
+                        lastLogin: Date.now()
+                    }, { merge: true });
 
-                    document.getElementById('chatSection').style.display = 'none';
-                    await loadPastSubmissions();
+                    // Update UI based on role
+                    if (currentUserRole === 'teacher' || currentUserRole === 'student') {
+                        document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
+                        document.getElementById('authSection').style.display = 'none';
+                        document.getElementById('appSection').style.display = 'flex';
+                        currentAuthReady = true;
+
+                        // Show/hide teacher-specific buttons
+                        const manageStudentsButton = document.getElementById('manageStudentsButton');
+                        if (currentUserRole === 'teacher') {
+                            manageStudentsButton.style.display = 'flex'; // Use flex to maintain button styling
+                        } else {
+                            manageStudentsButton.style.display = 'none';
+                        }
+
+                        // Initially show grading section with fade-in
+                        const gradingSection = document.getElementById('gradingSection');
+                        gradingSection.style.display = 'block';
+                        gradingSection.style.opacity = '0'; // Start at 0 for fade-in
+                        setTimeout(() => { gradingSection.style.opacity = '1'; }, 50); // Small delay to trigger transition
+
+                        document.getElementById('chatSection').style.display = 'none';
+                        document.getElementById('studentManagementSection').style.display = 'none'; // Ensure this is hidden
+
+                        await loadPastSubmissions();
+                        if (currentUserRole === 'teacher') {
+                            await loadAuthorizedStudents(); // Load students if teacher
+                        }
+
+                    } else { // Unauthorized user
+                        document.getElementById('userDisplayName').textContent = `Not logged in`;
+                        document.getElementById('authSection').style.display = 'flex';
+                        document.getElementById('appSection').style.display = 'none';
+                        unauthorizedMessageElement.style.display = 'block'; // Show unauthorized message
+                        currentAuthReady = true; // Auth system is ready, user just not authorized
+                    }
 
                 } catch (error) {
-                    console.error("Error fetching or setting user profile:", error);
+                    console.error("Error fetching or setting user profile/role:", error);
                     currentAuthReady = true;
-                    showModal('Profile Error', `Failed to load or assign user profile. Details: ${error.message}`);
+                    showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}`);
                     document.getElementById('authSection').style.display = 'flex';
                     document.getElementById('appSection').style.display = 'none';
                 }
@@ -620,6 +681,7 @@
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appSection').style.display = 'none';
+                unauthorizedMessageElement.style.display = 'none'; // Hide unauthorized message
                 currentAuthReady = true; // Auth system is ready, no user.
             }
         });
@@ -647,8 +709,12 @@
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
                 document.getElementById('appSection').style.display = 'none';
                 document.getElementById('authSection').style.display = 'flex';
-                pastSubmissionsContainer.innerHTML = '';
-                noSubmissionsMessage.style.display = 'block';
+                document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
+                document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
+                document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
+                document.getElementById('noAuthorizedStudents').style.display = 'block'; // Show no students message
+                document.getElementById('unauthorizedMessage').style.display = 'none'; // Ensure unauthorized message is hidden on logout
+
 
                 await signOut(auth);
                 showModal('Logged Out', 'You have been logged out successfully.');
@@ -658,32 +724,30 @@
             }
         });
 
-        // --- UI Toggle Functions ---
-        document.getElementById('toggleGradingButton').addEventListener('click', () => {
-            const gradingSection = document.getElementById('gradingSection');
-            const chatSection = document.getElementById('chatSection');
+        // --- UI Section Toggle Functions (with transitions) ---
+        function showSection(sectionIdToShow) {
+            const sections = ['gradingSection', 'chatSection', 'studentManagementSection'];
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (id === sectionIdToShow) {
+                    section.style.opacity = '0'; // Start hidden for transition
+                    section.style.display = (id === 'chatSection' || id === 'studentManagementSection') ? 'flex' : 'block'; // Adjust display type
+                    setTimeout(() => { section.style.opacity = '1'; }, 50); // Fade in
+                } else {
+                    section.style.opacity = '0'; // Fade out
+                    setTimeout(() => { section.style.display = 'none'; }, 400); // Hide after fade
+                }
+            });
+        }
 
-            if (gradingSection.style.display === 'none') {
-                chatSection.style.opacity = '0'; // Start fading out chat
-                setTimeout(() => {
-                    chatSection.style.display = 'none'; // Hide chat after fade
-                    gradingSection.style.display = 'block'; // Show grading
-                    setTimeout(() => { gradingSection.style.opacity = '1'; }, 50); // Fade in grading
-                }, 400); // Match CSS transition duration
-            }
-        });
-
-        document.getElementById('toggleChatButton').addEventListener('click', () => {
-            const gradingSection = document.getElementById('gradingSection');
-            const chatSection = document.getElementById('chatSection');
-
-            if (chatSection.style.display === 'none') {
-                gradingSection.style.opacity = '0'; // Start fading out grading
-                setTimeout(() => {
-                    gradingSection.style.display = 'none'; // Hide grading after fade
-                    chatSection.style.display = 'flex'; // Show chat
-                    setTimeout(() => { chatSection.style.opacity = '1'; }, 50); // Fade in chat
-                }, 400); // Match CSS transition duration
+        document.getElementById('toggleGradingButton').addEventListener('click', () => showSection('gradingSection'));
+        document.getElementById('toggleChatButton').addEventListener('click', () => showSection('chatSection'));
+        document.getElementById('manageStudentsButton').addEventListener('click', () => {
+            if (currentUserRole === 'teacher') {
+                showSection('studentManagementSection');
+                loadAuthorizedStudents(); // Reload list when showing
+            } else {
+                showModal('Access Denied', 'Only teachers can manage students.');
             }
         });
 
@@ -850,6 +914,11 @@
                 noSubmissionsMessage.style.display = 'block';
                 return;
             }
+            if (currentUserRole === 'unauthorized') { // Added check for unauthorized users
+                pastSubmissionsContainer.innerHTML = '';
+                noSubmissionsMessage.style.display = 'block';
+                return;
+            }
 
             pastSubmissionsContainer.innerHTML = ''; // Clear previous submissions
             noSubmissionsMessage.style.display = 'block'; // Show "No submissions" initially
@@ -928,8 +997,8 @@
         // --- Main Grading Logic ---
         gradeButton.addEventListener('click', async () => {
             // Ensure user is authenticated and has a role
-            if (!currentUserId || !currentUserRole) {
-                showModal('Authentication Required', 'Please sign in to grade work.');
+            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
+                showModal('Authentication Required', 'Please sign in with an authorized account to grade work.');
                 return;
             }
 
@@ -1116,8 +1185,8 @@
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
 
-            if (!currentUserId || !currentUserRole) {
-                showModal('Authentication Required', 'Please sign in to chat with Gemini.');
+            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
+                showModal('Authentication Required', 'Please sign in with an authorized account to chat with Gemini.');
                 return;
             }
 
@@ -1185,6 +1254,155 @@
             if (event.key === 'Enter' && !event.shiftKey) { // Send on Enter, allow Shift+Enter for new line
                 event.preventDefault();
                 sendChatMessage();
+            }
+        });
+
+        // --- Teacher: Student Management Logic ---
+        const studentEmailInput = document.getElementById('studentEmailInput');
+        const addStudentButton = document.getElementById('addStudentButton');
+        const authorizedStudentsList = document.getElementById('authorizedStudentsList');
+        const noAuthorizedStudentsMessage = document.getElementById('noAuthorizedStudents');
+        const studentManagementLoading = document.getElementById('studentManagementLoading');
+
+
+        // Live listener for authorized students (teacher view)
+        let unsubscribeStudents = null; // To store the unsubscribe function
+
+        async function loadAuthorizedStudents() {
+            if (!currentAuthReady || currentUserRole !== 'teacher') {
+                console.log("Not a teacher or auth not ready, skipping loading authorized students.");
+                authorizedStudentsList.innerHTML = '';
+                noAuthorizedStudentsMessage.style.display = 'block';
+                return;
+            }
+
+            if (unsubscribeStudents) {
+                unsubscribeStudents(); // Unsubscribe from previous listener if it exists
+            }
+
+            studentManagementLoading.style.display = 'block';
+            studentManagementLoading.textContent = 'Loading authorized students...';
+            authorizedStudentsList.innerHTML = ''; // Clear existing list
+            noAuthorizedStudentsMessage.style.display = 'block'; // Show 'No students' by default
+
+            try {
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                const q = query(authorizedStudentsCollectionRef, orderBy('email')); // Order for consistent display
+
+                // Use onSnapshot for real-time updates
+                unsubscribeStudents = onSnapshot(q, (snapshot) => {
+                    authorizedStudentsList.innerHTML = ''; // Clear list on every update
+                    if (snapshot.empty) {
+                        noAuthorizedStudentsMessage.style.display = 'block';
+                        console.log("No authorized students found.");
+                        return;
+                    }
+
+                    noAuthorizedStudentsMessage.style.display = 'none';
+                    snapshot.forEach((doc) => {
+                        const studentData = doc.data();
+                        const studentDocId = doc.id;
+                        const studentEmail = studentData.email;
+
+                        const studentEntry = document.createElement('div');
+                        studentEntry.className = 'flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 mb-2';
+                        studentEntry.innerHTML = `
+                            <span class="text-gray-800 font-medium">${studentEmail}</span>
+                            <button class="remove-student-btn btn-secondary" data-doc-id="${studentDocId}">Remove</button>
+                        `;
+                        authorizedStudentsList.appendChild(studentEntry);
+                    });
+                    studentManagementLoading.style.display = 'none';
+                }, (error) => {
+                    console.error("Error listening to authorized students:", error);
+                    studentManagementLoading.textContent = `Error: ${error.message}`;
+                    showModal('Error', `Failed to load student list: ${error.message}`);
+                });
+
+            } catch (error) {
+                console.error("Error setting up student listener:", error);
+                studentManagementLoading.textContent = `Error: ${error.message}`;
+                showModal('Error', `Failed to load student list: ${error.message}`);
+            } finally {
+                // Initial hide will be done by onSnapshot callback
+            }
+        }
+
+
+        addStudentButton.addEventListener('click', async () => {
+            const email = studentEmailInput.value.trim();
+            if (!email) {
+                showModal('Input Required', 'Please enter a student email address.');
+                return;
+            }
+            if (!/\S+@\S+\.\S+/.test(email)) { // Simple email validation
+                showModal('Invalid Email', 'Please enter a valid email address.');
+                return;
+            }
+            if (currentUserRole !== 'teacher') {
+                showModal('Access Denied', 'Only teachers can add students.');
+                return;
+            }
+
+            studentManagementLoading.style.display = 'block';
+            studentManagementLoading.textContent = 'Adding student...';
+
+            try {
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                // Check if email already exists
+                const q = query(authorizedStudentsCollectionRef, where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    showModal('Student Exists', `Student with email ${email} is already authorized.`);
+                    studentManagementLoading.style.display = 'none';
+                    return;
+                }
+
+                // Add new student email. Firestore will auto-generate doc ID.
+                await addDoc(authorizedStudentsCollectionRef, {
+                    email: email,
+                    addedBy: currentUserId,
+                    timestamp: Date.now()
+                });
+                showModal('Success', `Student ${email} added successfully.`);
+                studentEmailInput.value = ''; // Clear input
+            } catch (error) {
+                console.error("Error adding student:", error);
+                showModal('Error', `Failed to add student: ${error.message}`);
+            } finally {
+                studentManagementLoading.style.display = 'none';
+            }
+        });
+
+        // Event delegation for remove buttons (since they are added dynamically)
+        authorizedStudentsList.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('remove-student-btn')) {
+                const docId = event.target.dataset.docId;
+                if (!docId) return;
+
+                if (currentUserRole !== 'teacher') {
+                    showModal('Access Denied', 'Only teachers can remove students.');
+                    return;
+                }
+
+                showModal('Confirm Removal', `Are you sure you want to remove this student?`, [
+                    { text: 'Yes, Remove', className: 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg', onClick: async () => {
+                        studentManagementLoading.style.display = 'block';
+                        studentManagementLoading.textContent = 'Removing student...';
+                        try {
+                            const studentDocRef = doc(db, `artifacts/${appId}/authorized_users/student_emails`, docId);
+                            await deleteDoc(studentDocRef);
+                            showModal('Success', 'Student removed successfully.');
+                        } catch (error) {
+                            console.error("Error removing student:", error);
+                            showModal('Error', `Failed to remove student: ${error.message}`);
+                        } finally {
+                            studentManagementLoading.style.display = 'none';
+                        }
+                    }},
+                    { text: 'Cancel', className: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg' }
+                ]);
             }
         });
 
