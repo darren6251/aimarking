@@ -235,7 +235,7 @@
 </head>
 <body class="antialiased">
     <div id="authSection" class="container flex flex-col gap-8 items-center" style="display: none;">
-        <!-- Custom Logo -->
+        <!-- Custom Logo (Ensure media.jpg is in the same directory as index.html on your server/GitHub) -->
         <img src="media.jpg" alt="3-SHOT Logo" class="w-auto h-24 mb-4">
         <h1 class="text-3xl font-semibold text-center text-gray-800">Gemini Grader</h1>
         <p class="text-gray-600 text-lg mb-6">Operated by Darren Ng</p>
@@ -322,11 +322,10 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-        // IMPORTANT: Replace these with your actual Firebase project config and Canvas App ID.
-        // Get FIREBASE_CONFIG_PLACEHOLDER from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
-        // Get APP_ID_FROM_CANVAS_ENVIRONMENT from the URL of THIS Canvas chat (the 'c_...' string).
+        // IMPORTANT: Replace these with your actual Firebase project config.
+        // Get this from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
         const FIREBASE_CONFIG_PLACEHOLDER = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key
           authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30",
           storageBucket: "ai-grading-9bb30.firebasestorage.app",
@@ -335,7 +334,9 @@
           measurementId: "G-CHKLKSM17S"
         };
 
-        const APP_ID_FROM_CANVAS_ENVIRONMENT = "c_03094e15"; // YOUR_CANVAS_APP_ID_HERE; // REMEMBER TO REPLACE THIS!
+        // This is the Canvas app ID (from the URL of THIS chat).
+        // It's used for the Firestore data structure related to this specific artifact.
+        const APP_ID_FROM_CANVAS_ENVIRONMENT = "c_03094e15";
 
 
         // Conditional assignment for running in Canvas vs. locally or on your own host
@@ -758,6 +759,7 @@
             try {
                 // Process student input
                 if (studentFile) {
+                    loadingIndicator.textContent = `Processing student file: ${studentFile.name}...`;
                     const fileData = await readFileAsBase64(studentFile); // Returns array of {type, data} for images/PDF pages
                     studentInputParts = fileData;
                 } else if (studentAnswerText) {
@@ -766,12 +768,14 @@
 
                 // Process answer key input
                 if (answerKeyFileObj) {
+                    loadingIndicator.textContent = `Processing answer key file: ${answerKeyFileObj.name}...`;
                     const fileData = await readFileAsBase64(answerKeyFileObj); // Returns array of {type, data} for images/PDF pages
                     answerKeyInputParts = fileData;
                 } else if (answerKeyText) {
                     answerKeyInputParts = [{ text: answerKeyText }];
                 }
 
+                loadingIndicator.textContent = 'Sending to Gemini for grading...';
                 let geminiPromptParts = [];
 
                 // Add student content to prompt
@@ -815,7 +819,8 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: geminiPromptParts });
                 const payload = { contents: chatHistory };
-                const apiKey = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Canvas provides this at runtime for testing purposes
+                // Using your provided API key directly
+                const apiKey = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Your Gemini API Key
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
