@@ -6,11 +6,13 @@
     <title>Gemini Exam Grader</title>
     <!-- Tailwind CSS for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js CDN for PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
-        /* Custom styles for the Inter font and rounded corners */
+        /* Custom styles for the Inter font and rounded corners, inspired by Google Material Design */
         body {
             font-family: "Inter", sans-serif;
-            background-color: #f7f9fa; /* Very light gray, almost white, like Google's */
+            background-color: #f7f9fa; /* Very light gray, almost white, like Google's background */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -19,8 +21,8 @@
         }
         .container {
             background-color: #ffffff;
-            padding: 40px; /* Increased padding */
-            border-radius: 8px; /* Slightly less rounded, more modern card */
+            padding: 40px; /* Increased padding for more breathing room */
+            border-radius: 8px; /* Slightly less rounded, more modern card look */
             /* Subtle, multi-layer shadow like Google's cards */
             box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
             max-width: 900px;
@@ -34,6 +36,8 @@
         input[type="file"],
         textarea {
             border-color: #dadce0; /* Softer, Google-like border color */
+            border-width: 1px;
+            padding: 12px 16px; /* Increased padding for inputs */
         }
         input[type="text"]:focus,
         input[type="file"]:focus,
@@ -45,15 +49,23 @@
         button {
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
             border-radius: 4px; /* Slightly less rounded buttons */
+            padding: 12px 24px; /* Consistent button padding */
+            font-weight: 600; /* Slightly bolder text */
+            display: flex; /* For icon alignment */
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* Space between text and icon */
         }
         button:hover {
-            transform: translateY(-1px); /* Slight lift */
+            transform: translateY(-1px); /* Slight lift on hover */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
         }
         #loadingIndicator {
             display: none;
             color: #4f46e5;
             font-weight: 500;
+            text-align: center;
+            margin-top: 1rem;
         }
         #resultContainer {
             min-height: 100px;
@@ -67,16 +79,51 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            border: 1px solid #dadce0; /* Border for the file input wrapper */
+            border-radius: 8px; /* Rounded corners for wrapper */
+            padding: 8px; /* Padding inside wrapper */
+            background-color: #fcfcfc; /* Slightly off-white background */
         }
         .file-input-wrapper input[type="file"] {
             flex-grow: 1;
+            border: none; /* Remove individual border for actual input */
+            padding: 0; /* Remove individual padding */
         }
+        .file-input-wrapper input[type="file"]::-webkit-file-upload-button {
+            visibility: hidden;
+            width: 0;
+            padding: 0;
+            margin: 0;
+        }
+        .file-input-wrapper input[type="file"]::before {
+            content: 'Choose File'; /* Custom button text */
+            display: inline-block;
+            background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 8px 12px;
+            outline: none;
+            white-space: nowrap;
+            -webkit-user-select: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 10pt;
+        }
+        .file-input-wrapper input[type="file"]:hover::before {
+            border-color: black;
+        }
+        .file-input-wrapper input[type="file"]:active::before {
+            background: -webkit-linear-gradient(top, #e3e3e3, #f0f0f0);
+        }
+
         .file-preview {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             margin-top: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 200px; /* Limit preview height */
+            object-fit: contain; /* Ensure image fits without cropping */
         }
         .error-message {
             color: #ef4444;
@@ -96,27 +143,30 @@
             background-color: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
+            animation: fadeIn 0.3s ease-out; /* Fade-in animation */
         }
         .modal-content {
             background-color: #fff;
-            padding: 20px;
+            padding: 30px; /* Increased modal padding */
             border-radius: 8px;
             max-width: 500px;
             width: 90%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             position: relative;
+            animation: slideIn 0.3s ease-out; /* Slide-in animation */
         }
         .close-button {
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 24px;
+            font-size: 28px; /* Larger close button */
             cursor: pointer;
             color: #aaa;
         }
         .close-button:hover {
             color: #555;
         }
+        /* Google Sign-In Button style */
         .google-btn {
             background-color: #4285F4; /* Google Blue */
             color: white;
@@ -145,13 +195,52 @@
             width: 20px;
             height: 20px;
         }
+        /* CSS Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .btn-primary {
+            background-image: linear-gradient(to right, #6366f1, #4f46e5); /* Indigo gradient */
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            background-image: linear-gradient(to right, #4f46e5, #4338ca); /* Darker gradient on hover */
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-grade {
+            background-image: linear-gradient(to right, #22c55e, #10b981); /* Green gradient */
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-grade:hover {
+            background-image: linear-gradient(to right, #10b981, #059669); /* Darker green gradient on hover */
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-logout {
+            background-color: #ef4444; /* Red */
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-logout:hover {
+            background-color: #dc2626; /* Darker red */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body class="antialiased">
-    <div id="authSection" class="container flex flex-col gap-6" style="display: none;">
-        <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-6">Welcome to AI Grader</h1>
+    <div id="authSection" class="container flex flex-col gap-8 items-center" style="display: none;">
+        <!-- Custom Logo -->
+        <img src="media.jpg" alt="3-SHOT Logo" class="w-auto h-24 mb-4">
+        <h1 class="text-3xl font-semibold text-center text-gray-800">Gemini Grader</h1>
+        <p class="text-gray-600 text-lg mb-6">Operated by Darren Ng</p>
 
-        <button id="googleSignInButton" class="google-btn rounded-lg focus:outline-none focus:shadow-outline-blue transition duration-300">
+        <button id="googleSignInButton" class="google-btn rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 w-full max-w-xs">
             <span class="google-icon">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
             </span>
@@ -161,63 +250,47 @@
         <p id="authError" class="error-message text-center"></p>
     </div>
 
-    <!-- Role Selection Modal (hidden by default) -->
-    <div id="roleSelectionModal" class="modal">
-        <div class="modal-content">
-            <h3 id="roleModalTitle" class="text-xl font-bold mb-3 text-center">Select Your Role</h3>
-            <p id="roleModalMessage" class="text-gray-700 text-center mb-6">Please tell us if you are a Student or a Teacher.</p>
-            <div id="roleModalButtons" class="flex flex-col gap-4">
-                <button id="selectStudentRole" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline-blue transition duration-300">
-                    I am a Student
-                </button>
-                <button id="selectTeacherRole" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline-green transition duration-300">
-                    I am a Teacher
-                </button>
-            </div>
-        </div>
-    </div>
-
-
     <div id="appSection" class="container flex flex-col gap-6" style="display: none;">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-4xl font-extrabold text-gray-800">Gemini Exam Grader</h1>
-            <div class="flex items-center gap-2">
-                <span id="userDisplayName" class="text-gray-600 text-sm font-medium"></span>
-                <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline-red transition duration-300 text-sm">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
+            <h1 class="text-3xl font-extrabold text-gray-800 mb-4 md:mb-0">Gemini Exam Grader</h1>
+            <div class="flex items-center gap-4">
+                <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
+                <button id="logoutButton" class="btn-logout text-sm py-2 px-4">
                     Log Out
                 </button>
             </div>
         </div>
 
         <div class="mb-4">
-            <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image):</label>
+            <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
             <div class="file-input-wrapper">
-                <input type="file" id="studentAnswerFile" accept="image/*" class="shadow-sm appearance-none border rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
                 <span id="studentFileName" class="text-gray-500 text-sm">No file chosen</span>
             </div>
-            <img id="studentFilePreview" class="file-preview" style="display: none;" alt="Student Work Preview">
+            <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
             <label for="studentAnswer" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Student's Answer:</label>
             <textarea id="studentAnswer" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter student's answer here..."></textarea>
             <p id="studentAnswerError" class="error-message"></p>
         </div>
 
         <div class="mb-6">
-            <label for="answerKeyFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image):</label>
+            <label for="answerKeyFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image or PDF):</label>
             <div class="file-input-wrapper">
-                <input type="file" id="answerKeyFile" accept="image/*" class="shadow-sm appearance-none border rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                <input type="file" id="answerKeyFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
                 <span id="answerKeyFileName" class="text-gray-500 text-sm">No file chosen</span>
             </div>
-            <img id="answerKeyFilePreview" class="file-preview" style="display: none;" alt="Answer Key Preview">
+            <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
             <label for="answerKey" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Answer Key:</label>
             <textarea id="answerKey" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter the correct answer key here..."></textarea>
             <p id="answerKeyError" class="error-message"></p>
         </div>
 
-        <button id="gradeButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline-indigo transition duration-300">
+        <button id="gradeButton" class="btn-primary btn-grade py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
             Grade Work
         </button>
 
-        <p id="loadingIndicator" class="text-center mt-4">Grading in progress, please wait...</p>
+        <p id="loadingIndicator" class="text-center mt-4">Processing files and grading in progress, please wait...</p>
 
         <div id="resultContainer" class="mt-6 border border-gray-300 rounded-lg p-5">
             <h2 class="text-2xl font-bold text-gray-800 mb-3">Grading Results:</h2>
@@ -249,10 +322,9 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-        // --- Firebase Initialization and Global Variables ---
-        // For local file execution or when hosted on your own domain,
-        // you MUST replace this `FIREBASE_CONFIG_PLACEHOLDER` with your actual Firebase project config.
-        // This config was copied from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
+        // IMPORTANT: Replace these with your actual Firebase project config and Canvas App ID.
+        // Get FIREBASE_CONFIG_PLACEHOLDER from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
+        // Get APP_ID_FROM_CANVAS_ENVIRONMENT from the URL of THIS Canvas chat (the 'c_...' string).
         const FIREBASE_CONFIG_PLACEHOLDER = {
           apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
           authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -263,16 +335,15 @@
           measurementId: "G-CHKLKSM17S"
         };
 
-        // For local file execution or when hosted on your own domain,
-        // you must replace this with the specific APP_ID from your Canvas environment URL.
-        // This is the 'c_...' string that appears in the URL when you view this Canvas.
-        // Example: "c_0aa637cf03094e15_gemini-grader-demo-878"
-        const APP_ID_FROM_CANVAS_ENVIRONMENT = "c_03094e15"; 
+        const APP_ID_FROM_CANVAS_ENVIRONMENT = "c_03094e15"; // YOUR_CANVAS_APP_ID_HERE; // REMEMBER TO REPLACE THIS!
 
 
         // Conditional assignment for running in Canvas vs. locally or on your own host
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FROM_CANVAS_ENVIRONMENT;
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG_PLACEHOLDER;
+
+        // Configure pdf.js worker source
+        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 
         let app;
@@ -316,15 +387,9 @@
             }
         };
 
-        // Function to show role selection modal
-        function showRoleSelectionModal() {
-            const roleModal = document.getElementById('roleSelectionModal');
-            roleModal.style.display = 'flex';
-        }
 
         // Initialize Firebase
         try {
-            // Check if firebaseConfig is empty (likely if placeholders were not filled for local run)
             if (!firebaseConfig || !firebaseConfig.projectId || firebaseConfig.projectId === "YOUR_PROJECT_ID") {
                 throw new Error("Firebase configuration is missing or incomplete. Please replace the placeholders in the HTML code with your actual Firebase project details.");
             }
@@ -342,34 +407,51 @@
             console.log("onAuthStateChanged fired. User:", user ? user.uid : "null");
             if (user) {
                 currentUserId = user.uid;
-                currentUserName = user.displayName || user.email || 'Anonymous User'; // Use Google name/email
+                currentUserName = user.displayName || user.email || 'Google User'; // Use Google name/email
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
 
                 try {
                     const profileDoc = await getDoc(userProfileRef);
                     if (profileDoc.exists() && profileDoc.data().role) {
+                        // User has a role stored
                         const profileData = profileDoc.data();
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || currentUserName; // Prefer stored name if available
-                        document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
-                        document.getElementById('authSection').style.display = 'none';
-                        document.getElementById('appSection').style.display = 'flex';
-                        currentAuthReady = true;
                         console.log(`User profile loaded: Name=${currentUserName}, Role=${currentUserRole}`);
-                        await loadPastSubmissions();
                     } else {
-                        // User exists (Google logged in), but no role assigned in Firestore profile
-                        console.log("User logged in with Google, but no role found. Prompting for role selection.");
-                        showRoleSelectionModal();
-                        document.getElementById('authSection').style.display = 'none'; // Keep auth section hidden
-                        document.getElementById('appSection').style.display = 'none'; // Keep app section hidden until role is selected
-                        currentAuthReady = true; // Auth system ready, just need role
+                        // New user or existing user without a role, determine role based on authorized_users
+                        console.log("User logged in with Google, checking for pre-authorized role.");
+                        const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
+                        const teacherAuthDoc = await getDoc(authorizedTeacherRef);
+
+                        if (teacherAuthDoc.exists()) {
+                            currentUserRole = 'teacher';
+                            console.log("User is an authorized teacher.");
+                        } else {
+                            currentUserRole = 'student';
+                            console.log("User is not an authorized teacher, assigning student role.");
+                        }
+
+                        // Save the determined role to the user's profile
+                        await setDoc(userProfileRef, {
+                            role: currentUserRole,
+                            name: currentUserName,
+                            lastLogin: Date.now()
+                        }, { merge: true }); // Merge to update, not overwrite
+                        showModal('Role Assigned', `You are logged in as a ${currentUserRole}!`);
                     }
-                } catch (error) {
-                    console.error("Error fetching user profile:", error);
+
+                    // Update UI and load submissions
+                    document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('appSection').style.display = 'flex';
                     currentAuthReady = true;
-                    showModal('Profile Error', `Failed to load user profile. Details: ${error.message}`);
-                    // Fallback: If profile fetch fails, stay on auth screen or show error
+                    await loadPastSubmissions();
+
+                } catch (error) {
+                    console.error("Error fetching or setting user profile:", error);
+                    currentAuthReady = true;
+                    showModal('Profile Error', `Failed to load or assign user profile. Details: ${error.message}`);
                     document.getElementById('authSection').style.display = 'flex';
                     document.getElementById('appSection').style.display = 'none';
                 }
@@ -384,7 +466,6 @@
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appSection').style.display = 'none';
                 currentAuthReady = true; // Auth system is ready, no user.
-                document.getElementById('roleSelectionModal').style.display = 'none'; // Hide role modal if user logs out
             }
         });
 
@@ -392,52 +473,16 @@
         document.getElementById('googleSignInButton').addEventListener('click', async () => {
             const provider = new GoogleAuthProvider();
             try {
-                // Use signInWithPopup for a new window authentication
                 const result = await signInWithPopup(auth, provider);
-                // User is signed in. onAuthStateChanged listener will handle UI update and role check.
                 console.log("Google Sign-In successful:", result.user);
+                // onAuthStateChanged listener will handle UI update and role check.
             } catch (error) {
                 console.error("Google Sign-In failed:", error);
-                const errorCode = error.code;
                 const errorMessage = error.message;
-                const credential = GoogleAuthProvider.credentialFromError(error);
                 document.getElementById('authError').textContent = `Sign-in failed: ${errorMessage}`;
                 showModal('Sign-In Error', `Failed to sign in with Google. Details: ${errorMessage}`);
             }
         });
-
-        // --- Role Selection Handlers ---
-        document.getElementById('selectStudentRole').addEventListener('click', () => saveUserRole('student'));
-        document.getElementById('selectTeacherRole').addEventListener('click', () => saveUserRole('teacher'));
-
-        async function saveUserRole(role) {
-            if (!currentUserId) {
-                console.error("No current user to save role for!");
-                showModal('Error', 'No active user. Please try signing in again.');
-                return;
-            }
-
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            try {
-                await setDoc(userProfileRef, {
-                    role: role,
-                    name: auth.currentUser.displayName || auth.currentUser.email,
-                    lastLogin: Date.now()
-                }, { merge: true }); // Merge to update, not overwrite
-
-                currentUserRole = role;
-                currentUserName = auth.currentUser.displayName || auth.currentUser.email;
-                document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
-                document.getElementById('roleSelectionModal').style.display = 'none'; // Hide role modal
-                document.getElementById('appSection').style.display = 'flex'; // Show main app
-                showModal('Role Set', `You are now logged in as a ${role}!`);
-                await loadPastSubmissions();
-            } catch (error) {
-                console.error("Error saving user role:", error);
-                showModal('Role Save Error', `Failed to save your role. Details: ${error.message}`);
-            }
-        }
-
 
         document.getElementById('logoutButton').addEventListener('click', async () => {
             try {
@@ -461,11 +506,45 @@
 
         // --- File Handling Functions ---
         async function readFileAsBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
+            return new Promise(async (resolve, reject) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve([{ type: file.type, data: reader.result.split(',')[1] }]);
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    try {
+                        const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                        const pdf = await loadingTask.promise;
+                        const numPages = pdf.numPages;
+                        const images = [];
+
+                        // Show processing message for PDF
+                        loadingIndicator.style.display = 'block';
+                        loadingIndicator.textContent = `Processing PDF: Page 1 of ${numPages}`;
+
+                        for (let i = 1; i <= numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: 2 }); // Scale for better resolution
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+                            images.push({ type: 'image/png', data: canvas.toDataURL('image/png').split(',')[1] });
+                            canvas.remove(); // Clean up canvas element
+                            loadingIndicator.textContent = `Processing PDF: Page ${i + 1} of ${numPages}`; // Update message
+                        }
+                        loadingIndicator.style.display = 'none'; // Hide after processing
+                        resolve(images);
+                    } catch (error) {
+                        loadingIndicator.style.display = 'none'; // Hide on error
+                        reject(new Error("Failed to render PDF: " + error.message));
+                    }
+                } else {
+                    reject(new Error("Unsupported file type. Please upload an image or PDF."));
+                }
             });
         }
 
@@ -487,12 +566,35 @@
             const file = event.target.files[0];
             if (file) {
                 studentFileNameDisplay.textContent = file.name;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    studentFilePreview.src = e.target.result;
-                    studentFilePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        studentFilePreview.src = e.target.result;
+                        studentFilePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    // For PDF preview, render the first page
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                    loadingTask.promise.then(pdf => {
+                        pdf.getPage(1).then(page => {
+                            const viewport = page.getViewport({ scale: 1.0 });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                studentFilePreview.src = canvas.toDataURL('image/png');
+                                studentFilePreview.style.display = 'block';
+                                canvas.remove();
+                            });
+                        });
+                    }).catch(error => {
+                        console.error("Error rendering PDF preview:", error);
+                        studentFilePreview.src = "https://placehold.co/150x200/cccccc/000000?text=PDF+Error";
+                        studentFilePreview.style.display = 'block';
+                    });
+                }
             } else {
                 studentFileNameDisplay.textContent = 'No file chosen';
                 studentFilePreview.style.display = 'none';
@@ -504,12 +606,34 @@
             const file = event.target.files[0];
             if (file) {
                 answerKeyFileNameDisplay.textContent = file.name;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    answerKeyFilePreview.src = e.target.result;
-                    answerKeyFilePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        answerKeyFilePreview.src = e.target.result;
+                        answerKeyFilePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                    loadingTask.promise.then(pdf => {
+                        pdf.getPage(1).then(page => {
+                            const viewport = page.getViewport({ scale: 1.0 });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                answerKeyFilePreview.src = canvas.toDataURL('image/png');
+                                answerKeyFilePreview.style.display = 'block';
+                                canvas.remove();
+                            });
+                        });
+                    }).catch(error => {
+                        console.error("Error rendering PDF preview:", error);
+                        answerKeyFilePreview.src = "https://placehold.co/150x200/cccccc/000000?text=PDF+Error";
+                        answerKeyFilePreview.style.display = 'block';
+                    });
+                }
             } else {
                 answerKeyFileNameDisplay.textContent = 'No file chosen';
                 answerKeyFilePreview.style.display = 'none';
@@ -534,8 +658,7 @@
                 console.log(`Loading past submissions for user: ${currentUserId}`);
                 // IMPORTANT: Ensure the path matches your Firestore security rules for private data
                 const submissionsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
-                // Using getDocs for a one-time fetch when the user logs in
-                const q = query(submissionsCollectionRef, orderBy('timestamp', 'desc')); // Order by timestamp
+                const q = query(submissionsCollectionRef, orderBy('timestamp', 'desc'));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
@@ -551,12 +674,37 @@
                     const submission = doc.data();
                     const submissionElement = document.createElement('div');
                     submissionElement.className = 'bg-gray-100 p-4 rounded-lg shadow-sm border border-gray-200';
+                    let studentWorkHtml = '';
+                    if (submission.studentAnswerText) {
+                        studentWorkHtml += `<p class="text-gray-700"><strong>Student Answer (Text):</strong> ${submission.studentAnswerText.substring(0, 150)}${submission.studentAnswerText.length > 150 ? '...' : ''}</p>`;
+                    }
+                    if (submission.studentAnswerImages && submission.studentAnswerImages.length > 0) {
+                        studentWorkHtml += `<p class="text-gray-700 mt-2"><strong>Student Work (Images):</strong></p>`;
+                        submission.studentAnswerImages.forEach((img, index) => {
+                            if (img.data) {
+                                studentWorkHtml += `<img src="data:${img.type};base64,${img.data}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                            }
+                        });
+                    }
+
+                    let answerKeyHtml = '';
+                    if (submission.answerKeyText) {
+                        answerKeyHtml += `<p class="text-gray-700"><strong>Answer Key (Text):</strong> ${submission.answerKeyText.substring(0, 150)}${submission.answerKeyText.length > 150 ? '...' : ''}</p>`;
+                    }
+                    if (submission.answerKeyImages && submission.answerKeyImages.length > 0) {
+                        answerKeyHtml += `<p class="text-gray-700 mt-2"><strong>Answer Key (Images):</strong></p>`;
+                        submission.answerKeyImages.forEach((img, index) => {
+                            if (img.data) {
+                                answerKeyHtml += `<img src="data:${img.type};base64,${img.data}" class="w-full h-auto max-h-40 object-contain rounded mt-2">`;
+                            }
+                        });
+                    }
+
+
                     submissionElement.innerHTML = `
                         <h3 class="font-semibold text-lg text-gray-800 mb-2">Submission on ${new Date(submission.timestamp).toLocaleString()}</h3>
-                        ${submission.studentAnswerText ? `<p class="text-gray-700"><strong>Student Answer (Text):</strong> ${submission.studentAnswerText.substring(0, 100)}...</p>` : ''}
-                        ${submission.studentAnswerImageBase64 ? `<p class="text-gray-700"><strong>Student Work:</strong> <img src="data:image/jpeg;base64,${submission.studentAnswerImageBase64}" class="w-full h-auto max-h-40 object-contain rounded mt-2"></p>` : ''}
-                        ${submission.answerKeyText ? `<p class="text-gray-700 mt-2"><strong>Answer Key (Text):</strong> ${submission.answerKeyText.substring(0, 100)}...</p>` : ''}
-                        ${submission.answerKeyImageBase64 ? `<p class="text-gray-700 mt-2"><strong>Answer Key:</strong> <img src="data:image/jpeg;base64,${submission.answerKeyImageBase64}" class="w-full h-auto max-h-40 object-contain rounded mt-2"></p>` : ''}
+                        ${studentWorkHtml}
+                        ${answerKeyHtml}
                         <div class="mt-4">
                             <p class="font-medium text-indigo-600"><strong>Gemini Grade:</strong></p>
                             <p class="text-gray-800 text-sm mt-1">${submission.geminiGrade || 'N/A'}</p>
@@ -575,7 +723,7 @@
         gradeButton.addEventListener('click', async () => {
             // Ensure user is authenticated and has a role
             if (!currentUserId || !currentUserRole) {
-                showModal('Authentication Required', 'Please sign in to grade work and select your role.');
+                showModal('Authentication Required', 'Please sign in to grade work.');
                 return;
             }
 
@@ -596,7 +744,7 @@
                 if (!answerKeyText && !answerKeyFileObj) {
                     document.getElementById('answerKeyError').textContent = 'Please provide answer key via text or file.';
                 }
-                gradeResultDisplay.textContent = "Please provide both student's answer (text or image) and the answer key (text or image).";
+                gradeResultDisplay.textContent = "Please provide both student's answer (text, image, or PDF) and the answer key (text, image, or PDF).";
                 gradeResultDisplay.style.color = "red";
                 return;
             }
@@ -604,46 +752,64 @@
             loadingIndicator.style.display = 'block'; // Show loading indicator
             gradeButton.disabled = true; // Disable button during grading
 
-            let studentImageBase64 = null;
-            let answerKeyImageBase64 = null;
-            let geminiPromptParts = [];
+            let studentInputParts = []; // Can be text or array of image objects
+            let answerKeyInputParts = []; // Can be text or array of image objects
 
             try {
-                // Read student file if provided
+                // Process student input
                 if (studentFile) {
-                    studentImageBase64 = await readFileAsBase64(studentFile);
-                    geminiPromptParts.push({ text: "Here is the student's work:" });
-                    geminiPromptParts.push({
-                        inlineData: {
-                            mimeType: studentFile.type,
-                            data: studentImageBase64
-                        }
-                    });
+                    const fileData = await readFileAsBase64(studentFile); // Returns array of {type, data} for images/PDF pages
+                    studentInputParts = fileData;
                 } else if (studentAnswerText) {
-                    geminiPromptParts.push({ text: `Student's Answer:\n"${studentAnswerText}"` });
+                    studentInputParts = [{ text: studentAnswerText }];
                 }
 
-                // Read answer key file if provided
+                // Process answer key input
                 if (answerKeyFileObj) {
-                    answerKeyImageBase64 = await readFileAsBase64(answerKeyFileObj);
-                    geminiPromptParts.push({ text: "Here is the answer key:" });
-                    geminiPromptParts.push({
-                        inlineData: {
-                            mimeType: answerKeyFileObj.type,
-                            data: answerKeyImageBase64
+                    const fileData = await readFileAsBase64(answerKeyFileObj); // Returns array of {type, data} for images/PDF pages
+                    answerKeyInputParts = fileData;
+                } else if (answerKeyText) {
+                    answerKeyInputParts = [{ text: answerKeyText }];
+                }
+
+                let geminiPromptParts = [];
+
+                // Add student content to prompt
+                if (studentInputParts.length > 0) {
+                    geminiPromptParts.push({ text: "Here is the student's work:" });
+                    studentInputParts.forEach(part => {
+                        if (part.text) {
+                            geminiPromptParts.push({ text: `"${part.text}"` });
+                        } else if (part.data) {
+                            geminiPromptParts.push({
+                                inlineData: { mimeType: part.type, data: part.data }
+                            });
                         }
                     });
-                } else if (answerKeyText) {
-                    geminiPromptParts.push({ text: `Answer Key:\n"${answerKeyText}"` });
                 }
+
+
+                // Add answer key content to prompt
+                if (answerKeyInputParts.length > 0) {
+                    geminiPromptParts.push({ text: "Here is the Answer Key:" }); // Separator for clarity
+                    answerKeyInputParts.forEach(part => {
+                        if (part.text) {
+                            geminiPromptParts.push({ text: `"${part.text}"` });
+                        } else if (part.data) {
+                            geminiPromptParts.push({
+                                inlineData: { mimeType: part.type, data: part.data }
+                            });
+                        }
+                    });
+                }
+
 
                 // Add grading instructions to the prompt
                 geminiPromptParts.push({ text: `\nYou are an expert exam grader.
                 Compare the student's work/answer with the provided answer key.
                 Provide a clear grade (e.g., "Excellent", "Good", "Needs Improvement", or a numerical score like "8/10").
                 Also, provide specific feedback on what was correct, what was incorrect, and suggestions for improvement.
-
-                Grading and Feedback:` });
+                Focus on providing detailed, constructive feedback.` });
 
 
                 let chatHistory = [];
@@ -676,16 +842,16 @@
                 }
 
                 // --- Save Submission to Firestore ---
-                // Save based on the current user's actual Firebase UID, linked to their role
                 const submissionsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
                 const newSubmission = {
                     submittedBy: currentUserName,
                     submittedByRole: currentUserRole,
                     studentAnswerText: studentAnswerText || null,
-                    studentAnswerImageBase64: studentImageBase64,
+                    // Store the processed image data from files
+                    studentAnswerImages: studentFile ? studentInputParts : [],
                     studentFileName: studentFile ? studentFile.name : null,
                     answerKeyText: answerKeyText || null,
-                    answerKeyImageBase64: answerKeyImageBase64,
+                    answerKeyImages: answerKeyFileObj ? answerKeyInputParts : [],
                     answerKeyFileName: answerKeyFileObj ? answerKeyFileObj.name : null,
                     geminiGrade: geminiGrade,
                     timestamp: Date.now()
