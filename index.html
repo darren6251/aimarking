@@ -7,7 +7,7 @@
     <!-- Tailwind CSS for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js CDN for PDF rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
     <style>
         /* Custom styles for the Inter font and rounded corners, inspired by Google Material Design */
         body {
@@ -598,7 +598,6 @@
 
                 try {
                     // 1. Check if user is a teacher
-                    // THIS IS THE LINE THAT WAS CAUSING THE ERROR
                     const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
                     const teacherAuthDoc = await getDoc(authorizedTeacherRef);
 
@@ -840,7 +839,7 @@
                     reader.readAsDataURL(file);
                 } else if (file.type === 'application/pdf') {
                     // For PDF preview, render the first page
-                    const loadingTask = pdfjsLib.getDocument({ url: URL.ObjectURL(file) });
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
                     loadingTask.promise.then(pdf => {
                         pdf.getPage(1).then(page => {
                             const viewport = page.getViewport({ scale: 1.0 });
