@@ -639,7 +639,7 @@
                         if (currentUserRole === 'teacher') {
                             manageStudentsButton.style.display = 'flex'; // Use flex to maintain button styling
                         } else {
-                            manageStudents.style.display = 'none'; // Ensure students don't see this
+                            manageStudentsButton.style.display = 'none'; // Ensure students don't see this
                         }
 
                         // Initially show grading section with fade-in
@@ -1136,7 +1136,6 @@
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     geminiGrade = result.candidates[0].content.parts[0].text;
-                    gradeResultDisplay.textContent = geminiGrade;
                 } else {
                     gradeResultDisplay.textContent = "Could not get a valid response from the Gemini API. Please try again.";
                 }
@@ -1406,6 +1405,49 @@
             }
         });
 
+    </script>
+    <!-- TEMPORARY SCRIPT FOR TEACHER AUTHORIZATION SETUP - REMOVE AFTER USE! -->
+    <script type="module">
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+
+        // IMPORTANT: Use your actual Firebase config and app ID
+        const FIREBASE_CONFIG_FOR_SETUP = {
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key
+          authDomain: "ai-grading-9bb30.firebaseapp.com",
+          projectId: "ai-grading-9bb30",
+          storageBucket: "ai-grading-9bb30.firebasestorage.app",
+          messagingSenderId: "298162112230",
+          appId: "1:298162112230:web:529d3f95536991be685d27",
+          measurementId: "G-CHKLKSM17S"
+        };
+        const APP_ID_FOR_SETUP = "c_03094e15";
+
+        const setupApp = initializeApp(FIREBASE_CONFIG_FOR_SETUP, "setupApp"); // Use a distinct app instance name
+        const setupDb = getFirestore(setupApp);
+        const setupAuth = getAuth(setupApp);
+
+        // *** YOUR TEACHER UID HAS BEEN ADDED HERE ***
+        const TEACHER_UID_TO_AUTHORIZE = "EkrZ6R2LRrdgnvp38YnAWMN7btz2"; // <--- THIS IS YOUR UID
+
+        onAuthStateChanged(setupAuth, async (user) => {
+            if (user && user.uid === TEACHER_UID_TO_AUTHORIZE) {
+                const teacherDocRef = doc(setupDb, `artifacts/${APP_ID_FOR_SETUP}/authorized_users/teachers/${TEACHER_UID_TO_AUTHORIZE}`);
+                try {
+                    await setDoc(teacherDocRef, { isTeacher: true }, { merge: true });
+                    console.log("Teacher authorization document successfully created/updated in Firestore!");
+                    // You might want to remove this log or disable this script after it runs once successfully
+                } catch (error) {
+                    console.error("Error creating teacher authorization document:", error);
+                }
+            } else if (user) {
+                console.log("Logged in user is not the designated teacher for setup. UID:", user.uid);
+            } else {
+                console.log("No user logged in for setup script. Please log in with the teacher account.");
+            }
+        });
+        // END TEMPORARY SCRIPT
     </script>
 </body>
 </html>
