@@ -7,7 +7,7 @@
     <!-- Tailwind CSS for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js CDN for PDF rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
         /* Custom styles for the Inter font and rounded corners, inspired by Google Material Design */
         body {
@@ -349,7 +349,7 @@
 <body class="antialiased">
     <div id="authSection" class="container flex flex-col gap-8 items-center" style="display: none;">
         <!-- Custom Logo (Ensure media.jpg is in the same directory as index.html on your server/GitHub) -->
-        <img src="media.jpg" alt="3-SHOT Logo" class="w-auto h-24 mb-4">
+        <img src="https://placehold.co/100x100?text=3-SHOT" alt="3-SHOT Logo" class="w-auto h-24 mb-4">
         <h1 class="text-3xl font-semibold text-center text-gray-800">Gemini Grader</h1>
         <p class="text-gray-600 text-lg mb-6">Operated by Darren Ng</p>
 
@@ -370,7 +370,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 app-header-content">
             <!-- Left-aligned Logo and Operated By -->
             <div class="flex items-center gap-2 app-header-logo-text">
-                <img src="media.jpg" alt="3-SHOT Logo" class="w-auto h-10">
+                <img src="https://placehold.co/40x40?text=3-SHOT" alt="3-SHOT Logo" class="w-auto h-10">
                 <div class="flex flex-col items-start">
                     <h1 class="text-xl font-extrabold text-gray-800">Gemini Grader</h1>
                     <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
@@ -598,14 +598,17 @@
 
                 try {
                     // 1. Check if user is a teacher
-                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
+                    // Corrected path to be a 4-segment document path (C/D/C/D)
+                    // Assumes structure: artifacts/c_03094e15/authorized_users/{UID_DOCUMENT}
+                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/${currentUserId}`);
                     const teacherAuthDoc = await getDoc(authorizedTeacherRef);
 
-                    if (teacherAuthDoc.exists()) {
+                    if (teacherAuthDoc.exists() && teacherAuthDoc.data().isTeacher === true) {
                         currentUserRole = 'teacher';
                         console.log("User is an authorized teacher.");
                     } else {
                         // 2. If not a teacher, check if user is an authorized student by email
+                        // This path remains the same as it's a collection lookup (C/D/C/C)
                         const studentEmailsRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
                         const q = query(studentEmailsRef, where("email", "==", user.email));
                         const studentAuthSnapshot = await getDocs(q);
@@ -667,7 +670,12 @@
                 } catch (error) {
                     console.error("Error fetching or setting user profile/role:", error);
                     currentAuthReady = true;
-                    showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}`);
+                    // Changed the modal message to reflect the specific error if it's the 5-segment path problem
+                    if (error.message.includes("even number of segments") && error.message.includes("artifacts/c_03094e15/authorized_users/teachers/")) {
+                         showModal('Profile Error', `Failed to load or assign user role. The Firestore path for teachers is incorrectly configured. Please ensure it's 'artifacts/${appId}/authorized_users/${currentUserId}' as a document, not with an extra 'teachers' collection in between.`);
+                    } else {
+                        showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}`);
+                    }
                     document.getElementById('authSection').style.display = 'flex';
                     document.getElementById('appSection').style.display = 'none';
                 }
@@ -1285,6 +1293,7 @@
             noAuthorizedStudentsMessage.style.display = 'block'; // Show 'No students' by default
 
             try {
+                // This path should be correct for fetching authorized students emails
                 const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
                 const q = query(authorizedStudentsCollectionRef, orderBy('email')); // Order for consistent display
 
