@@ -520,7 +520,7 @@
         // IMPORTANT: Replace these with your actual Firebase project config.
         // Get this from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
         const FIREBASE_CONFIG_PLACEHOLDER = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key
+          apiKey: "AIzaSyBJsCaQ0O0E1Bb_xQXd7pQLBAgEwa2poKI", // Your API Key (Updated from previous step)
           authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30",
           storageBucket: "ai-grading-9bb30.firebasestorage.app",
@@ -1313,8 +1313,8 @@
             noAuthorizedStudentsMessage.style.display = 'block'; // Show 'No students' by default
 
             try {
-                // This path should be correct for fetching authorized students emails
-                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                // This path is now CORRECT for fetching authorized student emails via the new auth_data document
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`);
                 const q = query(authorizedStudentsCollectionRef, orderBy('email')); // Order for consistent display
 
                 // Use onSnapshot for real-time updates
@@ -1376,7 +1376,8 @@
             studentManagementLoading.textContent = 'Adding student...';
 
             try {
-                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                // This path is now CORRECT for adding authorized student emails
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`);
                 // Check if email already exists
                 const q = query(authorizedStudentsCollectionRef, where("email", "==", email));
                 const querySnapshot = await getDocs(q);
@@ -1419,7 +1420,8 @@
                         studentManagementLoading.style.display = 'block';
                         studentManagementLoading.textContent = 'Removing student...';
                         try {
-                            const studentDocRef = doc(db, `artifacts/${appId}/authorized_users/student_emails`, docId);
+                            // This path is now CORRECT for removing student emails
+                            const studentDocRef = doc(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`, docId);
                             await deleteDoc(studentDocRef);
                             showModal('Success', 'Student removed successfully.');
                         } catch (error) {
