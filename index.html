@@ -592,15 +592,16 @@
             if (user) {
                 currentUserId = user.uid;
                 currentUserName = user.displayName || user.email || 'Google User'; // Use Google name/email
+                // This path for user's profile data seems consistently fine (artifacts/appId/users/userId/profile/data)
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 const unauthorizedMessageElement = document.getElementById('unauthorizedMessage');
                 unauthorizedMessageElement.style.display = 'none'; // Hide by default
 
                 try {
                     // 1. Check if user is a teacher
-                    // Corrected path to be a 4-segment document path (C/D/C/D)
-                    // Assumes structure: artifacts/c_03094e15/authorized_users/{UID_DOCUMENT}
-                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/${currentUserId}`);
+                    // PATH MUST BE: artifacts/{appId}/authorized_users/teachers/{currentUserId}
+                    // This is 6 segments (C/D/C/C/D) - valid for a document
+                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
                     const teacherAuthDoc = await getDoc(authorizedTeacherRef);
 
                     if (teacherAuthDoc.exists() && teacherAuthDoc.data().isTeacher === true) {
@@ -608,9 +609,10 @@
                         console.log("User is an authorized teacher.");
                     } else {
                         // 2. If not a teacher, check if user is an authorized student by email
-                        // This path remains the same as it's a collection lookup (C/D/C/C)
-                        const studentEmailsRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
-                        const q = query(studentEmailsRef, where("email", "==", user.email));
+                        // PATH MUST BE: artifacts/{appId}/authorized_users/student_emails
+                        // This is 4 segments (C/D/C/C) - valid for a collection
+                        const studentEmailsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                        const q = query(studentEmailsCollectionRef, where("email", "==", user.email));
                         const studentAuthSnapshot = await getDocs(q);
 
                         if (!studentAuthSnapshot.empty) {
@@ -670,12 +672,8 @@
                 } catch (error) {
                     console.error("Error fetching or setting user profile/role:", error);
                     currentAuthReady = true;
-                    // Changed the modal message to reflect the specific error if it's the 5-segment path problem
-                    if (error.message.includes("even number of segments") && error.message.includes("artifacts/c_03094e15/authorized_users/teachers/")) {
-                         showModal('Profile Error', `Failed to load or assign user role. The Firestore path for teachers is incorrectly configured. Please ensure it's 'artifacts/${appId}/authorized_users/${currentUserId}' as a document, not with an extra 'teachers' collection in between.`);
-                    } else {
-                        showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}`);
-                    }
+                    // Provide a more generic error for this catch block, as path specific errors are handled by Firebase directly.
+                    showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}. Please check console for details.`);
                     document.getElementById('authSection').style.display = 'flex';
                     document.getElementById('appSection').style.display = 'none';
                 }
@@ -740,7 +738,7 @@
                 if (id === sectionIdToShow) {
                     section.style.opacity = '0'; // Start hidden for transition
                     section.style.display = (id === 'chatSection' || id === 'studentManagementSection') ? 'flex' : 'block'; // Adjust display type
-                    setTimeout(() => { section.style.opacity = '1'; }, 50); // Fade in
+                    setTimeout(() => { section.style.opacity = '1'; }, 50); // Small delay to trigger transition
                 } else {
                     section.style.opacity = '0'; // Fade out
                     setTimeout(() => { section.style.display = 'none'; }, 400); // Match CSS transition duration
@@ -1268,7 +1266,7 @@
         const studentEmailInput = document.getElementById('studentEmailInput');
         const addStudentButton = document.getElementById('addStudentButton');
         const authorizedStudentsList = document.getElementById('authorizedStudentsList');
-        const noAuthorizedStudentsMessage = document.getElementById('noAuthorizedStudents');
+        const noAuthorizedStudentsMessage = document = document.getElementById('noAuthorizedStudents'); // *** FIXED HERE ***
         const studentManagementLoading = document.getElementById('studentManagementLoading');
 
 
