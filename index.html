@@ -361,10 +361,27 @@
         </button>
 
         <p id="authError" class="error-message text-center"></p>
+        <!-- The unauthorizedMessage will now only be shown if a user's *saved* role is 'unauthorized', not on initial login. -->
         <p id="unauthorizedMessage" class="error-message text-center mt-4" style="display: none;">
             Your account is not authorized to use this application. Please contact the administrator.
         </p>
     </div>
+
+    <!-- Code Entry Section (New) -->
+    <div id="codeEntrySection" class="container flex flex-col gap-8 items-center" style="display: none;">
+        <h1 class="text-3xl font-semibold text-center text-gray-800">Enter Access Code</h1>
+        <p class="text-gray-600 text-lg mb-6 text-center">
+            Please enter the access code provided by your administrator to use the application.
+        </p>
+        <input type="text" id="accessCodeInput" placeholder="Enter code here"
+               class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 max-w-xs text-center">
+        <p id="codeError" class="error-message text-center"></p>
+        <button id="submitCodeButton" class="btn-primary py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300 w-full max-w-xs">
+            Submit Code
+        </button>
+        <p id="codeLoadingIndicator" class="loading-indicator"></p>
+    </div>
+
 
     <div id="appSection" class="container flex flex-col gap-6" style="display: none;">
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 app-header-content">
@@ -503,7 +520,7 @@
         // IMPORTANT: Replace these with your actual Firebase project config.
         // Get this from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
         const FIREBASE_CONFIG_PLACEHOLDER = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEEwa2poKI", // Your API Key
           authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30",
           storageBucket: "ai-grading-9bb30.firebasestorage.app",
@@ -530,12 +547,17 @@
         let auth;
         let storage; // Declare storage variable
         let currentUserId = null;
-        let currentUserRole = null;
+        let currentUserEmail = null; // Store user email for potential use
+        let currentUserRole = null; // Will be 'teacher', 'student', or 'unassigned'
         let currentUserName = null;
         let currentAuthReady = false; // Flag to indicate Firebase auth is ready
 
         // Gemini API Key for direct calls (not provided by Canvas environment)
         const GEMINI_API_KEY = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Your Gemini API Key here
+
+        // Define your secret codes here
+        const TEACHER_CODE = "TEACHER123";
+        const STUDENT_CODE = "STUDENT456";
 
         // Function to show custom modal for general messages
         function showModal(title, message, buttons = []) {
@@ -591,51 +613,38 @@
             console.log("onAuthStateChanged fired. User:", user ? user.uid : "null");
             if (user) {
                 currentUserId = user.uid;
+                currentUserEmail = user.email; // Store email
                 currentUserName = user.displayName || user.email || 'Google User'; // Use Google name/email
-                // This path for user's profile data seems consistently fine (artifacts/appId/users/userId/profile/data)
+                
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 const unauthorizedMessageElement = document.getElementById('unauthorizedMessage');
                 unauthorizedMessageElement.style.display = 'none'; // Hide by default
 
                 try {
-                    // 1. Check if user is a teacher
-                    // PATH MUST BE: artifacts/{appId}/authorized_users/teachers/{currentUserId}
-                    // This is 6 segments (C/D/C/C/D) - valid for a document
-                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
-                    const teacherAuthDoc = await getDoc(authorizedTeacherRef);
-
-                    if (teacherAuthDoc.exists() && teacherAuthDoc.data().isTeacher === true) {
-                        currentUserRole = 'teacher';
-                        console.log("User is an authorized teacher.");
+                    const userProfileDoc = await getDoc(userProfileRef);
+                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
+                        currentUserRole = userProfileDoc.data().role;
+                        console.log(`User profile loaded. Role: ${currentUserRole}`);
                     } else {
-                        // 2. If not a teacher, check if user is an authorized student by email
-                        // PATH MUST BE: artifacts/{appId}/authorized_users/student_emails
-                        // This is 4 segments (C/D/C/C) - valid for a collection
-                        const studentEmailsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
-                        const q = query(studentEmailsCollectionRef, where("email", "==", user.email));
-                        const studentAuthSnapshot = await getDocs(q);
-
-                        if (!studentAuthSnapshot.empty) {
-                            currentUserRole = 'student';
-                            console.log("User is an authorized student.");
-                        } else {
-                            currentUserRole = 'unauthorized';
-                            console.log("User is unauthorized.");
-                        }
+                        // New user or role not set, prompt for code
+                        currentUserRole = 'unassigned'; // Temporarily set as unassigned
+                        console.log("User role not found or unassigned. Prompting for access code.");
                     }
 
-                    // Save or update user profile in their private collection
+                    // Always save/update basic profile info (email, name, lastLogin)
                     await setDoc(userProfileRef, {
-                        role: currentUserRole,
                         name: currentUserName,
-                        email: user.email, // Store email for future checks
-                        lastLogin: Date.now()
+                        email: currentUserEmail,
+                        lastLogin: Date.now(),
+                        // Only set role if it's not 'unassigned' yet to avoid overwriting later
+                        role: currentUserRole === 'unassigned' ? null : currentUserRole 
                     }, { merge: true });
 
                     // Update UI based on role
                     if (currentUserRole === 'teacher' || currentUserRole === 'student') {
                         document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
                         document.getElementById('authSection').style.display = 'none';
+                        document.getElementById('codeEntrySection').style.display = 'none'; // Hide code section
                         document.getElementById('appSection').style.display = 'flex';
                         currentAuthReady = true;
 
@@ -661,33 +670,48 @@
                             await loadAuthorizedStudents(); // Load students if teacher
                         }
 
-                    } else { // Unauthorized user
+                    } else if (currentUserRole === 'unassigned') {
+                        // User logged in, but needs to enter a code
+                        document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName}`; // Show they are logged in
+                        document.getElementById('authSection').style.display = 'none';
+                        document.getElementById('appSection').style.display = 'none';
+                        document.getElementById('codeEntrySection').style.display = 'flex'; // Show code entry
+                        currentAuthReady = true;
+                    } else { // Should not happen with 'unassigned' fallback, but for safety
                         document.getElementById('userDisplayName').textContent = `Not logged in`;
                         document.getElementById('authSection').style.display = 'flex';
                         document.getElementById('appSection').style.display = 'none';
+                        document.getElementById('codeEntrySection').style.display = 'none';
                         unauthorizedMessageElement.style.display = 'block'; // Show unauthorized message
-                        currentAuthReady = true; // Auth system is ready, user just not authorized
+                        currentAuthReady = true; 
                     }
 
                 } catch (error) {
-                    console.error("Error fetching or setting user profile/role:", error);
+                    console.error("Error fetching or setting user profile:", error);
                     currentAuthReady = true;
-                    // Provide a more generic error for this catch block, as path specific errors are handled by Firebase directly.
                     showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}. Please check console for details.`);
                     document.getElementById('authSection').style.display = 'flex';
                     document.getElementById('appSection').style.display = 'none';
+                    document.getElementById('codeEntrySection').style.display = 'none';
                 }
 
             } else {
                 // User is logged out
                 currentUserId = null;
+                currentUserEmail = null;
                 currentUserRole = null;
                 currentUserName = null;
                 console.log("User is logged out. Displaying auth section.");
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
                 document.getElementById('authSection').style.display = 'flex';
                 document.getElementById('appSection').style.display = 'none';
-                unauthorizedMessageElement.style.display = 'none'; // Hide unauthorized message
+                document.getElementById('codeEntrySection').style.display = 'none'; // Hide code entry
+                document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
+                document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
+                document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
+                document.getElementById('noAuthorizedStudents').style.display = 'block'; // Show no students message
+                document.getElementById('unauthorizedMessage').style.display = 'none'; // Ensure unauthorized message is hidden on logout
+                
                 currentAuthReady = true; // Auth system is ready, no user.
             }
         });
@@ -712,9 +736,11 @@
                 currentUserRole = null;
                 currentUserName = null;
                 currentUserId = null;
+                currentUserEmail = null;
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
                 document.getElementById('appSection').style.display = 'none';
                 document.getElementById('authSection').style.display = 'flex';
+                document.getElementById('codeEntrySection').style.display = 'none';
                 document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
                 document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
                 document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
@@ -914,17 +940,13 @@
 
         // --- Load Past Submissions from Firestore ---
         async function loadPastSubmissions() {
-            if (!currentAuthReady || !currentUserId) {
-                console.log("Auth not ready or no user (currentUserId is null), skipping loading past submissions.");
+            if (!currentAuthReady || !currentUserId || currentUserRole === 'unassigned') {
+                console.log("Auth not ready, no user, or user unassigned. Skipping loading past submissions.");
                 pastSubmissionsContainer.innerHTML = '';
                 noSubmissionsMessage.style.display = 'block';
                 return;
             }
-            if (currentUserRole === 'unauthorized') { // Added check for unauthorized users
-                pastSubmissionsContainer.innerHTML = '';
-                noSubmissionsMessage.style.display = 'block';
-                return;
-            }
+            // No need to check for 'unauthorized' role anymore, as that implies code not entered
 
             pastSubmissionsContainer.innerHTML = ''; // Clear previous submissions
             noSubmissionsMessage.style.display = 'block'; // Show "No submissions" initially
@@ -1002,9 +1024,9 @@
 
         // --- Main Grading Logic ---
         gradeButton.addEventListener('click', async () => {
-            // Ensure user is authenticated and has a role
-            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
-                showModal('Authentication Required', 'Please sign in with an authorized account to grade work.');
+            // Ensure user is authenticated and has a valid role (not 'unassigned')
+            if (!currentUserId || !currentUserRole || currentUserRole === 'unassigned') {
+                showModal('Authentication Required', 'Please sign in and enter a valid access code to grade work.');
                 return;
             }
 
@@ -1190,8 +1212,8 @@
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
 
-            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
-                showModal('Authentication Required', 'Please sign in with an authorized account to chat with Gemini.');
+            if (!currentUserId || currentUserRole === 'unassigned') { // Check for valid user and assigned role
+                showModal('Authentication Required', 'Please sign in and enter a valid access code to chat with Gemini.');
                 return;
             }
 
@@ -1266,7 +1288,6 @@
         const studentEmailInput = document.getElementById('studentEmailInput');
         const addStudentButton = document.getElementById('addStudentButton');
         const authorizedStudentsList = document.getElementById('authorizedStudentsList');
-        // Corrected the typo here: was `document = document.getElementById`
         const noAuthorizedStudentsMessage = document.getElementById('noAuthorizedStudents'); 
         const studentManagementLoading = document.getElementById('studentManagementLoading');
 
@@ -1413,6 +1434,73 @@
             }
         });
 
+        // --- Code Entry Logic (New Section) ---
+        const accessCodeInput = document.getElementById('accessCodeInput');
+        const submitCodeButton = document.getElementById('submitCodeButton');
+        const codeError = document.getElementById('codeError');
+        const codeLoadingIndicator = document.getElementById('codeLoadingIndicator');
+
+        submitCodeButton.addEventListener('click', async () => {
+            const code = accessCodeInput.value.trim();
+            codeError.textContent = ''; // Clear previous errors
+            codeLoadingIndicator.style.display = 'block';
+            codeLoadingIndicator.textContent = 'Verifying code...';
+            submitCodeButton.disabled = true;
+
+            if (!code) {
+                codeError.textContent = 'Please enter an access code.';
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+                return;
+            }
+
+            let newRole = null;
+            if (code === TEACHER_CODE) {
+                newRole = 'teacher';
+            } else if (code === STUDENT_CODE) {
+                newRole = 'student';
+            } else {
+                codeError.textContent = 'Invalid code. Please try again.';
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+                return;
+            }
+
+            try {
+                // Save the assigned role to the user's profile
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await setDoc(userProfileRef, {
+                    role: newRole,
+                    email: currentUserEmail, // Ensure email is saved with the role
+                    lastLogin: Date.now()
+                }, { merge: true });
+
+                currentUserRole = newRole; // Update local role
+                accessCodeInput.value = ''; // Clear code input
+                showModal('Success', `Welcome! You are now logged in as a ${newRole}.`);
+                
+                // Re-evaluate auth state to update UI (this will call onAuthStateChanged again)
+                // This ensures all UI elements are updated correctly based on the new role.
+                // We'll simulate a user login to re-trigger the onAuthStateChanged.
+                // A simple reload might also work, but this is cleaner.
+                const user = auth.currentUser;
+                if (user) {
+                    onAuthStateChanged(auth, (re_user) => {
+                        // This callback exists only to ensure onAuthStateChanged runs again
+                        // The main logic is handled by the primary onAuthStateChanged listener
+                        console.log("Re-triggering onAuthStateChanged after code submission.");
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Error saving user role after code entry:", error);
+                codeError.textContent = `Error: ${error.message}. Could not save your role.`;
+                showModal('Role Assignment Error', `Failed to assign your role: ${error.message}`);
+            } finally {
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
