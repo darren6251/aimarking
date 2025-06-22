@@ -1340,14 +1340,13 @@
                 chatHistory.push({ role: "user", parts: geminiPromptParts });
                 const payload = { contents: chatHistory };
                 // Your Gemini API Key
-                const apiKey = GEMINI_API_KEY; // Use the globally defined API key
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Make the fetch request to your Cloudflare Worker URL instead of direct Gemini API
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) // Send the full payload to the Worker
                 });
+                
 
                 if (!response.ok) {
                     const errorData = await response.json();
