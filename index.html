@@ -549,31 +549,29 @@
     <div id="appSection" class="app-container" style="display: none;">
         <div class="app-header-content-in-container">
             <!-- Left-aligned Logo and Operated By -->
-            <div class="app-header-logo-text-in-container">
-                <div class="flex items-center gap-2 mb-2">
-                    <img src="https://placehold.co/40x40/FFFFFF/000000?text=AI" alt="AI Marker Logo" class="w-auto h-10 border rounded-full border-gray-300">
-                    <h1 class="text-xl font-extrabold text-gray-800">AI Marker</h1>
-                </div>
-                <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
+            <div class="flex items-center gap-2 mb-2">
+                <img src="https://placehold.co/40x40/FFFFFF/000000?text=AI" alt="AI Marker Logo" class="w-auto h-10 border rounded-full border-gray-300">
+                <h1 class="text-xl font-extrabold text-gray-800">AI Marker</h1>
             </div>
+            <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
+        </div>
 
-            <!-- Right-aligned user info and buttons -->
-            <div class="flex items-center gap-4 app-header-buttons-in-container">
-                <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
-                <!-- Toggle Buttons for Grading vs Chat -->
-                <button id="toggleGradingButton" class="btn-primary text-sm py-2 px-4">
-                    Exam Grader
-                </button>
-                <button id="toggleChatButton" class="btn-primary text-sm py-2 px-4">
-                    Chat with Gemini
-                </button>
-                <button id="manageStudentsButton" class="btn-primary text-sm py-2 px-4" style="display: none;">
-                    Manage Students
-                </button>
-                <button id="logoutButton" class="btn-logout text-sm py-2 px-4">
-                    Log Out
-                </button>
-            </div>
+        <!-- Right-aligned user info and buttons -->
+        <div class="flex items-center gap-4 app-header-buttons-in-container">
+            <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
+            <!-- Toggle Buttons for Grading vs Chat -->
+            <button id="toggleGradingButton" class="btn-primary text-sm py-2 px-4">
+                Exam Grader
+            </button>
+            <button id="toggleChatButton" class="btn-primary text-sm py-2 px-4">
+                Chat with Gemini
+            </button>
+            <button id="manageStudentsButton" class="btn-primary text-sm py-2 px-4" style="display: none;">
+                Manage Students
+            </button>
+            <button id="logoutButton" class="btn-logout text-sm py-2 px-4">
+                Log Out
+            </button>
         </div>
 
         <!-- Grading Section -->
@@ -920,25 +918,9 @@
 
         document.getElementById('logoutButton').addEventListener('click', async () => {
             try {
-                currentUserRole = null;
-                currentUserName = null;
-                currentUserId = null;
-                currentUserEmail = null;
-                document.getElementById('userDisplayName').textContent = `Not logged in`;
-                document.getElementById('appSection').style.display = 'none';
-                document.getElementById('authWrapper').style.display = 'flex'; // Show login wrapper
-                document.getElementById('authContent').style.display = 'flex'; // Show Google Sign-In
-                document.getElementById('codeEntryContent').style.display = 'none'; // Hide code entry
-                document.body.classList.add('login-active'); // Add login active class
-
-                document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
-                document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
-                document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
-                document.getElementById('noAuthorizedStudents').style.display = 'block'; // Show no students message
-                document.getElementById('unauthorizedMessage').style.display = 'none'; // Ensure unauthorized message is hidden on logout
-
-
+                // Perform Firebase signOut
                 await signOut(auth);
+                // The onAuthStateChanged listener (when user is null) will now handle all UI updates
                 showModal('Logged Out', 'You have been logged out successfully.');
             } catch (error) {
                 console.error("Logout error:", error);
@@ -1723,3 +1705,363 @@
     </script>
 </body>
 </html>
+```
+
+---
+
+### **Part 1: Fixing the "Cannot log out" Issue**
+
+Your current `index.html` file has the following `logoutButton` event listener:
+
+```javascript
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            try {
+                currentUserRole = null;
+                currentUserName = null;
+                currentUserId = null;
+                currentUserEmail = null;
+                document.getElementById('userDisplayName').textContent = `Not logged in`;
+                document.getElementById('appSection').style.display = 'none';
+                document.getElementById('authWrapper').style.display = 'flex'; // Show login wrapper
+                document.getElementById('authContent').style.display = 'flex'; // Show Google Sign-In
+                document.getElementById('codeEntryContent').style.display = 'none'; // Hide code entry
+                document.body.classList.add('login-active'); // Add login active class
+
+                document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
+                document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
+                document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
+                document.getElementById('noAuthorizedStudents').style.display = 'block'; // Show no students message
+                document.getElementById('unauthorizedMessage').style.display = 'none'; // Ensure unauthorized message is hidden on logout
+
+
+                await signOut(auth);
+                showModal('Logged Out', 'You have been logged out successfully.');
+            } catch (error) {
+                console.error("Logout error:", error);
+                showModal('Logout Error', `Failed to log out: ${error.message}`);
+            }
+        });
+```
+
+**The problem is that you are doing a lot of UI manipulation *before* `signOut(auth)` completes, and also before the `onAuthStateChanged` listener has a chance to react.**
+
+The `onAuthStateChanged` listener is the single source of truth for your UI's authentication state. When `signOut(auth)` is called successfully, Firebase will automatically trigger `onAuthStateChanged` with a `null` user object. All UI changes related to login/logout should ideally happen within that listener.
+
+**Here's the fix for your `logoutButton` event listener:**
+
+I've simplified it to *only* call `signOut(auth)` and then display a success modal. All the UI changes (hiding app, showing login, clearing data) will be handled by the existing `onAuthStateChanged` listener when it detects the user is `null`.
+
+**Please replace the `logoutButton` event listener in your `index.html` with this updated version:**
+
+```javascript
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            try {
+                // Perform Firebase signOut.
+                // The onAuthStateChanged listener will automatically handle all UI updates
+                // and state clearing when it detects that the user is now null.
+                await signOut(auth);
+                showModal('Logged Out', 'You have been logged out successfully.');
+            } catch (error) {
+                console.error("Logout error:", error);
+                showModal('Logout Error', `Failed to log out: ${error.message}`);
+            }
+        });
+```
+
+**And crucially, ensure your `onAuthStateChanged` block for `if (!user) { ... }` handles all the necessary UI resets:**
+
+```javascript
+            } else { // User is logged out (user is null)
+                currentUserId = null;
+                currentUserEmail = null;
+                currentUserRole = null;
+                currentUserName = null;
+                console.log("User is logged out. Displaying auth section.");
+                document.getElementById('userDisplayName').textContent = `Not logged in`;
+                document.getElementById('appSection').style.display = 'none'; // Hide main app
+                document.getElementById('authWrapper').style.display = 'flex'; // Show login wrapper
+                document.getElementById('authContent').style.display = 'flex'; // Show Google Sign-In content
+                document.getElementById('codeEntryContent').style.display = 'none'; // Hide code entry
+                setTimeout(() => { document.getElementById('authWrapper').style.opacity = '1'; }, 50); // Fade in auth wrapper
+                document.body.classList.add('login-active'); // Add login active class
+
+                // Clear app-specific content relevant to a logged-in user
+                document.getElementById('pastSubmissions').innerHTML = '';
+                document.getElementById('noSubmissions').style.display = 'block';
+                document.getElementById('authorizedStudentsList').innerHTML = '';
+                document.getElementById('noAuthorizedStudents').style.display = 'block';
+                document.getElementById('unauthorizedMessage').style.display = 'none';
+                
+                // Clear chat history
+                geminiChatHistory = [{ role: "model", parts: [{ text: "Hello! I'm Gemini. How can I help you today?" }] }];
+                document.getElementById('chatDisplay').innerHTML = '<div class="chat-message gemini">Hello! I\'m Gemini. How can I help you today?</div>';
+
+                currentAuthReady = true; // Auth system is ready, no user.
+            }
+```
+*I've added the chat history reset to the `onAuthStateChanged` `else` block.*
+
+---
+
+### **Part 2: Adding File Uploads to "Chat with Gemini" (Multimodal Chat)**
+
+This will involve adding a file input element to your chat UI and modifying `sendChatMessage` to handle both text and files.
+
+**Here's the plan and the code changes:**
+
+**1. Update HTML for Chat Input:**
+
+We need to add a hidden file input and a button/icon to trigger it.
+
+```html
+            <div class="chat-input-wrapper flex items-center gap-2">
+                <input type="text" id="chatInput" class="w-full py-3 px-4 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Type your message...">
+                
+                <!-- New: File Upload Button for Chat -->
+                <label for="chatFileInput" class="cursor-pointer text-gray-500 hover:text-blue-600 p-2 rounded-full transition duration-150 ease-in-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                    </svg>
+                    <input type="file" id="chatFileInput" accept="image/*,application/pdf" class="hidden">
+                </label>
+
+                <button id="sendChatButton" class="px-3 py-2 rounded-full text-blue-600 hover:bg-blue-100 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 9l-6 6"/></svg>
+                </button>
+            </div>
+            <!-- New: File Preview for Chat -->
+            <div id="chatFilePreviewContainer" class="flex items-center gap-2 mt-2 bg-gray-100 p-2 rounded-lg" style="display: none;">
+                <img id="chatFilePreviewImage" class="h-10 w-auto rounded object-contain" alt="Selected file preview" style="display: none;">
+                <span id="chatFilePreviewName" class="text-gray-700 text-sm flex-grow"></span>
+                <button id="clearChatFileButton" class="text-red-500 hover:text-red-700 p-1 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+```
+
+**2. Update JavaScript Logic for Chat (File Handling & Sending):**
+
+This is the bigger change. We'll add event listeners for the new chat file input, manage its preview, and modify `sendChatMessage` to prepare the multimodal payload for your Cloudflare Worker.
+
+```javascript
+        // --- Gemini Chat Logic ---
+        const chatDisplay = document.getElementById('chatDisplay');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatButton = document.getElementById('sendChatButton');
+        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+        const chatFileInput = document.getElementById('chatFileInput'); // New: Chat file input
+        const chatFilePreviewContainer = document.getElementById('chatFilePreviewContainer'); // New: Chat file preview container
+        const chatFilePreviewImage = document.getElementById('chatFilePreviewImage'); // New: Chat image preview
+        const chatFilePreviewName = document.getElementById('chatFilePreviewName'); // New: Chat file name display
+        const clearChatFileButton = document.getElementById('clearChatFileButton'); // New: Clear chat file button
+
+        let selectedChatFile = null; // To store the selected file for chat
+
+        // Initial chat history with a greeting
+        let geminiChatHistory = [{
+            role: "model",
+            parts: [{ text: "Hello! I'm Gemini. How can I help you today?" }]
+        }];
+
+        // Function to process file for chat (similar to grading)
+        async function processFileForChat(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                return new Promise((resolve, reject) => {
+                    reader.onload = () => resolve([{ type: file.type, data: reader.result.split(',')[1] }]);
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            } else if (file.type === 'application/pdf') {
+                try {
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                    const pdf = await loadingTask.promise;
+                    const numPages = pdf.numPages;
+                    const images = [];
+
+                    // For chat, we'll only send the first page of a PDF to avoid overly large payloads.
+                    // You could extend this to send all pages if needed, but be mindful of token limits.
+                    const page = await pdf.getPage(1); 
+                    const viewport = page.getViewport({ scale: 1.5 }); // Adjust scale as needed
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    images.push({ type: 'image/png', data: canvas.toDataURL('image/png').split(',')[1] });
+                    canvas.remove(); // Clean up canvas element
+                    return images; // Return array of image data
+                } catch (error) {
+                    throw new Error("Failed to render PDF for chat: " + error.message);
+                }
+            } else {
+                throw new Error("Unsupported file type for chat. Please upload an image or PDF.");
+            }
+        }
+
+
+        async function sendChatMessage() {
+            const userMessage = chatInput.value.trim();
+            
+            // Only proceed if there's text OR a file
+            if (!userMessage && !selectedChatFile) {
+                showModal('Input Required', 'Please enter a message or upload a file to chat with Gemini.');
+                return;
+            }
+
+            if (!currentUserId || currentUserRole === 'unassigned') { // Check for valid user and assigned role
+                showModal('Authentication Required', 'Please sign in and enter a valid access code to chat with Gemini.');
+                return;
+            }
+
+            // Temporarily display user input for immediate feedback
+            appendMessage(userMessage || (selectedChatFile ? `(Image/PDF: ${selectedChatFile.name})` : ''), 'user');
+            
+            chatLoadingIndicator.style.display = 'block'; // Show typing indicator
+            sendChatButton.disabled = true;
+
+            try {
+                let userMessageParts = [];
+
+                // Add text part if available
+                if (userMessage) {
+                    userMessageParts.push({ text: userMessage });
+                }
+
+                // Add file parts if a file is selected
+                if (selectedChatFile) {
+                    chatLoadingIndicator.textContent = 'Preparing file for AI chat...';
+                    const fileParts = await processFileForChat(selectedChatFile);
+                    fileParts.forEach(part => userMessageParts.push(part));
+                }
+
+                if (userMessageParts.length === 0) {
+                    throw new Error("No content to send to Gemini.");
+                }
+
+                const payload = { contents: [{ role: "user", parts: userMessageParts }] };
+                
+                // Make the fetch request to your Cloudflare Worker URL
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+                }
+
+                const result = await response.json();
+                let geminiResponseText = "Sorry, I couldn't get a response. Please try again.";
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    geminiResponseText = result.candidates[0].content.parts[0].text;
+                }
+
+                // Add Gemini's response to history and display
+                geminiChatHistory.push({ role: "user", parts: userMessageParts }); // Add user message to history
+                geminiChatHistory.push({ role: "model", parts: [{ text: geminiResponseText }] }); // Add Gemini's response
+
+                appendMessage(geminiResponseText, 'gemini');
+
+            } catch (error) {
+                console.error('Error in Gemini chat:', error);
+                const errorMessage = `An error occurred with the chat: ${error.message}. Please check the console.`;
+                appendMessage(errorMessage, 'gemini'); // Display error in chat
+                showModal('Chat Error', errorMessage);
+            } finally {
+                chatLoadingIndicator.style.display = 'none'; // Hide typing indicator
+                sendChatButton.disabled = false;
+                chatInput.value = ''; // Clear text input
+                selectedChatFile = null; // Clear selected file
+                chatFileInput.value = ''; // Clear file input
+                chatFilePreviewContainer.style.display = 'none'; // Hide preview
+                chatFilePreviewImage.style.display = 'none';
+                chatFilePreviewName.textContent = '';
+                chatLoadingIndicator.textContent = ''; // Clear processing message
+                chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        // Event listener for chat file input
+        chatFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                selectedChatFile = file;
+                chatFilePreviewName.textContent = file.name;
+                chatFilePreviewContainer.style.display = 'flex'; // Show container
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        chatFilePreviewImage.src = e.target.result;
+                        chatFilePreviewImage.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    // For PDF preview, use the same logic as grading, showing first page
+                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                    loadingTask.promise.then(pdf => {
+                        pdf.getPage(1).then(page => {
+                            const viewport = page.getViewport({ scale: 0.5 }); // Smaller scale for chat preview
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                chatFilePreviewImage.src = canvas.toDataURL('image/png');
+                                chatFilePreviewImage.style.display = 'block';
+                                canvas.remove();
+                            });
+                        });
+                    }).catch(error => {
+                        console.error("Error rendering chat PDF preview:", error);
+                        chatFilePreviewImage.src = "https://placehold.co/50x50/cccccc/000000?text=PDF"; // Generic PDF icon
+                        chatFilePreviewImage.style.display = 'block';
+                    });
+                } else {
+                    showModal('Unsupported File Type', 'Please upload an image or PDF for chat.');
+                    selectedChatFile = null;
+                    chatFileInput.value = '';
+                    chatFilePreviewContainer.style.display = 'none';
+                    chatFilePreviewImage.style.display = 'none';
+                    chatFilePreviewName.textContent = '';
+                }
+            } else {
+                selectedChatFile = null;
+                chatFilePreviewContainer.style.display = 'none';
+                chatFilePreviewImage.style.display = 'none';
+                chatFilePreviewName.textContent = '';
+            }
+        });
+
+        // Event listener for clearing the selected chat file
+        clearChatFileButton.addEventListener('click', () => {
+            selectedChatFile = null;
+            chatFileInput.value = '';
+            chatFilePreviewContainer.style.display = 'none';
+            chatFilePreviewImage.style.display = 'none';
+            chatFilePreviewName.textContent = '';
+        });
+
+        function appendMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${sender}`;
+            messageElement.textContent = text;
+            chatDisplay.appendChild(messageElement);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to latest message
+        }
+
+        sendChatButton.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) { // Send on Enter, allow Shift+Enter for new line
+                event.preventDefault();
+                sendChatMessage();
+            }
+        });
+```
