@@ -3,69 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Exam Grader</title>
+    <title>AI Marker</title>
     <!-- Tailwind CSS for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js CDN for PDF rendering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
-        /* Custom styles for the Inter font and rounded corners, inspired by Google Material Design */
+        /* Base styles */
         body {
             font-family: "Inter", sans-serif;
-            background-color: #f7f9fa; /* Very light gray, almost white, like Google's background */
-            display: flex;
-            flex-direction: column; /* Allow content and footer to stack */
-            justify-content: center;
-            align-items: center;
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box; /* Include padding in element's total width and height */
+            display: flex;
+            flex-direction: column; /* Allows content and footer to stack conceptually */
+            position: relative; /* For footer positioning */
+            overflow: hidden; /* Prevent scrollbars from initial layout */
+            background-color: #f7f9fa; /* Default light background, visible if authWrapper is hidden */
         }
-        .container {
+
+        /* Full-screen wrapper for login/auth sections */
+        .auth-wrapper {
+            display: flex; /* Flex container for the left and right panels */
+            width: 100vw; /* Take full viewport width */
+            height: 100vh; /* Take full viewport height */
+            position: fixed; /* Fix to viewport so it covers the whole screen */
+            top: 0;
+            left: 0;
+            z-index: 10; /* Ensure it's above body background and below footer/modals */
+            opacity: 0; /* Initial state for fade-in */
+            transition: opacity 0.5s ease-in-out; /* Smooth transition */
+            /* Add overflow hidden to prevent internal content from causing scrollbars at this level */
+            overflow: hidden;
+        }
+
+        /* Left side of the login page (70% - Black Background) */
+        .login-left-panel {
+            width: 70%; /* 70% of the screen width */
+            background-color: #000000; /* Black background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
+            text-align: center;
+            padding: 30px;
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+        .login-left-panel h1 {
+            font-size: 3rem; /* Larger font for main title */
+            font-weight: 800; /* Extra bold */
+            margin-bottom: 20px;
+            line-height: 1.2; /* Tighter line height for large text */
+        }
+        .login-left-panel p {
+            font-size: 2rem; /* Consistent size for all lines */
+            margin-bottom: 15px; /* Spacing between lines */
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .login-left-panel p:last-child {
+            margin-bottom: 0; /* No margin after the last paragraph */
+        }
+
+        /* Right side of the login page (30% - White Panel with form) */
+        .login-right-panel {
+            width: 30%; /* 30% of the screen width */
+            background-color: #ffffff; /* White background */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
+            padding: 30px;
+            box-sizing: border-box;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+            border-radius: 8px; /* Rounded corners for the right panel */
+            margin: 0 20px; /* Horizontal margin to create space from the edges */
+            align-self: center; /* Vertically center the panel within its 30% parent */
+            max-height: 500px; /* Prevent it from getting too tall */
+            min-height: 300px; /* Minimum height for better appearance */
+            overflow-y: auto; /* Allow scrolling within this panel if content is too tall */
+        }
+
+        /* Specific styling for elements within the right panel to ensure they fit */
+        .login-right-panel .google-btn,
+        .login-right-panel #accessCodeInput,
+        .login-right-panel #submitCodeButton {
+            width: 100%; /* Take full width of its panel's padding */
+            max-width: 280px; /* Maximum width for these elements for better aesthetics */
+        }
+        .login-right-panel #googleSignInButton {
+            margin-bottom: 20px;
+        }
+
+        /* Main application container (after login) */
+        #appSection {
             background-color: #ffffff;
-            padding: 40px; /* Increased padding for more breathing room */
-            border-radius: 8px; /* Slightly less rounded, more modern card look */
-            /* Subtle, multi-layer shadow like Google's cards */
+            padding: 40px;
+            border-radius: 8px;
             box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
             max-width: 900px;
             width: 100%;
-            flex-shrink: 0; /* Prevent container from shrinking due to footer */
+            margin: 20px auto; /* Center the app section and provide vertical spacing */
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            /* New: Make appSection scrollable if content overflows */
+            max-height: calc(100vh - 40px); /* Adjust based on body padding and footer height if fixed */
+            overflow-y: auto; /* Enable vertical scrolling for the main app section */
+            padding-bottom: 20px; /* Ensure space at the bottom when scrolling */
         }
+
+        /* When appSection is shown, body doesn't need fixed 100vh to avoid double scrollbars */
+        body:not(.login-active) {
+            min-height: 100vh; /* Ensure body stretches for footer at bottom */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align content to top */
+            align-items: center; /* Center appSection horizontally */
+            overflow-y: auto; /* Allow body to scroll if content plus appSection overflows */
+            padding-top: 20px; /* Add padding to the top of the body for main app section */
+        }
+
+
+        /* Common styles for buttons, inputs, etc. */
         textarea {
             resize: vertical;
             min-height: 100px;
         }
         input[type="text"],
-        input[type="email"], /* Added email type for consistency */
+        input[type="email"],
         input[type="file"],
         textarea {
-            border-color: #dadce0; /* Softer, Google-like border color */
+            border-color: #dadce0;
             border-width: 1px;
-            padding: 12px 16px; /* Increased padding for inputs */
+            padding: 12px 16px;
         }
         input[type="text"]:focus,
         input[type="email"]:focus,
         input[type="file"]:focus,
         textarea:focus {
-            border-color: #4285F4; /* Google blue for focus */
-            box-shadow: 0 0 0 1px #4285F4; /* Subtle glow on focus */
-            outline: none; /* Remove default outline */
+            border-color: #4285F4;
+            box-shadow: 0 0 0 1px #4285F4;
+            outline: none;
         }
         button {
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            border-radius: 4px; /* Slightly less rounded buttons */
-            padding: 12px 24px; /* Consistent button padding */
-            font-weight: 600; /* Slightly bolder text */
-            display: flex; /* For icon alignment */
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-weight: 600;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px; /* Space between text and icon */
+            gap: 8px;
         }
         button:hover {
-            transform: translateY(-1px); /* Slight lift on hover */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .loading-indicator { /* Common class for all loading indicators */
+        .loading-indicator {
             display: none;
             color: #4f46e5;
             font-weight: 500;
@@ -78,41 +178,33 @@
             padding: 16px;
             border-radius: 8px;
             white-space: pre-wrap;
-            border: 1px solid #dadce0; /* Add a light border to the result container */
+            border: 1px solid #dadce0;
         }
-        .file-input-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid #dadce0; /* Border for the file input wrapper */
-            border-radius: 8px; /* Rounded corners for wrapper */
-            padding: 8px; /* Padding inside wrapper */
-            background-color: #fcfcfc; /* Slightly off-white background */
-        }
-        .file-input-wrapper input[type="file"] {
-            flex-grow: 1;
-            border: none; /* Remove individual border for actual input */
-            padding: 0; /* Remove individual padding */
-        }
-        .file-input-wrapper input[type="file"]::before {
-            content: 'Choose File'; /* Custom button text */
-            display: inline-block;
-            background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            padding: 8px 12px;
-            outline: none;
-            white-space: nowrap;
-            -webkit-user-select: none;
+        .drop-zone {
+            border: 2px dashed #a0aec0;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
             cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            margin-bottom: 1rem;
+            word-wrap: break-word; /* Ensure text wraps within drop zone */
+        }
+        .drop-zone.highlight {
+            background-color: #ebf8ff;
+            border-color: #4299e1;
+        }
+        .drop-zone-text {
+            color: #4a5568;
             font-weight: 500;
-            font-size: 10pt;
+            white-space: normal; /* Ensure text can wrap */
         }
-        .file-input-wrapper input[type="file"]:hover::before {
-            border-color: black;
-        }
-        .file-input-wrapper input[type="file"]:active::before {
-            background: -webkit-linear-gradient(top, #e3e3e3, #f0f0f0);
+        .drop-zone-subtext {
+            color: #718096;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            white-space: normal; /* Ensure text can wrap */
         }
 
         .file-preview {
@@ -121,13 +213,14 @@
             border-radius: 8px;
             margin-top: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-height: 200px; /* Limit preview height */
-            object-fit: contain; /* Ensure image fits without cropping */
+            max-height: 200px;
+            object-fit: contain;
         }
         .error-message {
             color: #ef4444;
             font-size: 0.875rem;
             margin-top: 0.5rem;
+            white-space: normal; /* Ensure error messages wrap */
         }
         /* Modal styles */
         .modal {
@@ -142,23 +235,23 @@
             background-color: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
-            animation: fadeIn 0.3s ease-out; /* Fade-in animation */
+            animation: fadeIn 0.3s ease-out;
         }
         .modal-content {
             background-color: #fff;
-            padding: 30px; /* Increased modal padding */
+            padding: 30px;
             border-radius: 8px;
             max-width: 500px;
             width: 90%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             position: relative;
-            animation: slideIn 0.3s ease-out; /* Slide-in animation */
+            animation: slideIn 0.3s ease-out;
         }
         .close-button {
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 28px; /* Larger close button */
+            font-size: 28px;
             cursor: pointer;
             color: #aaa;
         }
@@ -167,7 +260,7 @@
         }
         /* Google Sign-In Button style */
         .google-btn {
-            background-color: #4285F4; /* Google Blue */
+            background-color: #4285F4;
             color: white;
             display: flex;
             align-items: center;
@@ -176,9 +269,10 @@
             padding: 12px 24px;
             font-size: 1rem;
             font-weight: 600;
+            border-radius: 8px;
         }
         .google-btn:hover {
-            background-color: #357ae8; /* Darker blue on hover */
+            background-color: #357ae8;
         }
         .google-icon {
             width: 24px;
@@ -204,49 +298,49 @@
             to { transform: translateY(0); opacity: 1; }
         }
         .btn-primary {
-            background-image: linear-gradient(to right, #6366f1, #4f46e5); /* Indigo gradient */
+            background-image: linear-gradient(to right, #6366f1, #4f46e5);
             color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .btn-primary:hover {
-            background-image: linear-gradient(to right, #4f46e5, #4338ca); /* Darker gradient on hover */
+            background-image: linear-gradient(to right, #4f46e5, #4338ca);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
         .btn-grade {
-            background-image: linear-gradient(to right, #22c55e, #10b981); /* Green gradient */
+            background-image: linear-gradient(to right, #22c55e, #10b981);
             color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .btn-grade:hover {
-            background-image: linear-gradient(to right, #10b981, #059669); /* Darker green gradient on hover */
+            background-image: linear-gradient(to right, #10b981, #059669);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
         .btn-logout {
-            background-color: #ef4444; /* Red */
+            background-color: #ef4444;
             color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .btn-logout:hover {
-            background-color: #dc2626; /* Darker red */
+            background-color: #dc2626;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
-        .btn-secondary { /* For remove student button */
-            background-color: #cbd5e1; /* Gray-300 */
-            color: #334155; /* Slate-700 */
+        .btn-secondary {
+            background-color: #cbd5e1;
+            color: #334155;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             padding: 8px 16px;
             font-size: 0.875rem;
         }
         .btn-secondary:hover {
-            background-color: #94a3b8; /* Gray-400 */
-            color: #1e293b; /* Slate-900 */
+            background-color: #94a3b8;
+            color: #1e293b;
         }
 
 
         /* Chat specific styles */
         #chatDisplay {
-            height: 400px; /* Fixed height for chat history */
-            overflow-y: auto; /* Scrollable */
+            height: 400px;
+            overflow-y: auto;
             border: 1px solid #dadce0;
             border-radius: 8px;
             padding: 16px;
@@ -263,18 +357,18 @@
             word-wrap: break-word;
         }
         .chat-message.user {
-            background-color: #e0f2f7; /* Light blue for user */
-            align-self: flex-end; /* Align right */
+            background-color: #e0f2f7;
+            align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
         .chat-message.gemini {
-            background-color: #f0f4f8; /* Light gray for Gemini */
-            align-self: flex-start; /* Align left */
+            background-color: #f0f4f8;
+            align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
         #chatInput {
-            border-radius: 20px; /* More rounded chat input */
-            padding-right: 50px; /* Space for send button */
+            border-radius: 20px;
+            padding-right: 50px;
         }
         #sendChatButton {
             position: absolute;
@@ -282,11 +376,11 @@
             top: 50%;
             transform: translateY(-50%);
             background-color: transparent;
-            color: #4285F4; /* Google blue */
+            color: #4285F4;
             border: none;
             padding: 0;
             cursor: pointer;
-            font-size: 24px; /* Larger icon */
+            font-size: 24px;
         }
         #sendChatButton:hover {
             color: #357ae8;
@@ -297,88 +391,174 @@
             align-items: center;
         }
 
-        /* Specific styles for animated sections */
+        /* Specific styles for animated sections (grading, chat, student management) */
         #gradingSection, #chatSection, #studentManagementSection {
-            opacity: 0; /* Start hidden for transition */
-            transition: opacity 0.5s ease-in-out; /* Apply transition effect */
-            height: auto; /* Allow height to adjust */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            height: auto;
+            width: 100%;
         }
+
+        /* Header content within the main application container (appSection) */
+        .app-header-content-in-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        @media (min-width: 768px) {
+            .app-header-content-in-container {
+                flex-direction: row;
+            }
+        }
+        .app-header-logo-text-in-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .app-header-buttons-in-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        @media (min-width: 768px) {
+            .app-header-logo-text-in-container {
+                margin-bottom: 0;
+            }
+            .app-header-buttons-in-container {
+                justify-content: flex-end;
+            }
+        }
+
 
         /* Footer styles */
         footer {
-            margin-top: auto; /* Pushes footer to the bottom */
-            text-align: center;
-            color: #71717a; /* Gray-600 */
-            font-size: 0.875rem; /* text-sm */
-            padding: 20px;
-            width: 100%;
-            max-width: 900px; /* Match container width */
-            margin-left: auto;
-            margin-right: auto;
+            position: fixed; /* Fixed to viewport */
+            bottom: 20px;
+            right: 20px;
+            text-align: right;
+            color: #71717a;
+            font-size: 0.875rem;
+            padding: 10px;
+            z-index: 100; /* Ensure it's above other content */
         }
         footer p {
-            margin-bottom: 5px; /* Small space between lines */
+            margin-bottom: 5px;
         }
 
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .container {
+            .auth-wrapper {
+                flex-direction: column; /* Stack panels vertically */
+                height: auto; /* Allow height to adjust to content */
+                position: static; /* Allow normal flow on small screens */
+                width: 100%;
+            }
+            .login-left-panel, .login-right-panel {
+                width: 100%; /* Full width on mobile */
                 padding: 20px;
+                box-shadow: none; /* Remove shadow on mobile for cleaner look */
+                border-radius: 0; /* No rounded corners on mobile panels */
+                margin: 0; /* No margins on stacked panels */
+                min-height: auto; /* Allow height to shrink */
+                max-height: none;
             }
-            .app-header-content {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
+            .login-left-panel {
+                padding-bottom: 10px; /* Reduce space between stacked panels */
             }
-            .app-header-logo-text {
-                text-align: center;
+            .login-left-panel h1 {
+                font-size: 2rem;
+            }
+            .login-left-panel p {
+                font-size: 1.25rem;
+            }
+            .login-right-panel {
+                padding-top: 10px; /* Reduce space between stacked panels */
+            }
+
+            #appSection {
+                padding: 20px;
+                margin-top: 10px;
                 margin-bottom: 10px;
+                max-height: calc(100vh - 20px); /* Adjust max-height for mobile if needed */
+                overflow-y: auto; /* Ensure scrolling */
             }
-            .app-header-buttons {
-                flex-direction: column;
+            body:not(.login-active) {
+                padding-top: 10px; /* Adjust body padding for main app on mobile */
+            }
+            footer {
+                position: static; /* Allow footer to flow with content */
+                text-align: center;
+                margin-top: 20px;
                 width: 100%;
-            }
-            .app-header-buttons button {
-                width: 100%;
-            }
-            #gradingSection, #chatSection, #studentManagementSection {
-                min-height: 500px; /* Ensure sections have some minimum height on small screens */
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body class="antialiased">
-    <div id="authSection" class="container flex flex-col gap-8 items-center" style="display: none;">
-        <!-- Custom Logo (Ensure media.jpg is in the same directory as index.html on your server/GitHub) -->
-        <img src="https://placehold.co/100x100?text=3-SHOT" alt="3-SHOT Logo" class="w-auto h-24 mb-4">
-        <h1 class="text-3xl font-semibold text-center text-gray-800">Gemini Grader</h1>
-        <p class="text-gray-600 text-lg mb-6">Operated by Darren Ng</p>
 
-        <button id="googleSignInButton" class="google-btn rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 w-full max-w-xs">
-            <span class="google-icon">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-            </span>
-            Sign in with Google
-        </button>
+    <!-- Auth Wrapper (Login and Code Entry) -->
+    <!-- This wrapper will manage the 70/30 split directly -->
+    <div id="authWrapper" class="auth-wrapper" style="display: none;">
+        <!-- Left Panel (70% - Black Background) -->
+        <div class="login-left-panel">
+            <h1>Let AI mark your work.</h1>
+            <p>Let AI assist you, not replace you</p>
+            <p>Mark with AI, learn better</p>
+        </div>
 
-        <p id="authError" class="error-message text-center"></p>
-        <p id="unauthorizedMessage" class="error-message text-center mt-4" style="display: none;">
-            Your account is not authorized to use this application. Please contact the administrator.
-        </p>
+        <!-- Right Panel (30% - White Background with form) -->
+        <div id="authRightPanel" class="login-right-panel">
+            <!-- Content for Google Sign-In -->
+            <div id="authContent" class="flex flex-col items-center w-full">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon" class="w-16 h-16 mb-6">
+                <button id="googleSignInButton" class="google-btn focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300">
+                    Sign in with Google
+                </button>
+                <p id="authError" class="error-message text-center mt-4"></p>
+                <p id="unauthorizedMessage" class="error-message text-center mt-4" style="display: none;">
+                    Your account is not authorized to use this application. Please contact the administrator.
+                </p>
+            </div>
+
+            <!-- Content for Access Code Entry (initially hidden) -->
+            <div id="codeEntryContent" class="flex flex-col items-center w-full" style="display: none;">
+                <h2 class="text-xl font-semibold text-center text-gray-800 mb-4">Enter Access Code</h2>
+                <p class="text-gray-600 text-md mb-6 text-center">
+                    Please enter the access code.
+                </p>
+                <input type="text" id="accessCodeInput" placeholder="Enter code here"
+                       class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 mb-4 text-center">
+                <p id="codeError" class="error-message text-center"></p>
+                <button id="submitCodeButton" class="btn-primary py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300">
+                    Submit Code
+                </button>
+                <p id="codeLoadingIndicator" class="loading-indicator"></p>
+            </div>
+        </div>
     </div>
 
-    <div id="appSection" class="container flex flex-col gap-6" style="display: none;">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 app-header-content">
+
+    <!-- Main Application Section (uses the app-container for the white card look) -->
+    <div id="appSection" class="app-container" style="display: none;">
+        <div class="app-header-content-in-container">
             <!-- Left-aligned Logo and Operated By -->
-            <div class="flex items-center gap-2 app-header-logo-text">
-                <img src="https://placehold.co/40x40?text=3-SHOT" alt="3-SHOT Logo" class="w-auto h-10">
-                <div class="flex flex-col items-start">
-                    <h1 class="text-xl font-extrabold text-gray-800">Gemini Grader</h1>
-                    <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
+            <div class="app-header-logo-text-in-container">
+                <div class="flex items-center gap-2 mb-2">
+                    <img src="https://placehold.co/40x40/FFFFFF/000000?text=AI" alt="AI Marker Logo" class="w-auto h-10 border rounded-full border-gray-300">
+                    <h1 class="text-xl font-extrabold text-gray-800">AI Marker</h1>
                 </div>
+                <p class="text-gray-600 text-sm">Operated by Darren Ng</p>
             </div>
 
             <!-- Right-aligned user info and buttons -->
-            <div class="flex items-center gap-4 app-header-buttons">
+            <div class="flex items-center gap-4 app-header-buttons-in-container">
                 <span id="userDisplayName" class="text-gray-600 text-base font-medium"></span>
                 <!-- Toggle Buttons for Grading vs Chat -->
                 <button id="toggleGradingButton" class="btn-primary text-sm py-2 px-4">
@@ -399,11 +579,14 @@
         <!-- Grading Section -->
         <div id="gradingSection" class="w-full" style="display: block; opacity: 0;">
             <div class="mb-4">
-                <label for="studentAnswerFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
-                    <span id="studentFileName" class="text-gray-500 text-sm">No file chosen</span>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Upload Student's Work (Image or PDF):</label>
+                <!-- Drag and Drop Zone for Student Answer -->
+                <div id="studentDropZone" class="drop-zone">
+                    <p class="drop-zone-text">Drag & Drop Student's Work Here</p>
+                    <p class="drop-zone-subtext">(or click to select file)</p>
+                    <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" class="hidden">
                 </div>
+                <span id="studentFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
                 <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
                 <label for="studentAnswer" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Student's Answer:</label>
                 <textarea id="studentAnswer" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter student's answer here..."></textarea>
@@ -411,11 +594,14 @@
             </div>
 
             <div class="mb-6">
-                <label for="answerKeyFile" class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image or PDF):</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="answerKeyFile" accept="image/*,application/pdf" class="shadow-sm appearance-none rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
-                    <span id="answerKeyFileName" class="text-gray-500 text-sm">No file chosen</span>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Upload Answer Key (Image or PDF):</label>
+                <!-- Drag and Drop Zone for Answer Key -->
+                <div id="answerKeyDropZone" class="drop-zone">
+                    <p class="drop-zone-text">Drag & Drop Answer Key Here</p>
+                    <p class="drop-zone-subtext">(or click to select file)</p>
+                    <input type="file" id="answerKeyFile" accept="image/*,application/pdf" class="hidden">
                 </div>
+                <span id="answerKeyFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
                 <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
                 <label for="answerKey" class="block text-gray-700 text-sm font-semibold mt-4 mb-2">Or type Answer Key:</label>
                 <textarea id="answerKey" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Enter the correct answer key here..."></textarea>
@@ -446,7 +632,7 @@
         <div id="chatSection" class="w-full flex flex-col gap-4" style="display: none; opacity: 0;">
             <div id="chatDisplay" class="flex-grow">
                 <!-- Chat messages will be appended here -->
-                <div class="chat-message gemini">Hello! I'm AI Marker, operated by Darren Ng, assisted with Gemini. How can I help you today?</div>
+                <div class="chat-message gemini">Hello! I'm AI Marker, operated by Darren Ng, assisted with Google Gemini, How can I help you today?</div>
             </div>
             <div class="chat-input-wrapper flex items-center gap-2">
                 <input type="text" id="chatInput" class="w-full py-3 px-4 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" placeholder="Type your message...">
@@ -503,7 +689,7 @@
         // IMPORTANT: Replace these with your actual Firebase project config.
         // Get this from your Firebase Console -> Project settings -> Your apps -> Web app -> Config
         const FIREBASE_CONFIG_PLACEHOLDER = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Your API Key (Updated from previous step)
           authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30",
           storageBucket: "ai-grading-9bb30.firebasestorage.app",
@@ -530,12 +716,18 @@
         let auth;
         let storage; // Declare storage variable
         let currentUserId = null;
-        let currentUserRole = null;
+        let currentUserEmail = null; // Store user email for potential use
+        let currentUserRole = null; // Will be 'teacher', 'student', or 'unassigned'
         let currentUserName = null;
         let currentAuthReady = false; // Flag to indicate Firebase auth is ready
 
         // Gemini API Key for direct calls (not provided by Canvas environment)
-        const GEMINI_API_KEY = "AIzaSyDdSvz-60i1YNk7jSGNvW1dUMKseRFMueQ"; // Your Gemini API Key here
+        // Define your Cloudflare Worker URL for proxying Gemini API calls
+        const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/"; // <<< PASTE YOUR WORKER URL HERE!
+
+        // Define your secret codes here
+        const TEACHER_CODE = "TEACHER123";
+        const STUDENT_CODE = "STUDENT456";
 
         // Function to show custom modal for general messages
         function showModal(title, message, buttons = []) {
@@ -589,56 +781,48 @@
         // --- Auth State Listener ---
         onAuthStateChanged(auth, async (user) => {
             console.log("onAuthStateChanged fired. User:", user ? user.uid : "null");
+            const authWrapper = document.getElementById('authWrapper');
+            const appSection = document.getElementById('appSection');
+            const authContent = document.getElementById('authContent');
+            const codeEntryContent = document.getElementById('codeEntryContent');
+            const unauthorizedMessageElement = document.getElementById('unauthorizedMessage');
+
             if (user) {
                 currentUserId = user.uid;
+                currentUserEmail = user.email; // Store email
                 currentUserName = user.displayName || user.email || 'Google User'; // Use Google name/email
-                // This path for user's profile data seems consistently fine (artifacts/appId/users/userId/profile/data)
+                
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                const unauthorizedMessageElement = document.getElementById('unauthorizedMessage');
                 unauthorizedMessageElement.style.display = 'none'; // Hide by default
 
                 try {
-                    // 1. Check if user is a teacher
-                    // PATH MUST BE: artifacts/{appId}/authorized_users/teachers/{currentUserId}
-                    // This is 6 segments (C/D/C/C/D) - valid for a document
-                    const authorizedTeacherRef = doc(db, `artifacts/${appId}/authorized_users/teachers/${currentUserId}`);
-                    const teacherAuthDoc = await getDoc(authorizedTeacherRef);
-
-                    if (teacherAuthDoc.exists() && teacherAuthDoc.data().isTeacher === true) {
-                        currentUserRole = 'teacher';
-                        console.log("User is an authorized teacher.");
+                    const userProfileDoc = await getDoc(userProfileRef);
+                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
+                        currentUserRole = userProfileDoc.data().role;
+                        console.log(`User profile loaded. Role: ${currentUserRole}`);
                     } else {
-                        // 2. If not a teacher, check if user is an authorized student by email
-                        // PATH MUST BE: artifacts/{appId}/authorized_users/student_emails
-                        // This is 4 segments (C/D/C/C) - valid for a collection
-                        const studentEmailsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
-                        const q = query(studentEmailsCollectionRef, where("email", "==", user.email));
-                        const studentAuthSnapshot = await getDocs(q);
-
-                        if (!studentAuthSnapshot.empty) {
-                            currentUserRole = 'student';
-                            console.log("User is an authorized student.");
-                        } else {
-                            currentUserRole = 'unauthorized';
-                            console.log("User is unauthorized.");
-                        }
+                        // New user or role not set, prompt for code
+                        currentUserRole = 'unassigned'; // Temporarily set as unassigned
+                        console.log("User role not found or unassigned. Prompting for access code.");
                     }
 
-                    // Save or update user profile in their private collection
+                    // Always save/update basic profile info (email, name, lastLogin)
                     await setDoc(userProfileRef, {
-                        role: currentUserRole,
                         name: currentUserName,
-                        email: user.email, // Store email for future checks
-                        lastLogin: Date.now()
+                        email: currentUserEmail,
+                        lastLogin: Date.now(),
+                        // Only set role if it's not 'unassigned' yet to avoid overwriting later
+                        role: currentUserRole === 'unassigned' ? null : currentUserRole 
                     }, { merge: true });
 
                     // Update UI based on role
                     if (currentUserRole === 'teacher' || currentUserRole === 'student') {
                         document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName} (${currentUserRole})`;
-                        document.getElementById('authSection').style.display = 'none';
-                        document.getElementById('appSection').style.display = 'flex';
-                        currentAuthReady = true;
-
+                        authWrapper.style.display = 'none'; // Hide auth wrapper
+                        appSection.style.display = 'flex'; // Show main app
+                        setTimeout(() => { appSection.style.opacity = '1'; }, 50); // Fade in app section
+                        document.body.classList.remove('login-active'); // Remove login active class
+                        
                         // Show/hide teacher-specific buttons
                         const manageStudentsButton = document.getElementById('manageStudentsButton');
                         if (currentUserRole === 'teacher') {
@@ -647,7 +831,7 @@
                             manageStudentsButton.style.display = 'none'; // Ensure students don't see this
                         }
 
-                        // Initially show grading section with fade-in
+                        // Initially show grading section with fade-in (within appSection)
                         const gradingSection = document.getElementById('gradingSection');
                         gradingSection.style.display = 'block';
                         gradingSection.style.opacity = '0'; // Start at 0 for fade-in
@@ -661,33 +845,60 @@
                             await loadAuthorizedStudents(); // Load students if teacher
                         }
 
-                    } else { // Unauthorized user
+                    } else if (currentUserRole === 'unassigned') {
+                        // User logged in, but needs to enter a code
+                        document.getElementById('userDisplayName').textContent = `Logged in as: ${currentUserName}`; // Show they are logged in
+                        authWrapper.style.display = 'flex'; // Show the auth wrapper
+                        authContent.style.display = 'none'; // Hide Google sign-in
+                        codeEntryContent.style.display = 'flex'; // Show code entry
+                        appSection.style.display = 'none'; // Hide main app
+                        setTimeout(() => { authWrapper.style.opacity = '1'; }, 50); // Fade in auth wrapper
+                        document.body.classList.add('login-active'); // Add login active class
+                        currentAuthReady = true;
+                    } else { // Should not happen with 'unassigned' fallback, but for safety
                         document.getElementById('userDisplayName').textContent = `Not logged in`;
-                        document.getElementById('authSection').style.display = 'flex';
-                        document.getElementById('appSection').style.display = 'none';
+                        authWrapper.style.display = 'flex'; // Show login
+                        authContent.style.display = 'flex'; // Show Google sign-in
+                        codeEntryContent.style.display = 'none'; // Hide code entry
+                        appSection.style.display = 'none';
                         unauthorizedMessageElement.style.display = 'block'; // Show unauthorized message
-                        currentAuthReady = true; // Auth system is ready, user just not authorized
+                        setTimeout(() => { authWrapper.style.opacity = '1'; }, 50); // Fade in auth wrapper
+                        document.body.classList.add('login-active'); // Add login active class
+                        currentAuthReady = true; 
                     }
 
                 } catch (error) {
-                    console.error("Error fetching or setting user profile/role:", error);
+                    console.error("Error fetching or setting user profile:", error);
                     currentAuthReady = true;
-                    // Provide a more generic error for this catch block, as path specific errors are handled by Firebase directly.
                     showModal('Profile Error', `Failed to load or assign user role. Details: ${error.message}. Please check console for details.`);
-                    document.getElementById('authSection').style.display = 'flex';
-                    document.getElementById('appSection').style.display = 'none';
+                    authWrapper.style.display = 'flex'; // Default to showing auth
+                    authContent.style.display = 'flex';
+                    codeEntryContent.style.display = 'none';
+                    appSection.style.display = 'none';
+                    document.body.classList.add('login-active'); // Add login active class
                 }
 
             } else {
                 // User is logged out
                 currentUserId = null;
+                currentUserEmail = null;
                 currentUserRole = null;
                 currentUserName = null;
                 console.log("User is logged out. Displaying auth section.");
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
-                document.getElementById('authSection').style.display = 'flex';
-                document.getElementById('appSection').style.display = 'none';
-                unauthorizedMessageElement.style.display = 'none'; // Hide unauthorized message
+                appSection.style.display = 'none';
+                authWrapper.style.display = 'flex'; // Show login wrapper
+                authContent.style.display = 'flex'; // Show Google Sign-In content
+                codeEntryContent.style.display = 'none'; // Hide code entry
+                setTimeout(() => { authWrapper.style.opacity = '1'; }, 50); // Fade in auth wrapper
+                document.body.classList.add('login-active'); // Add login active class
+
+                document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
+                document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
+                document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
+                document.getElementById('noAuthorizedStudents').style.display = 'block'; // Show no students message
+                document.getElementById('unauthorizedMessage').style.display = 'none'; // Ensure unauthorized message is hidden on logout
+                
                 currentAuthReady = true; // Auth system is ready, no user.
             }
         });
@@ -712,9 +923,14 @@
                 currentUserRole = null;
                 currentUserName = null;
                 currentUserId = null;
+                currentUserEmail = null;
                 document.getElementById('userDisplayName').textContent = `Not logged in`;
                 document.getElementById('appSection').style.display = 'none';
-                document.getElementById('authSection').style.display = 'flex';
+                document.getElementById('authWrapper').style.display = 'flex'; // Show login wrapper
+                document.getElementById('authContent').style.display = 'flex'; // Show Google Sign-In
+                document.getElementById('codeEntryContent').style.display = 'none'; // Hide code entry
+                document.body.classList.add('login-active'); // Add login active class
+
                 document.getElementById('pastSubmissions').innerHTML = ''; // Clear past submissions
                 document.getElementById('noSubmissions').style.display = 'block'; // Show no submissions message
                 document.getElementById('authorizedStudentsList').innerHTML = ''; // Clear student list
@@ -737,7 +953,8 @@
                 const section = document.getElementById(id);
                 if (id === sectionIdToShow) {
                     section.style.opacity = '0'; // Start hidden for transition
-                    section.style.display = (id === 'chatSection' || id === 'studentManagementSection') ? 'flex' : 'block'; // Adjust display type
+                    // Ensure display flex for chat/management sections to maintain column layout
+                    section.style.display = (id === 'chatSection' || id === 'studentManagementSection') ? 'flex' : 'block';
                     setTimeout(() => { section.style.opacity = '1'; }, 50); // Small delay to trigger transition
                 } else {
                     section.style.opacity = '0'; // Fade out
@@ -817,114 +1034,116 @@
             }
         }
 
+        // --- Drag and Drop File Handlers ---
+        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileNameDisplay = document.getElementById(fileNameDisplayId);
+            const filePreview = document.getElementById(filePreviewId);
+
+            // Trigger file input click when drop zone is clicked
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false); // Global prevent
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight drop zone when dragging over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('highlight'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('highlight'), false);
+            });
+
+            // Handle dropped files
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    fileInput.files = files; // Assign files to the hidden input
+                    // Manually trigger change event since it's not a user-initiated click
+                    const changeEvent = new Event('change', { bubbles: true });
+                    fileInput.dispatchEvent(changeEvent);
+                }
+            }
+
+            // Update file name and preview when file input changes (for both click and drop)
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    fileNameDisplay.textContent = file.name;
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            filePreview.src = e.target.result;
+                            filePreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (file.type === 'application/pdf') {
+                        const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
+                        loadingTask.promise.then(pdf => {
+                            pdf.getPage(1).then(page => {
+                                const viewport = page.getViewport({ scale: 1.0 });
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                    filePreview.src = canvas.toDataURL('image/png');
+                                    filePreview.style.display = 'block';
+                                    canvas.remove();
+                                });
+                            });
+                        }).catch(error => {
+                            console.error("Error rendering PDF preview:", error);
+                            filePreview.src = "https://placehold.co/150x200/cccccc/000000?text=PDF+Error";
+                            filePreview.style.display = 'block';
+                        });
+                    }
+                } else {
+                    fileNameDisplay.textContent = 'No file chosen';
+                    filePreview.style.display = 'none';
+                    filePreview.src = '';
+                }
+            });
+        }
+
+        // Setup the drop zones for student and answer key files
+        setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
+        setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
+
 
         const gradeButton = document.getElementById('gradeButton');
         const studentAnswerInput = document.getElementById('studentAnswer');
         const answerKeyInput = document.getElementById('answerKey');
-        const studentAnswerFile = document.getElementById('studentAnswerFile');
-        const answerKeyFile = document.getElementById('answerKeyFile');
-        const studentFileNameDisplay = document.getElementById('studentFileName');
-        const answerKeyFileNameDisplay = document.getElementById('answerKeyFileName');
-        const studentFilePreview = document.getElementById('studentFilePreview');
-        const answerKeyFilePreview = document.getElementById('answerKeyFilePreview');
+        const studentAnswerFile = document.getElementById('studentAnswerFile'); // Keep for direct file access
+        const answerKeyFile = document.getElementById('answerKeyFile'); // Keep for direct file access
         const gradeResultDisplay = document.getElementById('gradeResult');
         const gradingLoadingIndicator = document.getElementById('gradingLoadingIndicator'); // Specific for grading
         const pastSubmissionsContainer = document.getElementById('pastSubmissions');
         const noSubmissionsMessage = document.getElementById('noSubmissions');
 
-        studentAnswerFile.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                studentFileNameDisplay.textContent = file.name;
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        studentFilePreview.src = e.target.result;
-                        studentFilePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type === 'application/pdf') {
-                    // For PDF preview, render the first page
-                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
-                    loadingTask.promise.then(pdf => {
-                        pdf.getPage(1).then(page => {
-                            const viewport = page.getViewport({ scale: 1.0 });
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-                            page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
-                                studentFilePreview.src = canvas.toDataURL('image/png');
-                                studentFilePreview.style.display = 'block';
-                                canvas.remove();
-                            });
-                        });
-                    }).catch(error => {
-                        console.error("Error rendering PDF preview:", error);
-                        studentFilePreview.src = "https://placehold.co/150x200/cccccc/000000?text=PDF+Error";
-                        studentFilePreview.style.display = 'block';
-                    });
-                }
-            } else {
-                studentFileNameDisplay.textContent = 'No file chosen';
-                studentFilePreview.style.display = 'none';
-                studentFilePreview.src = '';
-            }
-        });
-
-        answerKeyFile.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                answerKeyFileNameDisplay.textContent = file.name;
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        answerKeyFilePreview.src = e.target.result;
-                        answerKeyFilePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type === 'application/pdf') {
-                    const loadingTask = pdfjsLib.getDocument({ url: URL.createObjectURL(file) });
-                    loadingTask.promise.then(pdf => {
-                        pdf.getPage(1).then(page => {
-                            const viewport = page.getViewport({ scale: 1.0 });
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-                            page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
-                                answerKeyFilePreview.src = canvas.toDataURL('image/png');
-                                answerKeyFilePreview.style.display = 'block';
-                                canvas.remove();
-                            });
-                        });
-                    }).catch(error => {
-                        console.error("Error rendering PDF preview:", error);
-                        answerKeyFilePreview.src = "https://placehold.co/150x200/cccccc/000000?text=PDF+Error";
-                        answerKeyFilePreview.style.display = 'block';
-                    });
-                }
-            } else {
-                answerKeyFileNameDisplay.textContent = 'No file chosen';
-                answerKeyFilePreview.style.display = 'none';
-                answerKeyFilePreview.src = '';
-            }
-        });
-
-
         // --- Load Past Submissions from Firestore ---
         async function loadPastSubmissions() {
-            if (!currentAuthReady || !currentUserId) {
-                console.log("Auth not ready or no user (currentUserId is null), skipping loading past submissions.");
+            if (!currentAuthReady || !currentUserId || currentUserRole === 'unassigned') {
+                console.log("Auth not ready, no user, or user unassigned. Skipping loading past submissions.");
                 pastSubmissionsContainer.innerHTML = '';
                 noSubmissionsMessage.style.display = 'block';
                 return;
             }
-            if (currentUserRole === 'unauthorized') { // Added check for unauthorized users
-                pastSubmissionsContainer.innerHTML = '';
-                noSubmissionsMessage.style.display = 'block';
-                return;
-            }
+            // No need to check for 'unauthorized' role anymore, as that implies code not entered
 
             pastSubmissionsContainer.innerHTML = ''; // Clear previous submissions
             noSubmissionsMessage.style.display = 'block'; // Show "No submissions" initially
@@ -1002,16 +1221,16 @@
 
         // --- Main Grading Logic ---
         gradeButton.addEventListener('click', async () => {
-            // Ensure user is authenticated and has a role
-            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
-                showModal('Authentication Required', 'Please sign in with an authorized account to grade work.');
+            // Ensure user is authenticated and has a valid role (not 'unassigned')
+            if (!currentUserId || !currentUserRole || currentUserRole === 'unassigned') {
+                showModal('Authentication Required', 'Please sign in and enter a valid access code to grade work.');
                 return;
             }
 
             const studentAnswerText = studentAnswerInput.value.trim();
             const answerKeyText = answerKeyInput.value.trim();
-            const studentFile = studentAnswerFile.files[0];
-            const answerKeyFileObj = answerKeyFile.files[0];
+            const studentFile = document.getElementById('studentAnswerFile').files[0]; // Get file from hidden input
+            const answerKeyFileObj = document.getElementById('answerKeyFile').files[0]; // Get file from hidden input
 
             // Clear previous error messages
             document.getElementById('studentAnswerError').textContent = '';
@@ -1121,14 +1340,13 @@
                 chatHistory.push({ role: "user", parts: geminiPromptParts });
                 const payload = { contents: chatHistory };
                 // Your Gemini API Key
-                const apiKey = GEMINI_API_KEY; // Use the globally defined API key
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Make the fetch request to your Cloudflare Worker URL instead of direct Gemini API
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) // Send the full payload to the Worker
                 });
+                
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -1190,8 +1408,8 @@
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
 
-            if (!currentUserId || !currentUserRole || currentUserRole === 'unauthorized') {
-                showModal('Authentication Required', 'Please sign in with an authorized account to chat with Gemini.');
+            if (!currentUserId || currentUserRole === 'unassigned') { // Check for valid user and assigned role
+                showModal('Authentication Required', 'Please sign in and enter a valid access code to chat with Gemini.');
                 return;
             }
 
@@ -1207,13 +1425,11 @@
 
             try {
                 const payload = { contents: geminiChatHistory };
-                const apiKey = GEMINI_API_KEY; // Use the globally defined API key
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Make the fetch request to your Cloudflare Worker URL instead of direct Gemini API
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) // Send the full payload to the Worker
                 });
 
                 if (!response.ok) {
@@ -1240,7 +1456,7 @@
                 appendMessage(errorMessage, 'gemini'); // Display error in chat
                 showModal('Chat Error', errorMessage);
             } finally {
-                chatLoadingIndicator.style.display = 'none'; // Hide typing indicator
+                    chatLoadingIndicator.style.display = 'none'; // Hide typing indicator
                 sendChatButton.disabled = false;
                 chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
             }
@@ -1266,7 +1482,6 @@
         const studentEmailInput = document.getElementById('studentEmailInput');
         const addStudentButton = document.getElementById('addStudentButton');
         const authorizedStudentsList = document.getElementById('authorizedStudentsList');
-        // Corrected the typo here: was `document = document.getElementById`
         const noAuthorizedStudentsMessage = document.getElementById('noAuthorizedStudents'); 
         const studentManagementLoading = document.getElementById('studentManagementLoading');
 
@@ -1292,8 +1507,8 @@
             noAuthorizedStudentsMessage.style.display = 'block'; // Show 'No students' by default
 
             try {
-                // This path should be correct for fetching authorized students emails
-                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                // This path is now CORRECT for fetching authorized students emails
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`);
                 const q = query(authorizedStudentsCollectionRef, orderBy('email')); // Order for consistent display
 
                 // Use onSnapshot for real-time updates
@@ -1355,7 +1570,8 @@
             studentManagementLoading.textContent = 'Adding student...';
 
             try {
-                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/student_emails`);
+                // This path is now CORRECT for adding authorized student emails
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`);
                 // Check if email already exists
                 const q = query(authorizedStudentsCollectionRef, where("email", "==", email));
                 const querySnapshot = await getDocs(q);
@@ -1398,7 +1614,8 @@
                         studentManagementLoading.style.display = 'block';
                         studentManagementLoading.textContent = 'Removing student...';
                         try {
-                            const studentDocRef = doc(db, `artifacts/${appId}/authorized_users/student_emails`, docId);
+                            // This path is now CORRECT for removing student emails
+                            const studentDocRef = doc(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`, docId);
                             await deleteDoc(studentDocRef);
                             showModal('Success', 'Student removed successfully.');
                         } catch (error) {
@@ -1413,6 +1630,96 @@
             }
         });
 
+        // --- Code Entry Logic ---
+        const accessCodeInput = document.getElementById('accessCodeInput');
+        const submitCodeButton = document.getElementById('submitCodeButton');
+        const codeError = document.getElementById('codeError');
+        const codeLoadingIndicator = document.getElementById('codeLoadingIndicator');
+
+        submitCodeButton.addEventListener('click', async () => {
+            const code = accessCodeInput.value.trim();
+            codeError.textContent = ''; // Clear previous errors
+            codeLoadingIndicator.style.display = 'block';
+            codeLoadingIndicator.textContent = 'Verifying code...';
+            submitCodeButton.disabled = true;
+
+            if (!code) {
+                codeError.textContent = 'Please enter an access code.';
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+                return;
+            }
+
+            let newRole = null;
+            let isAuthorized = false;
+
+            // Check if the user's email is in the authorized students list if the code is a student code
+            if (code === STUDENT_CODE) {
+                if (!currentUserEmail) {
+                    codeError.textContent = 'Could not verify student. Please re-login.';
+                    codeLoadingIndicator.style.display = 'none';
+                    submitCodeButton.disabled = false;
+                    return;
+                }
+                const authorizedStudentsCollectionRef = collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`);
+                const q = query(authorizedStudentsCollectionRef, where("email", "==", currentUserEmail));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    codeError.textContent = 'Your email is not authorized for student access. Please contact your teacher.';
+                    codeLoadingIndicator.style.display = 'none';
+                    submitCodeButton.disabled = false;
+                    return;
+                }
+                isAuthorized = true;
+                newRole = 'student';
+            } else if (code === TEACHER_CODE) {
+                isAuthorized = true; // Teacher code is direct authorization
+                newRole = 'teacher';
+            } else {
+                codeError.textContent = 'Invalid code. Please try again.';
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+                return;
+            }
+
+            if (!isAuthorized) {
+                 codeError.textContent = 'Access Denied. Invalid code or unauthorized email.';
+                 codeLoadingIndicator.style.display = 'none';
+                 submitCodeButton.disabled = false;
+                 return;
+            }
+
+            try {
+                // Save the assigned role to the user's profile
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await setDoc(userProfileRef, {
+                    role: newRole,
+                    email: currentUserEmail, // Ensure email is saved with the role
+                    lastLogin: Date.now()
+                }, { merge: true });
+
+                currentUserRole = newRole; // Update local role
+                accessCodeInput.value = ''; // Clear code input
+                showModal('Success', `Welcome! You are now logged in as a ${newRole}.`);
+                
+                // Re-evaluate auth state to update UI (this will call onAuthStateChanged again)
+                // This ensures all UI elements are updated correctly based on the new role.
+                const user = auth.currentUser;
+                if (user) {
+                    onAuthStateChanged(auth, (re_user) => {
+                        console.log("Re-triggering onAuthStateChanged after code submission.");
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Error saving user role after code entry:", error);
+                codeError.textContent = `Error: ${error.message}. Could not save your role.`;
+                showModal('Role Assignment Error', `Failed to assign your role: ${error.message}`);
+            } finally {
+                codeLoadingIndicator.style.display = 'none';
+                submitCodeButton.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
