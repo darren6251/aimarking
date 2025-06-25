@@ -433,21 +433,24 @@
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-        const FIREBASE_CONFIG_PLACEHOLDER = {
-          apiKey: "YOUR_API_KEY",
-          authDomain: "YOUR_AUTH_DOMAIN",
-          projectId: "YOUR_PROJECT_ID",
-          storageBucket: "YOUR_STORAGE_BUCKET",
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-          appId: "YOUR_APP_ID"
+        // --- Firebase Configuration ---
+        // Your provided Firebase project configuration has been inserted here.
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
+          authDomain: "ai-grading-9bb30.firebaseapp.com",
+          projectId: "ai-grading-9bb30",
+          storageBucket: "ai-grading-9bb30.firebasestorage.app",
+          messagingSenderId: "298162112230",
+          appId: "1:298162112230:web:529d3f95536991be685d27",
+          measurementId: "G-CHKLKSM17S"
         };
+        
         const APP_ID_FROM_CANVAS_ENVIRONMENT = "c_03094e15";
         const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/";
         const TEACHER_CODE = "TEACHER123";
         const STUDENT_CODE = "STUDENT456";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FROM_CANVAS_ENVIRONMENT;
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG_PLACEHOLDER;
         pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
         let app, db, auth, storage;
@@ -479,9 +482,6 @@
 
         // Initialize Firebase
         try {
-            if (!firebaseConfig || !firebaseConfig.projectId || firebaseConfig.projectId === "YOUR_PROJECT_ID") {
-                throw new Error("Firebase configuration is missing or incomplete.");
-            }
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -489,7 +489,7 @@
             console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
-            showModal('Firebase Error', `Failed to initialize Firebase: ${error.message}`);
+            showModal('Firebase Configuration Error', error.message);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -527,7 +527,10 @@
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
             authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton').addEventListener('click', handleGoogleSignIn);
+            const signInButton = document.getElementById('googleSignInButton');
+            if (signInButton) {
+                signInButton.addEventListener('click', handleGoogleSignIn);
+            }
         }
 
         function showCodeEntry() {
@@ -535,7 +538,10 @@
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
             authContainer.innerHTML = codeEntryTemplate;
-            document.getElementById('submitCodeButton').addEventListener('click', handleSubmitCode);
+            const submitCodeButton = document.getElementById('submitCodeButton');
+            if (submitCodeButton) {
+                submitCodeButton.addEventListener('click', handleSubmitCode);
+            }
         }
 
         function showApp() {
