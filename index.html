@@ -230,33 +230,39 @@
         .header-actions .tab:hover:not(.active) { background: #21262d; }
 
         .user-info { display: flex; align-items: center; gap: 1rem; }
-        #userDisplayName { font-weight: 500; }
+        #userDisplayName { font-weight: 500; cursor: pointer; }
         .logout-btn { background: none; border: 1px solid var(--red); color: var(--red); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 600; }
         .logout-btn:hover { background: rgba(248, 81, 73, 0.1); }
 
         main {
             flex: 1;
             display: flex;
-            overflow: hidden;
+            overflow-y: auto; /* Enables scrolling for main content */
             padding: 24px;
             gap: 24px;
+            padding-bottom: 60px; /* Add padding to avoid footer overlap */
         }
         
         /* Content Sections */
-        #gradingSection, #chatSection, #studentManagementSection {
+        #gradingSection, #chatSection, #studentManagementSection, #profileSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
         }
+        #profileSection { max-width: 800px; margin: 0 auto; } /* Center profile section */
 
         /* Form elements */
         label { display: block; font-weight: 600; margin-bottom: 8px; }
+        input[type="text"], input[type="number"], input[type="email"] {
+             width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
+            padding: 12px; border-radius: 6px; margin-bottom: 1rem;
+        }
         textarea {
             width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
             padding: 12px; border-radius: 6px; margin-bottom: 1rem; resize: vertical; min-height: 120px;
         }
-        textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
+        input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
         
         .drop-zone {
             border: 2px dashed var(--border-color); border-radius: 6px; min-height: 140px; display: flex;
@@ -289,10 +295,10 @@
         
         .loading-indicator { text-align: center; padding: 1rem; color: var(--light-gray); }
 
-        /* Student Management */
-         #studentManagementSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
+        /* Student Management & Profile */
+        #studentManagementSection h2, #profileSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
         .add-student-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-        #studentEmailInput { flex-grow: 1; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white); padding: 12px; border-radius: 6px; }
+        #studentEmailInput { flex-grow: 1; }
         #addStudentButton { background-color: var(--green); color: white; border: none; padding: 0 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
         #addStudentButton:hover { background-color: #2ea043; }
         #authorizedStudentsList { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -307,6 +313,29 @@
         #modalMessage { line-height: 1.5; }
         .close-button { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #aaa; }
         .close-button:hover { color: #fff; }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--dark-gray);
+            color: var(--light-gray);
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        footer a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+
 
         /* Mobile responsiveness */
         @media (max-width: 768px) {
@@ -343,6 +372,7 @@
                 <button id="toggleGradingButton" class="tab active">Exam Grader</button>
                 <button id="toggleChatButton" class="tab">Chat with Gemini</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
+                <button id="toggleProfileButton" class="tab">Profile</button>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
                      <button id="logoutButton" class="logout-btn">Log Out</button>
@@ -395,7 +425,7 @@
 
             <div id="chatSection">
                 <div id="chatDisplay">
-                    <div class="chat-message gemini">Hello! I'm AI Marker, operated by Darren Ng, assisted with Google Gemini, How can I help you today?</div>
+                    <div class="chat-message gemini">Hello! How can I help you today?</div>
                 </div>
                 <div class="chat-input-wrapper">
                     <input type="text" id="chatInput" placeholder="Type a message…">
@@ -415,8 +445,39 @@
                     <p id="noAuthorizedStudents">No authorized students yet.</p>
                 </div>
             </div>
+
+            <div id="profileSection">
+                <h2>Edit Your Profile</h2>
+                <form id="profileForm">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="profileName">Display Name</label>
+                        <input type="text" id="profileName" name="name" required>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="profileAge">Age</label>
+                        <input type="number" id="profileAge" name="age">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="profileGrade">Year/Grade</label>
+                        <input type="text" id="profileGrade" name="grade">
+                    </div>
+                     <div style="margin-bottom: 1rem;">
+                        <label for="profileSchool">School</label>
+                        <input type="text" id="profileSchool" name="school">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="profileElectives">Elective Subjects</label>
+                        <textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science, Art"></textarea>
+                    </div>
+                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
+                </form>
+            </div>
         </main>
     </div>
+
+    <footer>
+        Contact: <a href="mailto:darren_0625@mc-zero.com">darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
+    </footer>
 
     <div id="messageModal" class="modal">
         <div class="modal-content">
@@ -434,7 +495,6 @@
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- Firebase Configuration ---
-        // Your provided Firebase project configuration has been inserted here.
         const firebaseConfig = {
           apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
           authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -455,7 +515,6 @@
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let currentAuthReady = false;
         let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
 
         const authWrapper = document.getElementById('authWrapper');
@@ -469,12 +528,11 @@
                 <span>Sign in with Google</span>
             </button>
             <p id="authError" class="error-message"></p>
-            <p id="unauthorizedMessage" class="error-message" style="display: none;">Your account is not authorized.</p>
         `;
 
         const codeEntryTemplate = `
             <h2>Enter Access Code</h2>
-            <p style="color: #888; text-align: center; margin-bottom: 1rem;">Student: STUDENT456 | Teacher: TEACHER123</p>
+            <p style="color: #888; text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
             <input type="text" id="accessCodeInput" placeholder="Enter code here">
             <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
             <p id="codeError" class="error-message"></p>
@@ -493,21 +551,20 @@
         }
 
         onAuthStateChanged(auth, async (user) => {
-            console.log("Auth state changed. User:", user ? user.uid : "null");
             if (user) {
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
-                currentUserName = user.displayName || 'User';
-                
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                
                 try {
                     const userProfileDoc = await getDoc(userProfileRef);
                     if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                        currentUserRole = userProfileDoc.data().role;
+                        const profileData = userProfileDoc.data();
+                        currentUserRole = profileData.role;
+                        currentUserName = profileData.name || user.displayName; // Use saved name, fallback to Google name
                         await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                         showApp();
                     } else {
+                        currentUserName = user.displayName; // Set temporary name before profile is saved
                         currentUserRole = 'unassigned';
                         showCodeEntry();
                     }
@@ -527,10 +584,7 @@
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
             authContainer.innerHTML = googleSignInTemplate;
-            const signInButton = document.getElementById('googleSignInButton');
-            if (signInButton) {
-                signInButton.addEventListener('click', handleGoogleSignIn);
-            }
+            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
 
         function showCodeEntry() {
@@ -538,10 +592,7 @@
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
             authContainer.innerHTML = codeEntryTemplate;
-            const submitCodeButton = document.getElementById('submitCodeButton');
-            if (submitCodeButton) {
-                submitCodeButton.addEventListener('click', handleSubmitCode);
-            }
+            document.getElementById('submitCodeButton')?.addEventListener('click', handleSubmitCode);
         }
 
         function showApp() {
@@ -585,8 +636,9 @@
                 }, { merge: true });
                 
                 currentUserRole = roleToSet;
-                showModal('Success!', `Your role has been set to ${roleToSet}.`);
+                showModal('Success!', `Your role has been set to ${roleToSet}. Please complete your profile.`);
                 showApp();
+                showSection('profileSection'); // Direct user to profile page
             } catch (error) {
                 codeError.textContent = "Could not set role. Please try again.";
             }
@@ -594,31 +646,91 @@
 
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
 
-        function setupSectionToggle() {
+        function showSection(sectionIdToShow) {
+            const sections = ['gradingSection', 'chatSection', 'studentManagementSection', 'profileSection'];
             const buttons = {
                 toggleGradingButton: 'gradingSection',
                 toggleChatButton: 'chatSection',
                 manageStudentsButton: 'studentManagementSection',
+                toggleProfileButton: 'profileSection'
             };
-            Object.keys(buttons).forEach(buttonId => {
-                document.getElementById(buttonId)?.addEventListener('click', (e) => {
-                    // Update active tab style
-                    document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
+            
+            let targetButtonId = null;
+            for(const [btnId, secId] of Object.entries(buttons)){
+                 if(secId === sectionIdToShow) targetButtonId = btnId;
+            }
 
-                    // Show selected section, hide others
-                    Object.values(buttons).forEach(sectionId => {
-                        const section = document.getElementById(sectionId);
-                        if (section) {
-                            const isTarget = sectionId === buttons[buttonId];
-                            section.style.display = isTarget ? (sectionId === 'gradingSection' ? 'block' : 'flex') : 'none';
-                            setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
-                        }
-                    });
-                });
+            document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
+            if(targetButtonId) document.getElementById(targetButtonId)?.classList.add('active');
+
+
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) {
+                    const isTarget = id === sectionIdToShow;
+                    section.style.display = isTarget ? (id === 'gradingSection' || id === 'profileSection' ? 'block' : 'flex') : 'none';
+                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
+                }
             });
+
+            if (sectionIdToShow === 'profileSection') {
+                loadProfileData();
+            }
+        }
+
+        function setupSectionToggle() {
+             const buttons = {
+                toggleGradingButton: 'gradingSection',
+                toggleChatButton: 'chatSection',
+                manageStudentsButton: 'studentManagementSection',
+                toggleProfileButton: 'profileSection'
+            };
+            Object.entries(buttons).forEach(([buttonId, sectionId]) => {
+                document.getElementById(buttonId)?.addEventListener('click', () => showSection(sectionId));
+            });
+            document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
         }
         setupSectionToggle();
+        
+        // Profile Management
+        const profileForm = document.getElementById('profileForm');
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(profileForm);
+            const profileData = {};
+            formData.forEach((value, key) => {
+                profileData[key] = value;
+            });
+
+            if (!currentUserId) {
+                showModal('Error', 'You must be logged in to save your profile.');
+                return;
+            }
+            
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+            try {
+                await setDoc(userProfileRef, profileData, { merge: true });
+                currentUserName = profileData.name; // Update display name locally
+                document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+                showModal('Success', 'Your profile has been updated!');
+            } catch (error) {
+                showModal('Error', `Could not save profile: ${error.message}`);
+            }
+        });
+
+        async function loadProfileData() {
+            if (!currentUserId) return;
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+            const docSnap = await getDoc(userProfileRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('profileName').value = data.name || '';
+                document.getElementById('profileAge').value = data.age || '';
+                document.getElementById('profileGrade').value = data.grade || '';
+                document.getElementById('profileSchool').value = data.school || '';
+                document.getElementById('profileElectives').value = data.electives || '';
+            }
+        }
         
         async function uploadFileToStorage(file, path) {
             if (!file) return null;
