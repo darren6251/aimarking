@@ -6,7 +6,7 @@
     <title>AI Marker</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- Custom styles merged from index (1).html -->
+    <!-- Custom styles -->
     <style>
         :root {
             --black: #0d1117;
@@ -130,7 +130,6 @@
             text-align: center;
         }
 
-        /* Google Sign-In Button style */
         .google-btn {
             display: flex;
             align-items: center;
@@ -146,17 +145,9 @@
             font-weight: 500;
             margin-bottom: 1rem;
         }
-
-        .google-btn:hover {
-            background-color: #21262d;
-            border-color: #8b949e;
-        }
+        .google-btn:hover { background-color: #21262d; border-color: #8b949e; }
+        .google-btn img { height: 20px; }
         
-        .google-btn img {
-            height: 20px;
-        }
-        
-        /* Access Code Input styling */
         #accessCodeInput {
              background-color: var(--dark-gray);
              border: 1px solid var(--border-color);
@@ -167,14 +158,12 @@
              margin-bottom: 1rem;
              text-align: center;
         }
-
         #accessCodeInput:focus {
             outline: none;
             border-color: var(--blue);
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
         }
 
-        /* Submit/Primary button styling */
         .btn-primary {
              background-color: var(--green);
              color: var(--white);
@@ -189,7 +178,6 @@
              transform: translateY(-1px);
         }
         
-        /* Main Application Container */
         #appSection {
             display: none;
             flex-direction: column;
@@ -209,23 +197,12 @@
             flex-shrink: 0;
         }
         
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
         .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
         .logo-container p { font-weight: 400; color: #bbb; }
         
-        .header-actions {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .header-actions .tab {
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--light-gray); font-weight: 500;
-        }
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+        .header-actions .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--light-gray); font-weight: 500; }
         .header-actions .tab.active { background: rgba(88, 166, 255, 0.2); color: var(--blue); }
         .header-actions .tab:hover:not(.active) { background: #21262d; }
 
@@ -240,35 +217,31 @@
             overflow-y: auto; /* Enables scrolling for main content */
             padding: 24px;
             gap: 24px;
-            padding-bottom: 60px; /* Add padding to avoid footer overlap */
+            padding-bottom: 100px; /* More padding to avoid footer overlap */
         }
         
         /* Content Sections */
-        #gradingSection, #chatSection, #studentManagementSection, #profileSection {
+        #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
         }
-        #profileSection { max-width: 800px; margin: 0 auto; } /* Center profile section */
+        #profileSection { max-width: 800px; margin: 0 auto; }
 
         /* Form elements */
         label { display: block; font-weight: 600; margin-bottom: 8px; }
-        input[type="text"], input[type="number"], input[type="email"] {
-             width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
+        input[type="text"], input[type="number"], input[type="email"], select {
+            width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
             padding: 12px; border-radius: 6px; margin-bottom: 1rem;
         }
         textarea {
             width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
             padding: 12px; border-radius: 6px; margin-bottom: 1rem; resize: vertical; min-height: 120px;
         }
-        input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
         
-        .drop-zone {
-            border: 2px dashed var(--border-color); border-radius: 6px; min-height: 140px; display: flex;
-            flex-direction: column; align-items: center; justify-content: center; color: #999;
-            font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; word-wrap: break-word; padding: 1rem; text-align: center;
-        }
+        .drop-zone { border: 2px dashed var(--border-color); border-radius: 6px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; word-wrap: break-word; padding: 1rem; text-align: center; }
         .drop-zone.highlight { border-color: var(--blue); background: rgba(88, 166, 255, .1); }
         
         .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
@@ -287,7 +260,6 @@
         .chat-message { max-width: 85%; padding: 10px 14px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; }
         .chat-message.user { background-color: var(--blue); color: var(--black); align-self: flex-end; border-bottom-right-radius: 4px; }
         .chat-message.gemini { background-color: #21262d; align-self: flex-start; border-bottom-left-radius: 4px; }
-
         .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; }
         #chatInput { flex: 1; padding: .75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--dark-gray); color: var(--white); }
         #sendChatButton { padding: .5rem 1rem; border: none; background: var(--blue); color: var(--black); border-radius: 6px; font-weight: 600; cursor: pointer; }
@@ -295,17 +267,27 @@
         
         .loading-indicator { text-align: center; padding: 1rem; color: var(--light-gray); }
 
-        /* Student Management & Profile */
-        #studentManagementSection h2, #profileSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
-        .add-student-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-        #studentEmailInput { flex-grow: 1; }
-        #addStudentButton { background-color: var(--green); color: white; border: none; padding: 0 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        #addStudentButton:hover { background-color: #2ea043; }
+        /* Student Management, Profile, Tutorial Pages */
+        #studentManagementSection h2, #profileSection h2, #tutorialSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
+        .form-container { max-width: 600px; margin-bottom: 2rem; background: var(--dark-gray); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        
         #authorizedStudentsList { display: flex; flex-direction: column; gap: 0.5rem; }
         .student-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--dark-gray); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
         .delete-student-btn { background: none; border: none; color: var(--red); cursor: pointer; padding: 4px; }
         .delete-student-btn:hover { background-color: rgba(248, 81, 73, 0.1); border-radius: 50%; }
 
+        /* Tutorial Page styles */
+        .tutorial-filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; }
+        .tutorial-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .tutorial-card { background-color: var(--dark-gray); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .tutorial-card-thumbnail { position: relative; }
+        .tutorial-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+        .tutorial-card-duration { position: absolute; bottom: 8px; right: 8px; background-color: rgba(0,0,0,0.8); color: white; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; }
+        .tutorial-card-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .tutorial-card-content h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .tutorial-card-info { font-size: 0.875rem; color: var(--light-gray); display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .tutorial-card-actions { margin-top: auto; }
+        
         /* Modal styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
         .modal-content { background-color: var(--dark-gray); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -315,27 +297,9 @@
         .close-button:hover { color: #fff; }
 
         /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--dark-gray);
-            color: var(--light-gray);
-            text-align: center;
-            padding: 10px 0;
-            font-size: 0.875rem;
-            border-top: 1px solid var(--border-color);
-            z-index: 100;
-        }
-        footer a {
-            color: var(--blue);
-            text-decoration: none;
-        }
-        footer a:hover {
-            text-decoration: underline;
-        }
-
+        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--light-gray); font-size: 0.875rem; z-index: 100; pointer-events: none; }
+        footer a { color: var(--blue); text-decoration: none; pointer-events: all;}
+        footer a:hover { text-decoration: underline; }
 
         /* Mobile responsiveness */
         @media (max-width: 768px) {
@@ -371,6 +335,7 @@
             <div class="header-actions">
                 <button id="toggleGradingButton" class="tab active">Exam Grader</button>
                 <button id="toggleChatButton" class="tab">Chat with Gemini</button>
+                <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
                 <button id="toggleProfileButton" class="tab">Profile</button>
                 <div class="user-info">
@@ -382,6 +347,7 @@
         
         <main>
             <div id="gradingSection" style="display: block; opacity: 1;">
+                 <!-- Grading content from previous version -->
                 <div class="mb-4">
                     <label>Upload Student's Work (Image or PDF):</label>
                     <div id="studentDropZone" class="drop-zone">
@@ -424,6 +390,7 @@
             </div>
 
             <div id="chatSection">
+                 <!-- Chat content from previous version -->
                 <div id="chatDisplay">
                     <div class="chat-message gemini">Hello! How can I help you today?</div>
                 </div>
@@ -435,8 +402,9 @@
             </div>
 
             <div id="studentManagementSection">
+                <!-- Student management content from previous version -->
                 <h2>Manage Authorized Students</h2>
-                <div class="add-student-form">
+                <div class="add-student-form form-container">
                     <input type="email" id="studentEmailInput" placeholder="Enter student's Gmail address">
                     <button id="addStudentButton">Add Student</button>
                 </div>
@@ -446,9 +414,51 @@
                 </div>
             </div>
 
+            <div id="tutorialSection">
+                 <!-- New Tutorial Section -->
+                 <h2>Tutorial Videos</h2>
+                 <div id="addTutorialContainer" class="form-container" style="display:none;">
+                     <h3>Add New Tutorial Video</h3>
+                     <form id="addTutorialForm">
+                         <div style="margin-bottom: 1rem;">
+                             <label for="tutorialLink">YouTube Video Link</label>
+                             <input type="text" id="tutorialLink" name="link" required placeholder="https://www.youtube.com/watch?v=...">
+                             <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
+                         </div>
+                         <div style="margin-bottom: 1rem;">
+                             <label for="tutorialTitle">Video Title</label>
+                             <input type="text" id="tutorialTitle" name="title" required>
+                         </div>
+                         <div style="margin-bottom: 1rem;">
+                            <label for="tutorialTopic">Topic</label>
+                            <input type="text" id="tutorialTopic" name="topic" required placeholder="e.g., Simultaneous Equations, Algebra">
+                        </div>
+                         <div style="margin-bottom: 1rem;">
+                            <label for="tutorialGrade">Grade / Level</label>
+                            <input type="text" id="tutorialGrade" name="grade" required placeholder="e.g., Grade 10, Secondary 3">
+                        </div>
+                         <button type="submit" class="btn-primary">Add Video</button>
+                     </form>
+                 </div>
+                 
+                 <div class="tutorial-filters">
+                     <input type="text" id="topicFilter" placeholder="Filter by topic..." style="width:200px;">
+                     <input type="text" id="gradeFilter" placeholder="Filter by grade..." style="width:200px;">
+                     <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0;">
+                         <input type="checkbox" id="watchlistFilter">
+                         My Watchlist Only
+                     </label>
+                 </div>
+
+                 <div id="tutorialGrid" class="tutorial-grid">
+                     <p id="noTutorials">No tutorial videos found.</p>
+                 </div>
+            </div>
+
             <div id="profileSection">
+                <!-- Profile content from previous version -->
                 <h2>Edit Your Profile</h2>
-                <form id="profileForm">
+                <form id="profileForm" class="form-container">
                     <div style="margin-bottom: 1rem;">
                         <label for="profileName">Display Name</label>
                         <input type="text" id="profileName" name="name" required>
@@ -476,7 +486,7 @@
     </div>
 
     <footer>
-        Contact: <a href="mailto:darren_0625@mc-zero.com">darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
+        <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
     </footer>
 
     <div id="messageModal" class="modal">
@@ -599,18 +609,19 @@
             authWrapper.style.display = 'none';
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'flex' : 'none';
+            document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
+            document.getElementById('addTutorialContainer').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
+            
+            // Default to grading section
+            showSection('gradingSection');
             loadPastSubmissions();
             if(currentUserRole === 'teacher') loadAuthorizedStudents();
         }
 
         async function handleGoogleSignIn() {
             const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                document.getElementById('authError').textContent = `Sign-in failed. Please try again.`;
-            }
+            try { await signInWithPopup(auth, provider); }
+            catch (error) { document.getElementById('authError').textContent = `Sign-in failed. Please try again.`; }
         }
 
         async function handleSubmitCode() {
@@ -621,24 +632,15 @@
 
             if (code === TEACHER_CODE) roleToSet = 'teacher';
             else if (code === STUDENT_CODE) roleToSet = 'student';
-            else {
-                codeError.textContent = 'Invalid access code.';
-                return;
-            }
+            else { codeError.textContent = 'Invalid access code.'; return; }
             
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, {
-                    role: roleToSet,
-                    name: currentUserName,
-                    email: currentUserEmail,
-                    lastLogin: Date.now()
-                }, { merge: true });
-                
+                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                 currentUserRole = roleToSet;
                 showModal('Success!', `Your role has been set to ${roleToSet}. Please complete your profile.`);
                 showApp();
-                showSection('profileSection'); // Direct user to profile page
+                showSection('profileSection');
             } catch (error) {
                 codeError.textContent = "Could not set role. Please try again.";
             }
@@ -647,12 +649,13 @@
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
 
         function showSection(sectionIdToShow) {
-            const sections = ['gradingSection', 'chatSection', 'studentManagementSection', 'profileSection'];
+            const sections = ['gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection'];
             const buttons = {
                 toggleGradingButton: 'gradingSection',
                 toggleChatButton: 'chatSection',
                 manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection'
+                toggleProfileButton: 'profileSection',
+                toggleTutorialButton: 'tutorialSection'
             };
             
             let targetButtonId = null;
@@ -663,19 +666,17 @@
             document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
             if(targetButtonId) document.getElementById(targetButtonId)?.classList.add('active');
 
-
             sections.forEach(id => {
                 const section = document.getElementById(id);
                 if (section) {
                     const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? (id === 'gradingSection' || id === 'profileSection' ? 'block' : 'flex') : 'none';
+                    section.style.display = isTarget ? (id.includes('Section') ? 'block' : 'flex') : 'none';
                     setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
                 }
             });
 
-            if (sectionIdToShow === 'profileSection') {
-                loadProfileData();
-            }
+            if (sectionIdToShow === 'profileSection') loadProfileData();
+            if (sectionIdToShow === 'tutorialSection') loadTutorials();
         }
 
         function setupSectionToggle() {
@@ -683,7 +684,8 @@
                 toggleGradingButton: 'gradingSection',
                 toggleChatButton: 'chatSection',
                 manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection'
+                toggleProfileButton: 'profileSection',
+                toggleTutorialButton: 'tutorialSection',
             };
             Object.entries(buttons).forEach(([buttonId, sectionId]) => {
                 document.getElementById(buttonId)?.addEventListener('click', () => showSection(sectionId));
@@ -693,24 +695,16 @@
         setupSectionToggle();
         
         // Profile Management
-        const profileForm = document.getElementById('profileForm');
-        profileForm.addEventListener('submit', async (e) => {
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(profileForm);
-            const profileData = {};
-            formData.forEach((value, key) => {
-                profileData[key] = value;
-            });
-
-            if (!currentUserId) {
-                showModal('Error', 'You must be logged in to save your profile.');
-                return;
-            }
+            if (!currentUserId) { showModal('Error', 'You must be logged in.'); return; }
             
+            const formData = new FormData(e.target);
+            const profileData = Object.fromEntries(formData.entries());
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 await setDoc(userProfileRef, profileData, { merge: true });
-                currentUserName = profileData.name; // Update display name locally
+                currentUserName = profileData.name;
                 document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
                 showModal('Success', 'Your profile has been updated!');
             } catch (error) {
@@ -732,6 +726,148 @@
             }
         }
         
+        // ALL OTHER FUNCTIONS (GRADING, CHAT, STUDENT MGMT) from previous version remain here...
+        // ... (omitting for brevity in this explanation, but they are in the full code) ...
+
+        // --- Tutorial Video Feature ---
+        const addTutorialForm = document.getElementById('addTutorialForm');
+        const tutorialLinkInput = document.getElementById('tutorialLink');
+        const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
+        const topicFilterInput = document.getElementById('topicFilter');
+        const gradeFilterInput = document.getElementById('gradeFilter');
+        const watchlistFilterCheckbox = document.getElementById('watchlistFilter');
+
+        function getYouTubeId(url) {
+            let ID = '';
+            url = url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+            if(url[2] !== undefined) {
+                ID = url[2].split(/[^0-9a-z_\-]/i);
+                ID = ID[0];
+            } else {
+                ID = url;
+            }
+            return ID;
+        }
+
+        tutorialLinkInput.addEventListener('input', () => {
+            const videoId = getYouTubeId(tutorialLinkInput.value);
+            if (videoId) {
+                thumbnailPreview.src = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                thumbnailPreview.style.display = 'block';
+            } else {
+                thumbnailPreview.style.display = 'none';
+            }
+        });
+
+        addTutorialForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (currentUserRole !== 'teacher') {
+                showModal('Error', 'Only teachers can add videos.');
+                return;
+            }
+            const link = document.getElementById('tutorialLink').value;
+            const title = document.getElementById('tutorialTitle').value;
+            const topic = document.getElementById('tutorialTopic').value;
+            const grade = document.getElementById('tutorialGrade').value;
+            const youtubeId = getYouTubeId(link);
+
+            if (!youtubeId || !title || !topic || !grade) {
+                showModal('Error', 'Please fill out all fields.');
+                return;
+            }
+            
+            try {
+                const tutorialsRef = collection(db, `artifacts/${appId}/public/data/tutorials`);
+                await addDoc(tutorialsRef, { youtubeId, title, topic, grade, addedBy: currentUserId, timestamp: Date.now() });
+                showModal('Success', 'Tutorial video added!');
+                addTutorialForm.reset();
+                thumbnailPreview.style.display = 'none';
+                loadTutorials();
+            } catch (error) {
+                showModal('Error', `Could not add video: ${error.message}`);
+            }
+        });
+
+        async function loadTutorials() {
+            const grid = document.getElementById('tutorialGrid');
+            grid.innerHTML = '';
+            document.getElementById('noTutorials').style.display = 'block';
+
+            try {
+                const tutorialsRef = collection(db, `artifacts/${appId}/public/data/tutorials`);
+                let videoQuery = query(tutorialsRef, orderBy('timestamp', 'desc'));
+                
+                const querySnapshot = await getDocs(videoQuery);
+                let tutorials = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Client-side filtering
+                const topicFilter = topicFilterInput.value.toLowerCase();
+                const gradeFilter = gradeFilterInput.value.toLowerCase();
+                if (topicFilter) tutorials = tutorials.filter(t => t.topic.toLowerCase().includes(topicFilter));
+                if (gradeFilter) tutorials = tutorials.filter(t => t.grade.toLowerCase().includes(gradeFilter));
+                
+                // Watchlist Filter
+                if (watchlistFilterCheckbox.checked) {
+                    const watchlistRef = collection(db, `artifacts/${appId}/users/${currentUserId}/watchlist`);
+                    const watchlistSnapshot = await getDocs(watchlistRef);
+                    const watchlistIds = watchlistSnapshot.docs.map(doc => doc.id);
+                    tutorials = tutorials.filter(t => watchlistIds.includes(t.id));
+                }
+
+                if (tutorials.length > 0) {
+                    document.getElementById('noTutorials').style.display = 'none';
+                    tutorials.forEach(video => {
+                        const card = document.createElement('div');
+                        card.className = 'tutorial-card';
+                        card.innerHTML = `
+                            <div class="tutorial-card-thumbnail">
+                                <a href="https://www.youtube.com/watch?v=${video.youtubeId}" target="_blank">
+                                    <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${video.title}">
+                                </a>
+                            </div>
+                            <div class="tutorial-card-content">
+                                <h3>${video.title}</h3>
+                                <div class="tutorial-card-info">
+                                    <span>${video.topic}</span>
+                                    <span>${video.grade}</span>
+                                </div>
+                                <div class="tutorial-card-actions">
+                                     <button class="btn-primary" onclick="window.addToWatchlist('${video.id}')">Add to Watchlist</button>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                } else {
+                     grid.innerHTML = '<p>No videos match your criteria.</p>';
+                }
+
+            } catch (error) {
+                console.error("Error loading tutorials:", error);
+                grid.innerHTML = '<p>Could not load videos.</p>';
+            }
+        }
+        
+        topicFilterInput.addEventListener('input', loadTutorials);
+        gradeFilterInput.addEventListener('input', loadTutorials);
+        watchlistFilterCheckbox.addEventListener('change', loadTutorials);
+
+        window.addToWatchlist = async (tutorialId) => {
+            if (!currentUserId) { showModal('Login Required', 'Please log in to use the watchlist.'); return; }
+            try {
+                const watchlistRef = doc(db, `artifacts/${appId}/users/${currentUserId}/watchlist`, tutorialId);
+                await setDoc(watchlistRef, { addedAt: Date.now() });
+                showModal('Success', 'Video added to your watchlist!');
+            } catch (error) {
+                showModal('Error', `Could not add to watchlist: ${error.message}`);
+            }
+        };
+
+        // All other functions (grading, chat, student mgmt) are here but omitted for brevity
+        // ... (Full code from previous version for these features is included) ...
+
+        // Paste the full functions for grading, chat, and student management here
+        // For example:
         async function uploadFileToStorage(file, path) {
             if (!file) return null;
             const storageRef = ref(storage, path + '/' + file.name + '-' + Date.now());
@@ -1009,7 +1145,7 @@
                 { text: 'Cancel', className: 'logout-btn' }
             ]);
         }
-
+        
         // Modal Functionality
         function showModal(title, message, buttons = []) {
             const modal = document.getElementById('messageModal');
