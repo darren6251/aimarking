@@ -215,6 +215,19 @@
         #userDisplayName { font-weight: 500; cursor: pointer; }
         .logout-btn { background: none; border: 1px solid var(--red); color: var(--red); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 600; }
         .logout-btn:hover { background: rgba(248, 81, 73, 0.1); }
+        /* Style for Switch Role button */
+        #switchRoleButton {
+            background-color: var(--blue);
+            color: var(--white);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #switchRoleButton:hover {
+            background-color: #4c9aff;
+        }
 
         main {
             flex: 1;
@@ -447,6 +460,7 @@
                 <button id="toggleProfileButton" class="tab">Profile</button>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
+                     <button id="switchRoleButton" class="btn-primary">Switch Role</button> <!-- NEW: Switch Role button -->
                      <button id="logoutButton" class="logout-btn">Log Out</button>
                 </div>
             </div>
@@ -466,7 +480,7 @@
                         </div>
                     </div>
                     <div class="hero-image">
-                        <!-- Placeholder image. If you have hero.jpg, upload it or replace with a descriptive placeholder -->
+                        <!-- IMPORTANT: Replace the 'src' below with the PUBLIC URL of your hero.png from GitHub! -->
                         <img src="https://placehold.co/600x400/161b22/c9d1d9?text=AI+Marker+Hero" alt="Darren Ng demonstrating AI Marker">
                     </div>
                 </section>
@@ -824,16 +838,16 @@
         }
 
         // Handles submission of access code
-        async function handleSubmitCode() {
-            const code = document.getElementById('accessCodeInput').value.trim();
+        async function handleSubmitCode(codeValue) { // Added codeValue parameter
+            const code = codeValue ? codeValue.trim() : document.getElementById('accessCodeInput').value.trim(); // Use parameter or input field
             const codeError = document.getElementById('codeError');
-            codeError.textContent = ''; // Clear previous errors
+            if (codeError) codeError.textContent = ''; // Clear previous errors if element exists
             let roleToSet = null;
 
             if (code === TEACHER_CODE) roleToSet = 'teacher';
             else if (code === STUDENT_CODE) roleToSet = 'student';
             else { 
-                codeError.textContent = 'Invalid access code.'; 
+                if (codeError) codeError.textContent = 'Invalid access code.'; // Only set if element exists
                 return; 
             }
             
@@ -842,17 +856,26 @@
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                 currentUserRole = roleToSet; // Update current user's role
-                showModal('Success!', `Your role has been set to ${roleToSet}. Please complete your profile.`);
-                showApp(); // Show the main app
-                showSection('profileSection'); // Navigate to profile section to encourage completion
+                showModal('Success!', `Your role has been set to ${roleToSet}.`); // Removed "Please complete your profile." as they might be switching
+                showApp(); // Show the main app, which will now reflect the new role
+                // No need to explicitly navigate to profile, showApp defaults to home
             } catch (error) {
-                codeError.textContent = `Could not set role. Please try again. Error: ${error.message}`;
+                if (codeError) codeError.textContent = `Could not set role. Please try again. Error: ${error.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
 
         // Add event listener for the logout button
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+
+        // NEW: Event listener for Switch Role button
+        document.getElementById('switchRoleButton').addEventListener('click', () => {
+            showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
+                // This callback uses the value entered in the modal
+                await handleSubmitCode(code); // Re-use handleSubmitCode logic
+            });
+        });
+
 
         // Function to show a specific section of the app
         function showSection(sectionIdToShow) {
@@ -1455,16 +1478,17 @@
             if (!currentUserId) return;
             const container = document.getElementById('pastSubmissions');
             container.innerHTML = ''; // Clear existing submissions
-            const noSubmissionsMsg = document.getElementById('noSubmissions');
+            const noSubmissionsMsg = document.getElementById('noSubmissions'); // Get reference here
+            
             try {
                 // Query submissions ordered by timestamp (newest first)
                 const q = query(collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`), orderBy('timestamp', 'desc'));
                 const querySnapshot = await getDocs(q);
                 if (querySnapshot.empty) {
-                    noSubmissionsMsg.style.display = 'block'; // Show "No submissions" message
+                    if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'block'; // Safe check
                     return;
                 }
-                noSubmissionsMsg.style.display = 'none'; // Hide "No submissions" message
+                if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'none'; // Safe check
                 querySnapshot.forEach((doc) => {
                     const submission = doc.data();
                     const card = document.createElement('div');
@@ -1648,9 +1672,11 @@
                 // Query authorized student emails ordered by timestamp
                 const q = query(collection(db, `artifacts/${appId}/authorized_users/auth_data/student_emails`), orderBy('timestamp', 'desc'));
                 const querySnapshot = await getDocs(q);
-                if(querySnapshot.empty) { noStudentsMsg.style.display = 'block'; return; }
-                
-                noStudentsMsg.style.display = 'none';
+                if(querySnapshot.empty) { 
+                    if (noStudentsMsg) noStudentsMsg.style.display = 'block'; 
+                    return; 
+                }
+                if (noStudentsMsg) noStudentsMsg.style.display = 'none';
                 querySnapshot.forEach(docSnap => {
                     const student = docSnap.data();
                     const item = document.createElement('div');
