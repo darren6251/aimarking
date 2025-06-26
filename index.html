@@ -8,15 +8,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <!-- Custom styles -->
     <style>
+        /* Base Dark Theme Variables */
         :root {
-            --black: #0d1117;
-            --dark-gray: #161b22;
-            --light-gray: #c9d1d9;
-            --white: #ffffff;
-            --blue: #58a6ff;
-            --green: #3fb950;
-            --red: #f85149;
+            --bg-primary: #0d1117; /* Black */
+            --bg-secondary: #161b22; /* Dark Gray */
+            --text-primary: #c9d1d9; /* Light Gray */
+            --text-secondary: #8b949e; /* Muted gray for secondary text */
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
             --border-color: #30363d;
+            --button-hover-darken: #21262d;
+            --button-primary-lighten: #2ea043; /* Green hover */
+            --button-blue-lighten: #4c9aff; /* Blue hover */
+            --button-red-lighten: rgba(248, 81, 73, 0.1); /* Red hover */
+        }
+
+        /* Light Theme Variables - Overrides for .light-theme class */
+        body.light-theme {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f0f2f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-blue: #007bff;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --border-color: #cccccc;
+            --button-hover-darken: #e2e6ea;
+            --button-primary-lighten: #218838;
+            --button-blue-lighten: #0069d9;
+            --button-red-lighten: rgba(220, 53, 69, 0.1);
         }
 
         * {
@@ -26,14 +47,14 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
-            color: var(--light-gray);
-            background-color: var(--black);
+            font-family: -apple-system, BlinkMacMacSystemFont, "Segoe UI", "Inter", sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
             overflow-x: hidden;
             scroll-behavior: smooth;
-            display: flex; /* Added for overall layout of app section */
-            flex-direction: column; /* Added for overall layout of app section */
-            min-height: 100vh; /* Ensure body takes full height */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         button,
@@ -76,7 +97,7 @@
             left: 0;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
-            z-index: 1001; /* Ensure it's on top */
+            z-index: 1001;
         }
 
         .login-left-panel,
@@ -89,8 +110,8 @@
         }
 
         .login-left-panel {
-            background: var(--black);
-            color: var(--white);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             flex-direction: column;
             text-align: center;
         }
@@ -107,11 +128,11 @@
             font-weight: 400;
             line-height: 1.3;
             margin-bottom: .5rem;
-            color: var(--light-gray);
+            color: var(--text-secondary);
         }
 
         .login-right-panel {
-            background: var(--dark-gray);
+            background: var(--bg-secondary);
             flex-direction: column;
         }
         
@@ -121,7 +142,7 @@
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            background-color: var(--black);
+            background-color: var(--bg-primary);
             padding: 2rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -130,7 +151,7 @@
         #authContainer h2 {
             font-size: 2rem;
             font-weight: 600;
-            color: var(--white);
+            color: var(--text-primary);
             margin-bottom: 1.5rem;
             text-align: center;
         }
@@ -144,19 +165,19 @@
             border-radius: 6px;
             padding: .75rem;
             cursor: pointer;
-            background: var(--dark-gray);
-            color: var(--white);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 1rem;
             font-weight: 500;
             margin-bottom: 1rem;
         }
-        .google-btn:hover { background-color: #21262d; border-color: #8b949e; }
+        .google-btn:hover { background-color: var(--button-hover-darken); border-color: var(--text-secondary); }
         .google-btn img { height: 20px; }
         
         #accessCodeInput {
-             background-color: var(--dark-gray);
+             background-color: var(--bg-secondary);
              border: 1px solid var(--border-color);
-             color: var(--white);
+             color: var(--text-primary);
              padding: 12px;
              border-radius: 6px;
              width: 100%;
@@ -165,12 +186,12 @@
         }
         #accessCodeInput:focus {
             outline: none;
-            border-color: var(--blue);
+            border-color: var(--accent-blue);
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
         }
 
         .btn-primary {
-             background-color: var(--green);
+             background-color: var(--accent-green);
              color: var(--white);
              padding: .75rem 1.5rem;
              border-radius: 6px;
@@ -179,21 +200,21 @@
              font-weight: 600;
         }
         .btn-primary:hover {
-             background-color: #2ea043;
+             background-color: var(--button-primary-lighten);
              transform: translateY(-1px);
         }
         
         #appSection {
-            display: none; /* Hidden by default, shown by JS */
+            display: none;
             flex-direction: column;
             height: 100vh;
-            background-color: var(--black);
+            background-color: var(--bg-primary);
             animation: fadeIn .6s ease-out both;
         }
         
         header {
-            background: var(--dark-gray);
-            color: var(--white);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             padding: 0 24px;
@@ -204,20 +225,20 @@
         
         .logo-container { display: flex; align-items: center; gap: 1rem; }
         .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
-        .logo-container p { font-weight: 400; color: #bbb; }
+        .logo-container p { font-weight: 400; color: var(--text-secondary); }
         
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
-        .header-actions .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--light-gray); font-weight: 500; }
-        .header-actions .tab.active { background: rgba(88, 166, 255, 0.2); color: var(--blue); }
-        .header-actions .tab:hover:not(.active) { background: #21262d; }
+        .header-actions .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-primary); font-weight: 500; }
+        .header-actions .tab.active { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .header-actions .tab:hover:not(.active) { background: var(--button-hover-darken); }
 
         .user-info { display: flex; align-items: center; gap: 1rem; }
         #userDisplayName { font-weight: 500; cursor: pointer; }
-        .logout-btn { background: none; border: 1px solid var(--red); color: var(--red); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 600; }
-        .logout-btn:hover { background: rgba(248, 81, 73, 0.1); }
+        .logout-btn { background: none; border: 1px solid var(--accent-red); color: var(--accent-red); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 600; }
+        .logout-btn:hover { background: var(--button-red-lighten); }
         /* Style for Switch Role button */
         #switchRoleButton {
-            background-color: var(--blue);
+            background-color: var(--accent-blue);
             color: var(--white);
             padding: 6px 12px;
             border-radius: 6px;
@@ -226,21 +247,21 @@
             font-weight: 600;
         }
         #switchRoleButton:hover {
-            background-color: #4c9aff;
+            background-color: var(--button-blue-lighten);
         }
 
         main {
             flex: 1;
             display: flex;
-            overflow-y: auto; /* Enables scrolling for main content */
+            overflow-y: auto;
             padding: 24px;
             gap: 24px;
-            padding-bottom: 100px; /* More padding to avoid footer overlap */
+            padding-bottom: 100px;
         }
         
         /* Content Sections */
         #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection {
-            display: none; /* Controlled by JS showSection */
+            display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
@@ -250,82 +271,82 @@
         /* Form elements */
         label { display: block; font-weight: 600; margin-bottom: 8px; }
         input[type="text"], input[type="number"], input[type="email"], select {
-            width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
+            width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary);
             padding: 12px; border-radius: 6px; margin-bottom: 1rem;
         }
         textarea {
-            width: 100%; background-color: var(--dark-gray); border: 1px solid var(--border-color); color: var(--white);
+            width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary);
             padding: 12px; border-radius: 6px; margin-bottom: 1rem; resize: vertical; min-height: 120px;
         }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3); }
         
-        .drop-zone { border: 2px dashed var(--border-color); border-radius: 6px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; word-wrap: break-word; padding: 1rem; text-align: center; }
-        .drop-zone.highlight { border-color: var(--blue); background: rgba(88, 166, 255, .1); }
+        .drop-zone { border: 2px dashed var(--border-color); border-radius: 6px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; word-wrap: break-word; padding: 1rem; text-align: center; }
+        .drop-zone.highlight { border-color: var(--accent-blue); background: rgba(88, 166, 255, .1); }
         
         .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
-        .error-message { color: var(--red); font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 1rem; }
+        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 1rem; }
 
-        #gradeButton { background-color: var(--green); color: var(--white); }
-        #gradeButton:hover { background-color: #2ea043; }
+        #gradeButton { background-color: var(--accent-green); color: var(--white); }
+        #gradeButton:hover { background-color: var(--button-primary-lighten); }
 
-        #resultContainer { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background-color: var(--dark-gray); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap; }
+        #resultContainer { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap; }
         #pastSubmissions { margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .submission-card { background-color: var(--dark-gray); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
 
         /* Chat styles */
         #chatSection, #studentManagementSection { display: none; flex-direction: column; gap: 1rem; }
-        #chatDisplay { flex: 1; background: var(--black); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 85%; padding: 10px 14px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; }
-        .chat-message.user { background-color: var(--blue); color: var(--black); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-message.gemini { background-color: #21262d; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .chat-message.user { background-color: var(--accent-blue); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-message.gemini { background-color: var(--button-hover-darken); align-self: flex-start; border-bottom-left-radius: 4px; }
         .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; }
-        #chatInput { flex: 1; padding: .75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--dark-gray); color: var(--white); }
-        #sendChatButton { padding: .5rem 1rem; border: none; background: var(--blue); color: var(--black); border-radius: 6px; font-weight: 600; cursor: pointer; }
-        #sendChatButton:hover { background-color: #4c9aff; }
+        #chatInput { flex: 1; padding: .75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-secondary); color: var(--text-primary); }
+        #sendChatButton { padding: .5rem 1rem; border: none; background: var(--accent-blue); color: var(--bg-primary); border-radius: 6px; font-weight: 600; cursor: pointer; }
+        #sendChatButton:hover { background-color: var(--button-blue-lighten); }
         
-        .loading-indicator { text-align: center; padding: 1rem; color: var(--light-gray); }
+        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
 
         /* Student Management, Profile, Tutorial Pages */
         #studentManagementSection h2, #profileSection h2, #tutorialSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
-        .form-container { max-width: 600px; margin-bottom: 2rem; background: var(--dark-gray); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .form-container { max-width: 600px; margin-bottom: 2rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
         
         #authorizedStudentsList { display: flex; flex-direction: column; gap: 0.5rem; }
-        .student-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--dark-gray); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
-        .delete-student-btn { background: none; border: none; color: var(--red); cursor: pointer; padding: 4px; }
-        .delete-student-btn:hover { background-color: rgba(248, 81, 73, 0.1); border-radius: 50%; }
+        .student-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .delete-student-btn { background: none; border: none; color: var(--accent-red); cursor: pointer; padding: 4px; }
+        .delete-student-btn:hover { background-color: var(--button-red-lighten); border-radius: 50%; }
 
         /* Tutorial Page styles */
         .tutorial-filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
         .tutorial-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-        .tutorial-card { background-color: var(--dark-gray); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; }
+        .tutorial-card { background-color: var(--bg-secondary); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; }
         .tutorial-card-thumbnail { position: relative; }
         .tutorial-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
         .tutorial-card-duration { position: absolute; bottom: 8px; right: 8px; background-color: rgba(0,0,0,0.8); color: white; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; }
         .tutorial-card-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
         .tutorial-card-content h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .tutorial-card-info { font-size: 0.875rem; color: var(--light-gray); display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .tutorial-card-info { font-size: 0.875rem; color: var(--text-secondary); display: flex; gap: 1rem; margin-bottom: 1rem; }
         
         /* Teacher Tutorial Management Styles */
-        .subject-item, .topic-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: #1a2028; }
+        .subject-item, .topic-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: var(--bg-primary); }
         .subject-header, .topic-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .subject-header h3, .topic-header h4 { margin: 0; }
         .item-actions button { margin-left: 0.5rem; padding: 4px 8px; font-size: 0.8rem; }
         .topics-container, .videos-container { padding-left: 1.5rem; margin-top: 1rem; border-left: 2px solid var(--border-color); display: none; }
         .video-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; }
-        .video-item:hover { background-color: #21262d; }
+        .video-item:hover { background-color: var(--button-hover-darken); }
 
         /* Modal styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-        .modal-content { background-color: var(--dark-gray); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
+        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
         #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
         #modalMessage { line-height: 1.5; }
-        .close-button { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #aaa; }
-        .close-button:hover { color: #fff; }
+        .close-button { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
 
         /* Footer */
-        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--light-gray); font-size: 0.875rem; z-index: 100; pointer-events: none; }
-        footer a { color: var(--blue); text-decoration: none; pointer-events: all;}
+        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
+        footer a { color: var(--accent-blue); text-decoration: none; pointer-events: all;}
         footer a:hover { text-decoration: underline; }
 
         /* Mobile responsiveness */
@@ -341,7 +362,6 @@
             .buttons { justify-content: center; }
         }
 
-        /* --- Styles from AI_Marker_Home_Page.html (adapted for dark theme) --- */
         /* Hero */
         .hero {
             flex: 1;
@@ -351,8 +371,8 @@
             padding: 2rem 1.5rem;
             position: relative;
             overflow: hidden;
-            background-color: var(--black); /* Ensure hero background matches body */
-            color: var(--light-gray);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
         }
         .hero-text {
             max-width: 50%;
@@ -366,7 +386,7 @@
             font-size: 1.5rem;
             font-weight: normal;
             margin-top: 0.5rem;
-            color: var(--blue); /* Highlighted text */
+            color: var(--accent-blue);
         }
         .hero-image {
             max-width: 40%;
@@ -378,10 +398,10 @@
             height: auto;
             display: block;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Add subtle shadow */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        /* Buttons */
+        /* Buttons (on Home Page Hero) */
         .buttons {
             margin-top: 1.5rem;
             display: flex;
@@ -389,33 +409,33 @@
         }
         .buttons a {
             padding: 0.6rem 1.2rem;
-            border: 2px solid var(--blue); /* Use theme blue for consistency */
+            border: 2px solid var(--accent-blue);
             border-radius: 4px;
             font-size: 1rem;
             transition: background 0.2s, color 0.2s;
-            color: var(--blue); /* Default text color for buttons */
+            color: var(--accent-blue);
             text-decoration: none;
         }
         .buttons a:hover {
-            background: var(--blue); /* Fill with blue on hover */
-            color: var(--white); /* White text on blue background */
+            background: var(--accent-blue);
+            color: var(--white);
         }
 
-        /* Why AI */
+        /* Why AI Section */
         .why-ai {
             padding: 2rem 1.5rem;
-            border-top: 1px solid var(--border-color); /* Use theme border color */
-            background-color: var(--dark-gray); /* Darker background for contrast */
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
             margin-top: 2rem;
             border-radius: 8px;
         }
         .why-ai h2 {
             font-size: 1.75rem;
             margin-bottom: 1rem;
-            color: var(--green); /* Use theme green for headings */
+            color: var(--accent-green);
         }
         .why-ai p {
-            color: var(--light-gray); /* Light gray for body text */
+            color: var(--text-primary);
             line-height: 1.6;
         }
 
@@ -458,6 +478,7 @@
                 <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
                 <button id="toggleProfileButton" class="tab">Profile</button>
+                <button id="themeToggleButton" class="tab">Theme</button> <!-- NEW: Theme Toggle button -->
                 <div class="user-info">
                      <span id="userDisplayName"></span>
                      <button id="switchRoleButton" class="btn-primary">Switch Role</button> <!-- NEW: Switch Role button -->
@@ -481,7 +502,8 @@
                     </div>
                     <div class="hero-image">
                         <!-- IMPORTANT: Replace the 'src' below with the PUBLIC URL of your hero.png from GitHub! -->
-                        <img src="https://github.com/6b68b60b-11d6-43b6-82ce-b8816d3ac425" alt="Darren Ng demonstrating AI Marker">
+                        <!-- Example: https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO_NAME/main/hero.png -->
+                        <img src="https://github.com/darren6251/aimarking/blob/main/hero.png?raw=true" alt="Darren Ng demonstrating AI Marker">
                     </div>
                 </section>
 
@@ -708,7 +730,7 @@
 
         const codeEntryTemplate = `
             <h2>Enter Access Code</h2>
-            <p style="color: #888; text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
+            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
             <input type="text" id="accessCodeInput" placeholder="Enter code here">
             <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
             <p id="codeError" class="error-message"></p>
@@ -1478,17 +1500,17 @@
             if (!currentUserId) return;
             const container = document.getElementById('pastSubmissions');
             container.innerHTML = ''; // Clear existing submissions
-            const noSubmissionsMsg = document.getElementById('noSubmissions'); // Get reference here
+            const noSubmissionsMsg = document.getElementById('noSubmissions'); 
             
             try {
                 // Query submissions ordered by timestamp (newest first)
                 const q = query(collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`), orderBy('timestamp', 'desc'));
                 const querySnapshot = await getDocs(q);
                 if (querySnapshot.empty) {
-                    if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'block'; // Safe check
+                    if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'block'; 
                     return;
                 }
-                if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'none'; // Safe check
+                if (noSubmissionsMsg) noSubmissionsMsg.style.display = 'none';
                 querySnapshot.forEach((doc) => {
                     const submission = doc.data();
                     const card = document.createElement('div');
@@ -1765,7 +1787,7 @@
                     callback(value); // Execute callback with the input value
                 } else {
                     // Optionally show a visual cue or a small error message in the modal
-                    modalInput.style.border = '1px solid var(--red)'; // Highlight input in red
+                    modalInput.style.border = '1px solid var(--accent-red)'; // Highlight input in red
                     modalInput.focus(); // Keep focus on the input
                 }
             };
@@ -1795,6 +1817,35 @@
                 btn.closest('.modal').style.display = 'none';
             };
         });
+
+        // NEW: Theme Toggle Logic
+        const themeToggleButton = document.getElementById('themeToggleButton');
+
+        // Function to apply the theme
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        }
+
+        // Function to load theme from localStorage or default to dark
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
+            applyTheme(savedTheme);
+        }
+
+        // Event listener for the theme toggle button
+        themeToggleButton.addEventListener('click', () => {
+            const currentTheme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('ai-marker-theme', newTheme); // Save preference
+        });
+
+        // Load theme when the script runs
+        loadTheme();
     </script>
 </body>
 </html>
