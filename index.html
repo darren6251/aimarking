@@ -31,6 +31,9 @@
             background-color: var(--black);
             overflow-x: hidden;
             scroll-behavior: smooth;
+            display: flex; /* Added for overall layout of app section */
+            flex-direction: column; /* Added for overall layout of app section */
+            min-height: 100vh; /* Ensure body takes full height */
         }
 
         button,
@@ -73,6 +76,7 @@
             left: 0;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            z-index: 1001; /* Ensure it's on top */
         }
 
         .login-left-panel,
@@ -180,7 +184,7 @@
         }
         
         #appSection {
-            display: none;
+            display: none; /* Hidden by default, shown by JS */
             flex-direction: column;
             height: 100vh;
             background-color: var(--black);
@@ -222,8 +226,8 @@
         }
         
         /* Content Sections */
-        #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection {
-            display: none;
+        #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection {
+            display: none; /* Controlled by JS showSection */
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
@@ -318,6 +322,98 @@
             header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
             .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
             main { flex-direction: column; }
+            /* Home page specific responsive adjustments */
+            .hero { flex-direction: column-reverse; text-align: center; }
+            .hero-text, .hero-image { max-width: 100%; }
+            .buttons { justify-content: center; }
+        }
+
+        /* --- Styles from AI_Marker_Home_Page.html (adapted for dark theme) --- */
+        /* Hero */
+        .hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--black); /* Ensure hero background matches body */
+            color: var(--light-gray);
+        }
+        .hero-text {
+            max-width: 50%;
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0;
+            animation: slideInLeft 1s ease-out forwards;
+        }
+        .hero-text span {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: normal;
+            margin-top: 0.5rem;
+            color: var(--blue); /* Highlighted text */
+        }
+        .hero-image {
+            max-width: 40%;
+            opacity: 0;
+            animation: slideInRight 1s ease-out forwards;
+        }
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Add subtle shadow */
+        }
+
+        /* Buttons */
+        .buttons {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .buttons a {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid var(--blue); /* Use theme blue for consistency */
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s;
+            color: var(--blue); /* Default text color for buttons */
+            text-decoration: none;
+        }
+        .buttons a:hover {
+            background: var(--blue); /* Fill with blue on hover */
+            color: var(--white); /* White text on blue background */
+        }
+
+        /* Why AI */
+        .why-ai {
+            padding: 2rem 1.5rem;
+            border-top: 1px solid var(--border-color); /* Use theme border color */
+            background-color: var(--dark-gray); /* Darker background for contrast */
+            margin-top: 2rem;
+            border-radius: 8px;
+        }
+        .why-ai h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--green); /* Use theme green for headings */
+        }
+        .why-ai p {
+            color: var(--light-gray); /* Light gray for body text */
+            line-height: 1.6;
+        }
+
+        /* Animations */
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
         }
     </style>
 </head>
@@ -343,7 +439,8 @@
                 <p>Operated by Darren Ng</p>
             </div>
             <div class="header-actions">
-                <button id="toggleGradingButton" class="tab active">Exam Grader</button>
+                <button id="toggleHomeButton" class="tab active">Home</button>
+                <button id="toggleGradingButton" class="tab">Exam Grader</button>
                 <button id="toggleChatButton" class="tab">Chat with Gemini</button>
                 <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
@@ -356,7 +453,34 @@
         </header>
         
         <main>
-            <div id="gradingSection" style="display: block; opacity: 1;">
+            <!-- NEW HOME SECTION -->
+            <div id="homeSection" style="display: block; opacity: 1;">
+                <section class="hero">
+                    <div class="hero-text">
+                        AI helps you learn better
+                        <span>to fight DSE</span>
+                        <div class="buttons">
+                            <a href="#tutorial" id="homeTutorialLink">Tutorial Video</a>
+                            <a href="#grader" id="homeGraderLink">Exam Grader</a>
+                            <a href="#chat" id="homeChatLink">Chat with AI</a>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <!-- Placeholder image. If you have hero.jpg, upload it or replace with a descriptive placeholder -->
+                        <img src="https://placehold.co/600x400/161b22/c9d1d9?text=AI+Marker+Hero" alt="Darren Ng demonstrating AI Marker">
+                    </div>
+                </section>
+
+                <section class="why-ai" id="why-ai">
+                    <h2>Why AI</h2>
+                    <p>
+                        AI serves as a powerful assistant in your studies, especially when preparing for challenging exams like DSE. It can provide instant feedback on your work, identify areas where you need improvement, and offer personalized explanations. Unlike traditional methods, AI can analyze vast amounts of information and adapt to your learning style, making your study sessions more efficient and effective. It helps you grasp complex concepts, practice critical thinking, and build confidence, ultimately empowering you to perform your best.
+                    </p>
+                </section>
+            </div>
+
+
+            <div id="gradingSection">
                  <!-- Grading content remains the same -->
                 <div class="mb-4">
                     <label>Upload Student's Work (Image or PDF):</label>
@@ -667,10 +791,24 @@
             // Initialize tutorial section based on current user's role
             setupTutorialSection();
 
-            // Default to grading section on app load
-            showSection('gradingSection');
+            // Default to Home section on app load
+            showSection('homeSection');
             loadPastSubmissions(); // Load user's past submissions
             if(currentUserRole === 'teacher') loadAuthorizedStudents(); // Load authorized students for teachers
+
+            // Add event listeners for home page links
+            document.getElementById('homeTutorialLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('tutorialSection');
+            });
+            document.getElementById('homeGraderLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('gradingSection');
+            });
+            document.getElementById('homeChatLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('chatSection');
+            });
         }
 
         // Handles Google Sign-In using Firebase Auth
@@ -718,8 +856,9 @@
 
         // Function to show a specific section of the app
         function showSection(sectionIdToShow) {
-            const sections = ['gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection'];
+            const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection'];
             const buttons = {
+                toggleHomeButton: 'homeSection',
                 toggleGradingButton: 'gradingSection',
                 toggleChatButton: 'chatSection',
                 manageStudentsButton: 'studentManagementSection',
@@ -756,6 +895,7 @@
         // Sets up event listeners for section toggle buttons in the header
         function setupSectionToggle() {
              const buttons = {
+                toggleHomeButton: 'homeSection',
                 toggleGradingButton: 'gradingSection',
                 toggleChatButton: 'chatSection',
                 manageStudentsButton: 'studentManagementSection',
