@@ -250,6 +250,69 @@
             background-color: var(--button-blue-lighten);
         }
 
+        /* NEW: Styles for Work with AI Dropdown */
+        .work-with-ai-dropdown {
+            position: relative;
+            display: inline-block; /* Allows side-by-side with other tabs */
+        }
+
+        .work-with-ai-dropdown .dropbtn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-weight: 500;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .work-with-ai-dropdown .dropbtn.active {
+            background: rgba(88, 166, 255, 0.2);
+            color: var(--accent-blue);
+        }
+        .work-with-ai-dropdown .dropbtn:hover {
+            background: var(--button-hover-darken);
+        }
+
+        .work-with-ai-dropdown-content {
+            display: none; /* Hidden by default */
+            position: absolute;
+            background-color: var(--bg-secondary); /* Dropdown background */
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+            z-index: 1; /* Ensure it appears above other content */
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-top: 5px; /* Small space below the button */
+        }
+
+        .work-with-ai-dropdown-content button {
+            color: var(--text-primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color); /* Separator */
+            border-radius: 0; /* Remove rounded corners from inner buttons */
+        }
+        .work-with-ai-dropdown-content button:first-child { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+        .work-with-ai-dropdown-content button:last-child { border-bottom: none; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+        
+        .work-with-ai-dropdown-content button:hover {
+            background-color: var(--button-hover-darken);
+            color: var(--accent-blue);
+        }
+
+        /* Show the dropdown menu on hover */
+        .work-with-ai-dropdown:hover .work-with-ai-dropdown-content {
+            display: block;
+        }
+
+
         main {
             flex: 1;
             display: flex;
@@ -473,15 +536,23 @@
             </div>
             <div class="header-actions">
                 <button id="toggleHomeButton" class="tab active">Home</button>
-                <button id="toggleGradingButton" class="tab">Exam Grader</button>
-                <button id="toggleChatButton" class="tab">Chat with Gemini</button>
+                
+                <!-- NEW: Work with AI Dropdown Group -->
+                <div class="work-with-ai-dropdown">
+                    <button class="tab dropbtn" id="workWithAIButton">Work with AI</button>
+                    <div class="work-with-ai-dropdown-content">
+                        <button id="toggleGradingButton" class="tab">Exam Grader</button>
+                        <button id="toggleChatButton" class="tab">Chat with Gemini</button>
+                    </div>
+                </div>
+
                 <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
                 <button id="toggleProfileButton" class="tab">Profile</button>
-                <button id="themeToggleButton" class="tab">Theme</button> <!-- NEW: Theme Toggle button -->
+                <button id="themeToggleButton" class="tab">Theme</button>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
-                     <button id="switchRoleButton" class="btn-primary">Switch Role</button> <!-- NEW: Switch Role button -->
+                     <button id="switchRoleButton" class="btn-primary">Switch Role</button>
                      <button id="logoutButton" class="logout-btn">Log Out</button>
                 </div>
             </div>
@@ -503,7 +574,7 @@
                     <div class="hero-image">
                         <!-- IMPORTANT: Replace the 'src' below with the PUBLIC URL of your hero.png from GitHub! -->
                         <!-- Example: https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO_NAME/main/hero.png -->
-                        <img src=https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png?token=GHSAT0AAAAAADGBTXXPT46WICT55XXY4RCY2C6ZOZA" alt="Darren Ng demonstrating AI Marker">
+                        <img src="https://drive.google.com/uc?export=download&id=1wdjIr6SjqlgEjulvbpuNa08HHSMX623t" alt="Darren Ng demonstrating AI Marker">
                     </div>
                 </section>
 
@@ -904,22 +975,28 @@
             const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection'];
             const buttons = {
                 toggleHomeButton: 'homeSection',
-                toggleGradingButton: 'gradingSection',
-                toggleChatButton: 'chatSection',
+                toggleGradingButton: 'gradingSection', // Now a sub-button
+                toggleChatButton: 'chatSection',     // Now a sub-button
                 manageStudentsButton: 'studentManagementSection',
                 toggleProfileButton: 'profileSection',
                 toggleTutorialButton: 'tutorialSection'
             };
             
-            let targetButtonId = null;
-            // Find the button corresponding to the section to show
-            for(const [btnId, secId] of Object.entries(buttons)){
-                 if(secId === sectionIdToShow) targetButtonId = btnId;
-            }
-
-            // Deactivate all header tabs and activate the target one
+            // Deactivate all header tabs
             document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
-            if(targetButtonId) document.getElementById(targetButtonId)?.classList.add('active');
+
+            // Handle "Work with AI" dropdown active state
+            const workWithAIButton = document.getElementById('workWithAIButton');
+            if (sectionIdToShow === 'gradingSection' || sectionIdToShow === 'chatSection') {
+                workWithAIButton?.classList.add('active');
+            } else {
+                // Find the direct tab button and activate it
+                let targetButtonId = null;
+                for(const [btnId, secId] of Object.entries(buttons)){
+                     if(secId === sectionIdToShow) targetButtonId = btnId;
+                }
+                if(targetButtonId) document.getElementById(targetButtonId)?.classList.add('active');
+            }
 
             // Hide all sections and show only the target section with a fade effect
             sections.forEach(id => {
@@ -939,17 +1016,14 @@
 
         // Sets up event listeners for section toggle buttons in the header
         function setupSectionToggle() {
-             const buttons = {
-                toggleHomeButton: 'homeSection',
-                toggleGradingButton: 'gradingSection',
-                toggleChatButton: 'chatSection',
-                manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection',
-                toggleTutorialButton: 'tutorialSection',
-            };
-            Object.entries(buttons).forEach(([buttonId, sectionId]) => {
-                document.getElementById(buttonId)?.addEventListener('click', () => showSection(sectionId));
-            });
+             // Directly attach listeners to the new dropdown items
+            document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
+            document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
+            document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
+            document.getElementById('manageStudentsButton')?.addEventListener('click', () => showSection('studentManagementSection'));
+            document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
+            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => showSection('tutorialSection'));
+            
             // Allow clicking user display name to go to profile
             document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
         }
