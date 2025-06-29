@@ -22,6 +22,7 @@
             --button-primary-lighten: #2ea043; /* Green hover */
             --button-blue-lighten: #4c9aff; /* Blue hover */
             --button-red-lighten: rgba(248, 81, 73, 0.1); /* Red hover */
+            --neon-glow-color: #58a6ff; /* Neon blue for dark theme */
         }
 
         /* Light Theme Variables - Overrides for .light-theme class */
@@ -38,6 +39,7 @@
             --button-primary-lighten: #218838;
             --button-blue-lighten: #0069d9;
             --button-red-lighten: rgba(220, 53, 69, 0.1);
+            --neon-glow-color: #007bff; /* Neon blue for light theme */
         }
 
         * {
@@ -192,7 +194,7 @@
 
         .btn-primary {
              background-color: var(--accent-green);
-             color: var(--white);
+             color: #fff;
              padding: .75rem 1.5rem;
              border-radius: 6px;
              border: none;
@@ -228,9 +230,100 @@
         .logo-container p { font-weight: 400; color: var(--text-secondary); }
         
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
-        .header-actions .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-primary); font-weight: 500; }
-        .header-actions .tab.active { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
-        .header-actions .tab:hover:not(.active) { background: var(--button-hover-darken); }
+
+        /* --- START: NEON BUTTON STYLES --- */
+        .header-actions .tab.neon-button {
+            position: relative;
+            display: inline-block;
+            padding: 10px 18px; /* Adjusted padding */
+            color: var(--neon-glow-color);
+            text-decoration: none;
+            overflow: hidden;
+            transition: .5s;
+            border: 1px solid var(--neon-glow-color);
+            border-radius: 6px;
+            background: transparent;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.875rem; /* Adjusted font size */
+        }
+        
+        .header-actions .tab.neon-button:hover,
+        .header-actions .tab.neon-button.active {
+            background: var(--neon-glow-color);
+            color: var(--bg-secondary);
+            border-radius: 6px;
+            box-shadow: 0 0 5px var(--neon-glow-color),
+                        0 0 25px var(--neon-glow-color),
+                        0 0 50px var(--neon-glow-color),
+                        0 0 100px var(--neon-glow-color);
+        }
+
+        .header-actions .tab.neon-button span {
+            position: absolute;
+            display: block;
+        }
+
+        .header-actions .tab.neon-button span:nth-child(1) {
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-glow-color));
+            animation: btn-anim1 1.5s linear infinite;
+        }
+
+        @keyframes btn-anim1 {
+            0% { left: -100%; }
+            50%,100% { left: 100%; }
+        }
+
+        .header-actions .tab.neon-button span:nth-child(2) {
+            top: -100%;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, var(--neon-glow-color));
+            animation: btn-anim2 1.5s linear infinite;
+            animation-delay: .375s
+        }
+
+        @keyframes btn-anim2 {
+            0% { top: -100%; }
+            50%,100% { top: 100%; }
+        }
+
+        .header-actions .tab.neon-button span:nth-child(3) {
+            bottom: 0;
+            right: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(270deg, transparent, var(--neon-glow-color));
+            animation: btn-anim3 1.5s linear infinite;
+            animation-delay: .75s
+        }
+
+        @keyframes btn-anim3 {
+            0% { right: -100%; }
+            50%,100% { right: 100%; }
+        }
+
+        .header-actions .tab.neon-button span:nth-child(4) {
+            bottom: -100%;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(360deg, transparent, var(--neon-glow-color));
+            animation: btn-anim4 1.5s linear infinite;
+            animation-delay: 1.125s
+        }
+
+        @keyframes btn-anim4 {
+            0% { bottom: -100%; }
+            50%,100% { bottom: 100%; }
+        }
+        /* --- END: NEON BUTTON STYLES --- */
+
 
         .user-info { display: flex; align-items: center; gap: 1rem; }
         #userDisplayName { font-weight: 500; cursor: pointer; }
@@ -239,7 +332,7 @@
         /* Style for Switch Role button */
         #switchRoleButton {
             background-color: var(--accent-blue);
-            color: var(--white);
+            color: #fff;
             padding: 6px 12px;
             border-radius: 6px;
             border: none;
@@ -250,40 +343,31 @@
             background-color: var(--button-blue-lighten);
         }
 
-        /* NEW: Styles for Work with AI Dropdown */
+        /* --- START: DROPDOWN FIX --- */
         .work-with-ai-dropdown {
             position: relative;
-            display: inline-block; /* Allows side-by-side with other tabs */
+            display: inline-block;
+            /* Add padding to the bottom to bridge the gap between button and menu */
+            padding-bottom: 10px;
+            margin-bottom: -10px; /* Counteract the padding to maintain alignment */
         }
-
+        /* The main "Work with AI" button gets the neon style */
         .work-with-ai-dropdown .dropbtn {
-            background: none;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            color: var(--text-primary);
-            font-weight: 500;
-            white-space: nowrap; /* Prevent text wrapping */
-        }
-        .work-with-ai-dropdown .dropbtn.active {
-            background: rgba(88, 166, 255, 0.2);
-            color: var(--accent-blue);
-        }
-        .work-with-ai-dropdown .dropbtn:hover {
-            background: var(--button-hover-darken);
+            /* This button will be styled by .tab.neon-button */
         }
 
         .work-with-ai-dropdown-content {
             display: none; /* Hidden by default */
             position: absolute;
+            top: 100%; /* Position it right below the button container */
+            left: 0;
             background-color: var(--bg-secondary); /* Dropdown background */
             min-width: 160px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-            z-index: 1; /* Ensure it appears above other content */
+            z-index: 10; /* Ensure it appears above other content */
             border-radius: 6px;
             border: 1px solid var(--border-color);
-            margin-top: 5px; /* Small space below the button */
+            /* Removed margin-top */
         }
 
         .work-with-ai-dropdown-content button {
@@ -298,6 +382,7 @@
             cursor: pointer;
             border-bottom: 1px solid var(--border-color); /* Separator */
             border-radius: 0; /* Remove rounded corners from inner buttons */
+            font-size: 0.875rem; /* Ensure consistent font size */
         }
         .work-with-ai-dropdown-content button:first-child { border-top-left-radius: 6px; border-top-right-radius: 6px; }
         .work-with-ai-dropdown-content button:last-child { border-bottom: none; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
@@ -311,6 +396,7 @@
         .work-with-ai-dropdown:hover .work-with-ai-dropdown-content {
             display: block;
         }
+        /* --- END: DROPDOWN FIX --- */
 
 
         main {
@@ -349,7 +435,7 @@
         .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
         .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 1rem; }
 
-        #gradeButton { background-color: var(--accent-green); color: var(--white); }
+        #gradeButton { background-color: var(--accent-green); color: #fff; }
         #gradeButton:hover { background-color: var(--button-primary-lighten); }
 
         #resultContainer { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap; }
@@ -481,7 +567,7 @@
         }
         .buttons a:hover {
             background: var(--accent-blue);
-            color: var(--white);
+            color: #fff;
         }
 
         /* Why AI Section */
@@ -535,21 +621,39 @@
                 <p>Operated by Darren Ng</p>
             </div>
             <div class="header-actions">
-                <button id="toggleHomeButton" class="tab active">Home</button>
+                <button id="toggleHomeButton" class="tab neon-button active">
+                    <span></span><span></span><span></span><span></span>
+                    Home
+                </button>
                 
                 <!-- NEW: Work with AI Dropdown Group -->
                 <div class="work-with-ai-dropdown">
-                    <button class="tab dropbtn" id="workWithAIButton">Work with AI</button>
+                    <button class="tab neon-button dropbtn" id="workWithAIButton">
+                        <span></span><span></span><span></span><span></span>
+                        Work with AI
+                    </button>
                     <div class="work-with-ai-dropdown-content">
                         <button id="toggleGradingButton" class="tab">Exam Grader</button>
                         <button id="toggleChatButton" class="tab">Chat with Gemini</button>
                     </div>
                 </div>
 
-                <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
-                <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
-                <button id="toggleProfileButton" class="tab">Profile</button>
-                <button id="themeToggleButton" class="tab">Theme</button>
+                <button id="toggleTutorialButton" class="tab neon-button">
+                    <span></span><span></span><span></span><span></span>
+                    Tutorial Videos
+                </button>
+                <button id="manageStudentsButton" class="tab neon-button" style="display: none;">
+                    <span></span><span></span><span></span><span></span>
+                    Manage Students
+                </button>
+                <button id="toggleProfileButton" class="tab neon-button">
+                    <span></span><span></span><span></span><span></span>
+                    Profile
+                </button>
+                <button id="themeToggleButton" class="tab neon-button">
+                    <span></span><span></span><span></span><span></span>
+                    Theme
+                </button>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
                      <button id="switchRoleButton" class="btn-primary">Switch Role</button>
@@ -975,28 +1079,31 @@
             const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection'];
             const buttons = {
                 toggleHomeButton: 'homeSection',
-                toggleGradingButton: 'gradingSection', // Now a sub-button
-                toggleChatButton: 'chatSection',     // Now a sub-button
+                workWithAIButton: ['gradingSection', 'chatSection'], // The parent button is active for either child
+                toggleTutorialButton: 'tutorialSection',
                 manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection',
-                toggleTutorialButton: 'tutorialSection'
+                toggleProfileButton: 'profileSection'
             };
             
             // Deactivate all header tabs
-            document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.header-actions .tab.neon-button').forEach(t => t.classList.remove('active'));
 
-            // Handle "Work with AI" dropdown active state
-            const workWithAIButton = document.getElementById('workWithAIButton');
-            if (sectionIdToShow === 'gradingSection' || sectionIdToShow === 'chatSection') {
-                workWithAIButton?.classList.add('active');
-            } else {
-                // Find the direct tab button and activate it
-                let targetButtonId = null;
-                for(const [btnId, secId] of Object.entries(buttons)){
-                     if(secId === sectionIdToShow) targetButtonId = btnId;
+            // Activate the correct button
+            let activeButtonId = null;
+            for (const [btnId, secId] of Object.entries(buttons)) {
+                if (Array.isArray(secId) && secId.includes(sectionIdToShow)) {
+                    activeButtonId = btnId;
+                    break;
                 }
-                if(targetButtonId) document.getElementById(targetButtonId)?.classList.add('active');
+                if (secId === sectionIdToShow) {
+                    activeButtonId = btnId;
+                    break;
+                }
             }
+            if (activeButtonId) {
+                document.getElementById(activeButtonId)?.classList.add('active');
+            }
+
 
             // Hide all sections and show only the target section with a fade effect
             sections.forEach(id => {
