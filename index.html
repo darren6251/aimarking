@@ -482,6 +482,111 @@
         .sub-item a { color: var(--accent-blue); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
 
+        /* --- E-COMMERCE STYLES --- */
+        .store-layout {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+        }
+        .product-grid {
+            flex-grow: 1;
+        }
+        .shopping-cart {
+            width: 320px;
+            flex-shrink: 0;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            height: fit-content;
+        }
+        .shopping-cart h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        #cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        .cart-item-name {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+        .cart-item-price {
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        .remove-from-cart-btn {
+            background: none;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+        #cart-summary {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        #cart-validation-message {
+            font-size: 0.875rem;
+            color: var(--accent-red);
+            text-align: center;
+            margin-top: 1rem;
+            min-height: 20px;
+        }
+        #checkout-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .product-card {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .product-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+        .add-to-cart-btn, .download-btn {
+            width: 100%;
+        }
+        .download-btn {
+            background-color: var(--accent-blue);
+        }
+        .download-btn:hover {
+            background-color: var(--button-blue-lighten);
+        }
+
         /* Modal styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -497,6 +602,17 @@
         footer a:hover { text-decoration: underline; }
 
         /* Mobile responsiveness */
+        @media (max-width: 992px) {
+            .store-layout {
+                flex-direction: column;
+            }
+            .shopping-cart {
+                width: 100%;
+                position: sticky;
+                bottom: 0;
+                border-radius: 8px 8px 0 0;
+            }
+        }
         @media (max-width: 768px) {
             #authWrapper { flex-direction: column; position: static; height: auto; }
             .login-left-panel, .login-right-panel { width: 100%; }
@@ -642,7 +758,7 @@
                     <div class="dropdown-menu-content">
                         <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                         <button id="togglePastPapersButton" class="tab">Past Papers</button>
-                        <button id="toggleExercisesButton" class="tab">Exercises</button>
+                        <button id="toggleExercisesButton" class="tab">Exercises for Sale</button>
                     </div>
                 </div>
 
@@ -868,7 +984,11 @@
                      <input type="text" id="exerciseName" required placeholder="e.g., Chapter 1 MCQs">
                  </div>
                  <div style="margin-bottom: 1rem;">
-                     <label for="exerciseLink">Download Link</label>
+                     <label for="exercisePrice">Price (USD)</label>
+                     <input type="number" id="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0">
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                     <label for="exerciseLink">Download Link (after purchase)</label>
                      <input type="url" id="exerciseLink" required placeholder="https://example.com/exercise.pdf">
                  </div>
                  <div id="modalButtons">
@@ -882,8 +1002,13 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+
+        // --- IMPORTANT CONFIGURATION ---
+        // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
+        // Create a product in Stripe with a price, then create a payment link for it.
+        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_... "; // Example: https://buy.stripe.com/test_...
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -906,6 +1031,7 @@
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
         let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
+        let shoppingCart = [];
 
         // --- AUTH & INITIALIZATION ---
         
@@ -997,13 +1123,14 @@
             accessCodeInput?.focus();
         }
 
-        function showApp() {
+        async function showApp() {
             authWrapper.style.display = 'none';
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
             
             initializeAllMaterialSections();
+            await checkForSuccessfulPurchase();
 
             showSection('homeSection');
             loadPastSubmissions();
@@ -1155,7 +1282,8 @@
                 level1: 'Subject',
                 level2: 'Topic',
                 level3: 'Video',
-                modalId: 'addVideoModal'
+                modalId: 'addVideoModal',
+                isPaid: false
             },
             pastPapers: {
                 sectionId: 'pastPapersSection',
@@ -1164,16 +1292,18 @@
                 level1: 'Subject',
                 level2: 'Year',
                 level3: 'Paper',
-                modalId: 'addPastPaperModal'
+                modalId: 'addPastPaperModal',
+                isPaid: false
             },
             exercises: {
                 sectionId: 'exerciseSection',
                 collectionName: 'exercises',
-                title: 'Exercises',
+                title: 'Exercises for Sale',
                 level1: 'Subject',
                 level2: 'Topic',
                 level3: 'Exercise',
-                modalId: 'addExerciseModal'
+                modalId: 'addExerciseModal',
+                isPaid: true
             }
         };
 
@@ -1195,23 +1325,48 @@
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
 
-            // Create the basic structure for the section
+            let studentViewHtml = `
+                <div class="filters-container">
+                    <select id="level1-${type}-filter" style="width:250px;"><option>-- Select ${config.level1} --</option></select>
+                    <select id="level2-${type}-filter" style="width:250px;" disabled><option>-- Select ${config.level2} --</option></select>
+                </div>
+                <div id="level3-${type}-grid" class="grid-container"></div>`;
+
+            if (config.isPaid) {
+                studentViewHtml = `
+                    <div class="store-layout">
+                        <div class="product-grid">
+                            ${studentViewHtml}
+                        </div>
+                        <div class="shopping-cart">
+                            <h3>Shopping Cart</h3>
+                            <div id="cart-items"></div>
+                            <div id="cart-summary">
+                                <div class="summary-line">
+                                    <span>Total Items:</span>
+                                    <span id="cart-total-items">0</span>
+                                </div>
+                                <div class="summary-line">
+                                    <span>Total Price:</span>
+                                    <span id="cart-total-price">$0.00</span>
+                                </div>
+                            </div>
+                            <div id="cart-validation-message"></div>
+                            <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
+                        </div>
+                    </div>`;
+            }
+
             section.innerHTML = `
                 <h2 class="section-title">${config.title}</h2>
-                <!-- Teacher View -->
                 <div id="teacher-${type}-view" style="display:none;">
                     <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
                     </div>
                     <div id="level1-${type}-container"></div>
                 </div>
-                <!-- Student View -->
                 <div id="student-${type}-view" style="display:none;">
-                    <div class="filters-container">
-                        <select id="level1-${type}-filter" style="width:250px;"><option>-- Select ${config.level1} --</option></select>
-                        <select id="level2-${type}-filter" style="width:250px;" disabled><option>-- Select ${config.level2} --</option></select>
-                    </div>
-                    <div id="level3-${type}-grid" class="grid-container"></div>
+                    ${studentViewHtml}
                 </div>`;
 
             const isTeacher = currentUserRole === 'teacher';
@@ -1224,6 +1379,9 @@
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
             } else {
                 setupStudentFilters(type);
+                if(config.isPaid) {
+                    document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+                }
             }
         }
         
@@ -1264,11 +1422,10 @@
                             <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
                         `;
                     } else { // Level 3 - Final item
-                        headerHtml = `<a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.name}</a>
+                        let itemName = item.name || item.title;
+                        let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
+                        headerHtml = `<span>${itemName}${itemPrice}</span>
                                      <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>`;
-                        if (type === 'tutorials') {
-                           headerHtml = `<span>${item.title}</span> <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>`
-                        }
                     }
                     el.innerHTML = headerHtml;
                     container.appendChild(el);
@@ -1292,7 +1449,7 @@
                     const nextLevel = parseInt(level);
                     if (nextLevel < 3) {
                         showAddItemModal(type, nextLevel, parentIdsArray);
-                    } else { // Level 3 modal
+                    } else { 
                         showAddFinalItemModal(type, parentIdsArray);
                     }
                 } else if (button.matches('.delete-item-btn')) {
@@ -1302,7 +1459,7 @@
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
                 const currentLevel = parseInt(level);
-                if (currentLevel >= 3) return; // Not expandable
+                if (currentLevel >= 3) return; 
                 
                 const nextLevel = currentLevel + 1;
                 const container = document.getElementById(`container-level${nextLevel}-${type}-${id}`);
@@ -1329,7 +1486,6 @@
                 try {
                     await addDoc(collectionRef, { name: name.trim() });
                     showModal('Success', `${levelName} added.`);
-                    // Refresh parent container
                     const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                     renderContent(type, containerId, level, parentIds);
                 } catch(e) {
@@ -1347,7 +1503,7 @@
             const form = modal.querySelector('form');
             form.querySelector('input[type=hidden]:nth-of-type(1)').value = parentIds[0];
             form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
-            form.reset(); // Also clear display fields
+            form.reset();
         }
 
         function handleDeleteItem(type, level, id, parentIds) {
@@ -1406,30 +1562,46 @@
              }
 
              const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
-             const q = query(itemsRef, orderBy('name', 'asc')); // Assuming timestamp doesn't exist on all
+             const q = query(itemsRef, orderBy('name', 'asc'));
+             
+             let purchasedItems = {};
+             if(config.isPaid) {
+                 const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
+                 const snapshot = await getDocs(purchaseCollectionRef);
+                 snapshot.forEach(doc => purchasedItems[doc.id] = true);
+             }
+
              try {
                 const snapshot = await getDocs(q);
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    const card = document.createElement('a');
-                    card.href = item.link;
-                    card.target = '_blank';
-                    card.rel = 'noopener noreferrer';
-                    card.className = 'material-card';
-
+                    item.id = doc.id; // Add id to item object
+                    const card = document.createElement('div');
+                    card.className = config.isPaid ? 'product-card' : 'material-card';
+                    
                     let cardContent = '';
                     if (type === 'tutorials') {
+                        cardContent = `<a href="https://www.youtube.com/watch?v=${item.youtubeId}" target="_blank" rel="noopener noreferrer" class="material-card-thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/1280x720/30363d/c9d1d9?text=No%20Thumbnail';"></a><div class="material-card-content"><h3>${item.title}</h3></div>`;
+                        card.innerHTML = cardContent;
+                    } else if (config.isPaid) {
+                        const isPurchased = purchasedItems[item.id];
+                        const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
                         cardContent = `
-                            <div class="material-card-thumbnail">
-                                <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/1280x720/30363d/c9d1d9?text=No%20Thumbnail';">
-                            </div>
-                            <div class="material-card-content"><h3>${item.title}</h3></div>`;
-                        card.href = `https://www.youtube.com/watch?v=${item.youtubeId}`;
-                    } else {
-                        cardContent = `<div class="material-card-content"><h3>${item.name}</h3></div>`;
+                            <h4>${item.name}</h4>
+                            <p class="product-price">$${item.price.toFixed(2)}</p>
+                            ${isPurchased 
+                                ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="btn-primary download-btn">Download</a>`
+                                : `<button class="add-to-cart-btn btn-primary" data-id="${item.id}" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
+                            }`;
+                        card.innerHTML = cardContent;
+                        if(!isPurchased) {
+                            card.querySelector('.add-to-cart-btn').addEventListener('click', () => addToCart(item));
+                        }
+                    } else { // Free materials like past papers
+                        cardContent = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;"><div class="material-card-content"><h3>${item.name}</h3></div></a>`;
+                        card.innerHTML = cardContent;
                     }
-                    card.innerHTML = cardContent;
                     grid.appendChild(card);
                 });
              } catch(e) {
@@ -1437,7 +1609,7 @@
                 grid.innerHTML = "<p>Error loading items.</p>"
              }
         }
-
+        
         async function populateFilter(selectElement, collectionRef, levelName) {
             selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
             try {
@@ -1456,6 +1628,134 @@
                 selectElement.innerHTML = `<option value="">-- Error --</option>`;
             }
         }
+
+        // --- E-COMMERCE LOGIC ---
+        function addToCart(item) {
+            shoppingCart.push(item);
+            updateCartUI();
+            // Re-render the grid to update the button state
+            renderStudentItems('exercises'); 
+        }
+
+        function removeFromCart(itemId) {
+            shoppingCart = shoppingCart.filter(item => item.id !== itemId);
+            updateCartUI();
+            renderStudentItems('exercises');
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const totalItemsEl = document.getElementById('cart-total-items');
+            const totalPriceEl = document.getElementById('cart-total-price');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            const validationMsg = document.getElementById('cart-validation-message');
+
+            cartItemsContainer.innerHTML = '';
+            let totalPrice = 0;
+
+            if (shoppingCart.length === 0) {
+                cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+            }
+
+            shoppingCart.forEach(item => {
+                totalPrice += item.price;
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cart-item';
+                itemEl.innerHTML = `
+                    <span class="cart-item-name">${item.name}</span>
+                    <span class="cart-item-price">$${item.price.toFixed(2)}</span>
+                    <button class="remove-from-cart-btn" data-id="${item.id}">✖</button>
+                `;
+                cartItemsContainer.appendChild(itemEl);
+            });
+            
+            document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+                btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+            });
+
+            totalItemsEl.textContent = shoppingCart.length;
+            totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+
+            // Validate cart
+            const itemCountValid = shoppingCart.length >= 5;
+            const priceValid = totalPrice >= 50;
+
+            if (itemCountValid && priceValid) {
+                checkoutBtn.disabled = false;
+                validationMsg.textContent = '';
+            } else {
+                checkoutBtn.disabled = true;
+                let message = 'Checkout requirements not met:';
+                if (!itemCountValid) message += ' Minimum 5 items required.';
+                if (!priceValid) message += ' Minimum total of $50 required.';
+                validationMsg.textContent = message;
+            }
+        }
+
+        async function handleCheckout() {
+            if (!currentUserId) return showModal('Error', 'You must be logged in to check out.');
+            if (STRIPE_PAYMENT_LINK.includes("...")) {
+                return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+            }
+
+            const checkoutSessionId = crypto.randomUUID();
+            const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
+
+            try {
+                // Save the cart to Firestore so we can retrieve it after payment
+                await setDoc(checkoutSessionRef, {
+                    cart: shoppingCart,
+                    created: Date.now()
+                });
+
+                // Redirect to Stripe
+                const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                window.location.href = stripeUrl;
+
+            } catch (error) {
+                console.error("Error creating checkout session:", error);
+                showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+            }
+        }
+        
+        async function checkForSuccessfulPurchase() {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id'); // This is a placeholder, Stripe might use a different param
+
+            // A more robust check might be needed depending on Stripe's redirect behavior
+            if (params.get('payment_status') === 'success' && sessionId) {
+                const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
+                try {
+                    const sessionDoc = await getDoc(checkoutSessionRef);
+                    if (sessionDoc.exists()) {
+                        const purchasedItems = sessionDoc.data().cart;
+
+                        // Use a batch write to add all purchased items and delete the session doc atomically
+                        const batch = writeBatch(db);
+                        purchasedItems.forEach(item => {
+                            const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                            batch.set(purchaseRef, { name: item.name, price: item.price, purchasedAt: Date.now() });
+                        });
+                        batch.delete(checkoutSessionRef); // Clean up the session doc
+                        await batch.commit();
+                        
+                        showModal('Purchase Successful!', 'Your new exercises are now available for download.');
+                        shoppingCart = []; // Clear the local cart
+                        
+                        // Clean the URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        // Re-render the exercises page
+                        showSection('exerciseSection');
+                        renderStudentItems('exercises');
+                    }
+                } catch (error) {
+                    console.error("Error processing purchase:", error);
+                    showModal('Purchase Error', 'There was an issue verifying your purchase. Please contact support.');
+                }
+            }
+        }
+
 
         // --- MODAL SUBMISSION LOGIC ---
         document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
@@ -1501,12 +1801,13 @@
             const parentId2 = e.target.querySelector('#exerciseParentId2').value;
             const name = document.getElementById('exerciseName').value;
             const link = document.getElementById('exerciseLink').value;
+            const price = parseFloat(document.getElementById('exercisePrice').value);
             
-            if (!name.trim() || !link.trim()) { return showModal('Input Error', 'Please provide a name and link.'); }
+            if (!name.trim() || !link.trim() || isNaN(price) || price < 0) { return showModal('Input Error', 'Please provide a valid name, link, and non-negative price.'); }
 
             const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
              try {
-                await addDoc(collectionRef, { name: name.trim(), link: link.trim(), timestamp: Date.now() });
+                await addDoc(collectionRef, { name: name.trim(), link: link.trim(), price: price, timestamp: Date.now() });
                 showModal('Success', 'Exercise added.');
                 document.getElementById('addExerciseModal').style.display = 'none';
                 renderContent('exercises', `container-level3-exercises-${parentId2}`, 3, [parentId1, parentId2]);
