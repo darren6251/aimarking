@@ -49,7 +49,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacMacSystemFont, "Segoe UI", "Inter", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
             color: var(--text-primary);
             background-color: var(--bg-primary);
             overflow-x: hidden;
@@ -252,7 +252,7 @@
         .header-actions .tab.neon-button.active {
             background: var(--neon-glow-color);
             color: var(--bg-secondary);
-            border-radius: 6px;
+            border-radius: 66px;
             box-shadow: 0 0 5px var(--neon-glow-color),
                         0 0 25px var(--neon-glow-color),
                         0 0 50px var(--neon-glow-color),
@@ -629,6 +629,24 @@
         .close-button { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+
+        /* Video Preview Modal Specific Styles */
+        #videoPreviewModal .modal-content {
+            max-width: 900px;
+            width: 95%;
+            padding: 15px;
+        }
+        #videoPreviewModal iframe {
+            width: 100%;
+            height: 500px; /* Adjust as needed or use aspect ratio trick */
+            border-radius: 8px;
+        }
+        @media (max-width: 768px) {
+            #videoPreviewModal iframe {
+                height: 300px;
+            }
+        }
+
 
         /* Footer */
         footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
@@ -1050,6 +1068,15 @@
         </div>
     </div>
 
+    <!-- Video Preview Modal -->
+    <div id="videoPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="videoPreviewTitle"></h3>
+            <div id="videoPreviewContent"></div>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
@@ -1060,7 +1087,7 @@
         // --- IMPORTANT CONFIGURATION ---
         // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
         // Create a product in Stripe with a price, then create a payment link for it.
-        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_... "; // Example: https://buy.stripe.com/test_...
+        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; // Updated Stripe Link
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -1468,6 +1495,7 @@
                 container.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
+                    item.id = doc.id; // Ensure item ID is available for preview/delete
                     const el = document.createElement('div');
                     el.className = level < 3 ? 'content-item' : 'sub-item';
 
@@ -1489,7 +1517,10 @@
                         let itemName = item.name || item.title;
                         let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
                         headerHtml = `<span>${itemName}${itemPrice}</span>
-                                     <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>`;
+                                     <div class="item-actions">
+                                        <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
+                                        <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                     </div>`;
                     }
                     el.innerHTML = headerHtml;
                     container.appendChild(el);
@@ -1507,7 +1538,7 @@
             if (button) {
                 e.stopPropagation();
                 const { level, parentIds } = button.dataset;
-                const parentIdsArray = JSON.parse(parentIds);
+                const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
 
                 if (button.matches('.add-item-btn')) {
                     const nextLevel = parseInt(level);
@@ -1519,6 +1550,9 @@
                 } else if (button.matches('.delete-item-btn')) {
                     const idToDelete = button.dataset.id;
                     handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
+                } else if (button.matches('.preview-item-btn')) {
+                    const itemData = JSON.parse(button.dataset.item);
+                    handleTeacherPreview(type, itemData);
                 }
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
@@ -1533,12 +1567,36 @@
                 container.style.display = isVisible ? 'none' : 'block';
 
                 if (!isVisible && !container.dataset.loaded) {
-                    const parentIdsArray = JSON.parse(parentIds);
+                    const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
                     await renderContent(type, container.id, nextLevel, [...parentIdsArray, id]);
                     container.dataset.loaded = 'true';
                 }
             }
         }
+
+        // New function for teacher preview
+        function handleTeacherPreview(type, item) {
+            if (type === 'tutorials') {
+                const videoPreviewModal = document.getElementById('videoPreviewModal');
+                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
+                const videoPreviewContent = document.getElementById('videoPreviewContent');
+                
+                videoPreviewTitle.textContent = item.title;
+                if (item.type === 'youtube') {
+                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                } else if (item.type === 'embed') {
+                    videoPreviewContent.innerHTML = item.embedCode;
+                }
+                videoPreviewModal.style.display = 'flex';
+            } else if (type === 'pastPapers' || type === 'exercises') {
+                if (item.link) {
+                    window.open(item.link, '_blank');
+                } else {
+                    showModal('Preview Error', 'No link available for this item.');
+                }
+            }
+        }
+
 
         function showAddItemModal(type, level, parentIds = []) {
             const config = materialsConfig[type];
@@ -1764,19 +1822,15 @@
             totalItemsEl.textContent = shoppingCart.length;
             totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
 
-            // Validate cart
-            const itemCountValid = shoppingCart.length >= 5;
-            const priceValid = totalPrice >= 50;
+            // Validate cart: Checkout enabled if total price is $100 or more.
+            const priceValid = totalPrice >= 100;
 
-            if (itemCountValid && priceValid) {
+            if (priceValid) {
                 checkoutBtn.disabled = false;
                 validationMsg.textContent = '';
             } else {
                 checkoutBtn.disabled = true;
-                let message = 'Checkout requirements not met:';
-                if (!itemCountValid) message += ' Minimum 5 items required.';
-                if (!priceValid) message += ' Minimum total of $50 required.';
-                validationMsg.textContent = message;
+                validationMsg.textContent = 'Minimum total of $100 required to checkout.';
             }
         }
 
@@ -1797,7 +1851,10 @@
                 });
 
                 // Redirect to Stripe
-                const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                // Note: Stripe's actual redirect parameters might vary.
+                // The `client_reference_id` is crucial for linking back to your session.
+                // `prefilled_email` is good for user experience.
+                const stripeUrl = `${STRIPE_PAYAPE_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
                 window.location.href = stripeUrl;
 
             } catch (error) {
@@ -2133,7 +2190,15 @@
             modalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } });
         }
 
-        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { btn.closest('.modal').style.display = 'none'; });
+        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
+            const modal = btn.closest('.modal');
+            modal.style.display = 'none'; 
+            // If it's the video preview modal, stop the video playback
+            if (modal.id === 'videoPreviewModal') {
+                const videoContent = document.getElementById('videoPreviewContent');
+                videoContent.innerHTML = ''; // Clear content to stop video
+            }
+        });
 
         const themeToggleButton = document.getElementById('themeToggleButton');
         function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
