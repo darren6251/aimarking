@@ -473,14 +473,52 @@
         
         /* Teacher Content Management Styles (Tutorials, Papers, Exercises) */
         .content-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: var(--bg-primary); }
-        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .content-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            padding: 0.5rem 0; /* Add padding for click area */
+        }
         .content-header h3, .content-header h4 { margin: 0; }
         .item-actions button { margin-left: 0.5rem; padding: 4px 8px; font-size: 0.8rem; }
-        .nested-container { padding-left: 1.5rem; margin-top: 1rem; border-left: 2px solid var(--border-color); display: none; }
+        
+        /* Nested container for collapsible content */
+        .nested-container { 
+            padding-left: 1.5rem; 
+            margin-top: 0.5rem; /* Reduced margin */
+            border-left: 2px solid var(--border-color); 
+            overflow: hidden; /* For smooth transition */
+            transition: max-height 0.3s ease-out; /* Smooth slide effect */
+            max-height: 0; /* Initially collapsed */
+        }
+        .nested-container.expanded {
+            max-height: 1000px; /* Arbitrary large value to allow full expansion */
+        }
+
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; }
         .sub-item:hover { background-color: var(--button-hover-darken); }
         .sub-item a { color: var(--accent-blue); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
+
+        /* Collapse/Expand Arrow */
+        .collapse-arrow {
+            margin-left: 10px;
+            transition: transform 0.3s ease-out;
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--text-secondary);
+        }
+        .content-header[aria-expanded="true"] .collapse-arrow {
+            transform: rotate(90deg); /* Point right when expanded */
+        }
+        .content-header[aria-expanded="false"] .collapse-arrow {
+            transform: rotate(0deg); /* Point down when collapsed */
+        }
+
 
         /* Video Embedding Styles */
         .video-embed-container {
@@ -1543,8 +1581,14 @@
                 <div id="teacher-${type}-view" style="display:none;">
                     <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                        <button id="toggle-view-mode-${type}" class="btn-primary" style="margin-left: 1rem;">Switch View Mode</button>
+                        <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
                     </div>
-                    <div id="level1-${type}-container"></div>
+                    <div id="level1-${type}-container" class="folder-view"></div>
+                    <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; color:var(--text-secondary);">
+                        Board View (Future Feature)
+                        <p>This will be an interactive tree diagram or board where you can freely move files.</p>
+                    </div>
                     ${type === 'exercises' ? `
                         <div class="form-container" style="max-width: initial; margin-top: 2rem;">
                             <h3>Promo Code Management</h3>
@@ -1572,6 +1616,32 @@
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+                
+                const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
+                const folderView = document.getElementById(`level1-${type}-container`);
+                const boardView = document.getElementById(`board-view-${type}`);
+                const viewStatus = document.getElementById(`view-mode-status-${type}`);
+                
+                let currentViewMode = 'folder'; // 'folder' or 'board'
+
+                const updateViewDisplay = () => {
+                    if (currentViewMode === 'folder') {
+                        folderView.style.display = 'block';
+                        boardView.style.display = 'none';
+                        viewStatus.textContent = '(Current: Folder View)';
+                    } else {
+                        folderView.style.display = 'none';
+                        boardView.style.display = 'block';
+                        viewStatus.textContent = '(Current: Board View)';
+                    }
+                };
+
+                toggleViewBtn.onclick = () => {
+                    currentViewMode = currentViewMode === 'folder' ? 'board' : 'folder';
+                    updateViewDisplay();
+                };
+                updateViewDisplay(); // Set initial display
+
                 if (type === 'exercises') {
                     document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
                     // Initial load of promo codes for teacher
@@ -1614,9 +1684,10 @@
                     if (level < 3) {
                         const nextLevel = level + 1;
                         const newParentIds = [...parentIds, doc.id];
+                        // Add aria-expanded for accessibility and CSS targeting
                         headerHtml = `
-                            <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>
-                                <${level === 1 ? 'h3' : 'h4'}>${item.name}</${level === 1 ? 'h3' : 'h4'}>
+                            <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                                <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
                                 <div class="item-actions">
                                     <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
                                     <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
@@ -1674,10 +1745,11 @@
                 const container = document.getElementById(`container-level${nextLevel}-${type}-${id}`);
                 if (!container) return;
 
-                const isVisible = container.style.display === 'block';
-                container.style.display = isVisible ? 'none' : 'block';
+                const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                header.setAttribute('aria-expanded', !isExpanded);
+                container.classList.toggle('expanded', !isExpanded);
 
-                if (!isVisible && !container.dataset.loaded) {
+                if (!isExpanded && !container.dataset.loaded) {
                     const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
                     await renderContent(type, container.id, nextLevel, [...parentIdsArray, id]);
                     container.dataset.loaded = 'true';
@@ -1961,15 +2033,26 @@
 
             totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
 
-            // Validate cart: Checkout enabled if total price is $100 or more.
-            const priceValid = finalPrice >= 100;
+            // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
+            const canCheckout = finalPrice >= 0 && shoppingCart.length > 0;
 
-            if (priceValid) {
+            if (canCheckout) {
                 checkoutBtn.disabled = false;
-                validationMsg.textContent = '';
+                if (finalPrice === 0) {
+                    validationMsg.textContent = 'Proceed to checkout for free!';
+                } else if (finalPrice < 100) {
+                    validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+                    checkoutBtn.disabled = true; // Still enforce $100 minimum for paid checkout
+                } else {
+                    validationMsg.textContent = '';
+                }
             } else {
                 checkoutBtn.disabled = true;
-                validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+                if (shoppingCart.length === 0) {
+                    validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
+                } else {
+                    validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+                }
             }
         }
 
@@ -2019,32 +2102,71 @@
 
 
         async function handleCheckout() {
-            if (!currentUserId) return showModal('Error', 'You must be logged in to check out.');
-            if (STRIPE_PAYMENT_LINK.includes("...")) {
-                return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+            if (!currentUserId) {
+                return showModal('Error', 'You must be logged in to check out.');
             }
 
-            const checkoutSessionId = crypto.randomUUID();
-            const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
+            // Recalculate final price with applied discount
+            let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
+            let finalPrice = subtotal;
+            if (appliedPromoCode) {
+                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
+            }
 
-            try {
-                // Save the cart and applied promo code to Firestore
-                await setDoc(checkoutSessionRef, {
-                    cart: shoppingCart,
-                    appliedPromoCode: appliedPromoCode, // Save applied promo code
-                    created: Date.now()
-                });
+            if (shoppingCart.length === 0) {
+                return showModal('Checkout Error', 'Your cart is empty. Please add items before checking out.');
+            }
 
-                // Redirect to Stripe
-                // Note: Stripe's actual redirect parameters might vary.
-                // The `client_reference_id` is crucial for linking back to your session.
-                // `prefilled_email` is good for user experience.
-                const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
-                window.location.href = stripeUrl;
+            if (finalPrice === 0) {
+                // Direct "free" checkout - bypass Stripe
+                try {
+                    const batch = writeBatch(db);
+                    shoppingCart.forEach(item => {
+                        const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                        batch.set(purchaseRef, { name: item.name, price: item.price, purchasedAt: Date.now() });
+                    });
+                    await batch.commit();
 
-            } catch (error) {
-                console.error("Error creating checkout session:", error);
-                showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+                    showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
+                    shoppingCart = []; // Clear the local cart
+                    appliedPromoCode = null; // Clear applied promo code
+                    updateCartUI(); // Update UI to reflect empty cart and no promo
+                    showSection('exerciseSection'); // Re-render the exercises page
+                    renderStudentItems('exercises');
+
+                } catch (error) {
+                    console.error("Error processing free checkout:", error);
+                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
+                }
+
+            } else if (finalPrice >= 100) {
+                // Proceed with Stripe checkout for paid items
+                if (STRIPE_PAYMENT_LINK.includes("...")) {
+                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+                }
+
+                const checkoutSessionId = crypto.randomUUID();
+                const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
+
+                try {
+                    // Save the cart and applied promo code to Firestore
+                    await setDoc(checkoutSessionRef, {
+                        cart: shoppingCart,
+                        appliedPromoCode: appliedPromoCode, // Save applied promo code
+                        created: Date.now(),
+                        totalAmount: finalPrice // Save the final amount for record
+                    });
+
+                    // Redirect to Stripe
+                    const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                    window.location.href = stripeUrl;
+
+                } catch (error) {
+                    console.error("Error creating checkout session:", error);
+                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+                }
+            } else {
+                showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
             }
         }
         
