@@ -472,7 +472,20 @@
         .material-card-content h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
         
         /* Teacher Content Management Styles (Tutorials, Papers, Exercises) */
-        .content-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: var(--bg-primary); }
+        .content-item { 
+            padding: 1rem; 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            margin-bottom: 1rem; 
+            background: var(--bg-primary); 
+            /* Add styles for drag-and-drop targets */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .content-item.drag-over {
+            background-color: rgba(88, 166, 255, 0.2); /* Highlight on drag over */
+            border-color: var(--accent-blue);
+        }
+
         .content-header { 
             display: flex; 
             justify-content: space-between; 
@@ -496,7 +509,14 @@
             max-height: 1000px; /* Arbitrary large value to allow full expansion */
         }
 
-        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; }
+        .sub-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0.5rem; 
+            border-radius: 4px; 
+            cursor: grab; /* Indicate draggable */
+        }
         .sub-item:hover { background-color: var(--button-hover-darken); }
         .sub-item a { color: var(--accent-blue); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
@@ -1617,6 +1637,13 @@
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 
+                // Add drag-and-drop event listeners to the main container for the teacher view
+                const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
+                teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
+                teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
+                teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
+
+
                 const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
                 const folderView = document.getElementById(`level1-${type}-container`);
                 const boardView = document.getElementById(`board-view-${type}`);
@@ -1703,6 +1730,12 @@
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
+                        // Add draggable attributes and event listeners for level 3 items
+                        el.setAttribute('draggable', 'true');
+                        el.dataset.itemId = doc.id;
+                        el.dataset.itemType = type;
+                        el.dataset.itemParentIds = JSON.stringify(parentIds);
+                        el.addEventListener('dragstart', handleDragStart);
                     }
                     el.innerHTML = headerHtml;
                     container.appendChild(el);
@@ -1845,6 +1878,138 @@
             ]);
         }
         
+        // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
+        let draggedItem = null; // Stores data about the item being dragged
+
+        function handleDragStart(e) {
+            const subItem = e.target.closest('.sub-item');
+            if (!subItem) return;
+
+            draggedItem = {
+                id: subItem.dataset.itemId,
+                type: subItem.dataset.itemType,
+                parentIds: JSON.parse(subItem.dataset.itemParentIds)
+            };
+            e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
+            e.dataTransfer.effectAllowed = 'move';
+            subItem.classList.add('dragging'); // Optional: Add visual feedback for the dragged item
+        }
+
+        function handleDragOver(e, type) {
+            e.preventDefault(); // Crucial to allow dropping
+            const targetElement = e.target.closest('.content-item'); // Target is a folder (level 1 or 2)
+            if (targetElement && draggedItem && draggedItem.type === type) { // Only allow dropping items of the same type
+                targetElement.classList.add('drag-over');
+                e.dataTransfer.dropEffect = 'move';
+            } else {
+                e.dataTransfer.dropEffect = 'none';
+            }
+        }
+
+        function handleDragLeave(e, type) {
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement) {
+                targetElement.classList.remove('drag-over');
+            }
+        }
+
+        async function handleDrop(e, type) {
+            e.preventDefault();
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement) {
+                targetElement.classList.remove('drag-over');
+            }
+
+            if (!draggedItem) return; // No item being dragged
+
+            const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
+            
+            // Ensure the dropped item is of the same type as the section
+            if (droppedItemData.type !== type) {
+                showModal('Move Error', 'Cannot move items between different material types (e.g., tutorials to past papers).');
+                draggedItem = null; // Reset dragged item
+                return;
+            }
+
+            const newParentLevel = parseInt(targetElement.dataset.level);
+            const newParentId = targetElement.dataset.id;
+            const newParentIds = JSON.parse(targetElement.dataset.parentIds);
+
+            // Determine the new full path for the item
+            let newFullParentIds = [];
+            if (newParentLevel === 1) { // Dropped into a Level 1 folder (Subject)
+                newFullParentIds = [newParentId];
+            } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (Topic/Year)
+                newFullParentIds = [...newParentIds, newParentId];
+            } else {
+                showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
+                draggedItem = null;
+                return;
+            }
+
+            // Prevent dropping into the same folder or an invalid folder structure (e.g., dropping a subject into a topic)
+            if (newFullParentIds.length !== 2) { // Files (level 3) always have 2 parent IDs
+                 showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
+                 draggedItem = null;
+                 return;
+            }
+
+            const oldParentIds = draggedItem.parentIds;
+            const itemId = draggedItem.id;
+            const itemType = draggedItem.type;
+
+            // Check if the item is being dropped into its current parent folder
+            if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
+                showModal('Move Info', 'Item is already in this folder.');
+                draggedItem = null;
+                return;
+            }
+
+            // Get a reference to the original document
+            const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
+            const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
+
+            try {
+                // Fetch the item's data
+                const docSnap = await getDoc(oldDocRef);
+                if (!docSnap.exists()) {
+                    throw new Error("Item not found for moving.");
+                }
+                const itemData = docSnap.data();
+
+                // Use a batch write for atomicity: delete from old location, add to new
+                const batch = writeBatch(db);
+                batch.set(newDocRef, itemData); // Create a new document with the same data in the new location
+                batch.delete(oldDocRef); // Delete the original document
+
+                await batch.commit();
+
+                showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+                
+                // Re-render both the old and new parent containers to reflect changes
+                const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
+                const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
+                
+                // Only re-render if the containers are currently expanded/loaded
+                if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
+                    renderContent(itemType, oldContainerId, 3, oldParentIds);
+                }
+                if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
+                     renderContent(itemType, newContainerId, 3, newFullParentIds);
+                }
+                // If a parent folder was not expanded, it will load correctly when expanded next time.
+
+            } catch (error) {
+                console.error("Error moving item:", error);
+                showModal('Move Error', `Could not move item. Error: ${error.message}`);
+            } finally {
+                draggedItem = null; // Reset dragged item
+                // Remove dragging class from original item if it still exists
+                document.querySelectorAll('.sub-item.dragging').forEach(el => el.classList.remove('dragging'));
+            }
+        }
+
+
         // --- STUDENT FILTER LOGIC ---
         function setupStudentFilters(type) {
             const config = materialsConfig[type];
