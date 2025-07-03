@@ -621,6 +621,76 @@
             background-color: var(--button-blue-lighten);
         }
 
+        /* Promo code styles */
+        .promo-code-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .promo-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .promo-input-group input {
+            flex-grow: 1;
+            margin-bottom: 0; /* Override default input margin */
+        }
+        .promo-input-group button {
+            flex-shrink: 0;
+            padding: 8px 12px;
+            font-size: 0.875rem;
+        }
+        .promo-display {
+            font-size: 0.875rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .promo-display .remove-promo-btn {
+            color: var(--accent-red);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+        }
+        .promo-display .remove-promo-btn:hover {
+            text-decoration: underline;
+        }
+        .promo-error {
+            color: var(--accent-red);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .promo-code-list {
+            margin-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+        .promo-code-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.9rem;
+        }
+        .promo-code-item:last-child {
+            border-bottom: none;
+        }
+        .promo-code-item span:first-child {
+            font-weight: 600;
+        }
+        .promo-code-item .actions button {
+            margin-left: 0.5rem;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+
         /* Modal styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -774,7 +844,7 @@
         </div>
         <div class="login-right-panel">
             <div id="authContainer">
-                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate here -->
+                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
             </div>
         </div>
     </div>
@@ -1087,7 +1157,7 @@
         // --- IMPORTANT CONFIGURATION ---
         // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
         // Create a product in Stripe with a price, then create a payment link for it.
-        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; // Updated Stripe Link
+        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -1111,6 +1181,7 @@
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
         let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
         let shoppingCart = [];
+        let appliedPromoCode = null; // New variable to store applied promo code details
 
         // --- AUTH & INITIALIZATION ---
         
@@ -1302,6 +1373,9 @@
             });
 
             if (sectionIdToShow === 'profileSection') loadProfileData();
+            if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
+                loadPromoCodesForTeacher(); // Load promo codes when teacher views exercises
+            }
         }
 
         function setupSectionToggle() {
@@ -1434,13 +1508,29 @@
                             <div id="cart-items"></div>
                             <div id="cart-summary">
                                 <div class="summary-line">
-                                    <span>Total Items:</span>
-                                    <span id="cart-total-items">0</span>
+                                    <span>Subtotal:</span>
+                                    <span id="cart-subtotal-price">$0.00</span>
+                                </div>
+                                <div class="summary-line" id="promo-discount-line" style="display:none;">
+                                    <span>Promo Discount:</span>
+                                    <span id="cart-promo-discount">-$0.00</span>
                                 </div>
                                 <div class="summary-line">
                                     <span>Total Price:</span>
                                     <span id="cart-total-price">$0.00</span>
                                 </div>
+                            </div>
+                            <div class="promo-code-section">
+                                <label for="promoCodeInput">Promo Code:</label>
+                                <div class="promo-input-group">
+                                    <input type="text" id="promoCodeInput" placeholder="Enter promo code">
+                                    <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
+                                </div>
+                                <div id="appliedPromoCodeDisplay" class="promo-display" style="display:none;">
+                                    <span>Applied: <span id="appliedPromoCodeText"></span></span>
+                                    <button id="removePromoCodeBtn" class="remove-promo-btn">Remove</button>
+                                </div>
+                                <p id="promoCodeError" class="promo-error"></p>
                             </div>
                             <div id="cart-validation-message"></div>
                             <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
@@ -1455,6 +1545,20 @@
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
                     </div>
                     <div id="level1-${type}-container"></div>
+                    ${type === 'exercises' ? `
+                        <div class="form-container" style="max-width: initial; margin-top: 2rem;">
+                            <h3>Promo Code Management</h3>
+                            <div style="margin-bottom: 1rem;">
+                                <label for="promoDiscountAmount">Discount Amount ($)</label>
+                                <input type="number" id="promoDiscountAmount" placeholder="e.g., 10.00" step="0.01" min="0">
+                            </div>
+                            <button id="generatePromoCodeBtn" class="btn-primary">Generate New Promo Code</button>
+                            <p id="promoCodeGenerationStatus" class="loading-indicator"></p>
+                            <div class="promo-code-list" id="teacherPromoCodeList">
+                                <p>No promo codes generated yet.</p>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
                 <div id="student-${type}-view" style="display:none;">
                     ${studentViewHtml}
@@ -1468,10 +1572,17 @@
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+                if (type === 'exercises') {
+                    document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
+                    // Initial load of promo codes for teacher
+                    loadPromoCodesForTeacher();
+                }
             } else {
                 setupStudentFilters(type);
                 if(config.isPaid) {
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+                    document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
+                    document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
                 }
             }
         }
@@ -1791,20 +1902,28 @@
 
         function updateCartUI() {
             const cartItemsContainer = document.getElementById('cart-items');
-            const totalItemsEl = document.getElementById('cart-total-items');
+            const subtotalPriceEl = document.getElementById('cart-subtotal-price');
+            const promoDiscountLine = document.getElementById('promo-discount-line');
+            const promoDiscountEl = document.getElementById('cart-promo-discount');
             const totalPriceEl = document.getElementById('cart-total-price');
             const checkoutBtn = document.getElementById('checkout-btn');
             const validationMsg = document.getElementById('cart-validation-message');
+            const promoCodeInput = document.getElementById('promoCodeInput');
+            const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
+            const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
+            const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
+            const promoCodeError = document.getElementById('promoCodeError');
+
 
             cartItemsContainer.innerHTML = '';
-            let totalPrice = 0;
+            let subtotal = 0;
 
             if (shoppingCart.length === 0) {
                 cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
             }
 
             shoppingCart.forEach(item => {
-                totalPrice += item.price;
+                subtotal += item.price;
                 const itemEl = document.createElement('div');
                 itemEl.className = 'cart-item';
                 itemEl.innerHTML = `
@@ -1819,11 +1938,31 @@
                 btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
             });
 
-            totalItemsEl.textContent = shoppingCart.length;
-            totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+            subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+            let finalPrice = subtotal;
+
+            if (appliedPromoCode) {
+                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
+                promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
+                promoDiscountLine.style.display = 'flex';
+                appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
+                appliedPromoCodeDisplay.style.display = 'flex';
+                promoCodeInput.disabled = true;
+                applyPromoCodeBtn.disabled = true;
+                promoCodeInput.value = appliedPromoCode.code; // Pre-fill with applied code
+                promoCodeError.textContent = ''; // Clear any previous error
+            } else {
+                promoDiscountLine.style.display = 'none';
+                appliedPromoCodeDisplay.style.display = 'none';
+                promoCodeInput.disabled = false;
+                applyPromoCodeBtn.disabled = false;
+                promoCodeInput.value = ''; // Clear input if no code applied
+            }
+
+            totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
 
             // Validate cart: Checkout enabled if total price is $100 or more.
-            const priceValid = totalPrice >= 100;
+            const priceValid = finalPrice >= 100;
 
             if (priceValid) {
                 checkoutBtn.disabled = false;
@@ -1833,6 +1972,51 @@
                 validationMsg.textContent = 'Minimum total of $100 required to checkout.';
             }
         }
+
+        async function applyPromoCode() {
+            const promoCodeInput = document.getElementById('promoCodeInput');
+            const promoCodeError = document.getElementById('promoCodeError');
+            const code = promoCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
+
+            promoCodeError.textContent = ''; // Clear previous errors
+
+            if (!code) {
+                promoCodeError.textContent = 'Please enter a promo code.';
+                return;
+            }
+
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+            try {
+                const docSnap = await getDoc(promoCodeRef);
+                if (docSnap.exists()) {
+                    const promoData = docSnap.data();
+                    if (promoData.isActive) {
+                        appliedPromoCode = {
+                            code: code,
+                            discountAmount: promoData.discountAmount
+                        };
+                        updateCartUI();
+                        showModal('Promo Code Applied', `Successfully applied promo code "${code}" for a $${promoData.discountAmount.toFixed(2)} discount!`);
+                    } else {
+                        promoCodeError.textContent = 'This promo code is not active.';
+                    }
+                } else {
+                    promoCodeError.textContent = 'Invalid promo code.';
+                }
+            } catch (error) {
+                console.error("Error applying promo code:", error);
+                promoCodeError.textContent = `Error applying code: ${error.message}`;
+            }
+        }
+
+        function removeAppliedPromoCode() {
+            appliedPromoCode = null;
+            updateCartUI();
+            document.getElementById('promoCodeInput').value = ''; // Clear input field
+            document.getElementById('promoCodeError').textContent = ''; // Clear error message
+            showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
+        }
+
 
         async function handleCheckout() {
             if (!currentUserId) return showModal('Error', 'You must be logged in to check out.');
@@ -1844,9 +2028,10 @@
             const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
 
             try {
-                // Save the cart to Firestore so we can retrieve it after payment
+                // Save the cart and applied promo code to Firestore
                 await setDoc(checkoutSessionRef, {
                     cart: shoppingCart,
+                    appliedPromoCode: appliedPromoCode, // Save applied promo code
                     created: Date.now()
                 });
 
@@ -1886,6 +2071,7 @@
                         
                         showModal('Purchase Successful!', 'Your new exercises are now available for download.');
                         shoppingCart = []; // Clear the local cart
+                        appliedPromoCode = null; // Clear applied promo code
                         
                         // Clean the URL
                         window.history.replaceState({}, document.title, window.location.pathname);
@@ -1900,6 +2086,126 @@
                 }
             }
         }
+
+        // --- PROMO CODE MANAGEMENT (TEACHER SIDE) ---
+        function generateRandomCode(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        async function generateAndSavePromoCode() {
+            const promoDiscountAmountInput = document.getElementById('promoDiscountAmount');
+            const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
+            const discountAmount = parseFloat(promoDiscountAmountInput.value);
+
+            promoCodeGenerationStatus.textContent = ''; // Clear previous messages
+
+            if (isNaN(discountAmount) || discountAmount <= 0) {
+                promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount (must be positive).';
+                return;
+            }
+
+            const newCode = generateRandomCode(8);
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
+
+            try {
+                promoCodeGenerationStatus.textContent = 'Generating and saving promo code...';
+                await setDoc(promoCodeRef, {
+                    code: newCode,
+                    discountAmount: discountAmount,
+                    isActive: true, // New codes are active by default
+                    createdAt: Date.now(),
+                    createdBy: currentUserId
+                });
+                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated with $${discountAmount.toFixed(2)} discount!`;
+                promoDiscountAmountInput.value = ''; // Clear discount input
+                loadPromoCodesForTeacher(); // Refresh the list
+            } catch (error) {
+                console.error("Error generating promo code:", error);
+                promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadPromoCodesForTeacher() {
+            const teacherPromoCodeList = document.getElementById('teacherPromoCodeList');
+            teacherPromoCodeList.innerHTML = '<p class="loading-indicator">Loading promo codes...</p>';
+
+            const promoCodesCollectionRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
+            const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
+
+            try {
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
+                    return;
+                }
+
+                teacherPromoCodeList.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const promo = doc.data();
+                    const promoItem = document.createElement('div');
+                    promoItem.className = 'promo-code-item';
+                    promoItem.innerHTML = `
+                        <span>${promo.code}</span>
+                        <span>$${promo.discountAmount.toFixed(2)}</span>
+                        <span>${promo.isActive ? 'Active' : 'Inactive'}</span>
+                        <div class="actions">
+                            <button class="btn-primary toggle-promo-status-btn" data-code="${promo.code}" data-is-active="${promo.isActive ? 'true' : 'false'}">
+                                ${promo.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button class="logout-btn delete-promo-btn" data-code="${promo.code}">Delete</button>
+                        </div>
+                    `;
+                    teacherPromoCodeList.appendChild(promoItem);
+                });
+
+                // Add event listeners for toggle and delete buttons
+                teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => {
+                    button.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
+                });
+                teacherPromoCodeList.querySelectorAll('.delete-promo-btn').forEach(button => {
+                    button.addEventListener('click', (e) => deletePromoCode(e.target.dataset.code));
+                });
+
+            } catch (error) {
+                console.error("Error loading promo codes:", error);
+                teacherPromoCodeList.innerHTML = '<p class="error-message">Error loading promo codes.</p>';
+            }
+        }
+
+        async function togglePromoCodeStatus(code, currentStatus) {
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+            try {
+                await updateDoc(promoCodeRef, { isActive: !currentStatus });
+                showModal('Status Updated', `Promo code "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
+                loadPromoCodesForTeacher(); // Refresh the list
+            } catch (error) {
+                console.error("Error toggling promo code status:", error);
+                showModal('Error', `Could not update status for "${code}": ${error.message}`);
+            }
+        }
+
+        async function deletePromoCode(code) {
+            showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"? This action cannot be undone.`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+                    try {
+                        await deleteDoc(promoCodeRef);
+                        showModal('Success', `Promo code "${code}" deleted.`);
+                        loadPromoCodesForTeacher(); // Refresh the list
+                    } catch (error) {
+                        console.error("Error deleting promo code:", error);
+                        showModal('Error', `Could not delete "${code}": ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
 
         // --- VIDEO PARSING ---
         function parseVideoInput(input) {
