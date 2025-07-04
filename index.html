@@ -225,7 +225,14 @@
             flex-shrink: 0;
         }
         
-        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        /* Make logo clickable */
+        #logoLink {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
         .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
         .logo-container p { font-weight: 400; color: var(--text-secondary); }
         
@@ -393,10 +400,10 @@
         main {
             flex: 1;
             display: flex;
-            overflow-y: auto;
+            overflow-y: auto; /* Changed to auto for better scrolling */
             padding: 24px;
             gap: 24px;
-            padding-bottom: 100px;
+            padding-bottom: 24px; /* Reduced bottom padding */
         }
         
         /* Content Sections */
@@ -434,11 +441,31 @@
         .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
 
         /* Chat styles */
-        #chatSection, #studentManagementSection { display: none; flex-direction: column; gap: 1rem; }
+        #chatSection { display: none; flex-direction: column; gap: 1rem; height: 100%; }
         #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 85%; padding: 10px 14px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; }
         .chat-message.user { background-color: var(--accent-blue); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
         .chat-message.gemini { background-color: var(--button-hover-darken); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .chat-message.loading {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-message.loading .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .chat-message.loading .dot:nth-child(1) { animation-delay: -0.32s; }
+        .chat-message.loading .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
         .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; }
         #chatInput { flex: 1; padding: .75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-secondary); color: var(--text-primary); }
         #sendChatButton { padding: .5rem 1rem; border: none; background: var(--accent-blue); color: var(--bg-primary); border-radius: 6px; font-weight: 600; cursor: pointer; }
@@ -454,7 +481,12 @@
         
         /* Student Management Styles */
         #authorizedStudentsList { display: flex; flex-direction: column; gap: 0.5rem; }
-        .student-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .student-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); flex-wrap: wrap; }
+        .student-info { flex-grow: 1; }
+        .student-info span { display: block; }
+        .student-info .student-name { font-weight: 600; }
+        .student-info .student-email { font-size: 0.9em; color: var(--text-secondary); }
+        .student-info .student-last-login { font-size: 0.8em; color: var(--accent-blue); margin-top: 4px; }
         .delete-student-btn { background: none; border: none; color: var(--accent-red); cursor: pointer; padding: 4px; }
         .delete-student-btn:hover { background-color: var(--button-red-lighten); border-radius: 50%; }
 
@@ -478,7 +510,6 @@
             border-radius: 6px; 
             margin-bottom: 1rem; 
             background: var(--bg-primary); 
-            /* Add styles for drag-and-drop targets */
             transition: background-color 0.2s ease-in-out;
         }
         .content-item.drag-over {
@@ -494,6 +525,7 @@
             padding: 0.5rem 0; /* Add padding for click area */
         }
         .content-header h3, .content-header h4 { margin: 0; }
+        .item-actions { display: flex; align-items: center; gap: 0.75rem; }
         .item-actions button { margin-left: 0.5rem; padding: 4px 8px; font-size: 0.8rem; }
         
         /* Nested container for collapsible content */
@@ -506,7 +538,7 @@
             max-height: 0; /* Initially collapsed */
         }
         .nested-container.expanded {
-            max-height: 1000px; /* Arbitrary large value to allow full expansion */
+            max-height: 2000px; /* Arbitrary large value to allow full expansion */
         }
 
         .sub-item { 
@@ -520,6 +552,7 @@
         .sub-item:hover { background-color: var(--button-hover-darken); }
         .sub-item a { color: var(--accent-blue); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
+        .sub-item-name { flex-grow: 1; margin-right: 1rem; }
 
         /* Collapse/Expand Arrow */
         .collapse-arrow {
@@ -538,6 +571,17 @@
         .content-header[aria-expanded="false"] .collapse-arrow {
             transform: rotate(0deg); /* Point down when collapsed */
         }
+
+        /* Visibility Toggle Switch CSS */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4d555e; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
+        input:checked + .slider { background-color: var(--accent-green); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--accent-green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .slider.round { border-radius: 24px; }
+        .slider.round:before { border-radius: 50%; }
 
 
         /* Video Embedding Styles */
@@ -909,10 +953,12 @@
 
     <div id="appSection" style="display: none;">
         <header>
-            <div class="logo-container">
-                <h1>AI Marker</h1>
-                <p>Operated by Darren Ng</p>
-            </div>
+             <a href="#" id="logoLink">
+                <div class="logo-container">
+                    <h1>AI Marker</h1>
+                    <p>Operated by Darren Ng</p>
+                </div>
+            </a>
             <div class="header-actions">
                 <button id="toggleHomeButton" class="tab neon-button active">
                     <span></span><span></span><span></span><span></span>
@@ -1018,7 +1064,7 @@
                 </div>
 
                 <button id="gradeButton" class="btn-primary">Grade Work</button>
-                <p id="gradingLoadingIndicator" class="loading-indicator"></p>
+                <div id="gradingLoadingIndicator" class="loading-indicator" style="display: none;"></div>
                 <div id="resultContainer">
                     <h2>Grading Results:</h2>
                     <p id="gradeResult">Your grading results will appear here.</p>
@@ -1041,7 +1087,6 @@
                     <input type="text" id="chatInput" placeholder="Type a message…">
                     <button id="sendChatButton">Send</button>
                 </div>
-                 <p id="chatLoadingIndicator" class="loading-indicator"></p>
             </div>
 
             <!-- Student Management Section -->
@@ -1050,8 +1095,9 @@
                 <div class="add-student-form form-container">
                     <input type="email" id="studentEmailInput" placeholder="Enter student's Gmail address">
                     <button id="addStudentButton" class="btn-primary">Add Student</button>
+                    <p id="addStudentStatus" class="loading-indicator" style="display: none;"></p>
                 </div>
-                <p id="studentManagementLoading" class="loading-indicator"></p>
+                <div id="studentManagementLoading" class="loading-indicator" style="display: none;"></div>
                 <div id="authorizedStudentsList">
                     <p id="noAuthorizedStudents">No authorized students yet.</p>
                 </div>
@@ -1209,7 +1255,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- IMPORTANT CONFIGURATION ---
@@ -1237,7 +1283,7 @@
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
+        let geminiChatHistory = [];
         let shoppingCart = [];
         let appliedPromoCode = null; // New variable to store applied promo code details
 
@@ -1291,6 +1337,7 @@
                     } else {
                         currentUserName = user.displayName;
                         currentUserRole = 'unassigned';
+                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                         showCodeEntry();
                     }
                 } catch (e) {
@@ -1374,7 +1421,7 @@
             
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail }, { merge: true });
                 currentUserRole = roleToSet;
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
@@ -1437,6 +1484,7 @@
         }
 
         function setupSectionToggle() {
+            document.getElementById('logoLink').addEventListener('click', (e) => { e.preventDefault(); showSection('homeSection'); });
             document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
             document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
             document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
@@ -1601,14 +1649,8 @@
                 <div id="teacher-${type}-view" style="display:none;">
                     <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
-                        <button id="toggle-view-mode-${type}" class="btn-primary" style="margin-left: 1rem;">Switch View Mode</button>
-                        <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
                     </div>
                     <div id="level1-${type}-container" class="folder-view"></div>
-                    <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; color:var(--text-secondary);">
-                        Board View (Future Feature)
-                        <p>This will be an interactive tree diagram or board where you can freely move files.</p>
-                    </div>
                     ${type === 'exercises' ? `
                         <div class="form-container" style="max-width: initial; margin-top: 2rem;">
                             <h3>Promo Code Management</h3>
@@ -1637,41 +1679,13 @@
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 
-                // Add drag-and-drop event listeners to the main container for the teacher view
                 const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
                 teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
                 teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
                 teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
 
-
-                const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
-                const folderView = document.getElementById(`level1-${type}-container`);
-                const boardView = document.getElementById(`board-view-${type}`);
-                const viewStatus = document.getElementById(`view-mode-status-${type}`);
-                
-                let currentViewMode = 'folder'; // 'folder' or 'board'
-
-                const updateViewDisplay = () => {
-                    if (currentViewMode === 'folder') {
-                        folderView.style.display = 'block';
-                        boardView.style.display = 'none';
-                        viewStatus.textContent = '(Current: Folder View)';
-                    } else {
-                        folderView.style.display = 'none';
-                        boardView.style.display = 'block';
-                        viewStatus.textContent = '(Current: Board View)';
-                    }
-                };
-
-                toggleViewBtn.onclick = () => {
-                    currentViewMode = currentViewMode === 'folder' ? 'board' : 'folder';
-                    updateViewDisplay();
-                };
-                updateViewDisplay(); // Set initial display
-
                 if (type === 'exercises') {
                     document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
-                    // Initial load of promo codes for teacher
                     loadPromoCodesForTeacher();
                 }
             } else {
@@ -1703,7 +1717,7 @@
                 container.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Ensure item ID is available for preview/delete
+                    item.id = doc.id;
                     const el = document.createElement('div');
                     el.className = level < 3 ? 'content-item' : 'sub-item';
 
@@ -1711,7 +1725,6 @@
                     if (level < 3) {
                         const nextLevel = level + 1;
                         const newParentIds = [...parentIds, doc.id];
-                        // Add aria-expanded for accessibility and CSS targeting
                         headerHtml = `
                             <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
                                 <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
@@ -1725,12 +1738,16 @@
                     } else { // Level 3 - Final item
                         let itemName = item.name || item.title;
                         let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
-                        headerHtml = `<span>${itemName}${itemPrice}</span>
+                        const isVisible = item.isVisibleToStudents === false ? '' : 'checked'; // Default to checked if undefined
+                        headerHtml = `<span class="sub-item-name">${itemName}${itemPrice}</span>
                                      <div class="item-actions">
+                                        <label class="switch" title="Visible to students">
+                                          <input type="checkbox" class="visibility-toggle" data-type="${type}" data-parent-ids='${JSON.stringify(parentIds)}' data-id="${doc.id}" ${isVisible}>
+                                          <span class="slider round"></span>
+                                        </label>
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
-                        // Add draggable attributes and event listeners for level 3 items
                         el.setAttribute('draggable', 'true');
                         el.dataset.itemId = doc.id;
                         el.dataset.itemType = type;
@@ -1749,6 +1766,15 @@
         async function handleTeacherClick(e, type) {
             const header = e.target.closest('.content-header');
             const button = e.target.closest('button');
+            const toggle = e.target.closest('.visibility-toggle');
+
+            if (toggle) {
+                const { type, parentIds, id } = toggle.dataset;
+                const parentIdsArray = JSON.parse(parentIds);
+                const isVisible = toggle.checked;
+                await toggleMaterialVisibility(type, parentIdsArray, id, isVisible);
+                return; // Stop further processing
+            }
 
             if (button) {
                 e.stopPropagation();
@@ -1790,7 +1816,20 @@
             }
         }
 
-        // New function for teacher preview
+        async function toggleMaterialVisibility(type, parentIds, itemId, isVisible) {
+            const docRef = doc(db, getPath(type, parentIds), itemId);
+            try {
+                await updateDoc(docRef, { isVisibleToStudents: isVisible });
+                console.log(`Visibility for item ${itemId} set to ${isVisible}`);
+            } catch (error) {
+                console.error("Error updating visibility:", error);
+                showModal('Error', `Could not update visibility. Error: ${error.message}`);
+                // Revert the checkbox state on error
+                const checkbox = document.querySelector(`.visibility-toggle[data-id="${itemId}"]`);
+                if (checkbox) checkbox.checked = !isVisible;
+            }
+        }
+
         function handleTeacherPreview(type, item) {
             if (type === 'tutorials') {
                 const videoPreviewModal = document.getElementById('videoPreviewModal');
@@ -1843,7 +1882,6 @@
             form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
             form.reset();
 
-            // Also reset file input displays and previews
             if (type === 'pastPapers') {
                 document.getElementById('pastPaperFileName').textContent = 'No file chosen';
                 document.getElementById('pastPaperLink').value = '';
@@ -1863,9 +1901,11 @@
 
             showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    // Note: This only deletes the document, not subcollections.
+                    // For full recursive delete, a Cloud Function is required.
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
-                        await deleteDoc(docRef); // Note: This doesn't delete subcollections. A proper solution requires a cloud function for recursive deletes.
+                        await deleteDoc(docRef); 
                         showModal('Success', `${levelName} deleted.`);
                         const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                         renderContent(type, containerId, level, parentIds);
@@ -1879,7 +1919,7 @@
         }
         
         // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
-        let draggedItem = null; // Stores data about the item being dragged
+        let draggedItem = null;
 
         function handleDragStart(e) {
             const subItem = e.target.closest('.sub-item');
@@ -1892,13 +1932,13 @@
             };
             e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
             e.dataTransfer.effectAllowed = 'move';
-            subItem.classList.add('dragging'); // Optional: Add visual feedback for the dragged item
+            setTimeout(() => subItem.style.opacity = '0.5', 0);
         }
 
         function handleDragOver(e, type) {
-            e.preventDefault(); // Crucial to allow dropping
-            const targetElement = e.target.closest('.content-item'); // Target is a folder (level 1 or 2)
-            if (targetElement && draggedItem && draggedItem.type === type) { // Only allow dropping items of the same type
+            e.preventDefault(); 
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement && draggedItem && draggedItem.type === type) {
                 targetElement.classList.add('drag-over');
                 e.dataTransfer.dropEffect = 'move';
             } else {
@@ -1915,31 +1955,34 @@
 
         async function handleDrop(e, type) {
             e.preventDefault();
+            document.querySelectorAll('.sub-item').forEach(item => item.style.opacity = '1');
+            document.querySelectorAll('.content-item.drag-over').forEach(item => item.classList.remove('drag-over'));
+
+            if (!draggedItem) return;
+
             const targetElement = e.target.closest('.content-item');
-            if (targetElement) {
-                targetElement.classList.remove('drag-over');
+            if (!targetElement) {
+                draggedItem = null;
+                return;
             }
-
-            if (!draggedItem) return; // No item being dragged
-
+            
             const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
             
-            // Ensure the dropped item is of the same type as the section
             if (droppedItemData.type !== type) {
-                showModal('Move Error', 'Cannot move items between different material types (e.g., tutorials to past papers).');
-                draggedItem = null; // Reset dragged item
+                showModal('Move Error', 'Cannot move items between different material types.');
+                draggedItem = null;
                 return;
             }
 
-            const newParentLevel = parseInt(targetElement.dataset.level);
-            const newParentId = targetElement.dataset.id;
-            const newParentIds = JSON.parse(targetElement.dataset.parentIds);
-
-            // Determine the new full path for the item
+            const header = targetElement.querySelector('.content-header');
+            const newParentLevel = parseInt(header.dataset.level);
+            const newParentId = header.dataset.id;
+            const newParentIds = JSON.parse(header.dataset.parentIds);
+            
             let newFullParentIds = [];
-            if (newParentLevel === 1) { // Dropped into a Level 1 folder (Subject)
+            if (newParentLevel === 1) {
                 newFullParentIds = [newParentId];
-            } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (Topic/Year)
+            } else if (newParentLevel === 2) {
                 newFullParentIds = [...newParentIds, newParentId];
             } else {
                 showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
@@ -1947,9 +1990,9 @@
                 return;
             }
 
-            // Prevent dropping into the same folder or an invalid folder structure (e.g., dropping a subject into a topic)
-            if (newFullParentIds.length !== 2) { // Files (level 3) always have 2 parent IDs
-                 showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
+            // Files must be moved into a level 2 folder (which has a level 1 parent)
+            if (newFullParentIds.length !== 2) {
+                 showModal('Move Error', 'Files must be moved into a Topic or Year folder.');
                  draggedItem = null;
                  return;
             }
@@ -1958,54 +2001,42 @@
             const itemId = draggedItem.id;
             const itemType = draggedItem.type;
 
-            // Check if the item is being dropped into its current parent folder
             if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
-                showModal('Move Info', 'Item is already in this folder.');
                 draggedItem = null;
                 return;
             }
 
-            // Get a reference to the original document
             const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
             const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
 
             try {
-                // Fetch the item's data
                 const docSnap = await getDoc(oldDocRef);
-                if (!docSnap.exists()) {
-                    throw new Error("Item not found for moving.");
-                }
+                if (!docSnap.exists()) throw new Error("Item not found for moving.");
+                
                 const itemData = docSnap.data();
-
-                // Use a batch write for atomicity: delete from old location, add to new
                 const batch = writeBatch(db);
-                batch.set(newDocRef, itemData); // Create a new document with the same data in the new location
-                batch.delete(oldDocRef); // Delete the original document
-
+                batch.set(newDocRef, itemData);
+                batch.delete(oldDocRef);
                 await batch.commit();
 
                 showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
                 
                 // Re-render both the old and new parent containers to reflect changes
-                const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
-                const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
+                const oldContainer = document.getElementById(`container-level3-${itemType}-${oldParentIds[1]}`);
+                const newContainer = document.getElementById(`container-level3-${itemType}-${newFullParentIds[1]}`);
                 
-                // Only re-render if the containers are currently expanded/loaded
-                if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
-                    renderContent(itemType, oldContainerId, 3, oldParentIds);
+                if (oldContainer?.classList.contains('expanded')) {
+                    renderContent(itemType, oldContainer.id, 3, oldParentIds);
                 }
-                if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
-                     renderContent(itemType, newContainerId, 3, newFullParentIds);
+                if (newContainer?.classList.contains('expanded')) {
+                     renderContent(itemType, newContainer.id, 3, newFullParentIds);
                 }
-                // If a parent folder was not expanded, it will load correctly when expanded next time.
 
             } catch (error) {
                 console.error("Error moving item:", error);
                 showModal('Move Error', `Could not move item. Error: ${error.message}`);
             } finally {
-                draggedItem = null; // Reset dragged item
-                // Remove dragging class from original item if it still exists
-                document.querySelectorAll('.sub-item.dragging').forEach(el => el.classList.remove('dragging'));
+                draggedItem = null;
             }
         }
 
@@ -2044,8 +2075,10 @@
                  return;
              }
 
+             // NOTE: This query requires a composite index on (isVisibleToStudents, name).
+             // Firestore will provide a link in the console to create it if it doesn't exist.
              const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
-             const q = query(itemsRef, orderBy('name', 'asc'));
+             const q = query(itemsRef, where('isVisibleToStudents', '==', true), orderBy('name', 'asc'));
              
              let purchasedItems = {};
              if(config.isPaid) {
@@ -2059,7 +2092,7 @@
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Add id to item object
+                    item.id = doc.id;
                     const card = document.createElement('div');
                     card.className = 'material-card';
                     
@@ -2101,7 +2134,7 @@
                 });
              } catch(e) {
                 console.error("Error loading student items:", e);
-                grid.innerHTML = "<p>Error loading items.</p>"
+                grid.innerHTML = "<p class='error-message'>Error loading items. A database index might be required. Please check the browser console for a link to create it.</p>"
              }
         }
         
@@ -2198,7 +2231,6 @@
 
             totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
 
-            // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
             const canCheckout = finalPrice >= 0 && shoppingCart.length > 0;
 
             if (canCheckout) {
@@ -2207,7 +2239,7 @@
                     validationMsg.textContent = 'Proceed to checkout for free!';
                 } else if (finalPrice < 100) {
                     validationMsg.textContent = 'Minimum total of $100 required to checkout.';
-                    checkoutBtn.disabled = true; // Still enforce $100 minimum for paid checkout
+                    checkoutBtn.disabled = true;
                 } else {
                     validationMsg.textContent = '';
                 }
@@ -2224,9 +2256,9 @@
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCodeInput');
             const promoCodeError = document.getElementById('promoCodeError');
-            const code = promoCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
+            const code = promoCodeInput.value.trim().toUpperCase();
 
-            promoCodeError.textContent = ''; // Clear previous errors
+            promoCodeError.textContent = '';
 
             if (!code) {
                 promoCodeError.textContent = 'Please enter a promo code.';
@@ -2260,8 +2292,8 @@
         function removeAppliedPromoCode() {
             appliedPromoCode = null;
             updateCartUI();
-            document.getElementById('promoCodeInput').value = ''; // Clear input field
-            document.getElementById('promoCodeError').textContent = ''; // Clear error message
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('promoCodeError').textContent = '';
             showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
         }
 
@@ -2271,7 +2303,6 @@
                 return showModal('Error', 'You must be logged in to check out.');
             }
 
-            // Recalculate final price with applied discount
             let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
             let finalPrice = subtotal;
             if (appliedPromoCode) {
@@ -2279,11 +2310,10 @@
             }
 
             if (shoppingCart.length === 0) {
-                return showModal('Checkout Error', 'Your cart is empty. Please add items before checking out.');
+                return showModal('Checkout Error', 'Your cart is empty.');
             }
 
             if (finalPrice === 0) {
-                // Direct "free" checkout - bypass Stripe
                 try {
                     const batch = writeBatch(db);
                     shoppingCart.forEach(item => {
@@ -2292,43 +2322,39 @@
                     });
                     await batch.commit();
 
-                    showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
-                    shoppingCart = []; // Clear the local cart
-                    appliedPromoCode = null; // Clear applied promo code
-                    updateCartUI(); // Update UI to reflect empty cart and no promo
-                    showSection('exerciseSection'); // Re-render the exercises page
+                    showModal('Purchase Successful!', 'Your new exercises are now available for download.');
+                    shoppingCart = [];
+                    appliedPromoCode = null;
+                    updateCartUI();
                     renderStudentItems('exercises');
 
                 } catch (error) {
                     console.error("Error processing free checkout:", error);
-                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not complete free checkout. Error: ${error.message}`);
                 }
 
             } else if (finalPrice >= 100) {
-                // Proceed with Stripe checkout for paid items
                 if (STRIPE_PAYMENT_LINK.includes("...")) {
-                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured.');
                 }
 
                 const checkoutSessionId = crypto.randomUUID();
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
 
                 try {
-                    // Save the cart and applied promo code to Firestore
                     await setDoc(checkoutSessionRef, {
                         cart: shoppingCart,
-                        appliedPromoCode: appliedPromoCode, // Save applied promo code
+                        appliedPromoCode: appliedPromoCode,
                         created: Date.now(),
-                        totalAmount: finalPrice // Save the final amount for record
+                        totalAmount: finalPrice
                     });
 
-                    // Redirect to Stripe
                     const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
                     window.location.href = stripeUrl;
 
                 } catch (error) {
                     console.error("Error creating checkout session:", error);
-                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not initiate checkout. Error: ${error.message}`);
                 }
             } else {
                 showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
@@ -2337,9 +2363,8 @@
         
         async function checkForSuccessfulPurchase() {
             const params = new URLSearchParams(window.location.search);
-            const sessionId = params.get('session_id'); // This is a placeholder, Stripe might use a different param
+            const sessionId = params.get('session_id');
 
-            // A more robust check might be needed depending on Stripe's redirect behavior
             if (params.get('payment_status') === 'success' && sessionId) {
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
                 try {
@@ -2347,23 +2372,20 @@
                     if (sessionDoc.exists()) {
                         const purchasedItems = sessionDoc.data().cart;
 
-                        // Use a batch write to add all purchased items and delete the session doc atomically
                         const batch = writeBatch(db);
                         purchasedItems.forEach(item => {
                             const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
                             batch.set(purchaseRef, { name: item.name, price: item.price, purchasedAt: Date.now() });
                         });
-                        batch.delete(checkoutSessionRef); // Clean up the session doc
+                        batch.delete(checkoutSessionRef);
                         await batch.commit();
                         
                         showModal('Purchase Successful!', 'Your new exercises are now available for download.');
-                        shoppingCart = []; // Clear the local cart
-                        appliedPromoCode = null; // Clear applied promo code
+                        shoppingCart = [];
+                        appliedPromoCode = null;
                         
-                        // Clean the URL
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        // Re-render the exercises page
                         showSection('exerciseSection');
                         renderStudentItems('exercises');
                     }
@@ -2389,10 +2411,10 @@
             const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
             const discountAmount = parseFloat(promoDiscountAmountInput.value);
 
-            promoCodeGenerationStatus.textContent = ''; // Clear previous messages
+            promoCodeGenerationStatus.textContent = '';
 
             if (isNaN(discountAmount) || discountAmount <= 0) {
-                promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount (must be positive).';
+                promoCodeGenerationStatus.textContent = 'Please enter a valid positive discount amount.';
                 return;
             }
 
@@ -2400,17 +2422,17 @@
             const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
 
             try {
-                promoCodeGenerationStatus.textContent = 'Generating and saving promo code...';
+                promoCodeGenerationStatus.textContent = 'Generating...';
                 await setDoc(promoCodeRef, {
                     code: newCode,
                     discountAmount: discountAmount,
-                    isActive: true, // New codes are active by default
+                    isActive: true,
                     createdAt: Date.now(),
                     createdBy: currentUserId
                 });
-                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated with $${discountAmount.toFixed(2)} discount!`;
-                promoDiscountAmountInput.value = ''; // Clear discount input
-                loadPromoCodesForTeacher(); // Refresh the list
+                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated!`;
+                promoDiscountAmountInput.value = '';
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error generating promo code:", error);
                 promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
@@ -2450,7 +2472,6 @@
                     teacherPromoCodeList.appendChild(promoItem);
                 });
 
-                // Add event listeners for toggle and delete buttons
                 teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => {
                     button.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
                 });
@@ -2469,7 +2490,7 @@
             try {
                 await updateDoc(promoCodeRef, { isActive: !currentStatus });
                 showModal('Status Updated', `Promo code "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
-                loadPromoCodesForTeacher(); // Refresh the list
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error toggling promo code status:", error);
                 showModal('Error', `Could not update status for "${code}": ${error.message}`);
@@ -2483,7 +2504,7 @@
                     try {
                         await deleteDoc(promoCodeRef);
                         showModal('Success', `Promo code "${code}" deleted.`);
-                        loadPromoCodesForTeacher(); // Refresh the list
+                        loadPromoCodesForTeacher();
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
                         showModal('Error', `Could not delete "${code}": ${error.message}`);
@@ -2497,17 +2518,15 @@
         // --- VIDEO PARSING ---
         function parseVideoInput(input) {
             const text = input.trim();
-            // Check for YouTube URL
             const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
             const youtubeMatch = text.match(youtubeRegex);
             if (youtubeMatch && youtubeMatch[1]) {
                 return { type: 'youtube', id: youtubeMatch[1] };
             }
-            // Check for iframe embed code
             if (text.startsWith('<iframe') && text.endsWith('>')) {
                 return { type: 'embed', code: text };
             }
-            return null; // Invalid input
+            return null;
         }
 
         // --- MODAL SUBMISSION LOGIC ---
@@ -2527,13 +2546,14 @@
             const dataToSave = {
                 title: title.trim(),
                 name: title.trim(),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                isVisibleToStudents: true // Visible by default
             };
 
             if (videoDetails.type === 'youtube') {
                 dataToSave.type = 'youtube';
                 dataToSave.youtubeId = videoDetails.id;
-            } else { // 'embed'
+            } else {
                 dataToSave.type = 'embed';
                 dataToSave.embedCode = videoDetails.code;
             }
@@ -2567,10 +2587,9 @@
             const originalButtonsHTML = buttonsContainer.innerHTML;
             buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
-            let downloadURL = link; // Default to the pasted link
+            let downloadURL = link;
 
             try {
-                // If a file is provided, it takes priority
                 if (file) {
                     buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
                     const storagePath = `materials/past-papers/${Date.now()}_${file.name}`;
@@ -2579,12 +2598,15 @@
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
 
-                if (!downloadURL) { // Final check in case link was empty and file failed
-                    throw new Error("No valid file or link provided.");
-                }
+                if (!downloadURL) throw new Error("No valid file or link provided.");
 
                 const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now() });
+                await addDoc(collectionRef, { 
+                    name: name.trim(), 
+                    link: downloadURL, 
+                    timestamp: Date.now(),
+                    isVisibleToStudents: true // Visible by default
+                });
                 
                 showModal('Success', 'Past paper added.');
                 document.getElementById('addPastPaperModal').style.display = 'none';
@@ -2627,12 +2649,16 @@
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
 
-                if (!downloadURL) {
-                    throw new Error("No valid file or link provided.");
-                }
+                if (!downloadURL) throw new Error("No valid file or link provided.");
 
                 const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now() });
+                await addDoc(collectionRef, { 
+                    name: name.trim(), 
+                    link: downloadURL, 
+                    price: price, 
+                    timestamp: Date.now(),
+                    isVisibleToStudents: true // Visible by default
+                });
                 
                 showModal('Success', 'Exercise added.');
                 document.getElementById('addExerciseModal').style.display = 'none';
@@ -2707,19 +2733,208 @@
                 }
             });
         }
-        // Setup all dropzones on init
         setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
         setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
         setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
         setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
         
-        async function loadPastSubmissions() { /* Placeholder for original function */ }
-        document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
-        async function handleSendMessage() { /* Placeholder for original function */ }
-        function appendChatMessage(text, sender) { /* Placeholder for original function */ }
-        document.getElementById('addStudentButton').addEventListener('click', async () => { /* Placeholder for original function */ });
-        async function loadAuthorizedStudents() { /* Placeholder for original function */ }
-        async function deleteStudent(e) { /* Placeholder for original function */ }
+        async function loadPastSubmissions() { /* Implementation needed */ }
+        document.getElementById('gradeButton').addEventListener('click', async () => { /* Implementation needed */ });
+        
+        // --- CHAT IMPLEMENTATION ---
+        const chatInput = document.getElementById('chatInput');
+        const sendChatButton = document.getElementById('sendChatButton');
+
+        async function handleSendMessage() {
+            const messageText = chatInput.value.trim();
+            if (!messageText) return;
+
+            appendChatMessage(messageText, 'user');
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendChatButton.disabled = true;
+
+            appendChatMessage('...', 'loading'); // Show loading indicator
+
+            geminiChatHistory.push({ role: "user", parts: [{ text: messageText }] });
+            
+            try {
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history: geminiChatHistory })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                const geminiResponse = data.response;
+                
+                geminiChatHistory.push({ role: "model", parts: [{ text: geminiResponse }] });
+                
+                // Remove loading indicator and append actual message
+                const loadingIndicator = document.querySelector('.chat-message.loading');
+                if (loadingIndicator) loadingIndicator.remove();
+                appendChatMessage(geminiResponse, 'gemini');
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                const loadingIndicator = document.querySelector('.chat-message.loading');
+                if (loadingIndicator) loadingIndicator.remove();
+                appendChatMessage(`Sorry, I encountered an error: ${error.message}`, 'gemini');
+            } finally {
+                chatInput.disabled = false;
+                sendChatButton.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        function appendChatMessage(text, sender) {
+            const chatDisplay = document.getElementById('chatDisplay');
+            const messageDiv = document.createElement('div');
+            
+            if (sender === 'loading') {
+                messageDiv.className = 'chat-message loading';
+                messageDiv.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+            } else {
+                messageDiv.className = `chat-message ${sender}`;
+                messageDiv.textContent = text;
+            }
+            
+            chatDisplay.appendChild(messageDiv);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        }
+
+        sendChatButton.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+
+        // --- STUDENT MANAGEMENT IMPLEMENTATION ---
+        document.getElementById('addStudentButton').addEventListener('click', async () => {
+            const emailInput = document.getElementById('studentEmailInput');
+            const studentEmail = emailInput.value.trim();
+            const statusEl = document.getElementById('addStudentStatus');
+
+            if (!studentEmail) {
+                showModal('Error', 'Please enter a student\'s email address.');
+                return;
+            }
+
+            statusEl.textContent = 'Searching for student...';
+            statusEl.style.display = 'block';
+
+            try {
+                // This collectionGroup query requires an index on the 'email' field in the 'profile' collection group.
+                // Firestore will provide a link in the console to create it.
+                const profileCollectionGroup = collectionGroup(db, 'profile');
+                const q = query(profileCollectionGroup, where("email", "==", studentEmail));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    statusEl.textContent = `No user found with email: ${studentEmail}`;
+                    return;
+                }
+
+                let studentData = null;
+                let studentUid = null;
+                querySnapshot.forEach(doc => {
+                    studentData = doc.data();
+                    studentUid = doc.ref.parent.parent.id; // The user ID is the ID of the parent of the parent ('profile' collection)
+                });
+
+                if (studentData && studentUid) {
+                    const studentRef = doc(db, `artifacts/${appId}/users/${currentUserId}/authorized_students/${studentUid}`);
+                    await setDoc(studentRef, {
+                        email: studentData.email,
+                        name: studentData.name || 'N/A'
+                    });
+                    statusEl.textContent = `Student "${studentData.name}" added successfully!`;
+                    emailInput.value = '';
+                    loadAuthorizedStudents(); // Refresh the list
+                } else {
+                     throw new Error("Could not retrieve student details.");
+                }
+
+            } catch (error) {
+                console.error("Error adding student:", error);
+                statusEl.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        async function loadAuthorizedStudents() {
+            const listContainer = document.getElementById('authorizedStudentsList');
+            const loadingEl = document.getElementById('studentManagementLoading');
+            loadingEl.style.display = 'block';
+            listContainer.innerHTML = '';
+
+            const authorizedStudentsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/authorized_students`);
+            try {
+                const snapshot = await getDocs(authorizedStudentsRef);
+                if (snapshot.empty) {
+                    listContainer.innerHTML = '<p id="noAuthorizedStudents">No authorized students yet.</p>';
+                    return;
+                }
+
+                for (const studentDoc of snapshot.docs) {
+                    const studentUid = studentDoc.id;
+                    const studentData = studentDoc.data();
+
+                    // Fetch the student's full profile to get the last login time
+                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentUid}/profile/data`);
+                    const profileSnap = await getDoc(studentProfileRef);
+                    
+                    let lastLogin = 'Never';
+                    if (profileSnap.exists() && profileSnap.data().lastLogin) {
+                        lastLogin = new Date(profileSnap.data().lastLogin).toLocaleString();
+                    }
+
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'student-item';
+                    itemEl.innerHTML = `
+                        <div class="student-info">
+                            <span class="student-name">${studentData.name}</span>
+                            <span class="student-email">${studentData.email}</span>
+                            <span class="student-last-login">Last Login: ${lastLogin}</span>
+                        </div>
+                        <button class="delete-student-btn" data-id="${studentUid}" title="Remove Student">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    `;
+                    listContainer.appendChild(itemEl);
+                }
+                listContainer.querySelectorAll('.delete-student-btn').forEach(btn => btn.addEventListener('click', deleteStudent));
+
+            } catch (error) {
+                console.error("Error loading authorized students:", error);
+                listContainer.innerHTML = `<p class="error-message">Error loading students: ${error.message}</p>`;
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        async function deleteStudent(e) {
+            const studentId = e.currentTarget.dataset.id;
+            showModal('Confirm Removal', 'Are you sure you want to remove this student\'s access?', [
+                { text: 'Remove', className: 'btn-primary', onClick: async () => {
+                    const studentRef = doc(db, `artifacts/${appId}/users/${currentUserId}/authorized_students/${studentId}`);
+                    try {
+                        await deleteDoc(studentRef);
+                        showModal('Success', 'Student removed.');
+                        loadAuthorizedStudents();
+                    } catch (error) {
+                        console.error("Error removing student:", error);
+                        showModal('Error', `Could not remove student: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
 
         function showModal(title, message, buttons = []) {
             const messageModal = document.getElementById('messageModal');
@@ -2786,10 +3001,8 @@
         document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
             const modal = btn.closest('.modal');
             modal.style.display = 'none'; 
-            // If it's the video preview modal, stop the video playback
             if (modal.id === 'videoPreviewModal') {
-                const videoContent = document.getElementById('videoPreviewContent');
-                videoContent.innerHTML = ''; // Clear content to stop video
+                document.getElementById('videoPreviewContent').innerHTML = '';
             }
         });
 
