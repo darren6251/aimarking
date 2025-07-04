@@ -464,10 +464,10 @@
             resize: both;
         }
         .finder-window-wrapper.fullscreen {
-            top: 0 !important;
+            top: 64px !important; /* Adjust for header */
             left: 0 !important;
             width: 100vw !important;
-            height: calc(100vh - 64px) !important; /* Adjust for header */
+            height: calc(100vh - 64px) !important; 
             transform: none !important;
             border-radius: 0;
             border: none;
@@ -947,6 +947,7 @@
              <span class="close-button">&times;</span>
              <h3 id="addItemModalTitle">Add New Item</h3>
              <form id="addItemForm">
+                 <input type="hidden" id="addItemMaterialType">
                  <input type="hidden" id="addItemType">
                  <input type="hidden" id="addItemParentId">
                  <div style="margin-bottom: 1rem;">
@@ -1211,7 +1212,7 @@
                 const section = document.getElementById(id);
                 if (section) {
                     const isTarget = id === sectionIdToShow;
-                    const displayStyle = (id.includes('Section') && !id.includes('home')) ? 'flex' : 'block';
+                    const displayStyle = 'flex';
                     section.style.display = isTarget ? displayStyle : 'none';
                     if (isTarget) {
                         if (['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(id)) {
@@ -1311,7 +1312,7 @@
             const section = document.getElementById(`${type}Section`);
             section.innerHTML = `
                 <!-- Embedded View -->
-                <div class="finder-container embedded-view">
+                <div class="finder-container embedded-view" style="display: flex;">
                     <div class="finder-toolbar"></div>
                     <div class="finder-content"></div>
                 </div>
@@ -1350,13 +1351,16 @@
                 const finderContainer = e.target.closest('.finder-container');
                 if (!finderContainer) return;
 
+                const currentPath = JSON.parse(finderContainer.dataset.path || '[]');
+                const parentId = currentPath.length > 0 ? currentPath[currentPath.length - 1].id : 'root';
+
                 if (e.target.matches('.add-folder-btn')) {
-                    showAddItemModal(type, 'folder', finderContainer);
+                    showAddItemModal(type, 'folder', parentId);
                 } else if (e.target.matches('.add-item-btn')) {
                     const itemType = Object.keys(config.itemTypes).find(k => k !== 'folder');
-                    showAddItemModal(type, itemType, finderContainer);
-                } else if (e.target.matches('.finder-item')) {
-                    handleFinderClick(e, type, finderContainer);
+                    showAddItemModal(type, itemType, parentId);
+                } else if (e.target.closest('.finder-item')) {
+                    handleFinderClick(e.target.closest('.finder-item'), type, finderContainer);
                 }
             });
             
@@ -1365,44 +1369,50 @@
             const embeddedView = section.querySelector('.embedded-view');
             section.querySelectorAll('.view-toggle-btn').forEach(btn => {
                 btn.onclick = () => {
-                    const isWindowed = windowWrapper.style.display === 'flex';
-                    windowWrapper.style.display = isWindowed ? 'none' : 'flex';
-                    embeddedView.style.display = isWindowed ? 'flex' : 'none';
-                    btn.textContent = isWindowed ? 'Window View' : 'Embed View';
-                    if (!isWindowed) { // When switching to window view, render content
-                        renderFinderColumn(type, 'root', windowWrapper.querySelector('.finder-content'));
-                    }
+                    const isEmbedded = embeddedView.style.display === 'flex';
+                    windowWrapper.style.display = isEmbedded ? 'flex' : 'none';
+                    embeddedView.style.display = isEmbedded ? 'none' : 'flex';
+                    btn.textContent = isEmbedded ? 'Embed View' : 'Window View';
+                    const targetContainer = isEmbedded ? windowWrapper : embeddedView;
+                    renderFinder(type, 'root', targetContainer.querySelector('.finder-content'));
                 };
             });
             setupWindowControls(windowWrapper);
 
             // Initial render
-            renderFinderColumn(type, 'root', embeddedView.querySelector('.finder-content'));
+            renderFinder(type, 'root', embeddedView.querySelector('.finder-content'));
         }
 
-        async function renderFinderColumn(type, parentId, contentContainer, activePath = []) {
-            // Clear old columns
-            contentContainer.innerHTML = '';
-            
-            // Re-render breadcrumbs/columns from path
+        async function renderFinder(type, parentId, contentContainer, activePath = []) {
+            contentContainer.innerHTML = ''; // Clear previous content
+            contentContainer.dataset.path = JSON.stringify(activePath);
+
+            // Re-render columns from the active path
             let currentParentId = 'root';
-            for (let i = 0; i < activePath.length; i++) {
-                await renderColumnContent(type, currentParentId, contentContainer, activePath, i);
-                currentParentId = activePath[i].id;
+            for (const pathItem of activePath) {
+                const columnEl = await createColumn(type, currentParentId, contentContainer);
+                // Mark the active item in the column
+                const activeItemEl = Array.from(columnEl.children).find(child => child.dataset.id === pathItem.id);
+                if (activeItemEl) activeItemEl.classList.add('active');
+                currentParentId = pathItem.id;
             }
-            // Render the final, new column
-            await renderColumnContent(type, parentId, contentContainer, activePath, activePath.length);
+            
+            // Render the new "current" column
+            await createColumn(type, parentId, contentContainer);
         }
 
-        async function renderColumnContent(type, parentId, contentContainer, activePath, columnIndex) {
+        async function createColumn(type, parentId, contentContainer) {
             const columnEl = document.createElement('div');
             columnEl.className = 'finder-column';
             columnEl.dataset.parentId = parentId;
             contentContainer.appendChild(columnEl);
-
             columnEl.innerHTML = `<p class="loading-indicator">Loading...</p>`;
 
-            const q = query(getItemsCollectionRef(type), where("parentId", "==", parentId), orderBy("name"));
+            const queries = [where("parentId", "==", parentId), orderBy("name")];
+            if (currentUserRole !== 'teacher') {
+                queries.unshift(where('isVisibleToStudents', '==', true));
+            }
+            const q = query(getItemsCollectionRef(type), ...queries);
             
             try {
                 const snapshot = await getDocs(q);
@@ -1416,9 +1426,6 @@
                     itemEl.className = 'finder-item';
                     itemEl.dataset.id = item.id;
                     itemEl.dataset.itemData = JSON.stringify(item);
-                    if (activePath[columnIndex] && activePath[columnIndex].id === item.id) {
-                        itemEl.classList.add('active');
-                    }
 
                     let teacherActions = '';
                     if (currentUserRole === 'teacher') {
@@ -1437,53 +1444,46 @@
                 console.error(`Error rendering column for ${type}:`, error);
                 columnEl.innerHTML = `<p class="error-message" style="padding: 12px;">Error loading items.</p>`;
             }
+            return columnEl;
         }
 
-        function handleFinderClick(e, type, finderContainer) {
-            const itemEl = e.target.closest('.finder-item');
-            if (!itemEl) return;
-            
-            const contentContainer = finderContainer.querySelector('.finder-content');
+        function handleFinderClick(itemEl, type, finderContainer) {
             const item = JSON.parse(itemEl.dataset.itemData);
-
-            // Determine the current path by finding the parent column
+            const contentContainer = finderContainer.querySelector('.finder-content');
+            
+            // Determine the new path
             const currentColumn = itemEl.closest('.finder-column');
             const allColumns = Array.from(contentContainer.querySelectorAll('.finder-column'));
             const columnIndex = allColumns.indexOf(currentColumn);
-            
-            let activePath = [];
-            for (let i = 0; i < columnIndex; i++) {
-                const activeItemInCol = allColumns[i].querySelector('.finder-item.active');
-                if (activeItemInCol) {
-                    activePath.push(JSON.parse(activeItemInCol.dataset.itemData));
-                }
-            }
-            activePath.push(item);
-            
+            const currentPath = JSON.parse(contentContainer.dataset.path || '[]');
+            const newPath = currentPath.slice(0, columnIndex);
+            newPath.push(item);
+
             // Handle delete button click
-            if(e.target.matches('.delete-btn')) {
-                e.stopPropagation();
-                handleDeleteItem(type, item);
+            if(event.target.matches('.delete-btn')) {
+                event.stopPropagation();
+                handleDeleteItem(type, item, finderContainer);
                 return;
             }
 
             if (item.itemType === 'folder') {
-                renderFinderColumn(type, item.id, contentContainer, activePath);
+                renderFinder(type, item.id, contentContainer, newPath);
             } else {
-                // If it's a file, just highlight and show preview
-                allColumns.forEach(col => col.querySelectorAll('.finder-item').forEach(i => i.classList.remove('active')));
+                // Remove selection from other items in the same column
+                currentColumn.querySelectorAll('.finder-item').forEach(el => el.classList.remove('active'));
                 itemEl.classList.add('active');
                 renderPreviewPane(type, item, contentContainer);
             }
         }
 
         function renderPreviewPane(type, item, contentContainer) {
+            // Remove existing preview pane first
             let previewPane = contentContainer.querySelector('.finder-preview-pane');
-            if (!previewPane) {
-                previewPane = document.createElement('div');
-                previewPane.className = 'finder-preview-pane';
-                contentContainer.appendChild(previewPane);
-            }
+            if (previewPane) previewPane.remove();
+
+            previewPane = document.createElement('div');
+            previewPane.className = 'finder-preview-pane';
+            contentContainer.appendChild(previewPane);
             
             previewPane.style.display = 'flex';
             const config = materialsConfig[type];
@@ -1518,7 +1518,6 @@
             }
         }
         
-        // ... Other functions like toggleMaterialVisibility, handlePreview, etc. remain similar but simplified ...
         async function toggleMaterialVisibility(type, itemId, isVisible) {
             const docRef = doc(getItemsCollectionRef(type), itemId);
             try {
@@ -1540,24 +1539,14 @@
             }
         }
 
-        function showAddItemModal(type, itemType, finderContainer) {
+        function showAddItemModal(type, itemType, parentId) {
             const config = materialsConfig[type];
             const modal = document.getElementById('addItemModal');
             const form = document.getElementById('addItemForm');
             form.reset();
             
-            const activeItem = finderContainer.querySelector('.finder-item.active');
-            let parentId = 'root';
-            if (activeItem) {
-                const activeItemData = JSON.parse(activeItem.dataset.itemData);
-                if (activeItemData.itemType === 'folder') {
-                    parentId = activeItemData.id;
-                } else {
-                    parentId = activeItemData.parentId;
-                }
-            }
-            
             document.getElementById('addItemModalTitle').textContent = `Add New ${config.itemTypes[itemType]}`;
+            document.getElementById('addItemMaterialType').value = type;
             document.getElementById('addItemType').value = itemType;
             document.getElementById('addItemParentId').value = parentId;
 
@@ -1577,51 +1566,41 @@
 
         document.getElementById('addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const type = document.getElementById('addItemType').value;
+            const materialType = document.getElementById('addItemMaterialType').value;
+            const itemType = document.getElementById('addItemType').value;
             const parentId = document.getElementById('addItemParentId').value;
             const name = document.getElementById('addItemName').value;
             
-            const dataToSave = { name, parentId, itemType: type, isVisibleToStudents: true, timestamp: Date.now() };
+            const dataToSave = { name, parentId, itemType, isVisibleToStudents: true, timestamp: Date.now() };
 
-            if (type === 'video') {
+            if (itemType === 'video') {
                 const link = document.getElementById('addItemLink').value;
                 const videoDetails = parseVideoInput(link);
                 if (!videoDetails || videoDetails.type !== 'youtube') return showModal('Error', 'Please enter a valid YouTube video link.');
                 dataToSave.youtubeId = videoDetails.id;
-            } else if (type === 'paper' || type === 'exercise') {
+            } else if (itemType === 'paper' || itemType === 'exercise') {
                 dataToSave.link = document.getElementById('addItemLink').value;
-                if (type === 'exercise') {
+                if (itemType === 'exercise') {
                     dataToSave.price = parseFloat(document.getElementById('addItemPrice').value);
                 }
             }
 
             try {
-                // Find which material section is active to refresh it
-                const activeMaterialSection = document.querySelector('#materialsButton.active')?.closest('.dropdown-menu')?.querySelector('.dropdown-menu-content button.active')?.id;
-                let materialTypeKey = 'tutorials'; // default
-                if (activeMaterialSection) {
-                    if (activeMaterialSection.includes('Tutorial')) materialTypeKey = 'tutorials';
-                    if (activeMaterialSection.includes('PastPapers')) materialTypeKey = 'pastPapers';
-                    if (activeMaterialSection.includes('Exercises')) materialTypeKey = 'exercises';
-                }
-                
-                await addDoc(getItemsCollectionRef(materialTypeKey), dataToSave);
+                await addDoc(getItemsCollectionRef(materialType), dataToSave);
                 showModal('Success', 'Item added!');
                 document.getElementById('addItemModal').style.display = 'none';
                 
                 // Refresh the view
-                const section = document.getElementById(`${materialTypeKey}Section`);
-                const visibleView = section.querySelector('.embedded-view[style*="display: flex"], .windowed-view[style*="display: flex"]');
-                if (visibleView) {
-                    renderFinderColumn(materialTypeKey, 'root', visibleView.querySelector('.finder-content'));
-                }
+                const section = document.getElementById(`${materialType}Section`);
+                const visibleView = section.querySelector('.embedded-view, .windowed-view');
+                renderFinder(materialType, parentId, visibleView.querySelector('.finder-content'), JSON.parse(visibleView.querySelector('.finder-content').dataset.path || '[]'));
 
             } catch (error) {
                 showModal('Error', `Could not add item: ${error.message}`);
             }
         });
 
-        function handleDeleteItem(type, item) {
+        function handleDeleteItem(type, item, finderContainer) {
              showModal('Confirm Deletion', `Are you sure you want to delete "${item.name}"? This action cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     try {
@@ -1630,11 +1609,9 @@
                         await deleteDoc(doc(getItemsCollectionRef(type), item.id));
                         showModal('Success', `"${item.name}" deleted.`);
                         // Refresh the view
-                        const section = document.getElementById(`${type}Section`);
-                        const visibleView = section.querySelector('.embedded-view[style*="display: flex"], .windowed-view[style*="display: flex"]');
-                        if (visibleView) {
-                           renderFinderColumn(type, 'root', visibleView.querySelector('.finder-content'));
-                        }
+                        const contentContainer = finderContainer.querySelector('.finder-content');
+                        renderFinder(type, item.parentId, contentContainer, JSON.parse(contentContainer.dataset.path || '[]').slice(0,-1));
+
                     } catch(e) {
                          showModal('Error', `Could not delete item: ${e.message}`);
                     }
@@ -1650,14 +1627,14 @@
             let isDragging = false, offsetX, offsetY;
 
             dragBar.onmousedown = (e) => {
-                if (e.target !== dragBar) return;
+                if (e.target.classList.contains('circle')) return;
                 isDragging = true;
                 offsetX = e.clientX - windowWrapper.offsetLeft;
                 offsetY = e.clientY - windowWrapper.offsetTop;
-                document.onmousemove = (e) => {
+                document.onmousemove = (ev) => {
                     if (isDragging) {
-                        windowWrapper.style.left = `${e.clientX - offsetX}px`;
-                        windowWrapper.style.top = `${e.clientY - offsetY}px`;
+                        windowWrapper.style.left = `${ev.clientX - offsetX}px`;
+                        windowWrapper.style.top = `${ev.clientY - offsetY}px`;
                     }
                 };
                 document.onmouseup = () => {
@@ -1775,13 +1752,13 @@
                 const response = await fetch(CLOUDFLARE_WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ history: geminiChatHistory })
+                    body: JSON.stringify({ contents: geminiChatHistory })
                 });
 
                 if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
 
                 const data = await response.json();
-                const geminiResponse = data.response;
+                const geminiResponse = data.candidates[0].content.parts[0].text;
                 
                 geminiChatHistory.push({ role: "model", parts: [{ text: geminiResponse }] });
                 
