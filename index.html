@@ -23,6 +23,17 @@
             --button-blue-lighten: #4c9aff; /* Blue hover */
             --button-red-lighten: rgba(248, 81, 73, 0.1); /* Red hover */
             --neon-glow-color: #58a6ff; /* Neon blue for dark theme */
+
+            /* Finder Window Specific Variables (Dark Theme) */
+            --finder-bg-primary: #161b22; /* Darker than app primary */
+            --finder-bg-secondary: #0d1117; /* Even darker for sidebar/columns */
+            --finder-text-primary: #c9d1d9;
+            --finder-text-secondary: #8b949e;
+            --finder-border-color: #30363d;
+            --finder-titlebar-bg: #1f252d; /* Slightly lighter for titlebar */
+            --finder-hover-bg: #21262d;
+            --finder-active-bg: var(--accent-blue);
+            --finder-active-text: #ffffff;
         }
 
         /* Light Theme Variables - Overrides for .light-theme class */
@@ -40,6 +51,17 @@
             --button-blue-lighten: #0069d9;
             --button-red-lighten: rgba(220, 53, 69, 0.1);
             --neon-glow-color: #007bff; /* Neon blue for light theme */
+
+            /* Finder Window Specific Variables (Light Theme) */
+            --finder-bg-primary: #ffffff;
+            --finder-bg-secondary: #f7f7f7;
+            --finder-text-primary: #333333;
+            --finder-text-secondary: #666666;
+            --finder-border-color: #cccccc;
+            --finder-titlebar-bg: #e0e0e0;
+            --finder-hover-bg: #e0e0e0;
+            --finder-active-bg: var(--accent-blue);
+            --finder-active-text: #ffffff;
         }
 
         * {
@@ -943,9 +965,9 @@
             transform: translate(-50%, -50%);
             width: 960px;
             height: 600px;
-            border: 1px solid #aaa;
+            border: 1px solid var(--finder-border-color); /* Themed border */
             border-radius: 6px;
-            background: #fff;
+            background: var(--finder-bg-primary); /* Themed background */
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -955,7 +977,7 @@
             resize: both;
             min-width: 300px; /* Added for resizability */
             min-height: 200px; /* Added for resizability */
-            color: #333; /* Default text color for finder window */
+            color: var(--finder-text-primary); /* Themed text color */
         }
 
         .finder-window-wrapper.fullscreen {
@@ -968,13 +990,14 @@
         }
 
         .finder-titlebar {
-            background: #f2f2f2;
+            background: var(--finder-titlebar-bg); /* Themed titlebar background */
             height: 28px;
             display: flex;
             align-items: center;
             padding: 0 10px;
             cursor: move;
             flex-shrink: 0; /* Prevent shrinking */
+            border-bottom: 1px solid var(--finder-border-color); /* Add border for separation */
         }
         .finder-titlebar .buttons {
             display: flex;
@@ -995,8 +1018,8 @@
         .finder-sidebar {
             width: 200px;
             min-width: 150px; /* Allow sidebar to shrink a bit */
-            border-right: 1px solid #ddd;
-            background: #fafafa;
+            border-right: 1px solid var(--finder-border-color); /* Themed border */
+            background: var(--finder-bg-secondary); /* Themed sidebar background */
             padding: 10px 0;
             overflow-y: auto; /* Enable scrolling for sidebar content */
             flex-shrink: 0;
@@ -1004,18 +1027,18 @@
         .finder-sidebar-item {
             padding: 8px 15px;
             font-size: 14px;
-            color: #333;
+            color: var(--finder-text-primary); /* Themed text color */
             cursor: pointer;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .finder-sidebar-item:hover {
-            background: #e0e0e0;
+            background: var(--finder-hover-bg); /* Themed hover background */
         }
         .finder-sidebar-item.active {
-            background: #007bff;
-            color: #fff;
+            background: var(--finder-active-bg); /* Themed active background */
+            color: var(--finder-active-text); /* Themed active text color */
         }
 
         .finder-file-list {
@@ -1023,19 +1046,30 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto; /* Enable scrolling for file list content */
-            background: #fff;
+            background: var(--finder-bg-primary); /* Themed file list background */
         }
         .finder-file-list .columns, .finder-file-list .row {
             display: grid;
             grid-template-columns: 3fr 1fr 1fr 1fr; /* Name, Size, Kind, Date Added */
             padding: 8px 12px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--finder-border-color); /* Themed border */
             align-items: center;
         }
-        .finder-file-list .columns { background: #f7f7f7; font-size: 12px; color: #666; font-weight: 600;}
-        .finder-file-list .row { font-size: 14px; color: #333; cursor: pointer; }
-        .finder-file-list .row:hover { background: #f0f8ff; }
-        .finder-file-list .row.folder { font-weight: bold; color: #007bff; } /* Style for folders */
+        .finder-file-list .columns { 
+            background: var(--finder-bg-secondary); /* Themed column header background */
+            font-size: 12px; 
+            color: var(--finder-text-secondary); /* Themed text color */
+            font-weight: 600;
+        }
+        .finder-file-list .row { 
+            font-size: 14px; 
+            color: var(--finder-text-primary); /* Themed text color */
+            cursor: pointer; 
+        }
+        .finder-file-list .row:hover { 
+            background: var(--finder-hover-bg); /* Themed row hover background */
+        }
+        .finder-file-list .row.folder { font-weight: bold; color: var(--accent-blue); } /* Style for folders */
         .finder-file-list .row.folder::before { content: '📁 '; margin-right: 5px; } /* Folder icon */
         .finder-file-list .row.file::before { content: '📄 '; margin-right: 5px; } /* File icon */
         .finder-file-list .row.video::before { content: '🎬 '; margin-right: 5px; } /* Video icon */
@@ -1045,10 +1079,10 @@
         .finder-footer {
             text-align: right;
             font-size: 11px;
-            color: #999;
+            color: var(--finder-text-secondary); /* Themed text color */
             padding: 5px 10px;
-            border-top: 1px solid #ddd;
-            background: #fafafa;
+            border-top: 1px solid var(--finder-border-color); /* Themed border */
+            background: var(--finder-bg-secondary); /* Themed footer background */
             flex-shrink: 0;
         }
 
@@ -1301,7 +1335,7 @@
                         </div>
                         <div id="finderFileListContent">
                             <!-- Level 2 items (Topics/Years) or Level 3 items (Files) will be loaded here -->
-                            <p style="text-align:center; padding:20px; color:#666;">Select a subject from the sidebar.</p>
+                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
                         </div>
                     </section>
                 </div>
@@ -3101,8 +3135,78 @@
         
         async function loadPastSubmissions() { /* Placeholder for original function */ }
         document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
-        async function handleSendMessage() { /* Placeholder for original function */ }
-        function appendChatMessage(text, sender) { /* Placeholder for original function */ }
+        
+        // --- CHAT FUNCTIONALITY ---
+        const chatInput = document.getElementById('chatInput');
+        const sendChatButton = document.getElementById('sendChatButton');
+        const chatDisplay = document.getElementById('chatDisplay');
+        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+
+        async function handleSendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendChatMessage(message, 'user');
+            chatInput.value = ''; // Clear input immediately
+            chatLoadingIndicator.textContent = 'AI is typing...';
+
+            geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
+
+            const payload = { contents: geminiChatHistory };
+            const apiKey = ""; // Canvas will provide this at runtime
+
+            try {
+                const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Gemini API error:", errorData);
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const aiResponse = result.candidates[0].content.parts[0].text;
+                    appendChatMessage(aiResponse, 'gemini');
+                    geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                } else {
+                    appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
+                    console.warn("Unexpected Gemini API response structure:", result);
+                }
+            } catch (error) {
+                console.error("Error sending message to Gemini:", error);
+                appendChatMessage(`Error: ${error.message}`, 'gemini');
+            } finally {
+                chatLoadingIndicator.textContent = ''; // Hide loading indicator
+                chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        function appendChatMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-message ${sender}`;
+            messageElement.textContent = text;
+            chatDisplay.appendChild(messageElement);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to latest message
+        }
+
+        sendChatButton.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent new line in textarea
+                handleSendMessage();
+            }
+        });
+
+        // --- STUDENT MANAGEMENT ---
         document.getElementById('addStudentButton').addEventListener('click', async () => { /* Placeholder for original function */ });
         async function loadAuthorizedStudents() { /* Placeholder for original function */ }
         async function deleteStudent(e) { /* Placeholder for original function */ }
@@ -3287,7 +3391,7 @@
             document.getElementById(activeMaterialSectionId).classList.add('hidden-on-desktop');
 
             await loadFinderSidebar(type);
-            document.getElementById('finderFileListContent').innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Select a subject from the sidebar.</p>';
+            document.getElementById('finderFileListContent').innerHTML = '<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>';
         }
 
         async function loadFinderSidebar(type) {
@@ -3302,7 +3406,7 @@
                 const snapshot = await getDocs(q);
                 sidebar.innerHTML = '';
                 if (snapshot.empty) {
-                    sidebar.innerHTML = '<p style="padding:10px; color:#666;">No subjects found.</p>';
+                    sidebar.innerHTML = '<p style="padding:10px; color:var(--finder-text-secondary);">No subjects found.</p>';
                     return;
                 }
                 snapshot.forEach(doc => {
@@ -3359,7 +3463,7 @@
                 const snapshot = await getDocs(q);
                 fileListContent.innerHTML = '';
                 if (snapshot.empty) {
-                    fileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:#666;">No ${currentLevelName.toLowerCase()}s found.</p>`;
+                    fileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No ${currentLevelName.toLowerCase()}s found.</p>`;
                     return;
                 }
 
