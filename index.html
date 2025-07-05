@@ -25,15 +25,15 @@
             --neon-glow-color: #58a6ff; /* Neon blue for dark theme */
 
             /* Finder Window Specific Variables (Dark Theme) */
-            --finder-bg-primary: #161b22; /* Darker than app primary */
-            --finder-bg-secondary: #0d1117; /* Even darker for sidebar/columns */
+            --finder-bg-primary: #161b22;
+            --finder-bg-secondary: #0d1117;
             --finder-text-primary: #c9d1d9;
             --finder-text-secondary: #8b949e;
             --finder-border-color: #30363d;
-            --finder-titlebar-bg: #1f252d; /* Slightly lighter for titlebar */
+            --finder-titlebar-bg: #1f252d;
             --finder-hover-bg: #21262d;
             --finder-active-bg: var(--accent-blue);
-            --finder-active-text: #ffffff;
+            --finder-active-text: #0d1117;
         }
 
         /* Light Theme Variables - Overrides for .light-theme class */
@@ -58,8 +58,8 @@
             --finder-text-primary: #333333;
             --finder-text-secondary: #666666;
             --finder-border-color: #cccccc;
-            --finder-titlebar-bg: #e0e0e0;
-            --finder-hover-bg: #e0e0e0;
+            --finder-titlebar-bg: #e9ecef;
+            --finder-hover-bg: #e9ecef;
             --finder-active-bg: var(--accent-blue);
             --finder-active-text: #ffffff;
         }
@@ -783,6 +783,7 @@
             margin-bottom: 1rem;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 0.5rem;
+            color: var(--accent-blue);
         }
         .student-purchase-entry {
             margin-bottom: 1rem;
@@ -794,7 +795,7 @@
         .student-purchase-entry strong {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--accent-blue);
+            color: var(--accent-green);
         }
         .purchased-item-detail {
             font-size: 0.9rem;
@@ -834,40 +835,6 @@
         footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
         footer a { color: var(--accent-blue); text-decoration: none; pointer-events: all;}
         footer a:hover { text-decoration: underline; }
-
-        /* Mobile responsiveness */
-        @media (max-width: 992px) {
-            .store-layout {
-                flex-direction: column;
-            }
-            .shopping-cart {
-                width: 100%;
-                position: sticky;
-                bottom: 0;
-                border-radius: 8px 8px 0 0;
-            }
-        }
-        @media (max-width: 768px) {
-            #authWrapper { flex-direction: column; position: static; height: auto; }
-            .login-left-panel, .login-right-panel { width: 100%; }
-            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
-            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
-            main { flex-direction: column; }
-            .hero { flex-direction: column-reverse; text-align: center; }
-            .hero-text, .hero-image { max-width: 100%; }
-            .buttons { justify-content: center; }
-
-            /* Hide finder view on mobile */
-            .finder-window-wrapper { display: none !important; }
-            .material-view-toggle { display: none !important; } /* Hide toggle on mobile */
-        }
-
-        /* Desktop responsiveness - show finder view */
-        @media (min-width: 769px) {
-            /* Hide card view on desktop when finder view is active */
-            .material-card-view.hidden-on-desktop { display: none !important; }
-            .finder-window-wrapper.hidden-on-desktop { display: none !important; }
-        }
 
 
         /* Hero */
@@ -957,29 +924,28 @@
             to   { transform: translateX(0);    opacity: 1; }
         }
 
-        /* Finder Window Styles (from finder_style_materials.html) */
+        /* --- START: Finder Window Styles --- */
         .finder-window-wrapper {
-            position: fixed; /* Use fixed to overlay content */
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90vw; /* Make it wider */
-            height: 90vh; /* Make it taller */
-            max-width: 1200px; /* Limit max width */
-            max-height: 800px; /* Limit max height */
-            border: 1px solid var(--finder-border-color); /* Themed border */
-            border-radius: 6px;
-            background: var(--finder-bg-primary); /* Themed background */
+            width: 90vw;
+            height: 85vh;
+            max-width: 1400px;
+            max-height: 900px;
+            border: 1px solid var(--finder-border-color);
+            border-radius: 8px;
+            background: var(--finder-bg-primary);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: all 0.3s ease; /* Smooth transition for size/position changes */
-            z-index: 100; /* Ensure it's above other content */
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 999;
             resize: both;
-            min-width: 300px; /* Added for resizability */
-            min-height: 200px; /* Added for resizability */
-            color: var(--finder-text-primary); /* Themed text color */
+            min-width: 400px;
+            min-height: 300px;
+            color: var(--finder-text-primary);
         }
 
         .finder-window-wrapper.fullscreen {
@@ -989,120 +955,122 @@
             width: 100vw !important;
             height: 100vh !important;
             border-radius: 0 !important;
+            max-width: 100vw;
+            max-height: 100vh;
         }
 
         .finder-titlebar {
-            background: var(--finder-titlebar-bg); /* Themed titlebar background */
-            height: 28px;
+            background: var(--finder-titlebar-bg);
+            height: 38px;
             display: flex;
             align-items: center;
-            padding: 0 10px;
-            cursor: grab; /* More indicative of drag */
-            flex-shrink: 0; /* Prevent shrinking */
-            border-bottom: 1px solid var(--finder-border-color); /* Add border for separation */
-            justify-content: flex-start; /* Ensure buttons are left-aligned */
+            padding: 0 12px;
+            cursor: grab;
+            user-select: none;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--finder-border-color);
         }
-        .finder-titlebar .buttons {
-            display: flex;
-            gap: 6px;
-        }
-        .finder-circle {
-            width: 12px; height: 12px; border-radius: 50%;
-        }
+        .finder-titlebar:active { cursor: grabbing; }
+
+        .finder-titlebar .buttons { display: flex; gap: 8px; margin-right: 12px; }
+        .finder-circle { width: 13px; height: 13px; border-radius: 50%; }
         .finder-circle.close { background: #ff5f57; }
         .finder-circle.min { background: #ffbd2e; }
         .finder-circle.max { background: #28c840; cursor: pointer; }
+        .finder-title { font-weight: 600; font-size: 1rem; color: var(--finder-text-primary); }
 
         .finder-content {
             flex: 1;
             display: flex;
-            overflow: hidden; /* Ensure content inside is scrollable if needed */
+            min-height: 0; /* Important for flex child with overflow */
         }
+
         .finder-sidebar {
-            width: 200px;
-            min-width: 150px; /* Allow sidebar to shrink a bit */
-            border-right: 1px solid var(--finder-border-color); /* Themed border */
-            background: var(--finder-bg-secondary); /* Themed sidebar background */
+            width: 240px;
+            min-width: 180px;
+            border-right: 1px solid var(--finder-border-color);
+            background: var(--finder-bg-secondary);
             padding: 10px 0;
-            overflow-y: auto; /* Enable scrolling for sidebar content */
+            overflow-y: auto;
             flex-shrink: 0;
         }
+        .finder-sidebar ul, .finder-sidebar li { list-style: none; margin: 0; padding: 0; }
         .finder-sidebar-item {
-            padding: 8px 15px;
-            font-size: 14px;
-            color: var(--finder-text-primary); /* Themed text color */
+            padding: 6px 15px;
+            font-size: 0.9rem;
+            color: var(--finder-text-primary);
             cursor: pointer;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            border-radius: 4px;
+            margin: 1px 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .finder-sidebar-item:hover {
-            background: var(--finder-hover-bg); /* Themed hover background */
-        }
-        .finder-sidebar-item.active {
-            background: var(--finder-active-bg); /* Themed active background */
-            color: var(--finder-active-text); /* Themed active text color */
-        }
+        .finder-sidebar-item:hover { background: var(--finder-hover-bg); }
+        .finder-sidebar-item.active { background: var(--finder-active-bg); color: var(--finder-active-text); font-weight: 600; }
+        .finder-sidebar-item .folder-icon { color: var(--accent-blue); }
+        .finder-sidebar-item.active .folder-icon { color: var(--finder-active-text); }
+        .finder-sidebar .nested { margin-left: 18px; }
 
         .finder-file-list {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-y: auto; /* Enable scrolling for file list content */
-            background: var(--finder-bg-primary); /* Themed file list background */
+            overflow-y: auto;
+            background: var(--finder-bg-primary);
+            padding: 8px;
         }
-        .finder-file-list .columns, .finder-file-list .row {
+        .finder-file-list .file-row {
             display: grid;
-            grid-template-columns: 3fr 1fr 1fr 1fr; /* Name, Size, Kind, Date Added */
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--finder-border-color); /* Themed border */
+            grid-template-columns: 3fr 1fr 1fr 1.5fr;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--finder-border-color);
             align-items: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 4px;
         }
-        .finder-file-list .columns { 
-            background: var(--finder-bg-secondary); /* Themed column header background */
-            font-size: 12px; 
-            color: var(--finder-text-secondary); /* Themed text color */
+        .finder-file-list .file-row:hover { background: var(--finder-hover-bg); }
+        .finder-file-list .file-row.header {
             font-weight: 600;
+            color: var(--finder-text-secondary);
+            background: transparent;
+            border-bottom: 2px solid var(--finder-border-color);
+            cursor: default;
         }
-        .finder-file-list .row { 
-            font-size: 14px; 
-            color: var(--finder-text-primary); /* Themed text color */
-            cursor: pointer; 
+        .finder-file-list .file-row:last-child { border-bottom: none; }
+        .finder-file-list .file-row .file-link { color: var(--accent-blue); text-decoration: none; font-weight: 500; }
+        .finder-file-list .file-row .file-link:hover { text-decoration: underline; }
+        .finder-file-list .file-row .file-icon { margin-right: 8px; }
+        .finder-file-list .file-row .purchased-tag {
+            background-color: var(--accent-green);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
         }
-        .finder-file-list .row:hover { 
-            background: var(--finder-hover-bg); /* Themed row hover background */
-        }
-        .finder-file-list .row.folder { font-weight: bold; color: var(--accent-blue); } /* Style for folders */
-        .finder-file-list .row.folder::before { content: '📁 '; margin-right: 5px; } /* Folder icon */
-        .finder-file-list .row.file::before { content: '📄 '; margin-right: 5px; } /* File icon */
-        .finder-file-list .row.video::before { content: '🎬 '; margin-right: 5px; } /* Video icon */
-        .finder-file-list .row.exercise::before { content: '📝 '; margin-right: 5px; } /* Exercise icon */
-        .finder-file-list .row.purchased { color: var(--accent-green); } /* Purchased item */
+
 
         .finder-footer {
             text-align: right;
-            font-size: 11px;
-            color: var(--finder-text-secondary); /* Themed text color */
-            padding: 5px 10px;
-            border-top: 1px solid var(--finder-border-color); /* Themed border */
-            background: var(--finder-bg-secondary); /* Themed footer background */
+            font-size: 0.8rem;
+            color: var(--finder-text-secondary);
+            padding: 8px 12px;
+            border-top: 1px solid var(--finder-border-color);
+            background: var(--finder-bg-secondary);
             flex-shrink: 0;
         }
 
-        /* Hide the finder window by default, show via JS */
         #finderMaterialsSection {
-            display: none;
-            position: fixed; /* Position within main content area */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 960px;
-            height: 600px;
-            justify-content: center;
-            align-items: center;
+            display: none; /* Hidden by default, shown via JS */
         }
 
-        /* Toggle button for view mode */
         .material-view-toggle {
             margin-left: 1rem;
             padding: 6px 12px;
@@ -1113,113 +1081,43 @@
             border: none;
             cursor: pointer;
         }
-        .material-view-toggle:hover {
-            background-color: var(--button-blue-lighten);
-        }
+        .material-view-toggle:hover { background-color: var(--button-blue-lighten); }
+        /* --- END: Finder Window Styles --- */
 
-        /* New styles for minimized windows bar */
-        #minimizedWindowsBar {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto; /* Will adjust based on content */
-            max-width: 80vw;
-            min-width: 150px;
-            height: 40px;
-            background-color: var(--bg-secondary);
-            border-top: 1px solid var(--border-color);
-            border-radius: 8px 8px 0 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            padding: 0 15px;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
-            z-index: 1000; /* Above finder window but below modals */
-            transition: all 0.3s ease-in-out;
-            opacity: 0; /* Hidden by default */
-            pointer-events: none; /* No interaction when hidden */
-        }
 
-        #minimizedWindowsBar.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .minimized-tab {
-            background-color: var(--accent-blue);
-            color: #fff;
-            padding: 5px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px; /* Limit tab width */
-        }
-
-        .minimized-tab:hover {
-            background-color: var(--button-blue-lighten);
-            transform: translateY(-2px);
-        }
-
-        .minimized-tab .close-tab-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-left: 5px;
-            padding: 0 3px;
-            border-radius: 50%;
-            opacity: 0.8;
-        }
-
-        .minimized-tab .close-tab-btn:hover {
-            opacity: 1;
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        /* Animations for minimize/restore */
-        @keyframes minimizeAnimation {
-            0% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-                border-radius: 6px;
+        /* Mobile responsiveness */
+        @media (max-width: 992px) {
+            .store-layout {
+                flex-direction: column;
             }
-            100% {
-                transform: translate(var(--target-x), var(--target-y)) scale(0.1); /* Scale down to tab size */
-                opacity: 0;
-                border-radius: 50%; /* Shrink to a circle for effect */
+            .shopping-cart {
+                width: 100%;
+                position: sticky;
+                bottom: 0;
+                border-radius: 8px 8px 0 0;
             }
         }
+        @media (max-width: 768px) {
+            #authWrapper { flex-direction: column; position: static; height: auto; }
+            .login-left-panel, .login-right-panel { width: 100%; }
+            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
+            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
+            main { flex-direction: column; padding: 12px; }
+            .hero { flex-direction: column-reverse; text-align: center; }
+            .hero-text, .hero-image { max-width: 100%; }
+            .buttons { justify-content: center; }
 
-        @keyframes restoreAnimation {
-            0% {
-                transform: translate(var(--start-x), var(--start-y)) scale(0.1);
-                opacity: 0;
-                border-radius: 50%;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-                border-radius: 6px;
-            }
+            /* Hide finder view and its toggle on mobile */
+            #finderMaterialsSection { display: none !important; }
+            .material-view-toggle { display: none !important; }
         }
 
-        /* Apply animations */
-        .finder-window-wrapper.minimizing {
-            animation: minimizeAnimation 0.5s ease-out forwards;
-        }
-
-        .finder-window-wrapper.restoring {
-            animation: restoreAnimation 0.5s ease-out forwards;
+        /* Desktop responsiveness - show finder view */
+        @media (min-width: 769px) {
+            /* This class will be toggled by JS to hide the card view when finder is active */
+            .material-card-view.hidden-on-desktop {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -1421,7 +1319,7 @@
                 </form>
             </div>
 
-            <!-- Finder Style Materials Section (Desktop Only) -->
+            <!-- Finder Style Materials Section (Universal for all material types) -->
             <div id="finderMaterialsSection" class="finder-window-wrapper">
                 <div class="finder-titlebar" id="finderDragBar">
                     <div class="buttons">
@@ -1429,20 +1327,22 @@
                         <div class="finder-circle min"></div>
                         <div class="finder-circle max" id="finderFullscreenToggle"></div>
                     </div>
-                    <span style="margin-left: 10px; font-weight: bold;">Materials</span>
+                    <span class="finder-title" id="finderTitle">Materials</span>
                 </div>
 
                 <div class="finder-content">
                     <aside class="finder-sidebar" id="finderSidebar">
-                        <!-- Level 1 items (Subjects) will be loaded here -->
+                        <!-- Sidebar content will be loaded here by JS -->
                     </aside>
-                    <section class="finder-file-list">
-                        <div class="columns">
-                            <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
+                    <section class="finder-file-list" id="finderFileList">
+                        <div class="file-row header">
+                            <div>Name</div>
+                            <div>Details</div>
+                            <div>Price/Status</div>
+                            <div>Date Added</div>
                         </div>
                         <div id="finderFileListContent">
-                            <!-- Level 2 items (Topics/Years) or Level 3 items (Files) will be loaded here -->
-                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
+                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select an item from the sidebar.</p>
                         </div>
                     </section>
                 </div>
@@ -1451,11 +1351,6 @@
             </div>
 
         </main>
-    </div>
-
-    <!-- Minimized Windows Bar -->
-    <div id="minimizedWindowsBar">
-        <!-- Minimized tabs will be appended here -->
     </div>
 
     <footer>
@@ -1811,7 +1706,7 @@
                 document.getElementById(sectionIdToShow).classList.toggle('hidden-on-desktop', currentMaterialViewMode === 'finder');
             } else { // Mobile or non-material section
                 finderSection.style.display = 'none';
-                document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
+                document.getElementById(sectionIdToShow)?.classList.remove('hidden-on-desktop');
             }
 
 
@@ -1832,35 +1727,32 @@
             // Materials dropdown buttons
             document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
                 showSection('tutorialSection');
-                if (window.innerWidth >= 769) { // On desktop, default to finder view if it's active
-                    if (currentMaterialViewMode === 'finder') showFinderView('tutorials');
-                    else renderStudentItems('tutorials'); // Re-render card view if that's active
-                } else {
-                    renderStudentItems('tutorials'); // Always card view on mobile
-                }
+                handleMaterialSectionToggle('tutorials');
             });
             document.getElementById('togglePastPapersButton')?.addEventListener('click', () => {
                 showSection('pastPapersSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('pastPapers');
-                    else renderStudentItems('pastPapers');
-                } else {
-                    renderStudentItems('pastPapers');
-                }
+                handleMaterialSectionToggle('pastPapers');
             });
             document.getElementById('toggleExercisesButton')?.addEventListener('click', () => {
                 showSection('exerciseSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('exercises');
-                    else renderStudentItems('exercises');
-                } else {
-                    renderStudentItems('exercises');
-                }
+                handleMaterialSectionToggle('exercises');
             });
             
             document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
         }
         setupSectionToggle();
+
+        function handleMaterialSectionToggle(type) {
+            if (window.innerWidth >= 769) { // On desktop
+                if (currentMaterialViewMode === 'finder') {
+                    showFinderView(type);
+                } else {
+                    renderStudentItems(type); // Re-render card view
+                }
+            } else {
+                renderStudentItems(type); // Always card view on mobile
+            }
+        }
         
         // --- PROFILE MANAGEMENT ---
 
@@ -2017,14 +1909,8 @@
                 <div id="teacher-${type}-view" style="display:none;">
                     <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
-                        <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
-                        <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
                     </div>
-                    <div id="level1-${type}-container" class="folder-view"></div>
-                    <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; color:var(--text-secondary);">
-                        Board View (Future Feature)
-                        <p>This will be an interactive tree diagram or board where you can freely move files.</p>
-                    </div>
+                    <div id="level1-${type}-container"></div>
                     ${type === 'exercises' ? `
                         <div class="form-container" style="max-width: initial; margin-top: 2rem;">
                             <h3>Promo Code Management</h3>
@@ -2046,7 +1932,7 @@
                         </div>
                     ` : ''}
                 </div>
-                <div id="student-${type}-view" style="display:none;">
+                <div id="student-${type}-view" class="material-card-view" style="display:none;">
                     ${studentViewHtml}
                 </div>`;
 
@@ -2059,41 +1945,13 @@
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 
-                // Add drag-and-drop event listeners to the main container for the teacher view
                 const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
                 teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
                 teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
                 teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
 
-
-                const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
-                const folderView = document.getElementById(`level1-${type}-container`);
-                const boardView = document.getElementById(`board-view-${type}`);
-                const viewStatus = document.getElementById(`view-mode-status-${type}`);
-                
-                let currentTeacherMaterialViewMode = 'folder'; // 'folder' or 'board'
-
-                const updateViewDisplay = () => {
-                    if (currentTeacherMaterialViewMode === 'folder') {
-                        folderView.style.display = 'block';
-                        boardView.style.display = 'none';
-                        viewStatus.textContent = '(Current: Folder View)';
-                    } else {
-                        folderView.style.display = 'none';
-                        boardView.style.display = 'block';
-                        viewStatus.textContent = '(Current: Board View)';
-                    }
-                };
-
-                toggleViewBtn.onclick = () => {
-                    currentTeacherMaterialViewMode = currentTeacherMaterialViewMode === 'folder' ? 'board' : 'folder';
-                    updateViewDisplay();
-                };
-                updateViewDisplay(); // Set initial display
-
                 if (type === 'exercises') {
                     document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
-                    // Initial load of promo codes for teacher
                     loadPromoCodesForTeacher();
                 }
             } else { // Student view
@@ -2105,29 +1963,28 @@
                 }
 
                 // Add toggle for student view (desktop only)
-                if (window.innerWidth >= 769) {
-                    const studentViewContainer = document.getElementById(`student-${type}-view`);
-                    const materialsSectionTitle = section.querySelector('.section-title');
-                    const toggleButton = document.createElement('button');
-                    toggleButton.className = 'material-view-toggle';
-                    toggleButton.textContent = 'Switch to Finder View';
-                    materialsSectionTitle.appendChild(toggleButton); // Append next to title
+                const studentViewContainer = document.getElementById(`student-${type}-view`);
+                const materialsSectionTitle = section.querySelector('.section-title');
+                const toggleButton = document.createElement('button');
+                toggleButton.className = 'material-view-toggle';
+                toggleButton.id = `toggle-view-btn-${type}`;
+                toggleButton.textContent = 'Finder View';
+                materialsSectionTitle.appendChild(toggleButton);
 
-                    toggleButton.addEventListener('click', () => {
-                        if (currentMaterialViewMode === 'card') {
-                            currentMaterialViewMode = 'finder';
-                            studentViewContainer.classList.add('hidden-on-desktop');
-                            showFinderView(type);
-                            toggleButton.textContent = 'Switch to Card View';
-                        } else {
-                            currentMaterialViewMode = 'card';
-                            studentViewContainer.classList.remove('hidden-on-desktop');
-                            document.getElementById('finderMaterialsSection').style.display = 'none';
-                            toggleButton.textContent = 'Switch to Finder View';
-                            renderStudentItems(type); // Re-render card view to ensure it's up-to-date
-                        }
-                    });
-                }
+                toggleButton.addEventListener('click', () => {
+                    if (currentMaterialViewMode === 'card') {
+                        currentMaterialViewMode = 'finder';
+                        studentViewContainer.classList.add('hidden-on-desktop');
+                        showFinderView(type);
+                        toggleButton.textContent = 'Card View';
+                    } else {
+                        currentMaterialViewMode = 'card';
+                        studentViewContainer.classList.remove('hidden-on-desktop');
+                        document.getElementById('finderMaterialsSection').style.display = 'none';
+                        toggleButton.textContent = 'Finder View';
+                        renderStudentItems(type);
+                    }
+                });
             }
         }
         
@@ -2138,12 +1995,6 @@
             container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
 
             const collectionRef = collection(db, getPath(type, parentIds));
-            // IMPORTANT: For 'orderBy' to work on 'name' in subcollections, you need to create a Collection Group Index in Firestore.
-            // Go to Firebase Console -> Firestore Database -> Indexes tab.
-            // Create a new index with:
-            // Collection ID: (e.g., 'tutorials', 'pastPapers', 'exercises') - you'll need one for each top-level collection name
-            // Fields: name (Ascending)
-            // Query Scope: Collection Group
             const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
             try {
@@ -2156,7 +2007,7 @@
                 container.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Ensure item ID is available for preview/delete
+                    item.id = doc.id;
                     const el = document.createElement('div');
                     el.className = level < 3 ? 'content-item' : 'sub-item';
 
@@ -2164,7 +2015,6 @@
                     if (level < 3) {
                         const nextLevel = level + 1;
                         const newParentIds = [...parentIds, doc.id];
-                        // Add aria-expanded for accessibility and CSS targeting
                         headerHtml = `
                             <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
                                 <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
@@ -2183,7 +2033,6 @@
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
-                        // Add draggable attributes and event listeners for level 3 items
                         el.setAttribute('draggable', 'true');
                         el.dataset.itemId = doc.id;
                         el.dataset.itemType = type;
@@ -2220,7 +2069,7 @@
                     handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
                 } else if (button.matches('.preview-item-btn')) {
                     const itemData = JSON.parse(button.dataset.item);
-                    handleTeacherPreview(type, itemData);
+                    handleItemPreview(type, itemData);
                 }
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
@@ -2243,8 +2092,7 @@
             }
         }
 
-        // New function for teacher preview
-        function handleTeacherPreview(type, item) {
+        function handleItemPreview(type, item) {
             if (type === 'tutorials') {
                 const videoPreviewModal = document.getElementById('videoPreviewModal');
                 const videoPreviewTitle = document.getElementById('videoPreviewTitle');
@@ -2296,7 +2144,6 @@
             form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
             form.reset();
 
-            // Also reset file input displays and previews
             if (type === 'pastPapers') {
                 document.getElementById('pastPaperFileName').textContent = 'No file chosen';
                 document.getElementById('pastPaperLink').value = '';
@@ -2318,7 +2165,8 @@
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
-                        await deleteDoc(docRef); // Note: This doesn't delete subcollections. A proper solution requires a cloud function for recursive deletes.
+                        // NOTE: This does not delete subcollections. For a production app, a Cloud Function is needed for recursive deletes.
+                        await deleteDoc(docRef); 
                         showModal('Success', `${levelName} deleted.`);
                         const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                         renderContent(type, containerId, level, parentIds);
@@ -2332,7 +2180,7 @@
         }
         
         // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
-        let draggedItem = null; // Stores data about the item being dragged
+        let draggedItem = null;
 
         function handleDragStart(e) {
             const subItem = e.target.closest('.sub-item');
@@ -2345,13 +2193,13 @@
             };
             e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
             e.dataTransfer.effectAllowed = 'move';
-            subItem.classList.add('dragging'); // Optional: Add visual feedback for the dragged item
+            setTimeout(() => subItem.style.opacity = '0.5', 0);
         }
 
         function handleDragOver(e, type) {
-            e.preventDefault(); // Crucial to allow dropping
-            const targetElement = e.target.closest('.content-item'); // Target is a folder (level 1 or 2)
-            if (targetElement && draggedItem && draggedItem.type === type) { // Only allow dropping items of the same type
+            e.preventDefault();
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement && draggedItem && draggedItem.type === type) {
                 targetElement.classList.add('drag-over');
                 e.dataTransfer.dropEffect = 'move';
             } else {
@@ -2368,97 +2216,74 @@
 
         async function handleDrop(e, type) {
             e.preventDefault();
+            document.querySelectorAll('.sub-item').forEach(item => item.style.opacity = '1');
             const targetElement = e.target.closest('.content-item');
             if (targetElement) {
                 targetElement.classList.remove('drag-over');
             }
 
-            if (!draggedItem) return; // No item being dragged
+            if (!draggedItem || !targetElement) return;
 
-            const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
-            
-            // Ensure the dropped item is of the same type as the section
-            if (droppedItemData.type !== type) {
-                showModal('Move Error', 'Cannot move items between different material types (e.g., tutorials to past papers).');
-                draggedItem = null; // Reset dragged item
-                return;
-            }
-
-            const newParentLevel = parseInt(targetElement.dataset.level);
-            const newParentId = targetElement.dataset.id;
-            const newParentIds = JSON.parse(targetElement.dataset.parentIds);
-
-            // Determine the new full path for the item
-            let newFullParentIds = [];
-            if (newParentLevel === 1) { // Dropped into a Level 1 folder (Subject)
-                newFullParentIds = [newParentId];
-            } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (Topic/Year)
-                newFullParentIds = [...newParentIds, newParentId];
-            } else {
-                showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
+            if (draggedItem.type !== type) {
+                showModal('Move Error', 'Cannot move items between different material types.');
                 draggedItem = null;
                 return;
             }
 
-            // Prevent dropping into the same folder or an invalid folder structure (e.g., dropping a subject into a topic)
-            if (newFullParentIds.length !== 2) { // Files (level 3) always have 2 parent IDs
-                 showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
-                 draggedItem = null;
-                 return;
+            const newParentLevel = parseInt(targetElement.querySelector('.content-header').dataset.level);
+            const newParentId = targetElement.querySelector('.content-header').dataset.id;
+            const newGrandparentIds = JSON.parse(targetElement.querySelector('.content-header').dataset.parentIds);
+            
+            let newFullParentIds;
+            if (newParentLevel === 1) { // Dropped into a Level 1 folder (e.g., Subject)
+                // This is not allowed for files, they must go into a level 2 folder
+                showModal('Move Error', `Files must be moved into a ${materialsConfig[type].level2}, not a ${materialsConfig[type].level1}.`);
+                draggedItem = null;
+                return;
+            } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (e.g., Topic/Year)
+                newFullParentIds = [...newGrandparentIds, newParentId];
+            } else {
+                draggedItem = null;
+                return;
             }
 
             const oldParentIds = draggedItem.parentIds;
             const itemId = draggedItem.id;
-            const itemType = draggedItem.type;
 
-            // Check if the item is being dropped into its current parent folder
-            if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
-                showModal('Move Info', 'Item is already in this folder.');
+            if (oldParentIds.join('/') === newFullParentIds.join('/')) {
                 draggedItem = null;
-                return;
+                return; // Dropped in the same folder
             }
 
-            // Get a reference to the original document
-            const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
-            const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
+            const oldDocRef = doc(db, getPath(type, oldParentIds), itemId);
+            const newDocRef = doc(db, getPath(type, newFullParentIds), itemId);
 
             try {
-                // Fetch the item's data
                 const docSnap = await getDoc(oldDocRef);
-                if (!docSnap.exists()) {
-                    throw new Error("Item not found for moving.");
-                }
+                if (!docSnap.exists()) throw new Error("Item not found for moving.");
+                
                 const itemData = docSnap.data();
-
-                // Use a batch write for atomicity: delete from old location, add to new
                 const batch = writeBatch(db);
-                batch.set(newDocRef, itemData); // Create a new document with the same data in the new location
-                batch.delete(oldDocRef); // Delete the original document
-
+                batch.set(newDocRef, itemData);
+                batch.delete(oldDocRef);
                 await batch.commit();
 
-                showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+                showModal('Success', `Item moved successfully!`);
                 
-                // Re-render both the old and new parent containers to reflect changes
-                const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
-                const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
+                const oldContainerId = `container-level3-${type}-${oldParentIds[1]}`;
+                const newContainerId = `container-level3-${type}-${newFullParentIds[1]}`;
                 
-                // Only re-render if the containers are currently expanded/loaded
                 if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
-                    renderContent(itemType, oldContainerId, 3, oldParentIds);
+                    renderContent(type, oldContainerId, 3, oldParentIds);
                 }
                 if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
-                     renderContent(itemType, newContainerId, 3, newFullParentIds);
+                     renderContent(type, newContainerId, 3, newFullParentIds);
                 }
-                // If a parent folder was not expanded, it will load correctly when expanded next time.
-
             } catch (error) {
                 console.error("Error moving item:", error);
-                showModal('Move Error', `Could not move item. Error: ${e.message}`);
+                showModal('Move Error', `Could not move item. Error: ${error.message}`);
             } finally {
-                draggedItem = null; // Reset dragged item
-                // Remove dragging class from original item if it still exists
-                document.querySelectorAll('.sub-item.dragging').forEach(el => el.classList.remove('dragging'));
+                draggedItem = null;
             }
         }
 
@@ -2476,7 +2301,7 @@
                 const level1Id = level1Filter.value;
                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
                 level2Filter.disabled = true;
-                grid.innerHTML = `<p>Please select a ${config.level2.toLowerCase()}.</p>`;
+                if(grid) grid.innerHTML = `<p>Please select a ${config.level2.toLowerCase()}.</p>`;
                 if (level1Id) {
                     populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
                     level2Filter.disabled = false;
@@ -2488,8 +2313,13 @@
         async function renderStudentItems(type) {
              const config = materialsConfig[type];
              const grid = document.getElementById(`level3-${type}-grid`);
-             const level1Id = document.getElementById(`level1-${type}-filter`).value;
-             const level2Id = document.getElementById(`level2-${type}-filter`).value;
+             const level1Filter = document.getElementById(`level1-${type}-filter`);
+             const level2Filter = document.getElementById(`level2-${type}-filter`);
+             
+             if (!grid || !level1Filter || !level2Filter) return;
+
+             const level1Id = level1Filter.value;
+             const level2Id = level2Filter.value;
 
              grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
              if (!level1Id || !level2Id) {
@@ -2512,12 +2342,12 @@
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Add id to item object
+                    item.id = doc.id;
                     const card = document.createElement('div');
-                    card.className = 'material-card';
                     
                     let cardContent = '';
                     if (type === 'tutorials') {
+                        card.className = 'material-card';
                         if (item.type === 'youtube') {
                             cardContent = `
                                 <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
@@ -2547,6 +2377,7 @@
                            setTimeout(() => card.querySelector('.add-to-cart-btn')?.addEventListener('click', () => addToCart(item)), 0);
                         }
                     } else { // Free materials like past papers
+                        card.className = 'material-card';
                         cardContent = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;"><div class="material-card-content"><h3>${item.name}</h3></div></a>`;
                     }
                     card.innerHTML = cardContent;
@@ -2593,6 +2424,8 @@
 
         function updateCartUI() {
             const cartItemsContainer = document.getElementById('cart-items');
+            if (!cartItemsContainer) return;
+
             const subtotalPriceEl = document.getElementById('cart-subtotal-price');
             const promoDiscountLine = document.getElementById('promo-discount-line');
             const promoDiscountEl = document.getElementById('cart-promo-discount');
@@ -2604,7 +2437,6 @@
             const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
             const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
             const promoCodeError = document.getElementById('promoCodeError');
-
 
             cartItemsContainer.innerHTML = '';
             let subtotal = 0;
@@ -2633,44 +2465,38 @@
             let finalPrice = subtotal;
 
             if (appliedPromoCode) {
-                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
+                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
                 promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
                 promoDiscountLine.style.display = 'flex';
                 appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
                 appliedPromoCodeDisplay.style.display = 'flex';
                 promoCodeInput.disabled = true;
                 applyPromoCodeBtn.disabled = true;
-                promoCodeInput.value = appliedPromoCode.code; // Pre-fill with applied code
-                promoCodeError.textContent = ''; // Clear any previous error
+                promoCodeInput.value = appliedPromoCode.code;
+                promoCodeError.textContent = '';
             } else {
                 promoDiscountLine.style.display = 'none';
                 appliedPromoCodeDisplay.style.display = 'none';
                 promoCodeInput.disabled = false;
                 applyPromoCodeBtn.disabled = false;
-                promoCodeInput.value = ''; // Clear input if no code applied
+                promoCodeInput.value = '';
             }
 
             totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
 
-            // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
-            // Also, if the final price is > 0, enforce a minimum total of $100.
             const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
 
             if (canCheckout) {
                 checkoutBtn.disabled = false;
-                if (finalPrice === 0) {
-                    validationMsg.textContent = 'Proceed to checkout for free!';
-                } else {
-                    validationMsg.textContent = '';
-                }
+                validationMsg.textContent = finalPrice === 0 ? 'Proceed to checkout for free!' : '';
             } else {
                 checkoutBtn.disabled = true;
                 if (shoppingCart.length === 0) {
-                    validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
+                    validationMsg.textContent = 'Your cart is empty.';
                 } else if (finalPrice > 0 && finalPrice < 100) {
                     validationMsg.textContent = 'Minimum total of $100 required to checkout.';
                 } else {
-                    validationMsg.textContent = ''; // Should not happen if previous conditions are met
+                    validationMsg.textContent = '';
                 }
             }
         }
@@ -2678,9 +2504,9 @@
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCodeInput');
             const promoCodeError = document.getElementById('promoCodeError');
-            const code = promoCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
+            const code = promoCodeInput.value.trim().toUpperCase();
 
-            promoCodeError.textContent = ''; // Clear previous errors
+            promoCodeError.textContent = '';
 
             if (!code) {
                 promoCodeError.textContent = 'Please enter a promo code.';
@@ -2690,54 +2516,37 @@
             const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
             try {
                 const docSnap = await getDoc(promoCodeRef);
-                if (docSnap.exists()) {
+                if (docSnap.exists() && docSnap.data().isActive) {
                     const promoData = docSnap.data();
-                    if (promoData.isActive) {
-                        appliedPromoCode = {
-                            code: code,
-                            discountAmount: promoData.discountAmount
-                        };
-                        updateCartUI();
-                        showModal('Promo Code Applied', `Successfully applied promo code "${code}" for a $${promoData.discountAmount.toFixed(2)} discount!`);
-                    } else {
-                        promoCodeError.textContent = 'This promo code is not active.';
-                    }
+                    appliedPromoCode = { code: code, discountAmount: promoData.discountAmount };
+                    updateCartUI();
+                    showModal('Promo Code Applied', `Successfully applied promo code "${code}" for a $${promoData.discountAmount.toFixed(2)} discount!`);
                 } else {
-                    promoCodeError.textContent = 'Invalid promo code.';
+                    promoCodeError.textContent = 'Invalid or inactive promo code.';
                 }
             } catch (error) {
                 console.error("Error applying promo code:", error);
-                promoCodeError.textContent = `Error applying code: ${e.message}`;
+                promoCodeError.textContent = `Error applying code: ${error.message}`;
             }
         }
 
         function removeAppliedPromoCode() {
             appliedPromoCode = null;
             updateCartUI();
-            document.getElementById('promoCodeInput').value = ''; // Clear input field
-            document.getElementById('promoCodeError').textContent = ''; // Clear error message
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('promoCodeError').textContent = '';
             showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
         }
 
 
         async function handleCheckout() {
-            if (!currentUserId) {
-                return showModal('Error', 'You must be logged in to check out.');
-            }
+            if (!currentUserId) return showModal('Error', 'You must be logged in to check out.');
+            if (shoppingCart.length === 0) return showModal('Checkout Error', 'Your cart is empty.');
 
-            // Recalculate final price with applied discount
             let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
-            let finalPrice = subtotal;
-            if (appliedPromoCode) {
-                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
-            }
+            let finalPrice = appliedPromoCode ? Math.max(0, subtotal - appliedPromoCode.discountAmount) : subtotal;
 
-            if (shoppingCart.length === 0) {
-                return showModal('Checkout Error', 'Your cart is empty. Please add items before checking out.');
-            }
-
-            if (finalPrice === 0) {
-                // Direct "free" checkout - bypass Stripe
+            const processPurchase = async (method) => {
                 try {
                     const batch = writeBatch(db);
                     shoppingCart.forEach(item => {
@@ -2746,96 +2555,82 @@
                             name: item.name, 
                             price: item.price, 
                             purchasedAt: Date.now(),
-                            purchaseMethod: 'promo', // Track purchase method
-                            promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A' // Track promo code used
+                            purchaseMethod: method,
+                            promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A'
                         });
                     });
                     await batch.commit();
 
-                    showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
-                    shoppingCart = []; // Clear the local cart
-                    appliedPromoCode = null; // Clear applied promo code
-                    updateCartUI(); // Update UI to reflect empty cart and no promo
-                    showSection('exerciseSection'); // Re-render the exercises page
+                    showModal('Purchase Successful!', 'Your new exercises are now available for download.');
+                    shoppingCart = [];
+                    appliedPromoCode = null;
+                    updateCartUI();
                     renderStudentItems('exercises');
-                    if (currentUserRole === 'teacher') loadStudentPurchasesForTeacher(); // Update teacher view
-
+                    if (currentUserRole === 'teacher') loadStudentPurchasesForTeacher();
                 } catch (error) {
-                    console.error("Error processing free checkout:", error);
-                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${e.message}`);
+                    console.error(`Error processing ${method} checkout:`, error);
+                    showModal('Checkout Error', `Could not complete checkout. Please try again. Error: ${error.message}`);
                 }
+            };
 
+            if (finalPrice === 0) {
+                await processPurchase('promo');
             } else if (finalPrice >= 100) {
-                // Proceed with Stripe checkout for paid items
                 if (STRIPE_PAYMENT_LINK.includes("...")) {
-                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured.');
                 }
-
                 const checkoutSessionId = crypto.randomUUID();
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
-
                 try {
-                    // Save the cart and applied promo code to Firestore
                     await setDoc(checkoutSessionRef, {
                         cart: shoppingCart,
-                        appliedPromoCode: appliedPromoCode, // Save applied promo code
+                        appliedPromoCode: appliedPromoCode,
                         created: Date.now(),
-                        totalAmount: finalPrice, // Save the final amount for record
-                        purchaseMethod: 'paid' // Mark as paid purchase
+                        totalAmount: finalPrice,
+                        purchaseMethod: 'paid'
                     });
-
-                    // Redirect to Stripe
                     const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
                     window.location.href = stripeUrl;
-
                 } catch (error) {
                     console.error("Error creating checkout session:", error);
-                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${e.message}`);
+                    showModal('Checkout Error', `Could not initiate checkout. Error: ${error.message}`);
                 }
             } else {
-                showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
+                showModal('Checkout Error', 'Minimum total of $100 required for paid checkouts.');
             }
         }
         
         async function checkForSuccessfulPurchase() {
             const params = new URLSearchParams(window.location.search);
-            const sessionId = params.get('session_id'); // This is a placeholder, Stripe might use a different param
+            const sessionId = params.get('session_id');
 
-            // A more robust check might be needed depending on Stripe's redirect behavior
             if (params.get('payment_status') === 'success' && sessionId) {
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
                 try {
                     const sessionDoc = await getDoc(checkoutSessionRef);
                     if (sessionDoc.exists()) {
                         const sessionData = sessionDoc.data();
-                        const purchasedItems = sessionData.cart;
-
-                        // Use a batch write to add all purchased items and delete the session doc atomically
                         const batch = writeBatch(db);
-                        purchasedItems.forEach(item => {
+                        sessionData.cart.forEach(item => {
                             const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
                             batch.set(purchaseRef, { 
                                 name: item.name, 
                                 price: item.price, 
                                 purchasedAt: Date.now(),
-                                purchaseMethod: sessionData.purchaseMethod || 'paid', // Default to paid if not specified
+                                purchaseMethod: sessionData.purchaseMethod || 'paid',
                                 promoCodeUsed: sessionData.appliedPromoCode ? sessionData.appliedPromoCode.code : 'N/A'
                             });
                         });
-                        batch.delete(checkoutSessionRef); // Clean up the session doc
+                        batch.delete(checkoutSessionRef);
                         await batch.commit();
                         
-                        showModal('Purchase Successful!', 'Your new exercises are now available for download.');
-                        shoppingCart = []; // Clear the local cart
-                        appliedPromoCode = null; // Clear applied promo code
+                        showModal('Purchase Successful!', 'Your new exercises are now available.');
+                        shoppingCart = [];
+                        appliedPromoCode = null;
                         
-                        // Clean the URL
                         window.history.replaceState({}, document.title, window.location.pathname);
-                        
-                        // Re-render the exercises page
                         showSection('exerciseSection');
-                        renderStudentItems('exercises');
-                        if (currentUserRole === 'teacher') loadStudentPurchasesForTeacher(); // Update teacher view
+                        if (currentUserRole === 'teacher') loadStudentPurchasesForTeacher();
                     }
                 } catch (error) {
                     console.error("Error processing purchase:", error);
@@ -2859,10 +2654,10 @@
             const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
             const discountAmount = parseFloat(promoDiscountAmountInput.value);
 
-            promoCodeGenerationStatus.textContent = ''; // Clear previous messages
+            promoCodeGenerationStatus.textContent = '';
 
             if (isNaN(discountAmount) || discountAmount <= 0) {
-                promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount (must be positive).';
+                promoCodeGenerationStatus.textContent = 'Please enter a valid positive discount amount.';
                 return;
             }
 
@@ -2870,38 +2665,34 @@
             const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
 
             try {
-                promoCodeGenerationStatus.textContent = 'Generating and saving promo code...';
+                promoCodeGenerationStatus.textContent = 'Generating...';
                 await setDoc(promoCodeRef, {
                     code: newCode,
                     discountAmount: discountAmount,
-                    isActive: true, // New codes are active by default
+                    isActive: true,
                     createdAt: Date.now(),
                     createdBy: currentUserId
                 });
-                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated with $${discountAmount.toFixed(2)} discount!`;
-                promoDiscountAmountInput.value = ''; // Clear discount input
-                loadPromoCodesForTeacher(); // Refresh the list
+                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated!`;
+                promoDiscountAmountInput.value = '';
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error generating promo code:", error);
-                promoCodeGenerationStatus.textContent = `Error: ${e.message}`;
+                promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
             }
         }
 
         async function loadPromoCodesForTeacher() {
             const teacherPromoCodeList = document.getElementById('teacherPromoCodeList');
+            if (!teacherPromoCodeList) return;
             teacherPromoCodeList.innerHTML = '<p class="loading-indicator">Loading promo codes...</p>';
 
-            const promoCodesCollectionRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
-            const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
+            const promoCodesRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
+            const q = query(promoCodesRef, orderBy('createdAt', 'desc'));
 
             try {
                 const snapshot = await getDocs(q);
-                if (snapshot.empty) {
-                    teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
-                    return;
-                }
-
-                teacherPromoCodeList.innerHTML = '';
+                teacherPromoCodeList.innerHTML = snapshot.empty ? '<p>No promo codes generated yet.</p>' : '';
                 snapshot.forEach(doc => {
                     const promo = doc.data();
                     const promoItem = document.createElement('div');
@@ -2920,12 +2711,11 @@
                     teacherPromoCodeList.appendChild(promoItem);
                 });
 
-                // Add event listeners for toggle and delete buttons
-                teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => {
-                    button.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
+                teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
                 });
-                teacherPromoCodeList.querySelectorAll('.delete-promo-btn').forEach(button => {
-                    button.addEventListener('click', (e) => deletePromoCode(e.target.dataset.code));
+                teacherPromoCodeList.querySelectorAll('.delete-promo-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => deletePromoCode(e.target.dataset.code));
                 });
 
             } catch (error) {
@@ -2939,10 +2729,10 @@
             try {
                 await updateDoc(promoCodeRef, { isActive: !currentStatus });
                 showModal('Status Updated', `Promo code "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
-                loadPromoCodesForTeacher(); // Refresh the list
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error toggling promo code status:", error);
-                showModal('Error', `Could not update status for "${code}": ${e.message}`);
+                showModal('Error', `Could not update status for "${code}": ${error.message}`);
             }
         }
 
@@ -2953,10 +2743,10 @@
                     try {
                         await deleteDoc(promoCodeRef);
                         showModal('Success', `Promo code "${code}" deleted.`);
-                        loadPromoCodesForTeacher(); // Refresh the list
+                        loadPromoCodesForTeacher();
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
-                        showModal('Error', `Could not delete "${code}": ${e.message}`);
+                        showModal('Error', `Could not delete "${code}": ${error.message}`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
@@ -2966,59 +2756,63 @@
         // --- TEACHER: LOAD STUDENT PURCHASE HISTORY ---
         async function loadStudentPurchasesForTeacher() {
             const purchaseHistoryList = document.getElementById('studentPurchaseHistoryList');
+            if (!purchaseHistoryList) return;
             purchaseHistoryList.innerHTML = '<p class="loading-indicator">Loading student purchase history...</p>';
 
             try {
                 const usersCollectionRef = collection(db, `artifacts/${appId}/users`);
                 const userDocs = await getDocs(usersCollectionRef);
                 
-                let allPurchases = [];
+                let allPurchasesByItem = {};
 
                 for (const userDoc of userDocs.docs) {
                     const userId = userDoc.id;
                     const userProfileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
                     const userProfileSnap = await getDoc(userProfileRef);
-                    const userName = userProfileSnap.exists() ? (userProfileSnap.data().name || userProfileSnap.data().email) : `User ${userId.substring(0, 8)}...`;
+                    const userName = userProfileSnap.exists() ? (userProfileSnap.data().name || userProfileSnap.data().email) : `User ${userId.substring(0, 6)}`;
 
                     const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${userId}/purchased_exercises`);
                     const purchasedExercisesSnap = await getDocs(purchasedExercisesRef);
 
                     purchasedExercisesSnap.forEach(purchaseDoc => {
                         const purchaseData = purchaseDoc.data();
-                        allPurchases.push({
-                            userId: userId,
+                        const itemName = purchaseData.name;
+                        if (!allPurchasesByItem[itemName]) {
+                            allPurchasesByItem[itemName] = [];
+                        }
+                        allPurchasesByItem[itemName].push({
                             userName: userName,
-                            itemName: purchaseData.name,
-                            price: purchaseData.price,
-                            purchasedAt: purchaseData.purchasedAt,
                             purchaseMethod: purchaseData.purchaseMethod || 'N/A',
                             promoCodeUsed: purchaseData.promoCodeUsed || 'N/A'
                         });
                     });
                 }
-
-                if (allPurchases.length === 0) {
+                
+                if (Object.keys(allPurchasesByItem).length === 0) {
                     purchaseHistoryList.innerHTML = '<p>No student purchase records found yet.</p>';
                     return;
                 }
 
-                // Sort purchases by date, newest first
-                allPurchases.sort((a, b) => b.purchasedAt - a.purchasedAt);
-
                 purchaseHistoryList.innerHTML = '';
-                allPurchases.forEach(purchase => {
+                for (const itemName in allPurchasesByItem) {
+                    const owners = allPurchasesByItem[itemName];
                     const purchaseEntry = document.createElement('div');
                     purchaseEntry.className = 'student-purchase-entry';
+                    let ownersHtml = owners.map(owner => 
+                        `<div class="purchased-item-detail">${owner.userName} - Method: 
+                            <span style="color:${owner.purchaseMethod === 'paid' ? 'var(--accent-green)' : 'var(--accent-blue)'}; font-weight: 600;">
+                                ${owner.purchaseMethod}
+                            </span>
+                            ${owner.promoCodeUsed !== 'N/A' ? ` (Code: ${owner.promoCodeUsed})` : ''}
+                        </div>`
+                    ).join('');
+
                     purchaseEntry.innerHTML = `
-                        <strong>Student: ${purchase.userName} (ID: ${purchase.userId})</strong>
-                        <div class="purchased-item-detail">Item: ${purchase.itemName}</div>
-                        <div class="purchased-item-detail">Price: $${purchase.price.toFixed(2)}</div>
-                        <div class="purchased-item-detail">Purchased: ${new Date(purchase.purchasedAt).toLocaleString()}</div>
-                        <div class="purchased-item-detail">Method: ${purchase.purchaseMethod}</div>
-                        <div class="purchased-item-detail">Promo Code: ${purchase.promoCodeUsed}</div>
+                        <strong>${itemName}</strong>
+                        ${ownersHtml}
                     `;
                     purchaseHistoryList.appendChild(purchaseEntry);
-                });
+                }
 
             } catch (error) {
                 console.error("Error loading student purchase history:", error);
@@ -3030,17 +2824,15 @@
         // --- VIDEO PARSING ---
         function parseVideoInput(input) {
             const text = input.trim();
-            // Check for YouTube URL
             const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
             const youtubeMatch = text.match(youtubeRegex);
             if (youtubeMatch && youtubeMatch[1]) {
                 return { type: 'youtube', id: youtubeMatch[1] };
             }
-            // Check for iframe embed code
             if (text.startsWith('<iframe') && text.endsWith('>')) {
                 return { type: 'embed', code: text };
             }
-            return null; // Invalid input
+            return null;
         }
 
         // --- MODAL SUBMISSION LOGIC ---
@@ -3052,21 +2844,13 @@
             const title = document.getElementById('tutorialTitle').value;
             
             const videoDetails = parseVideoInput(input);
-
-            if (!videoDetails || !title.trim()) { 
-                return showModal('Input Error', 'Please provide a title and a valid YouTube link or embed code.');
-            }
+            if (!videoDetails || !title.trim()) return showModal('Input Error', 'Please provide a title and a valid YouTube link or embed code.');
             
-            const dataToSave = {
-                title: title.trim(),
-                name: title.trim(),
-                timestamp: Date.now()
-            };
-
+            const dataToSave = { title: title.trim(), name: title.trim(), timestamp: Date.now() };
             if (videoDetails.type === 'youtube') {
                 dataToSave.type = 'youtube';
                 dataToSave.youtubeId = videoDetails.id;
-            } else { // 'embed'
+            } else {
                 dataToSave.type = 'embed';
                 dataToSave.embedCode = videoDetails.code;
             }
@@ -3077,72 +2861,18 @@
                 showModal('Success', 'Video added.');
                 document.getElementById('addVideoModal').style.display = 'none';
                 renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
-            } catch (error) { 
-                showModal('Error', `Could not add video: ${e.message}`); 
-            }
+            } catch (error) { showModal('Error', `Could not add video: ${error.message}`); }
         });
 
-        document.getElementById('addPastPaperForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function handleFileUploadForm(e, type, parentIds, name, price = null) {
             const form = e.target;
-            const parentId1 = form.querySelector('#paperParentId1').value;
-            const parentId2 = form.querySelector('#paperParentId2').value;
-            const name = document.getElementById('pastPaperName').value;
-            const fileInput = document.getElementById('pastPaperFile');
+            const fileInput = form.querySelector('input[type=file]');
+            const linkInput = form.querySelector('input[type=url]');
             const file = fileInput.files[0];
-            const link = document.getElementById('pastPaperLink').value.trim();
+            const link = linkInput.value.trim();
 
             if (!name.trim() || (!file && !link)) {
-                return showModal('Input Error', 'Please provide a paper name and either upload a PDF or paste a link.');
-            }
-
-            const buttonsContainer = form.querySelector('.modal-form-buttons');
-            const originalButtonsHTML = buttonsContainer.innerHTML;
-            buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
-            
-            let downloadURL = link; // Default to the pasted link
-
-            try {
-                // If a file is provided, it takes priority
-                if (file) {
-                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
-                    const storagePath = `materials/past-papers/${Date.now()}_${file.name}`;
-                    const storageRef = ref(storage, storagePath);
-                    const uploadResult = await uploadBytes(storageRef, file);
-                    downloadURL = await getDownloadURL(uploadResult.ref);
-                }
-
-                if (!downloadURL) { // Final check in case link was empty and file failed
-                    throw new Error("No valid file or link provided.");
-                }
-
-                const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now() });
-                
-                showModal('Success', 'Past paper added.');
-                document.getElementById('addPastPaperModal').style.display = 'none';
-                renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
-            } catch (error) { 
-                console.error("Past paper upload error:", error);
-                showModal('Error', `Could not add paper: ${e.message}`); 
-            } finally {
-                buttonsContainer.innerHTML = originalButtonsHTML;
-            }
-        });
-
-        document.getElementById('addExerciseForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const parentId1 = form.querySelector('#exerciseParentId1').value;
-            const parentId2 = form.querySelector('#exerciseParentId2').value;
-            const name = document.getElementById('exerciseName').value;
-            const price = parseFloat(document.getElementById('exercisePrice').value);
-            const fileInput = document.getElementById('exerciseFile');
-            const file = fileInput.files[0];
-            const link = document.getElementById('exerciseLink').value.trim();
-            
-            if (!name.trim() || (!file && !link) || isNaN(price) || price < 0) { 
-                return showModal('Input Error', 'Please provide a name, price, and either upload a file or paste a link.'); 
+                return showModal('Input Error', `Please provide a name and either upload a file or paste a link.`);
             }
 
             const buttonsContainer = form.querySelector('.modal-form-buttons');
@@ -3154,28 +2884,47 @@
             try {
                 if (file) {
                     buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
-                    const storagePath = `materials/exercises/${Date.now()}_${file.name}`;
+                    const storagePath = `materials/${type}/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, storagePath);
                     const uploadResult = await uploadBytes(storageRef, file);
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
 
-                if (!downloadURL) {
-                    throw new Error("No valid file or link provided.");
-                }
+                if (!downloadURL) throw new Error("No valid file or link provided.");
 
-                const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now() });
+                const collectionRef = collection(db, getPath(type, parentIds));
+                const dataToSave = { name: name.trim(), link: downloadURL, timestamp: Date.now() };
+                if (price !== null) dataToSave.price = price;
+
+                await addDoc(collectionRef, dataToSave);
                 
-                showModal('Success', 'Exercise added.');
-                document.getElementById('addExerciseModal').style.display = 'none';
-                renderContent('exercises', `container-level3-exercises-${parentId2}`, 3, [parentId1, parentId2]);
+                showModal('Success', `${materialsConfig[type].level3} added.`);
+                document.getElementById(materialsConfig[type].modalId).style.display = 'none';
+                renderContent(type, `container-level3-${type}-${parentIds[1]}`, 3, parentIds);
             } catch (error) { 
-                console.error("Exercise upload error:", error);
-                showModal('Error', `Could not add exercise: ${e.message}`); 
+                console.error(`${type} upload error:`, error);
+                showModal('Error', `Could not add item: ${error.message}`); 
             } finally {
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
+        }
+
+        document.getElementById('addPastPaperForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const parentId1 = e.target.querySelector('#paperParentId1').value;
+            const parentId2 = e.target.querySelector('#paperParentId2').value;
+            const name = document.getElementById('pastPaperName').value;
+            handleFileUploadForm(e, 'pastPapers', [parentId1, parentId2], name);
+        });
+
+        document.getElementById('addExerciseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const parentId1 = e.target.querySelector('#exerciseParentId1').value;
+            const parentId2 = e.target.querySelector('#exerciseParentId2').value;
+            const name = document.getElementById('exerciseName').value;
+            const price = parseFloat(document.getElementById('exercisePrice').value);
+            if (isNaN(price) || price < 0) return showModal('Input Error', 'Please provide a valid, non-negative price.');
+            handleFileUploadForm(e, 'exercises', [parentId1, parentId2], name, price);
         });
 
         document.getElementById('tutorialLink').addEventListener('input', (e) => {
@@ -3240,14 +2989,13 @@
                 }
             });
         }
-        // Setup all dropzones on init
         setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
         setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
         setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
         setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
         
-        async function loadPastSubmissions() { /* Placeholder for original function */ }
-        document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
+        async function loadPastSubmissions() { /* Placeholder */ }
+        document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder */ });
         
         // --- CHAT FUNCTIONALITY ---
         const chatInput = document.getElementById('chatInput');
@@ -3260,46 +3008,39 @@
             if (!message) return;
 
             appendChatMessage(message, 'user');
-            chatInput.value = ''; // Clear input immediately
+            chatInput.value = '';
             chatLoadingIndicator.textContent = 'AI is typing...';
 
             geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
 
-            const payload = { contents: geminiChatHistory };
-            const apiKey = ""; // Canvas will provide this at runtime
-
             try {
-                const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=`;
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ contents: geminiChatHistory })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Gemini API error:", errorData);
-                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                    throw new Error(`API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
                 }
 
                 const result = await response.json();
                 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
+                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                     const aiResponse = result.candidates[0].content.parts[0].text;
                     appendChatMessage(aiResponse, 'gemini');
                     geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
                 } else {
-                    appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
-                    console.warn("Unexpected Gemini API response structure:", result);
+                    appendChatMessage("Sorry, I couldn't get a response.", 'gemini');
                 }
             } catch (error) {
                 console.error("Error sending message to Gemini:", error);
                 appendChatMessage(`Error: ${error.message}`, 'gemini');
             } finally {
-                chatLoadingIndicator.textContent = ''; // Hide loading indicator
-                chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
+                chatLoadingIndicator.textContent = '';
+                chatDisplay.scrollTop = chatDisplay.scrollHeight;
             }
         }
 
@@ -3308,21 +3049,21 @@
             messageElement.className = `chat-message ${sender}`;
             messageElement.textContent = text;
             chatDisplay.appendChild(messageElement);
-            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to latest message
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
         }
 
         sendChatButton.addEventListener('click', handleSendMessage);
         chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent new line in textarea
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 handleSendMessage();
             }
         });
 
         // --- STUDENT MANAGEMENT ---
-        document.getElementById('addStudentButton').addEventListener('click', async () => { /* Placeholder for original function */ });
-        async function loadAuthorizedStudents() { /* Placeholder for original function */ }
-        async function deleteStudent(e) { /* Placeholder for original function */ }
+        document.getElementById('addStudentButton').addEventListener('click', async () => { /* Placeholder */ });
+        async function loadAuthorizedStudents() { /* Placeholder */ }
+        async function deleteStudent(e) { /* Placeholder */ }
 
         function showModal(title, message, buttons = []) {
             const messageModal = document.getElementById('messageModal');
@@ -3368,9 +3109,6 @@
                 if (value) {
                     messageModal.style.display = 'none';
                     callback(value);
-                } else {
-                    modalInput.style.border = '1px solid var(--accent-red)';
-                    modalInput.focus();
                 }
             };
             modalButtons.appendChild(saveButton);
@@ -3389,10 +3127,8 @@
         document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
             const modal = btn.closest('.modal');
             modal.style.display = 'none'; 
-            // If it's the video preview modal, stop the video playback
             if (modal.id === 'videoPreviewModal') {
-                const videoContent = document.getElementById('videoPreviewContent');
-                videoContent.innerHTML = ''; // Clear content to stop video
+                document.getElementById('videoPreviewContent').innerHTML = '';
             }
         });
 
@@ -3408,241 +3144,207 @@
         loadTheme();
 
         // --- FINDER WINDOW LOGIC ---
-        let finderCurrentPath = []; // Stores [type, level1Id, level2Id]
-        let finderCurrentType = null; // 'tutorials', 'pastPapers', 'exercises'
-        let minimizedWindows = {}; // Stores minimized window states: {type: {left, top, width, height}}
-
+        let finderCurrentType = null;
+        
         function setupFinderWindow() {
             const finderWindow = document.getElementById('finderMaterialsSection');
             const dragBar = document.getElementById('finderDragBar');
             const fullscreenToggle = document.getElementById('finderFullscreenToggle');
-            const minimizeButton = finderWindow.querySelector('.finder-circle.min'); // Get the minimize button
+            const closeButton = finderWindow.querySelector('.finder-circle.close');
 
             let isDragging = false, offsetX = 0, offsetY = 0;
             
-            // Prevent text selection during drag
-            dragBar.addEventListener('selectstart', (e) => e.preventDefault());
-
             dragBar.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.buttons')) return;
                 isDragging = true;
-                // Remove the transform to allow direct manipulation of left/top
-                finderWindow.style.transform = 'none';
-                // Calculate offset relative to the window's current position
-                offsetX = e.clientX - finderWindow.getBoundingClientRect().left;
-                offsetY = e.clientY - finderWindow.getBoundingClientRect().top;
-                finderWindow.style.cursor = 'grabbing';
+                offsetX = e.clientX - finderWindow.offsetLeft;
+                offsetY = e.clientY - finderWindow.offsetTop;
+                dragBar.style.cursor = 'grabbing';
             });
 
             document.addEventListener('mouseup', () => {
                 isDragging = false;
-                finderWindow.style.cursor = 'grab';
+                dragBar.style.cursor = 'grab';
             });
 
             document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
-                    // Update window position based on mouse movement
-                    let newLeft = e.clientX - offsetX;
-                    let newTop = e.clientY - offsetY;
-
-                    // Ensure window stays within viewport
-                    const maxX = window.innerWidth - finderWindow.offsetWidth;
-                    const maxY = window.innerHeight - finderWindow.offsetHeight;
-
-                    finderWindow.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-                    finderWindow.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                    finderWindow.style.left = `${e.clientX - offsetX}px`;
+                    finderWindow.style.top = `${e.clientY - offsetY}px`;
                 }
             });
 
-            let isFullscreen = false;
             fullscreenToggle.addEventListener('click', () => {
-                if (!isFullscreen) {
-                    finderWindow.classList.add('fullscreen');
-                    // When going fullscreen, also remove transform and set explicit 0,0
-                    finderWindow.style.transform = 'none';
-                    finderWindow.style.top = '0';
-                    finderWindow.style.left = '0';
-                    isFullscreen = true;
-                } else {
-                    finderWindow.classList.remove('fullscreen');
-                    // When exiting fullscreen, reset to default centered position
-                    finderWindow.style.top = '50%';
-                    finderWindow.style.left = '50%';
-                    finderWindow.style.transform = 'translate(-50%, -50%)';
-                    finderWindow.style.width = '90vw'; // Restore default width
-                    finderWindow.style.height = '90vh'; // Restore default height
-                    finderWindow.style.maxWidth = '1200px'; // Restore max width
-                    finderWindow.style.maxHeight = '800px'; // Restore max height
-                    isFullscreen = false;
-                }
+                finderWindow.classList.toggle('fullscreen');
             });
 
-            // Handle close button
-            finderWindow.querySelector('.finder-circle.close').addEventListener('click', () => {
+            closeButton.addEventListener('click', () => {
                 finderWindow.style.display = 'none';
-                currentMaterialViewMode = 'card'; // Revert to card view
-                // Re-render the currently active material section in card view
-                const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
-                if (activeMaterialSectionId) {
-                    document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-                    const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
-                    if (type) renderStudentItems(type); // Re-render the card view
-                }
-                // When closing, reset position to default centered state for next open
-                finderWindow.style.top = '50%';
-                finderWindow.style.left = '50%';
-                finderWindow.style.transform = 'translate(-50%, -50%)';
-                finderWindow.style.width = '90vw';
-                finderWindow.style.height = '90vh';
-                finderWindow.style.maxWidth = '1200px';
-                finderWindow.style.maxHeight = '800px';
-                finderWindow.classList.remove('fullscreen'); // Ensure fullscreen class is removed
-            });
-
-            // Handle minimize button
-            minimizeButton.addEventListener('click', () => {
-                minimizeFinderWindow();
+                currentMaterialViewMode = 'card';
+                const studentView = document.getElementById(`student-${finderCurrentType}-view`);
+                if(studentView) studentView.classList.remove('hidden-on-desktop');
+                const toggleBtn = document.getElementById(`toggle-view-btn-${finderCurrentType}`);
+                if(toggleBtn) toggleBtn.textContent = 'Finder View';
             });
         }
 
-        function minimizeFinderWindow() {
+        async function showFinderView(type) {
+            finderCurrentType = type;
+            const config = materialsConfig[type];
             const finderWindow = document.getElementById('finderMaterialsSection');
-            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
-            const type = finderCurrentType; // Get the current type of material being viewed
-
-            if (!type) return; // Should not happen if a material section is open
-
-            // Store current position and size for restoration
-            const rect = finderWindow.getBoundingClientRect();
-            minimizedWindows[type] = {
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-                isFullscreen: finderWindow.classList.contains('fullscreen')
-            };
-
-            // Create a new tab for the minimized window
-            const tab = document.createElement('div');
-            tab.className = 'minimized-tab';
-            tab.dataset.type = type;
-            tab.innerHTML = `
-                <span>${materialsConfig[type].title}</span>
-                <button class="close-tab-btn">✖</button>
-            `;
-            minimizedWindowsBar.appendChild(tab);
-
-            // Calculate target position for animation (center of the new tab)
-            // This requires the tab to be rendered first to get its position
-            const tabRect = tab.getBoundingClientRect();
-            const targetX = tabRect.left + tabRect.width / 2;
-            const targetY = tabRect.top + tabRect.height / 2;
-
-            // Set CSS variables for animation
-            finderWindow.style.setProperty('--target-x', `${targetX - window.innerWidth / 2}px`); // Relative to center
-            finderWindow.style.setProperty('--target-y', `${targetY - window.innerHeight / 2}px`); // Relative to center
-
-            // Apply minimize animation
-            finderWindow.classList.add('minimizing');
-            finderWindow.classList.remove('restoring'); // Ensure no conflicting animation
-
-            finderWindow.addEventListener('animationend', function handler() {
-                finderWindow.style.display = 'none';
-                finderWindow.classList.remove('minimizing');
-                minimizedWindowsBar.classList.add('active'); // Show the bar
-                this.removeEventListener('animationend', handler);
-            });
-
-            // Handle click on the minimized tab to restore
-            tab.addEventListener('click', (e) => {
-                if (e.target.classList.contains('close-tab-btn')) {
-                    // If close button on tab is clicked, remove the tab and clear state
-                    e.stopPropagation(); // Prevent tab click from restoring
-                    delete minimizedWindows[type];
-                    tab.remove();
-                    if (Object.keys(minimizedWindows).length === 0) {
-                        minimizedWindowsBar.classList.remove('active');
-                    }
-                } else {
-                    restoreFinderWindow(type, tab);
-                }
-            });
-        }
-
-        function restoreFinderWindow(type, tabElement) {
-            const finderWindow = document.getElementById('finderMaterialsSection');
-            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
-            const storedState = minimizedWindows[type];
-
-            if (!storedState) return; // No stored state for this window
-
-            // Remove the tab from the bar
-            tabElement.remove();
-            delete minimizedWindows[type];
-            if (Object.keys(minimizedWindows).length === 0) {
-                minimizedWindowsBar.classList.remove('active');
-            }
-
-            // Calculate start position for animation (center of the tab)
-            const tabRect = tabElement.getBoundingClientRect();
-            const startX = tabRect.left + tabRect.width / 2;
-            const startY = tabRect.top + tabRect.height / 2;
-
-            // Set CSS variables for animation
-            finderWindow.style.setProperty('--start-x', `${startX - window.innerWidth / 2}px`); // Relative to center
-            finderWindow.style.setProperty('--start-y', `${startY - window.innerHeight / 2}px`); // Relative to center
-
-            // Reset position and size before animation starts
+            document.getElementById('finderTitle').textContent = config.title;
             finderWindow.style.display = 'flex';
-            finderWindow.style.left = `${storedState.left}px`;
-            finderWindow.style.top = `${storedState.top}px`;
-            finderWindow.style.width = `${storedState.width}px`;
-            finderWindow.style.height = `${storedState.height}px`;
-            finderWindow.style.transform = 'none'; // Ensure transform is not interfering initially
-
-            // Apply restore animation
-            finderWindow.classList.add('restoring');
-            finderWindow.classList.remove('minimizing'); // Ensure no conflicting animation
-
-            if (storedState.isFullscreen) {
-                finderWindow.classList.add('fullscreen');
-            }
-
-            finderWindow.addEventListener('animationend', function handler() {
-                finderWindow.classList.remove('restoring');
-                // Re-apply original transform for centering if not fullscreen
-                if (!storedState.isFullscreen) {
-                    finderWindow.style.transform = 'translate(-50%, -50%)';
+            
+            const sidebar = document.getElementById('finderSidebar');
+            sidebar.innerHTML = '<p class="loading-indicator">Loading...</p>';
+            
+            const collectionRef = collection(db, getPath(type));
+            const q = query(collectionRef, orderBy('name', 'asc'));
+            
+            try {
+                const snapshot = await getDocs(q);
+                sidebar.innerHTML = '<ul></ul>';
+                const ul = sidebar.querySelector('ul');
+                if (snapshot.empty) {
+                    ul.innerHTML = `<li>No ${config.level1}s found.</li>`;
+                    return;
                 }
-                this.removeEventListener('animationend', handler);
-            });
+                snapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const li = document.createElement('li');
+                    li.className = 'finder-sidebar-item';
+                    li.dataset.id = item.id;
+                    li.dataset.name = item.name;
+                    li.innerHTML = `<span class="folder-icon">📁</span> ${item.name}`;
+                    li.onclick = () => {
+                        document.querySelectorAll('.finder-sidebar-item.active').forEach(el => el.classList.remove('active'));
+                        li.classList.add('active');
+                        renderFinderLevel2(type, item.id);
+                    };
+                    ul.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Error loading finder sidebar:", error);
+                sidebar.innerHTML = '<p class="error-message">Error loading content.</p>';
+            }
         }
 
-        // Adjust view mode on window resize - ensure finder window state is handled
+        async function renderFinderLevel2(type, level1Id) {
+            const config = materialsConfig[type];
+            const sidebar = document.getElementById('finderSidebar');
+            const parentLi = sidebar.querySelector(`[data-id="${level1Id}"]`);
+            let nestedUl = parentLi.querySelector('ul');
+
+            if (nestedUl) { // Toggle visibility
+                nestedUl.style.display = nestedUl.style.display === 'none' ? 'block' : 'none';
+                return;
+            }
+
+            nestedUl = document.createElement('ul');
+            nestedUl.className = 'nested';
+            parentLi.appendChild(nestedUl);
+            nestedUl.innerHTML = '<li><p class="loading-indicator" style="font-size: 0.8em;">Loading...</p></li>';
+            
+            const collectionRef = collection(db, getPath(type, [level1Id]));
+            const q = query(collectionRef, orderBy('name', config.level2 === 'Year' ? 'desc' : 'asc'));
+
+            try {
+                const snapshot = await getDocs(q);
+                nestedUl.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const li = document.createElement('li');
+                    li.className = 'finder-sidebar-item';
+                    li.dataset.id = item.id;
+                    li.dataset.name = item.name;
+                    li.innerHTML = `<span class="folder-icon">📂</span> ${item.name}`;
+                    li.onclick = (e) => {
+                        e.stopPropagation();
+                        document.querySelectorAll('.finder-sidebar-item.active').forEach(el => el.classList.remove('active'));
+                        li.classList.add('active');
+                        renderFinderFileList(type, [level1Id, item.id]);
+                    };
+                    nestedUl.appendChild(li);
+                });
+            } catch (error) {
+                nestedUl.innerHTML = '<li><p class="error-message">Error.</p></li>';
+            }
+        }
+
+        async function renderFinderFileList(type, parentIds) {
+            const config = materialsConfig[type];
+            const contentArea = document.getElementById('finderFileListContent');
+            contentArea.innerHTML = '<p class="loading-indicator">Loading files...</p>';
+            
+            const collectionRef = collection(db, getPath(type, parentIds));
+            const q = query(collectionRef, orderBy('name', 'asc'));
+
+            let purchasedItems = {};
+            if (config.isPaid) {
+                const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
+                const snapshot = await getDocs(purchaseCollectionRef);
+                snapshot.forEach(doc => purchasedItems[doc.id] = true);
+            }
+
+            try {
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    contentArea.innerHTML = `<p style="padding: 20px; text-align: center;">No ${config.level3}s found in this folder.</p>`;
+                    return;
+                }
+                contentArea.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const row = document.createElement('div');
+                    row.className = 'file-row';
+                    row.onclick = () => handleItemPreview(type, item);
+                    
+                    const name = item.name || item.title;
+                    const date = item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'N/A';
+                    let details = '';
+                    let priceStatus = '';
+
+                    if (type === 'tutorials') {
+                        details = item.type === 'youtube' ? 'YouTube Video' : 'Embed';
+                        priceStatus = 'Free';
+                    } else if (type === 'pastPapers') {
+                        details = 'PDF Document';
+                        priceStatus = 'Free';
+                    } else if (type === 'exercises') {
+                        details = 'PDF Document';
+                        if (purchasedItems[item.id]) {
+                            priceStatus = '<span class="purchased-tag">Owned</span>';
+                        } else {
+                            priceStatus = `$${item.price.toFixed(2)}`;
+                        }
+                    }
+
+                    row.innerHTML = `
+                        <div><span class="file-icon">${type === 'tutorials' ? '🎬' : '📄'}</span><span class="file-link">${name}</span></div>
+                        <div>${details}</div>
+                        <div>${priceStatus}</div>
+                        <div>${date}</div>
+                    `;
+                    contentArea.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error loading finder file list:", error);
+                contentArea.innerHTML = '<p class="error-message">Error loading files.</p>';
+            }
+        }
+
         window.addEventListener('resize', () => {
             const isDesktop = window.innerWidth >= 769;
             const finderSection = document.getElementById('finderMaterialsSection');
-            const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
             
-            if (isDesktop && currentMaterialViewMode === 'finder') {
-                finderSection.style.display = 'flex';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.add('hidden-on-desktop');
-            } else if (!isDesktop && currentMaterialViewMode === 'finder') {
+            if (!isDesktop) {
                 finderSection.style.display = 'none';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-            } else if (isDesktop && currentMaterialViewMode === 'card') {
-                finderSection.style.display = 'none';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-            }
-            // If it's mobile and in card view, no change needed.
-
-            // Re-center finder window on resize if not fullscreen and not minimized
-            if (finderSection.style.display === 'flex' && !finderSection.classList.contains('fullscreen')) {
-                finderSection.style.left = '50%';
-                finderSection.style.top = '50%';
-                finderSection.style.transform = 'translate(-50%, -50%)';
+                if (finderCurrentType) {
+                    const studentView = document.getElementById(`student-${finderCurrentType}-view`);
+                    if(studentView) studentView.classList.remove('hidden-on-desktop');
+                }
             }
         });
-
 
     </script>
 </body>
