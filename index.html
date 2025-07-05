@@ -1055,11 +1055,12 @@
         /* Hide the finder window by default, show via JS */
         #finderMaterialsSection {
             display: none;
-            position: absolute; /* Position within main content area */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; /* Position within main content area */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 960px;
+            height: 600px;
             justify-content: center;
             align-items: center;
         }
@@ -1601,7 +1602,7 @@
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
+                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
@@ -1977,6 +1978,7 @@
                             studentViewContainer.classList.remove('hidden-on-desktop');
                             document.getElementById('finderMaterialsSection').style.display = 'none';
                             toggleButton.textContent = 'Switch to Finder View';
+                            renderStudentItems(type); // Re-render card view to ensure it's up-to-date
                         }
                     });
                 }
@@ -2306,7 +2308,7 @@
 
             } catch (error) {
                 console.error("Error moving item:", error);
-                showModal('Move Error', `Could not move item. Error: ${error.message}`);
+                showModal('Move Error', `Could not move item. Error: ${e.message}`);
             } finally {
                 draggedItem = null; // Reset dragged item
                 // Remove dragging class from original item if it still exists
@@ -2558,7 +2560,7 @@
                 }
             } catch (error) {
                 console.error("Error applying promo code:", error);
-                promoCodeError.textContent = `Error applying code: ${error.message}`;
+                promoCodeError.textContent = `Error applying code: ${e.message}`;
             }
         }
 
@@ -2613,7 +2615,7 @@
 
                 } catch (error) {
                     console.error("Error processing free checkout:", error);
-                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${e.message}`);
                 }
 
             } else if (finalPrice >= 100) {
@@ -2641,7 +2643,7 @@
 
                 } catch (error) {
                     console.error("Error creating checkout session:", error);
-                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${e.message}`);
                 }
             } else {
                 showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
@@ -2734,7 +2736,7 @@
                 loadPromoCodesForTeacher(); // Refresh the list
             } catch (error) {
                 console.error("Error generating promo code:", error);
-                promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
+                promoCodeGenerationStatus.textContent = `Error: ${e.message}`;
             }
         }
 
@@ -2793,7 +2795,7 @@
                 loadPromoCodesForTeacher(); // Refresh the list
             } catch (error) {
                 console.error("Error toggling promo code status:", error);
-                showModal('Error', `Could not update status for "${code}": ${error.message}`);
+                showModal('Error', `Could not update status for "${code}": ${e.message}`);
             }
         }
 
@@ -2807,7 +2809,7 @@
                         loadPromoCodesForTeacher(); // Refresh the list
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
-                        showModal('Error', `Could not delete "${code}": ${error.message}`);
+                        showModal('Error', `Could not delete "${code}": ${e.message}`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
@@ -2929,7 +2931,7 @@
                 document.getElementById('addVideoModal').style.display = 'none';
                 renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
-                showModal('Error', `Could not add video: ${error.message}`); 
+                showModal('Error', `Could not add video: ${e.message}`); 
             }
         });
 
@@ -2975,7 +2977,7 @@
                 renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
                 console.error("Past paper upload error:", error);
-                showModal('Error', `Could not add paper: ${error.message}`); 
+                showModal('Error', `Could not add paper: ${e.message}`); 
             } finally {
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
@@ -3023,7 +3025,7 @@
                 renderContent('exercises', `container-level3-exercises-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
                 console.error("Exercise upload error:", error);
-                showModal('Error', `Could not add exercise: ${error.message}`); 
+                showModal('Error', `Could not add exercise: ${e.message}`); 
             } finally {
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
@@ -3204,9 +3206,11 @@
 
             dragBar.addEventListener('mousedown', (e) => {
                 isDragging = true;
-                // Capture initial mouse position relative to the window's top-left corner
-                offsetX = e.clientX - finderWindow.offsetLeft;
-                offsetY = e.clientY - finderWindow.offsetTop;
+                // Remove the transform to allow direct manipulation of left/top
+                finderWindow.style.transform = 'none';
+                // Calculate offset relative to the window's current position
+                offsetX = e.clientX - finderWindow.getBoundingClientRect().left;
+                offsetY = e.clientY - finderWindow.getBoundingClientRect().top;
                 finderWindow.style.cursor = 'grabbing';
             });
 
@@ -3218,13 +3222,15 @@
             document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
                     // Update window position based on mouse movement
-                    finderWindow.style.left = e.clientX - offsetX + 'px';
-                    finderWindow.style.top = e.clientY - offsetY + 'px';
-                    // Ensure window stays within viewport (optional, but good for UX)
+                    let newLeft = e.clientX - offsetX;
+                    let newTop = e.clientY - offsetY;
+
+                    // Ensure window stays within viewport
                     const maxX = window.innerWidth - finderWindow.offsetWidth;
                     const maxY = window.innerHeight - finderWindow.offsetHeight;
-                    finderWindow.style.left = Math.max(0, Math.min(e.clientX - offsetX, maxX)) + 'px';
-                    finderWindow.style.top = Math.max(0, Math.min(e.clientY - offsetY, maxY)) + 'px';
+
+                    finderWindow.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+                    finderWindow.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
                 }
             });
 
@@ -3232,15 +3238,19 @@
             fullscreenToggle.addEventListener('click', () => {
                 if (!isFullscreen) {
                     finderWindow.classList.add('fullscreen');
+                    // When going fullscreen, also remove transform and set explicit 0,0
+                    finderWindow.style.transform = 'none';
+                    finderWindow.style.top = '0';
+                    finderWindow.style.left = '0';
                     isFullscreen = true;
                 } else {
                     finderWindow.classList.remove('fullscreen');
-                    // Reset to initial position (or last dragged position)
+                    // When exiting fullscreen, reset to default centered position
                     finderWindow.style.top = '50%';
                     finderWindow.style.left = '50%';
                     finderWindow.style.transform = 'translate(-50%, -50%)';
-                    finderWindow.style.width = '960px';
-                    finderWindow.style.height = '600px';
+                    finderWindow.style.width = '960px'; // Restore default width
+                    finderWindow.style.height = '600px'; // Restore default height
                     isFullscreen = false;
                 }
             });
@@ -3256,6 +3266,13 @@
                     const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
                     if (type) renderStudentItems(type); // Re-render the card view
                 }
+                // When closing, reset position to default centered state for next open
+                finderWindow.style.top = '50%';
+                finderWindow.style.left = '50%';
+                finderWindow.style.transform = 'translate(-50%, -50%)';
+                finderWindow.style.width = '960px';
+                finderWindow.style.height = '600px';
+                finderWindow.classList.remove('fullscreen'); // Ensure fullscreen class is removed
             });
         }
 
