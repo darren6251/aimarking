@@ -963,8 +963,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 960px;
-            height: 600px;
+            width: 90vw; /* Make it wider */
+            height: 90vh; /* Make it taller */
+            max-width: 1200px; /* Limit max width */
+            max-height: 800px; /* Limit max height */
             border: 1px solid var(--finder-border-color); /* Themed border */
             border-radius: 6px;
             background: var(--finder-bg-primary); /* Themed background */
@@ -972,7 +974,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
+            transition: all 0.3s ease; /* Smooth transition for size/position changes */
             z-index: 100; /* Ensure it's above other content */
             resize: both;
             min-width: 300px; /* Added for resizability */
@@ -995,9 +997,10 @@
             display: flex;
             align-items: center;
             padding: 0 10px;
-            cursor: move;
+            cursor: grab; /* More indicative of drag */
             flex-shrink: 0; /* Prevent shrinking */
             border-bottom: 1px solid var(--finder-border-color); /* Add border for separation */
+            justify-content: flex-start; /* Ensure buttons are left-aligned */
         }
         .finder-titlebar .buttons {
             display: flex;
@@ -1114,6 +1117,110 @@
             background-color: var(--button-blue-lighten);
         }
 
+        /* New styles for minimized windows bar */
+        #minimizedWindowsBar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto; /* Will adjust based on content */
+            max-width: 80vw;
+            min-width: 150px;
+            height: 40px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 0 15px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+            z-index: 1000; /* Above finder window but below modals */
+            transition: all 0.3s ease-in-out;
+            opacity: 0; /* Hidden by default */
+            pointer-events: none; /* No interaction when hidden */
+        }
+
+        #minimizedWindowsBar.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .minimized-tab {
+            background-color: var(--accent-blue);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px; /* Limit tab width */
+        }
+
+        .minimized-tab:hover {
+            background-color: var(--button-blue-lighten);
+            transform: translateY(-2px);
+        }
+
+        .minimized-tab .close-tab-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 5px;
+            padding: 0 3px;
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+
+        .minimized-tab .close-tab-btn:hover {
+            opacity: 1;
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* Animations for minimize/restore */
+        @keyframes minimizeAnimation {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                border-radius: 6px;
+            }
+            100% {
+                transform: translate(var(--target-x), var(--target-y)) scale(0.1); /* Scale down to tab size */
+                opacity: 0;
+                border-radius: 50%; /* Shrink to a circle for effect */
+            }
+        }
+
+        @keyframes restoreAnimation {
+            0% {
+                transform: translate(var(--start-x), var(--start-y)) scale(0.1);
+                opacity: 0;
+                border-radius: 50%;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                border-radius: 6px;
+            }
+        }
+
+        /* Apply animations */
+        .finder-window-wrapper.minimizing {
+            animation: minimizeAnimation 0.5s ease-out forwards;
+        }
+
+        .finder-window-wrapper.restoring {
+            animation: restoreAnimation 0.5s ease-out forwards;
+        }
     </style>
 </head>
 <body>
@@ -1344,6 +1451,11 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- Minimized Windows Bar -->
+    <div id="minimizedWindowsBar">
+        <!-- Minimized tabs will be appended here -->
     </div>
 
     <footer>
@@ -2459,7 +2571,8 @@
                 snapshot.forEach(doc => {
                     selectElement.add(new Option(doc.data().name, doc.id));
                 });
-            } catch (e) {
+            }
+            catch (e) {
                 console.error(`Error loading ${levelName}s:`, e);
                 selectElement.innerHTML = `<option value="">-- Error --</option>`;
             }
@@ -3297,11 +3410,13 @@
         // --- FINDER WINDOW LOGIC ---
         let finderCurrentPath = []; // Stores [type, level1Id, level2Id]
         let finderCurrentType = null; // 'tutorials', 'pastPapers', 'exercises'
+        let minimizedWindows = {}; // Stores minimized window states: {type: {left, top, width, height}}
 
         function setupFinderWindow() {
             const finderWindow = document.getElementById('finderMaterialsSection');
             const dragBar = document.getElementById('finderDragBar');
             const fullscreenToggle = document.getElementById('finderFullscreenToggle');
+            const minimizeButton = finderWindow.querySelector('.finder-circle.min'); // Get the minimize button
 
             let isDragging = false, offsetX = 0, offsetY = 0;
             
@@ -3353,8 +3468,10 @@
                     finderWindow.style.top = '50%';
                     finderWindow.style.left = '50%';
                     finderWindow.style.transform = 'translate(-50%, -50%)';
-                    finderWindow.style.width = '960px'; // Restore default width
-                    finderWindow.style.height = '600px'; // Restore default height
+                    finderWindow.style.width = '90vw'; // Restore default width
+                    finderWindow.style.height = '90vh'; // Restore default height
+                    finderWindow.style.maxWidth = '1200px'; // Restore max width
+                    finderWindow.style.maxHeight = '800px'; // Restore max height
                     isFullscreen = false;
                 }
             });
@@ -3374,254 +3491,133 @@
                 finderWindow.style.top = '50%';
                 finderWindow.style.left = '50%';
                 finderWindow.style.transform = 'translate(-50%, -50%)';
-                finderWindow.style.width = '960px';
-                finderWindow.style.height = '600px';
+                finderWindow.style.width = '90vw';
+                finderWindow.style.height = '90vh';
+                finderWindow.style.maxWidth = '1200px';
+                finderWindow.style.maxHeight = '800px';
                 finderWindow.classList.remove('fullscreen'); // Ensure fullscreen class is removed
+            });
+
+            // Handle minimize button
+            minimizeButton.addEventListener('click', () => {
+                minimizeFinderWindow();
             });
         }
 
-        async function showFinderView(type) {
-            finderCurrentType = type;
-            finderCurrentPath = []; // Reset path to top level
-            const finderSection = document.getElementById('finderMaterialsSection');
-            finderSection.style.display = 'flex';
-            
-            // Hide the current card view for the active material type
-            const activeMaterialSectionId = materialsConfig[type].sectionId;
-            document.getElementById(activeMaterialSectionId).classList.add('hidden-on-desktop');
+        function minimizeFinderWindow() {
+            const finderWindow = document.getElementById('finderMaterialsSection');
+            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
+            const type = finderCurrentType; // Get the current type of material being viewed
 
-            await loadFinderSidebar(type);
-            document.getElementById('finderFileListContent').innerHTML = '<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>';
-        }
+            if (!type) return; // Should not happen if a material section is open
 
-        async function loadFinderSidebar(type) {
-            const sidebar = document.getElementById('finderSidebar');
-            sidebar.innerHTML = '<p class="loading-indicator">Loading subjects...</p>';
+            // Store current position and size for restoration
+            const rect = finderWindow.getBoundingClientRect();
+            minimizedWindows[type] = {
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+                isFullscreen: finderWindow.classList.contains('fullscreen')
+            };
 
-            const config = materialsConfig[type];
-            const collectionRef = collection(db, `artifacts/${appId}/public/data/${config.collectionName}`);
-            const q = query(collectionRef, orderBy('name', 'asc'));
+            // Create a new tab for the minimized window
+            const tab = document.createElement('div');
+            tab.className = 'minimized-tab';
+            tab.dataset.type = type;
+            tab.innerHTML = `
+                <span>${materialsConfig[type].title}</span>
+                <button class="close-tab-btn">✖</button>
+            `;
+            minimizedWindowsBar.appendChild(tab);
 
-            try {
-                const snapshot = await getDocs(q);
-                sidebar.innerHTML = '';
-                if (snapshot.empty) {
-                    sidebar.innerHTML = '<p style="padding:10px; color:var(--finder-text-secondary);">No subjects found.</p>';
-                    return;
-                }
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const div = document.createElement('div');
-                    div.className = 'finder-sidebar-item';
-                    div.textContent = item.name;
-                    div.dataset.id = doc.id;
-                    div.dataset.level = 1; // Mark as level 1 item
-                    div.dataset.type = type;
-                    div.addEventListener('click', () => handleFinderSidebarClick(div, type, doc.id));
-                    sidebar.appendChild(div);
-                });
-            } catch (e) {
-                console.error("Error loading finder sidebar:", e);
-                sidebar.innerHTML = '<p class="error-message" style="padding:10px;">Error loading subjects.</p>';
-            }
-        }
+            // Calculate target position for animation (center of the new tab)
+            // This requires the tab to be rendered first to get its position
+            const tabRect = tab.getBoundingClientRect();
+            const targetX = tabRect.left + tabRect.width / 2;
+            const targetY = tabRect.top + tabRect.height / 2;
 
-        async function handleFinderSidebarClick(element, type, id) {
-            // Remove active class from previous sidebar item
-            document.querySelectorAll('.finder-sidebar-item.active').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
+            // Set CSS variables for animation
+            finderWindow.style.setProperty('--target-x', `${targetX - window.innerWidth / 2}px`); // Relative to center
+            finderWindow.style.setProperty('--target-y', `${targetY - window.innerHeight / 2}px`); // Relative to center
 
-            finderCurrentPath = [id]; // Set current path to the selected subject
-            await loadFinderFileList(type, id);
-        }
+            // Apply minimize animation
+            finderWindow.classList.add('minimizing');
+            finderWindow.classList.remove('restoring'); // Ensure no conflicting animation
 
-        async function loadFinderFileList(type, level1Id, level2Id = null) {
-            const fileListContent = document.getElementById('finderFileListContent');
-            fileListContent.innerHTML = '<p class="loading-indicator">Loading items...</p>';
+            finderWindow.addEventListener('animationend', function handler() {
+                finderWindow.style.display = 'none';
+                finderWindow.classList.remove('minimizing');
+                minimizedWindowsBar.classList.add('active'); // Show the bar
+                this.removeEventListener('animationend', handler);
+            });
 
-            const config = materialsConfig[type];
-            let itemsRef;
-            let currentLevelName;
-            let purchasedItems = {};
-
-            if (level2Id) { // Showing Level 3 items (files)
-                itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
-                currentLevelName = config.level3;
-                if (config.isPaid) {
-                    const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
-                    const snapshot = await getDocs(purchaseCollectionRef);
-                    snapshot.forEach(doc => purchasedItems[doc.id] = true);
-                }
-            } else { // Showing Level 2 items (folders)
-                itemsRef = collection(db, getPath(type, [level1Id]));
-                currentLevelName = config.level2;
-            }
-
-            const q = query(itemsRef, orderBy('name', currentLevelName === 'Year' ? 'desc' : 'asc'));
-
-            try {
-                const snapshot = await getDocs(q);
-                fileListContent.innerHTML = '';
-                if (snapshot.empty) {
-                    fileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No ${currentLevelName.toLowerCase()}s found.</p>`;
-                    return;
-                }
-
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const row = document.createElement('div');
-                    row.className = 'finder-file-list row';
-                    row.dataset.id = doc.id;
-                    row.dataset.name = item.name || item.title;
-                    row.dataset.type = type;
-
-                    let kind = '';
-                    let size = ''; // Placeholder for size, not implemented
-                    let dateAdded = item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'N/A';
-
-                    if (!level2Id) { // This is a Level 2 folder (Topic/Year)
-                        row.classList.add('folder');
-                        kind = config.level2;
-                        row.addEventListener('click', () => {
-                            finderCurrentPath = [level1Id, doc.id]; // Update path
-                            loadFinderFileList(type, level1Id, doc.id);
-                        });
-                    } else { // This is a Level 3 item (Video/Paper/Exercise)
-                        row.classList.add('file'); // Default to file
-                        let isPurchased = false;
-                        if (config.isPaid) {
-                            isPurchased = purchasedItems[doc.id];
-                            if (isPurchased) row.classList.add('purchased');
-                        }
-
-                        if (type === 'tutorials') {
-                            kind = 'Video';
-                            row.classList.add('video');
-                            row.addEventListener('click', () => handleStudentPreview(type, item));
-                        } else if (type === 'pastPapers') {
-                            kind = 'PDF';
-                            row.addEventListener('click', () => handleStudentPreview(type, item));
-                        } else if (type === 'exercises') {
-                            kind = 'Exercise';
-                            row.classList.add('exercise');
-                            if (isPurchased) {
-                                row.addEventListener('click', () => handleStudentPreview(type, item));
-                            } else {
-                                row.innerHTML += `<div style="grid-column: span 4; text-align: right; font-size: 0.8em; color: var(--accent-red);">Price: $${item.price.toFixed(2)} - Not Purchased</div>`;
-                                // Add to cart button directly in the row for exercises
-                                const addToCartBtn = document.createElement('button');
-                                addToCartBtn.textContent = shoppingCart.some(cartItem => cartItem.id === doc.id) ? 'In Cart' : 'Add to Cart';
-                                addToCartBtn.className = 'btn-primary';
-                                addToCartBtn.style.cssText = 'padding: 4px 8px; font-size: 0.75rem; margin-left: auto;';
-                                addToCartBtn.disabled = shoppingCart.some(cartItem => cartItem.id === doc.id);
-                                addToCartBtn.addEventListener('click', (e) => {
-                                    e.stopPropagation(); // Prevent row click from firing
-                                    addToCart(item);
-                                    addToCartBtn.textContent = 'In Cart';
-                                    addToCartBtn.disabled = true;
-                                });
-                                row.appendChild(addToCartBtn);
-                            }
-                        }
+            // Handle click on the minimized tab to restore
+            tab.addEventListener('click', (e) => {
+                if (e.target.classList.contains('close-tab-btn')) {
+                    // If close button on tab is clicked, remove the tab and clear state
+                    e.stopPropagation(); // Prevent tab click from restoring
+                    delete minimizedWindows[type];
+                    tab.remove();
+                    if (Object.keys(minimizedWindows).length === 0) {
+                        minimizedWindowsBar.classList.remove('active');
                     }
-
-                    row.innerHTML = `
-                        <div>${item.name || item.title}</div>
-                        <div>${size}</div>
-                        <div>${kind}</div>
-                        <div>${dateAdded}</div>
-                    ` + (level2Id && type === 'exercises' && !purchasedItems[doc.id] ? '' : ''); // Remove price if already added above
-                    
-                    fileListContent.appendChild(row);
-                });
-            } catch (e) {
-                console.error("Error loading finder file list:", e);
-                fileListContent.innerHTML = `<p class="error-message" style="text-align:center; padding:20px;">Error loading items. A database index might be required. Check console for details.</p>`;
-            }
+                } else {
+                    restoreFinderWindow(type, tab);
+                }
+            });
         }
 
-        // Handle clicks on items within the finder file list (for navigation or preview)
-        document.getElementById('finderFileListContent').addEventListener('click', (e) => {
-            const row = e.target.closest('.finder-file-list .row');
-            if (!row) return;
+        function restoreFinderWindow(type, tabElement) {
+            const finderWindow = document.getElementById('finderMaterialsSection');
+            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
+            const storedState = minimizedWindows[type];
 
-            const type = row.dataset.type;
-            const id = row.dataset.id;
-            const name = row.dataset.name;
-            const config = materialsConfig[type];
+            if (!storedState) return; // No stored state for this window
 
-            if (row.classList.contains('folder')) {
-                // Navigate into the folder
-                const level1Id = finderCurrentPath[0];
-                loadFinderFileList(type, level1Id, id);
-            } else {
-                // It's a file, handle preview/download
-                const itemData = { id: id, name: name, ...materialsConfig[type].isPaid ? { price: parseFloat(row.dataset.price) } : {} }; // Reconstruct item data
-                // Need to fetch full item data to get link/youtubeId
-                const itemRef = doc(db, getPath(type, finderCurrentPath), id);
-                getDoc(itemRef).then(docSnap => {
-                    if (docSnap.exists()) {
-                        handleStudentPreview(type, docSnap.data());
-                    } else {
-                        showModal('Error', 'Item details not found.');
-                    }
-                }).catch(err => {
-                    console.error("Error fetching item for preview:", err);
-                    showModal('Error', 'Could not retrieve item details for preview.');
-                });
+            // Remove the tab from the bar
+            tabElement.remove();
+            delete minimizedWindows[type];
+            if (Object.keys(minimizedWindows).length === 0) {
+                minimizedWindowsBar.classList.remove('active');
             }
-        });
 
-        // Function to handle student preview for both card and finder views
-        function handleStudentPreview(type, item) {
-            if (type === 'tutorials') {
-                const videoPreviewModal = document.getElementById('videoPreviewModal');
-                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
-                const videoPreviewContent = document.getElementById('videoPreviewContent');
-                
-                videoPreviewTitle.textContent = item.title;
-                if (item.type === 'youtube') {
-                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                } else if (item.type === 'embed') {
-                    videoPreviewContent.innerHTML = item.embedCode;
-                }
-                videoPreviewModal.style.display = 'flex';
-            } else if (type === 'pastPapers' || type === 'exercises') {
-                if (item.link) {
-                    window.open(item.link, '_blank');
-                } else {
-                    showModal('Preview Error', 'No link available for this item.');
-                }
+            // Calculate start position for animation (center of the tab)
+            const tabRect = tabElement.getBoundingClientRect();
+            const startX = tabRect.left + tabRect.width / 2;
+            const startY = tabRect.top + tabRect.height / 2;
+
+            // Set CSS variables for animation
+            finderWindow.style.setProperty('--start-x', `${startX - window.innerWidth / 2}px`); // Relative to center
+            finderWindow.style.setProperty('--start-y', `${startY - window.innerHeight / 2}px`); // Relative to center
+
+            // Reset position and size before animation starts
+            finderWindow.style.display = 'flex';
+            finderWindow.style.left = `${storedState.left}px`;
+            finderWindow.style.top = `${storedState.top}px`;
+            finderWindow.style.width = `${storedState.width}px`;
+            finderWindow.style.height = `${storedState.height}px`;
+            finderWindow.style.transform = 'none'; // Ensure transform is not interfering initially
+
+            // Apply restore animation
+            finderWindow.classList.add('restoring');
+            finderWindow.classList.remove('minimizing'); // Ensure no conflicting animation
+
+            if (storedState.isFullscreen) {
+                finderWindow.classList.add('fullscreen');
             }
+
+            finderWindow.addEventListener('animationend', function handler() {
+                finderWindow.classList.remove('restoring');
+                // Re-apply original transform for centering if not fullscreen
+                if (!storedState.isFullscreen) {
+                    finderWindow.style.transform = 'translate(-50%, -50%)';
+                }
+                this.removeEventListener('animationend', handler);
+            });
         }
 
-        // Listen for browser back/forward to update finder path (basic)
-        window.addEventListener('popstate', () => {
-            // This is a simplified approach. A full routing solution would be better.
-            // For now, if the user navigates back, we can try to go up one level in the finder.
-            if (document.getElementById('finderMaterialsSection').style.display === 'flex' && finderCurrentPath.length > 1) {
-                finderCurrentPath.pop(); // Go up one level
-                const type = finderCurrentType;
-                const level1Id = finderCurrentPath[0];
-                const level2Id = finderCurrentPath.length === 2 ? finderCurrentPath[1] : null;
-                if (level1Id) {
-                    loadFinderFileList(type, level1Id, level2Id);
-                } else {
-                    loadFinderSidebar(type); // Back to subjects list
-                }
-            }
-        });
-
-        // Initial check for screen width to set default view mode
-        window.addEventListener('load', () => {
-            if (window.innerWidth >= 769) {
-                currentMaterialViewMode = 'finder'; // Default to finder for desktop
-            } else {
-                currentMaterialViewMode = 'card'; // Default to card for mobile
-            }
-        });
-
-        // Adjust view mode on window resize
+        // Adjust view mode on window resize - ensure finder window state is handled
         window.addEventListener('resize', () => {
             const isDesktop = window.innerWidth >= 769;
             const finderSection = document.getElementById('finderMaterialsSection');
@@ -3638,6 +3634,13 @@
                 if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
             }
             // If it's mobile and in card view, no change needed.
+
+            // Re-center finder window on resize if not fullscreen and not minimized
+            if (finderSection.style.display === 'flex' && !finderSection.classList.contains('fullscreen')) {
+                finderSection.style.left = '50%';
+                finderSection.style.top = '50%';
+                finderSection.style.transform = 'translate(-50%, -50%)';
+            }
         });
 
 
