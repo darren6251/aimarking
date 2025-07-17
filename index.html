@@ -1527,6 +1527,31 @@
         </div>
     </div>
 
+    <!-- New Modal for Editing Past Papers -->
+    <div id="editPastPaperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Past Paper</h3>
+            <form id="editPastPaperForm">
+                <input type="hidden" id="editPaperId">
+                <input type="hidden" id="editPaperParentId1">
+                <input type="hidden" id="editPaperParentId2">
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperName">Paper Name / Title</label>
+                    <input type="text" id="editPastPaperName" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperLink">Download Link</label>
+                    <input type="url" id="editPastPaperLink" required>
+                </div>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="addExerciseModal" class="modal">
         <div class="modal-content">
              <span class="close-button">&times;</span>
@@ -1917,6 +1942,7 @@
                 level2: 'Year',
                 level3: 'Paper',
                 modalId: 'addPastPaperModal',
+                editModalId: 'editPastPaperModal', // New: Add edit modal ID
                 isPaid: false
             },
             exercises: {
@@ -2124,7 +2150,7 @@
                             studentViewContainer.classList.remove('hidden-on-desktop');
                             document.getElementById('finderMaterialsSection').style.display = 'none';
                             toggleButton.textContent = 'Switch to Finder View';
-                            renderStudentItems(type); // Re-render card view to ensure it's up-to-date
+                            renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
                         }
                     });
                 }
@@ -2180,6 +2206,7 @@
                         let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
                         headerHtml = `<span>${itemName}${itemPrice}</span>
                                      <div class="item-actions">
+                                        ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
@@ -2221,6 +2248,10 @@
                 } else if (button.matches('.preview-item-btn')) {
                     const itemData = JSON.parse(button.dataset.item);
                     handleTeacherPreview(type, itemData);
+                } else if (button.matches('.edit-item-btn')) { // New: Handle edit button click
+                    const itemData = JSON.parse(button.dataset.item);
+                    const itemParentIds = JSON.parse(button.dataset.parentIds);
+                    showEditPastPaperModal(itemData, itemParentIds);
                 }
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
@@ -3129,6 +3160,45 @@
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
         });
+
+        // New: Edit Past Paper Modal Submission
+        document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const itemId = form.querySelector('#editPaperId').value;
+            const parentId1 = form.querySelector('#editPaperParentId1').value;
+            const parentId2 = form.querySelector('#editPaperParentId2').value;
+            const name = document.getElementById('editPastPaperName').value.trim();
+            const link = document.getElementById('editPastPaperLink').value.trim();
+
+            if (!name || !link) {
+                return showModal('Input Error', 'Please provide a paper name and a download link.');
+            }
+
+            const docRef = doc(db, getPath('pastPapers', [parentId1, parentId2]), itemId);
+            try {
+                await updateDoc(docRef, { name: name, link: link });
+                showModal('Success', 'Past paper updated successfully!');
+                document.getElementById('editPastPaperModal').style.display = 'none';
+                // Re-render the relevant section to show updated data
+                renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) {
+                console.error("Error updating past paper:", error);
+                showModal('Error', `Could not update past paper: ${error.message}`);
+            }
+        });
+
+        // New: Function to show Edit Past Paper Modal
+        function showEditPastPaperModal(itemData, parentIds) {
+            const modal = document.getElementById('editPastPaperModal');
+            document.getElementById('editPaperId').value = itemData.id;
+            document.getElementById('editPaperParentId1').value = parentIds[0];
+            document.getElementById('editPaperParentId2').value = parentIds[1];
+            document.getElementById('editPastPaperName').value = itemData.name;
+            document.getElementById('editPastPaperLink').value = itemData.link;
+            modal.style.display = 'flex';
+        }
+
 
         document.getElementById('addExerciseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
