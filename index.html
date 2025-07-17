@@ -829,6 +829,61 @@
             }
         }
 
+        /* PDF Preview Modal Styles */
+        #pdfPreviewModal .modal-content {
+            max-width: 90vw; /* Maximize width */
+            max-height: 90vh; /* Maximize height */
+            width: auto; /* Allow content to dictate width */
+            height: auto; /* Allow content to dictate height */
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #pdfCanvasContainer {
+            width: 100%;
+            flex-grow: 1; /* Allow it to take available space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; /* Enable scrolling for large PDFs */
+            margin-bottom: 10px;
+        }
+        #pdfCanvas {
+            border: 1px solid var(--border-color);
+            display: block; /* Remove extra space below canvas */
+            max-width: 100%; /* Ensure canvas doesn't overflow */
+            height: auto; /* Maintain aspect ratio */
+        }
+        #pdfControls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap; /* Allow controls to wrap on smaller screens */
+            justify-content: center;
+        }
+        #pdfControls button {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            background-color: var(--accent-blue);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #pdfControls button:hover:not(:disabled) {
+            background-color: var(--button-blue-lighten);
+        }
+        #pdfControls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #pdfPageNum {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
 
         /* Footer */
         footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
@@ -1595,6 +1650,22 @@
         </div>
     </div>
 
+    <!-- PDF Preview Modal -->
+    <div id="pdfPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="pdfPreviewTitle"></h3>
+            <div id="pdfCanvasContainer">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+            <div id="pdfControls">
+                <button id="prevPdfPage">Previous</button>
+                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                <button id="nextPdfPage">Next</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
@@ -2249,7 +2320,7 @@
                     handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
                 } else if (button.matches('.preview-item-btn')) {
                     const itemData = JSON.parse(button.dataset.item);
-                    handleTeacherPreview(type, itemData);
+                    handlePreview(type, itemData); // Use the unified preview function
                 } else if (button.matches('.edit-item-btn')) { // New: Handle edit button click
                     const itemData = JSON.parse(button.dataset.item);
                     const itemParentIds = JSON.parse(button.dataset.parentIds);
@@ -2276,8 +2347,8 @@
             }
         }
 
-        // New function for teacher preview
-        function handleTeacherPreview(type, item) {
+        // Unified preview function for both teacher and student
+        function handlePreview(type, item) {
             if (type === 'tutorials') {
                 const videoPreviewModal = document.getElementById('videoPreviewModal');
                 const videoPreviewTitle = document.getElementById('videoPreviewTitle');
@@ -2292,7 +2363,13 @@
                 videoPreviewModal.style.display = 'flex';
             } else if (type === 'pastPapers' || type === 'exercises') {
                 if (item.link) {
-                    window.open(item.link, '_blank');
+                    // Check if the link is a PDF
+                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
+                        showPdfPreviewModal(item.name, item.link);
+                    } else {
+                        // For non-PDF links, open in a new tab
+                        window.open(item.link, '_blank');
+                    }
                 } else {
                     showModal('Preview Error', 'No link available for this item.');
                 }
@@ -2573,14 +2650,23 @@
                             <h4>${item.name}</h4>
                             <p class="product-price">$${item.price.toFixed(2)}</p>
                             ${isPurchased 
-                                ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="btn-primary download-btn">Download</a>`
+                                ? `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>`
                                 : `<button class="add-to-cart-btn btn-primary" data-id="${item.id}" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
                             }`;
                         if(!isPurchased) {
                            setTimeout(() => card.querySelector('.add-to-cart-btn')?.addEventListener('click', () => addToCart(item)), 0);
+                        } else {
+                            setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
+                                const itemData = JSON.parse(e.target.dataset.item);
+                                handlePreview(type, itemData); // Use the unified preview function
+                            }), 0);
                         }
                     } else { // Free materials like past papers
-                        cardContent = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;"><div class="material-card-content"><h3>${item.name}</h3></div></a>`;
+                        cardContent = `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}' style="width:100%;"><div class="material-card-content"><h3>${item.name}</h3></div></button>`;
+                        setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
+                            const itemData = JSON.parse(e.target.dataset.item);
+                            handlePreview(type, itemData); // Use the unified preview function
+                        }), 0);
                     }
                     card.innerHTML = cardContent;
                     grid.appendChild(card);
@@ -3492,6 +3578,13 @@
                 const videoContent = document.getElementById('videoPreviewContent');
                 videoContent.innerHTML = ''; // Clear content to stop video
             }
+            // If it's the PDF preview modal, stop PDF rendering
+            if (modal.id === 'pdfPreviewModal') {
+                pdfDoc = null; // Clear PDF document reference
+                document.getElementById('pdfCanvas').getContext('2d').clearRect(0, 0, document.getElementById('pdfCanvas').width, document.getElementById('pdfCanvas').height);
+                document.getElementById('pdfPageNum').textContent = '';
+                document.getElementById('pdfTotalPages').textContent = '';
+            }
         });
 
         const themeToggleButton = document.getElementById('themeToggleButton');
@@ -3741,6 +3834,108 @@
             }
         });
 
+        // --- PDF PREVIEW LOGIC ---
+        let pdfDoc = null; // Stores PDF document
+        let pageNum = 1; // Current page number
+
+        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const pdfContext = pdfCanvas.getContext('2d');
+        const pdfPageNumSpan = document.getElementById('pdfPageNum');
+        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
+        const prevPdfPageBtn = document.getElementById('prevPdfPage');
+        const nextPdfPageBtn = document.getElementById('nextPdfPage');
+
+        prevPdfPageBtn.addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        nextPdfPageBtn.addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+        function showPdfPreviewModal(title, pdfUrl) {
+            document.getElementById('pdfPreviewTitle').textContent = title;
+            pdfPreviewModal.style.display = 'flex';
+            loadPdf(pdfUrl);
+        }
+
+        async function loadPdf(pdfUrl) {
+            pdfDoc = null;
+            pageNum = 1;
+            pdfPageNumSpan.textContent = '';
+            pdfTotalPagesSpan.textContent = '';
+            pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height); // Clear canvas
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                pdfDoc = await loadingTask.promise;
+                pdfTotalPagesSpan.textContent = pdfDoc.numPages;
+                queueRenderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
+                pdfPreviewModal.style.display = 'none'; // Close modal on error
+            }
+        }
+
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfPageNumSpan.textContent = num;
+
+            // Fetch the page
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.5 }); // Adjust scale as needed for better resolution
+                
+                // Set canvas dimensions to match viewport
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+
+                // Render PDF page into canvas context
+                const renderContext = {
+                    canvasContext: pdfContext,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                // Wait for rendering to finish
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        // New page rendering is pending
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePdfNavButtons();
+                });
+            }).catch(error => {
+                console.error('Error rendering PDF page:', error);
+                showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+                pageRendering = false;
+                pageNumPending = null;
+                updatePdfNavButtons();
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updatePdfNavButtons() {
+            prevPdfPageBtn.disabled = pageNum <= 1;
+            nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+        }
 
     </script>
 </body>
