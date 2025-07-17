@@ -1073,8 +1073,7 @@
             background: var(--finder-hover-bg); /* Themed row hover background */
         }
         .finder-file-list .row.folder { font-weight: bold; color: var(--accent-blue); } /* Style for folders */
-        .finder-file-list .row.folder::before { content: '📁 '; margin-right: 5px; } /* Folder icon */
-        .finder-file-list .row.file::before { content: '📄 '; margin-right: 5px; } /* File icon */
+        .finder-file-list .row.file::before { content: '📁 '; margin-right: 5px; } /* File icon */
         .finder-file-list .row.video::before { content: '🎬 '; margin-right: 5px; } /* Video icon */
         .finder-file-list .row.exercise::before { content: '📝 '; margin-right: 5px; } /* Exercise icon */
         .finder-file-list .row.purchased { color: var(--accent-green); } /* Purchased item */
@@ -1977,13 +1976,16 @@
                     const videoId = thumbnail.dataset.youtubeId;
                     const embedContainer = document.createElement('div');
                     embedContainer.className = 'video-embed-container';
-                    embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
                     thumbnail.replaceWith(embedContainer);
                 }
             });
 
             // Setup the Finder window's drag/resize/fullscreen
             setupFinderWindow();
+
+            // Setup Google Drive link conversion for relevant inputs
+            setupGoogleDriveLinkConversion();
         }
 
         function setupMaterialSection(type) {
@@ -2283,7 +2285,7 @@
                 
                 videoPreviewTitle.textContent = item.title;
                 if (item.type === 'youtube') {
-                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
                 } else if (item.type === 'embed') {
                     videoPreviewContent.innerHTML = item.embedCode;
                 }
@@ -3074,6 +3076,32 @@
             return null; // Invalid input
         }
 
+        // --- GOOGLE DRIVE LINK CONVERSION ---
+        function convertGoogleDriveLink(url) {
+            const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
+            const match = url.match(driveViewRegex);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            }
+            return url; // Return original URL if no match
+        }
+
+        function setupGoogleDriveLinkConversion() {
+            const linkInputs = [
+                document.getElementById('pastPaperLink'),
+                document.getElementById('exerciseLink'),
+                document.getElementById('editPastPaperLink')
+            ];
+
+            linkInputs.forEach(input => {
+                if (input) {
+                    input.addEventListener('input', (e) => {
+                        e.target.value = convertGoogleDriveLink(e.target.value);
+                    });
+                }
+            });
+        }
+
         // --- MODAL SUBMISSION LOGIC ---
         document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -3223,7 +3251,7 @@
 
             try {
                 if (file) {
-                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
+                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...`;
                     const storagePath = `materials/exercises/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, storagePath);
                     const uploadResult = await uploadBytes(storageRef, file);
