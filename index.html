@@ -2281,6 +2281,7 @@
                                      <div class="item-actions">
                                         ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
+                                        <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem;">Download</a>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
                         // Add draggable attributes and event listeners for level 3 items
@@ -2662,7 +2663,14 @@
                             }), 0);
                         }
                     } else { // Free materials like past papers
-                        cardContent = `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}' style="width:100%;"><div class="material-card-content"><h3>${item.name}</h3></div></button>`;
+                        // Changed to a button for consistent styling and click handling
+                        cardContent = `
+                            <div class="material-card-content">
+                                <h3>${item.name}</h3>
+                            </div>
+                            <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
+                        `;
+                        // Attach event listener directly after creating the card
                         setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
                             const itemData = JSON.parse(e.target.dataset.item);
                             handlePreview(type, itemData); // Use the unified preview function
@@ -3602,6 +3610,141 @@
         let finderCurrentPath = []; // Stores [type, level1Id, level2Id]
         let finderCurrentType = null; // 'tutorials', 'pastPapers', 'exercises'
         let minimizedWindows = {}; // Stores minimized window states: {type: {left, top, width, height}}
+
+        function showFinderView(type) {
+            const finderWindow = document.getElementById('finderMaterialsSection');
+            const finderSidebar = document.getElementById('finderSidebar');
+            const finderFileListContent = document.getElementById('finderFileListContent');
+            
+            finderCurrentType = type; // Set the current type for the finder window
+            finderCurrentPath = []; // Reset path when opening a new type
+
+            // Update title bar
+            finderWindow.querySelector('.finder-titlebar span').textContent = materialsConfig[type].title;
+
+            // Show finder window
+            finderWindow.style.display = 'flex';
+            finderWindow.classList.remove('fullscreen'); // Ensure it's not fullscreen by default
+            finderWindow.style.top = '50%'; // Reset position
+            finderWindow.style.left = '50%';
+            finderWindow.style.transform = 'translate(-50%, -50%)';
+            finderWindow.style.width = '90vw'; // Reset size
+            finderWindow.style.height = '90vh';
+            finderWindow.style.maxWidth = '1200px';
+            finderWindow.style.maxHeight = '800px';
+
+            // Load Level 1 items into sidebar
+            loadFinderSidebar(type);
+            finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a ${materialsConfig[type].level1.toLowerCase()} from the sidebar.</p>`;
+        }
+
+        async function loadFinderSidebar(type) {
+            const finderSidebar = document.getElementById('finderSidebar');
+            finderSidebar.innerHTML = `<p class="loading-indicator">Loading subjects...</p>`;
+            const config = materialsConfig[type];
+            const collectionRef = collection(db, getPath(type));
+            const q = query(collectionRef, orderBy('name', 'asc'));
+
+            try {
+                const snapshot = await getDocs(q);
+                finderSidebar.innerHTML = '';
+                if (snapshot.empty) {
+                    finderSidebar.innerHTML = `<p style="padding:10px;">No ${config.level1.toLowerCase()}s found.</p>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    const el = document.createElement('div');
+                    el.className = 'finder-sidebar-item';
+                    el.textContent = item.name;
+                    el.dataset.id = doc.id;
+                    el.dataset.level = 1;
+                    el.dataset.type = type;
+                    el.addEventListener('click', handleFinderSidebarClick);
+                    finderSidebar.appendChild(el);
+                });
+            } catch (error) {
+                console.error("Error loading finder sidebar:", error);
+                finderSidebar.innerHTML = `<p class="error-message" style="padding:10px;">Error loading subjects.</p>`;
+            }
+        }
+
+        async function handleFinderSidebarClick(e) {
+            const item = e.target;
+            const type = item.dataset.type;
+            const level1Id = item.dataset.id;
+            finderCurrentPath = [type, level1Id];
+            
+            // Highlight active sidebar item
+            document.querySelectorAll('.finder-sidebar-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+
+            // Load Level 2 items into file list
+            await loadFinderFileList(type, [level1Id], 2);
+        }
+
+        async function loadFinderFileList(type, parentIds, level) {
+            const finderFileListContent = document.getElementById('finderFileListContent');
+            finderFileListContent.innerHTML = `<p class="loading-indicator">Loading items...</p>`;
+            const config = materialsConfig[type];
+            const collectionRef = collection(db, getPath(type, parentIds));
+            const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc')); // Order years descending
+
+            try {
+                const snapshot = await getDocs(q);
+                finderFileListContent.innerHTML = '';
+                if (snapshot.empty) {
+                    finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No items found here.</p>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    item.id = doc.id; // Ensure ID is part of the item data
+                    const el = document.createElement('div');
+                    el.className = 'row';
+                    el.dataset.id = doc.id;
+                    el.dataset.level = level;
+                    el.dataset.type = type;
+                    el.dataset.parentIds = JSON.stringify(parentIds); // Store parent IDs for drill-down
+
+                    let icon = '';
+                    let size = ''; // Placeholder for file size
+                    let kind = ''; // Placeholder for file type
+                    let dateAdded = new Date(item.timestamp).toLocaleDateString();
+
+                    if (level === 2) { // Folder for Level 2 (Topic/Year)
+                        el.classList.add('folder');
+                        icon = '📁 ';
+                        kind = config.level2;
+                        el.addEventListener('click', async () => {
+                            finderCurrentPath = [...parentIds, doc.id];
+                            await loadFinderFileList(type, finderCurrentPath, 3);
+                        });
+                    } else if (level === 3) { // Actual file
+                        el.classList.add('file');
+                        icon = (type === 'tutorials' ? '🎬 ' : (type === 'exercises' ? '📝 ' : '📄 '));
+                        kind = config.level3;
+                        // For files, add a click listener to preview/download
+                        el.addEventListener('click', () => {
+                            handlePreview(type, item);
+                        });
+                    }
+
+                    el.innerHTML = `
+                        <div>${icon}${item.name}</div>
+                        <div>${size}</div>
+                        <div>${kind}</div>
+                        <div>${dateAdded}</div>
+                    `;
+                    finderFileListContent.appendChild(el);
+                });
+            } catch (error) {
+                console.error("Error loading finder file list:", error);
+                finderFileListContent.innerHTML = `<p class="error-message" style="text-align:center; padding:20px;">Error loading items.</p>`;
+            }
+        }
+
 
         function setupFinderWindow() {
             const finderWindow = document.getElementById('finderMaterialsSection');
