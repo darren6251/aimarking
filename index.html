@@ -456,7 +456,7 @@
         .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
 
         /* Chat styles */
-        #chatSection, #studentManagementSection { display: none; flex-direction: column; gap: 1rem; }
+        #chatSection { display: none; flex-direction: column; gap: 1rem; }
         #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 85%; padding: 10px 14px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; }
         .chat-message.user { background-color: var(--accent-blue); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
@@ -1128,7 +1128,6 @@
             background: var(--finder-hover-bg); /* Themed row hover background */
         }
         .finder-file-list .row.folder { font-weight: bold; color: var(--accent-blue); } /* Style for folders */
-        .finder-file-list .row.file::before { content: '📁 '; margin-right: 5px; } /* File icon */
         .finder-file-list .row.video::before { content: '🎬 '; margin-right: 5px; } /* Video icon */
         .finder-file-list .row.exercise::before { content: '📝 '; margin-right: 5px; } /* Exercise icon */
         .finder-file-list .row.purchased { color: var(--accent-green); } /* Purchased item */
@@ -1419,6 +1418,14 @@
 
             <!-- Chat Section -->
             <div id="chatSection">
+                <h2 class="section-title">Chat with AI</h2>
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <label>AI Source:</label>
+                    <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
+                    <label for="aiSourceGemini">Gemini API (Cloud)</label>
+                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
+                    <label for="aiSourceLocal">Local AI (Experimental)</label>
+                </div>
                 <div id="chatDisplay">
                     <div class="chat-message gemini">Hello! How can I help you today?</div>
                 </div>
@@ -1701,6 +1708,7 @@
         let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
         let shoppingCart = [];
         let appliedPromoCode = null; // New variable to store applied promo code details
+        let currentAiSource = 'gemini-api'; // Default AI source for chat
 
         // --- AUTH & INITIALIZATION ---
         
@@ -2657,6 +2665,7 @@
                         if(!isPurchased) {
                            setTimeout(() => card.querySelector('.add-to-cart-btn')?.addEventListener('click', () => addToCart(item)), 0);
                         } else {
+                            // Ensure the download-btn has the correct data-item for preview
                             setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
                                 const itemData = JSON.parse(e.target.dataset.item);
                                 handlePreview(type, itemData); // Use the unified preview function
@@ -3447,6 +3456,15 @@
         const chatDisplay = document.getElementById('chatDisplay');
         const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
 
+        // Event listeners for AI source selection
+        document.getElementById('aiSourceGemini').addEventListener('change', (e) => {
+            if (e.target.checked) currentAiSource = 'gemini-api';
+        });
+        document.getElementById('aiSourceLocal').addEventListener('change', (e) => {
+            if (e.target.checked) currentAiSource = 'local-ai';
+        });
+
+
         async function handleSendMessage() {
             const message = chatInput.value.trim();
             if (!message) return;
@@ -3455,43 +3473,63 @@
             chatInput.value = ''; // Clear input immediately
             chatLoadingIndicator.textContent = 'AI is typing...';
 
-            geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
+            if (currentAiSource === 'gemini-api') {
+                geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
 
-            const payload = { contents: geminiChatHistory };
-            const apiKey = ""; // Canvas will provide this at runtime
+                const payload = { contents: geminiChatHistory };
+                const apiKey = ""; // Canvas will provide this at runtime
 
-            try {
-                const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                try {
+                    const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Gemini API error:", errorData);
-                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Gemini API error:", errorData);
+                        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const aiResponse = result.candidates[0].content.parts[0].text;
+                        appendChatMessage(aiResponse, 'gemini');
+                        geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                    } else {
+                        appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
+                        console.warn("Unexpected Gemini API response structure:", result);
+                    }
+                } catch (error) {
+                    console.error("Error sending message to Gemini:", error);
+                    appendChatMessage(`Error: ${error.message}`, 'gemini');
+                } finally {
+                    chatLoadingIndicator.textContent = ''; // Hide loading indicator
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
                 }
-
-                const result = await response.json();
+            } else if (currentAiSource === 'local-ai') {
+                // Simulate a "local AI" response
+                let localAiResponse = "I'm the experimental local AI. Currently, I can only provide basic responses and cannot solve complex academic problems like math questions directly. Please switch to 'Gemini API (Cloud)' for more advanced assistance!";
                 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const aiResponse = result.candidates[0].content.parts[0].text;
-                    appendChatMessage(aiResponse, 'gemini');
-                    geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                } else {
-                    appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
-                    console.warn("Unexpected Gemini API response structure:", result);
+                // A very basic keyword-based response for demonstration
+                if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
+                    localAiResponse = "Hello there! How can I help you with my limited local capabilities?";
+                } else if (message.toLowerCase().includes("math") || message.toLowerCase().includes("equation")) {
+                    localAiResponse = "As a local AI, I don't have the advanced processing power for complex math problems. Please use the 'Gemini API (Cloud)' option for that!";
+                } else if (message.toLowerCase().includes("thank you") || message.toLowerCase().includes("thanks")) {
+                    localAiResponse = "You're welcome! Happy to assist in simple ways.";
                 }
-            } catch (error) {
-                console.error("Error sending message to Gemini:", error);
-                appendChatMessage(`Error: ${error.message}`, 'gemini');
-            } finally {
-                chatLoadingIndicator.textContent = ''; // Hide loading indicator
-                chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
+
+                setTimeout(() => { // Simulate a short processing time
+                    appendChatMessage(localAiResponse, 'gemini'); // Using 'gemini' class for styling consistency
+                    chatLoadingIndicator.textContent = '';
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                }, 1000);
             }
         }
 
