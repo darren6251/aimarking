@@ -1000,6 +1000,20 @@
             color: var(--text-primary);
             line-height: 1.6;
         }
+        .why-ai ul {
+            list-style: disc;
+            margin-left: 20px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-top: 1rem;
+        }
+        .why-ai ul li {
+            margin-bottom: 0.5rem;
+        }
+        .why-ai ul li strong {
+            color: var(--accent-blue);
+        }
+
 
         /* Animations */
         @keyframes slideInLeft {
@@ -1364,9 +1378,30 @@
                 </section>
 
                 <section class="why-ai" id="why-ai">
-                    <h2>Why AI</h2>
+                    <h2>Why AI? Unlock Your Potential with AI Marker!</h2>
                     <p>
-                        AI serves as a powerful assistant in your studies, especially when preparing for challenging exams like DSE. It can provide instant feedback on your work, identify areas where you need improvement, and offer personalized explanations. Unlike traditional methods, AI can analyze vast amounts of information and adapt to your learning style, making your study sessions more efficient and effective. It helps you grasp complex concepts, practice critical thinking, and build confidence, ultimately empowering you to perform your best.
+                        In today's competitive academic landscape, especially when preparing for challenging exams like DSE, personalized and efficient learning is key. AI is not just a tool; it's your dedicated study partner, designed to enhance every aspect of your learning journey on AI Marker.
+                    </p>
+                    <p>Here's how AI truly empowers you through our platform:</p>
+                    <ul>
+                        <li>
+                            <strong>AI Exam Grader:</strong> Upload your handwritten work or typed answers alongside the answer key. Our AI instantly grades your submissions, provides detailed feedback, identifies common mistakes, and suggests areas for improvement. This eliminates waiting times and offers consistent, objective evaluations.
+                        </li>
+                        <li>
+                            <strong>Chat with AI (Gemini/DeepSeek):</strong> Get instant answers to your academic questions, clarify complex concepts, or brainstorm ideas with our powerful AI chatbots. Whether you need a quick definition or an in-depth explanation, AI is ready to assist, learning from your interactions to provide more relevant help over time.
+                        </li>
+                        <li>
+                            <strong>Personalized Learning Paths:</strong> While not explicitly a feature yet, AI lays the groundwork for future personalized recommendations. By understanding your strengths and weaknesses from your graded work and chat interactions, AI can eventually suggest specific tutorial videos, past papers, or exercises tailored to your needs.
+                        </li>
+                        <li>
+                            <strong>Efficient Content Discovery:</strong> Our AI-powered search and organization (behind the scenes) help you quickly find relevant tutorial videos, past papers, and exercises from our extensive library, ensuring you spend less time searching and more time learning.
+                        </li>
+                        <li>
+                            <strong>Adaptive Support:</strong> AI adapts to your learning style by providing explanations in various formats and at different levels of detail. It's like having a tutor available 24/7, ready to help you overcome challenges and build confidence.
+                        </li>
+                    </ul>
+                    <p>
+                        AI Marker is built to make your study sessions more effective, engaging, and tailored to your individual progress. Let AI assist you, not replace you, on your path to academic success!
                     </p>
                 </section>
             </div>
@@ -3538,29 +3573,32 @@
                 const deepseekApiKey = ""; // If you have a DeepSeek API key for a proxy
 
                 try {
-                    // Simulate a network request to the DeepSeek proxy
-                    // In a real scenario, this fetch call would go to your Cloudflare Worker:
-                    // const response = await fetch(DEEPSEEK_WORKER_URL, {
-                    //     method: 'POST',
-                    //     headers: { 'Content-Type': 'application/json' },
-                    //     body: JSON.stringify(deepseekPayload)
-                    // });
+                    // This fetch call will now go to your actual DeepSeek Cloudflare Worker
+                    const response = await fetch(DEEPSEEK_WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(deepseekPayload)
+                    });
 
-                    // For demonstration, we'll simulate a response directly
-                    let aiResponse = "";
-                    if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
-                        aiResponse = "Hello! I am DeepSeek AI, ready to assist you with complex queries.";
-                    } else if (message.toLowerCase().includes("math") || message.toLowerCase().includes("solve")) {
-                        aiResponse = "As DeepSeek AI, I am designed to handle complex academic problems, including advanced mathematics. Please provide the problem, and I will do my best to solve it.";
-                    } else {
-                        aiResponse = "Hello! I am DeepSeek AI, a powerful cloud-based model. How can I help you today with your academic or general questions?";
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("DeepSeek API error:", errorData);
+                        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
                     }
-                    
-                    appendChatMessage(aiResponse, 'gemini'); // Using 'gemini' class for styling consistency
 
+                    const result = await response.json();
+
+                    if (result.choices && result.choices.length > 0 &&
+                        result.choices[0].message && result.choices[0].message.content) {
+                        const aiResponse = result.choices[0].message.content;
+                        appendChatMessage(aiResponse, 'gemini'); // Using 'gemini' class for styling consistency
+                    } else {
+                        appendChatMessage("Sorry, I couldn't get a response from DeepSeek AI.", 'gemini');
+                        console.warn("Unexpected DeepSeek API response structure:", result);
+                    }
                 } catch (error) {
-                    console.error("Error sending message to DeepSeek (simulated):", error);
-                    appendChatMessage(`Error with DeepSeek AI: ${error.message}. (Note: This is a simulated response. A real DeepSeek integration requires a backend proxy.)`, 'gemini');
+                    console.error("Error sending message to DeepSeek:", error);
+                    appendChatMessage(`Error with DeepSeek AI: ${error.message}`, 'gemini');
                 } finally {
                     chatLoadingIndicator.textContent = '';
                     chatDisplay.scrollTop = chatDisplay.scrollHeight;
@@ -4189,7 +4227,7 @@
         const pdfPageNumSpan = document.getElementById('pdfPageNum');
         const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
         const prevPdfPageBtn = document.getElementById('prevPdfPage');
-        const nextPdfPageBtn = document.getElementById('nextPdfPage');
+        const nextPdfPageBtn = document = document.getElementById('nextPdfPage');
 
         prevPdfPageBtn.addEventListener('click', () => {
             if (pageNum <= 1) return;
