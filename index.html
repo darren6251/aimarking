@@ -60,7 +60,6 @@
             --finder-border-color: #cccccc;
             --finder-titlebar-bg: #e0e0e0;
             --finder-hover-bg: #e0e0e0;
-            --finder-active-bg: var(--accent-blue);
             --finder-active-text: #ffffff;
         }
 
@@ -1419,10 +1418,12 @@
             <!-- Chat Section -->
             <div id="chatSection">
                 <h2 class="section-title">Chat with AI</h2>
-                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <label>AI Source:</label>
                     <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
                     <label for="aiSourceGemini">Gemini API (Cloud)</label>
+                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
+                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
                     <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
                     <label for="aiSourceLocal">Local AI (Experimental)</label>
                 </div>
@@ -1698,6 +1699,9 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/";
+        // Placeholder for DeepSeek API Cloudflare Worker URL
+        // IMPORTANT: Replace this with your actual Cloudflare Worker URL that proxies to DeepSeek API
+        const DEEPSEEK_WORKER_URL = "https://your-deepseek-proxy-worker.yourdomain.workers.dev/"; 
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
 
@@ -1705,7 +1709,11 @@
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
+        // Initialize chat history for Gemini API
+        let geminiChatHistory = [
+            { role: "user", parts: [{text: "You are an AI assistant."}]}, 
+            { role: "model", parts: [{text: "Hello! How can I assist you?"}]}
+        ];
         let shoppingCart = [];
         let appliedPromoCode = null; // New variable to store applied promo code details
         let currentAiSource = 'gemini-api'; // Default AI source for chat
@@ -2843,7 +2851,7 @@
                 }
             } catch (error) {
                 console.error("Error applying promo code:", error);
-                promoCodeError.textContent = `Error applying code: ${e.message}`;
+                promoCodeError.textContent = `Error applying code: ${error.message}`;
             }
         }
 
@@ -2898,7 +2906,7 @@
 
                 } catch (error) {
                     console.error("Error processing free checkout:", error);
-                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${e.message}`);
+                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
                 }
 
             } else if (finalPrice >= 100) {
@@ -2926,7 +2934,7 @@
 
                 } catch (error) {
                     console.error("Error creating checkout session:", error);
-                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${e.message}`);
+                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
                 }
             } else {
                 showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
@@ -3019,7 +3027,7 @@
                 loadPromoCodesForTeacher(); // Refresh the list
             } catch (error) {
                 console.error("Error generating promo code:", error);
-                promoCodeGenerationStatus.textContent = `Error: ${e.message}`;
+                promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
             }
         }
 
@@ -3078,7 +3086,7 @@
                 loadPromoCodesForTeacher(); // Refresh the list
             } catch (error) {
                 console.error("Error toggling promo code status:", error);
-                showModal('Error', `Could not update status for "${code}": ${e.message}`);
+                showModal('Error', `Could not update status for "${code}": ${error.message}`);
             }
         }
 
@@ -3092,7 +3100,7 @@
                         loadPromoCodesForTeacher(); // Refresh the list
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
-                        showModal('Error', `Could not delete "${code}": ${e.message}`);
+                        showModal('Error', `Could not delete "${code}": ${error.message}`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
@@ -3460,6 +3468,9 @@
         document.getElementById('aiSourceGemini').addEventListener('change', (e) => {
             if (e.target.checked) currentAiSource = 'gemini-api';
         });
+        document.getElementById('aiSourceDeepSeek').addEventListener('change', (e) => {
+            if (e.target.checked) currentAiSource = 'deepseek-api';
+        });
         document.getElementById('aiSourceLocal').addEventListener('change', (e) => {
             if (e.target.checked) currentAiSource = 'local-ai';
         });
@@ -3512,17 +3523,78 @@
                     chatLoadingIndicator.textContent = ''; // Hide loading indicator
                     chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
                 }
+            } else if (currentAiSource === 'deepseek-api') {
+                // For DeepSeek, you would typically use a Cloudflare Worker or similar proxy
+                // to handle the API key securely and bypass CORS issues.
+                // This is a placeholder for demonstration.
+                const deepseekPayload = {
+                    messages: [{ role: "user", content: message }],
+                    model: "deepseek-chat", // Or other DeepSeek model
+                    stream: false
+                };
+                const deepseekApiKey = ""; // If you have a DeepSeek API key for a proxy
+
+                try {
+                    // Simulate a network request to the DeepSeek proxy
+                    // In a real scenario, this fetch call would go to your Cloudflare Worker:
+                    // const response = await fetch(DEEPSEEK_WORKER_URL, {
+                    //     method: 'POST',
+                    //     headers: { 'Content-Type': 'application/json' },
+                    //     body: JSON.stringify(deepseekPayload)
+                    // });
+
+                    // For demonstration, we'll simulate a response directly
+                    let aiResponse = "";
+                    if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
+                        aiResponse = "Hello! I am DeepSeek AI, ready to assist you with complex queries.";
+                    } else if (message.toLowerCase().includes("math") || message.toLowerCase().includes("solve")) {
+                        aiResponse = "As DeepSeek AI, I am designed to handle complex academic problems, including advanced mathematics. Please provide the problem, and I will do my best to solve it.";
+                    } else {
+                        aiResponse = "Hello! I am DeepSeek AI, a powerful cloud-based model. How can I help you today with your academic or general questions?";
+                    }
+                    
+                    appendChatMessage(aiResponse, 'gemini'); // Using 'gemini' class for styling consistency
+
+                } catch (error) {
+                    console.error("Error sending message to DeepSeek (simulated):", error);
+                    appendChatMessage(`Error with DeepSeek AI: ${error.message}. (Note: This is a simulated response. A real DeepSeek integration requires a backend proxy.)`, 'gemini');
+                } finally {
+                    chatLoadingIndicator.textContent = '';
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                }
+
             } else if (currentAiSource === 'local-ai') {
-                // Simulate a "local AI" response
-                let localAiResponse = "I'm the experimental local AI. Currently, I can only provide basic responses and cannot solve complex academic problems like math questions directly. Please switch to 'Gemini API (Cloud)' for more advanced assistance!";
-                
-                // A very basic keyword-based response for demonstration
-                if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
-                    localAiResponse = "Hello there! How can I help you with my limited local capabilities?";
+                let localAiResponse = "";
+                // Simple arithmetic check for "1+1" and other basic operations
+                const arithmeticMatch = message.match(/^(\d+)\s*([\+\-\*\/])\s*(\d+)$/);
+                if (arithmeticMatch) {
+                    const num1 = parseFloat(arithmeticMatch[1]);
+                    const operator = arithmeticMatch[2];
+                    const num2 = parseFloat(arithmeticMatch[3]);
+                    let result;
+                    try {
+                        switch (operator) {
+                            case '+': result = num1 + num2; break;
+                            case '-': result = num1 - num2; break;
+                            case '*': result = num1 * num2; break;
+                            case '/': 
+                                if (num2 === 0) throw new Error("Division by zero");
+                                result = num1 / num2; 
+                                break;
+                            default: throw new Error("Invalid operator");
+                        }
+                        localAiResponse = `${message} equals ${result}. While I can handle very simple arithmetic, I'm the experimental local AI and cannot solve complex academic problems like advanced math questions or provide detailed explanations. Please switch to 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' for more powerful assistance!`;
+                    } catch (e) {
+                        localAiResponse = `I can't perform that calculation (${e.message}). I'm the experimental local AI and primarily for very basic tasks. For complex math, please use a cloud AI option.`;
+                    }
+                } else if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
+                    localAiResponse = "Hello there! I'm the local AI. I can only provide very basic responses and cannot solve complex academic problems. Please switch to a cloud AI option for advanced help.";
                 } else if (message.toLowerCase().includes("math") || message.toLowerCase().includes("equation")) {
-                    localAiResponse = "As a local AI, I don't have the advanced processing power for complex math problems. Please use the 'Gemini API (Cloud)' option for that!";
+                    localAiResponse = "As a local AI, I don't have the advanced processing power for complex math problems or detailed academic explanations. Please use the 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' option for that!";
                 } else if (message.toLowerCase().includes("thank you") || message.toLowerCase().includes("thanks")) {
                     localAiResponse = "You're welcome! Happy to assist in simple ways.";
+                } else {
+                    localAiResponse = "I'm the experimental local AI. Currently, I can only provide very basic responses and cannot solve complex academic problems. Please switch to 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' for more powerful assistance!";
                 }
 
                 setTimeout(() => { // Simulate a short processing time
