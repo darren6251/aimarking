@@ -1426,9 +1426,10 @@
                     <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
                     <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
                     <label for="aiSourceLocal">Local AI (Experimental)</label>
+                    <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
                 </div>
                 <div id="chatDisplay">
-                    <div class="chat-message gemini">Hello! How can I help you today?</div>
+                    <!-- Chat messages will be appended here -->
                 </div>
                 <div class="chat-input-wrapper">
                     <input type="text" id="chatInput" placeholder="Type a message…">
@@ -1709,11 +1710,8 @@
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        // Initialize chat history for Gemini API
-        let geminiChatHistory = [
-            { role: "user", parts: [{text: "You are an AI assistant."}]}, 
-            { role: "model", parts: [{text: "Hello! How can I assist you?"}]}
-        ];
+        // Initialize chat history for Gemini API - will be loaded from Firestore
+        let geminiChatHistory = []; 
         let shoppingCart = [];
         let appliedPromoCode = null; // New variable to store applied promo code details
         let currentAiSource = 'gemini-api'; // Default AI source for chat
@@ -1930,6 +1928,9 @@
             if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
                 loadPromoCodesForTeacher(); // Load promo codes when teacher views exercises
                 loadStudentPurchasesForTeacher(); // Also load student purchases
+            }
+            if (sectionIdToShow === 'chatSection') {
+                loadChatHistory(); // Load chat history when chat section is shown
             }
         }
 
@@ -3463,6 +3464,7 @@
         const sendChatButton = document.getElementById('sendChatButton');
         const chatDisplay = document.getElementById('chatDisplay');
         const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+        const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
 
         // Event listeners for AI source selection
         document.getElementById('aiSourceGemini').addEventListener('change', (e) => {
@@ -3512,6 +3514,7 @@
                         const aiResponse = result.candidates[0].content.parts[0].text;
                         appendChatMessage(aiResponse, 'gemini');
                         geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                        await saveChatHistory(); // Save updated history to Firestore
                     } else {
                         appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
                         console.warn("Unexpected Gemini API response structure:", result);
@@ -3620,6 +3623,95 @@
                 handleSendMessage();
             }
         });
+
+        // --- PERSISTENT CHAT HISTORY (FIRESTORE) ---
+        const CHAT_HISTORY_DOC_PATH = (userId) => `artifacts/${appId}/users/${userId}/chatHistory/data`;
+
+        async function loadChatHistory() {
+            if (!currentUserId) {
+                console.warn("No current user ID, cannot load chat history.");
+                initializeDefaultChatHistory();
+                return;
+            }
+
+            chatDisplay.innerHTML = ''; // Clear current display
+            chatLoadingIndicator.textContent = 'Loading chat history...';
+
+            try {
+                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                const docSnap = await getDoc(chatDocRef);
+
+                if (docSnap.exists() && docSnap.data().history) {
+                    // Firestore stores arrays as native arrays, no need for JSON.parse
+                    geminiChatHistory = docSnap.data().history;
+                    geminiChatHistory.forEach(msg => {
+                        if (msg.role === "user" || msg.role === "model") {
+                            appendChatMessage(msg.parts[0].text, msg.role === "user" ? "user" : "gemini");
+                        }
+                    });
+                } else {
+                    console.log("No existing chat history found for user. Initializing default.");
+                    initializeDefaultChatHistory();
+                }
+            } catch (error) {
+                console.error("Error loading chat history:", error);
+                showModal('Chat History Error', `Could not load chat history: ${error.message}`);
+                initializeDefaultChatHistory(); // Fallback to default if load fails
+            } finally {
+                chatLoadingIndicator.textContent = '';
+                chatDisplay.scrollTop = chatDisplay.scrollHeight;
+            }
+        }
+
+        async function saveChatHistory() {
+            if (!currentUserId) {
+                console.warn("No current user ID, cannot save chat history.");
+                return;
+            }
+
+            try {
+                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                // Firestore can directly store arrays of objects, no need for JSON.stringify
+                await setDoc(chatDocRef, { history: geminiChatHistory }, { merge: true });
+                console.log("Chat history saved to Firestore.");
+            } catch (error) {
+                console.error("Error saving chat history:", error);
+                showModal('Chat Save Error', `Could not save chat history: ${error.message}`);
+            }
+        }
+
+        function initializeDefaultChatHistory() {
+            geminiChatHistory = [
+                { role: "user", parts: [{text: "You are an AI assistant."}]}, 
+                { role: "model", parts: [{text: "Hello! How can I assist you?"}]}
+            ];
+            chatDisplay.innerHTML = ''; // Clear display
+            appendChatMessage("Hello! How can I help you today?", 'gemini');
+        }
+
+        async function clearChatHistory() {
+            showModal('Confirm Clear History', 'Are you sure you want to clear your chat history? This action cannot be undone.', [
+                { text: 'Clear', className: 'btn-primary', onClick: async () => {
+                    if (!currentUserId) {
+                        showModal('Error', 'Not logged in. Cannot clear history.');
+                        return;
+                    }
+                    try {
+                        const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                        await deleteDoc(chatDocRef);
+                        initializeDefaultChatHistory(); // Reset local history and UI
+                        showModal('Success', 'Chat history cleared.');
+                    } catch (error) {
+                        console.error("Error clearing chat history:", error);
+                        showModal('Error', `Could not clear chat history: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
+        clearChatMemoryButton.addEventListener('click', clearChatHistory);
+
 
         // --- STUDENT MANAGEMENT ---
         document.getElementById('addStudentButton').addEventListener('click', async () => { /* Placeholder for original function */ });
