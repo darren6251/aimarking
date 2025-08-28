@@ -349,15 +349,22 @@
             overflow-y: auto;
             padding: 32px;
             gap: 32px;
+            justify-content: center; /* Center content horizontally */
         }
         
         #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection, #submissionSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
-            width: 100%;
+            width: 100%; /* Take full width of main */
+            max-width: 900px; /* Max width for content readability */
+            margin: 0 auto; /* Center content within main */
         }
-        #profileSection, #submissionSection { max-width: 900px; margin: 0 auto; } /* Centered for better readability */
+        
+        #gradingSection, #chatSection, #studentManagementSection, #submissionSection {
+            max-width: 900px; /* Consistent max-width for these sections */
+            margin: 0 auto;
+        }
 
         /* --- FORMS --- */
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
@@ -411,7 +418,7 @@
         .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
 
         /* --- CHAT --- */
-        #chatSection { display: flex; flex-direction: column; gap: 1rem; max-width: 900px; margin: 0 auto; }
+        #chatSection { display: flex; flex-direction: column; gap: 1rem; }
         #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 80%; padding: 12px 18px; border-radius: 20px; line-height: 1.5; word-wrap: break-word; }
         .chat-message.user { background-color: var(--accent-primary); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 6px; }
@@ -431,7 +438,7 @@
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
         /* --- STUDENT MANAGEMENT --- */
-        #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+        #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; }
         .student-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; position: relative;}
         .student-card h3 { font-size: 1.25rem; margin-bottom: 1rem; }
         .student-info p { margin-bottom: 0.5rem; color: var(--text-secondary); }
@@ -1655,9 +1662,9 @@
                     const studentViewContainer = document.getElementById(`student-${type}-view`);
                     const materialsSectionTitle = section.querySelector('.section-title');
                     const toggleButton = document.createElement('button');
-                    toggleButton.className = 'material-view-toggle';
+                    toggleButton.className = 'material-view-toggle btn-primary'; /* Added btn-primary for consistent styling */
                     toggleButton.textContent = 'Switch to Finder View';
-                    materialsSectionTitle.appendChild(toggleButton); // Append next to title
+                    materialsSectionTitle.after(toggleButton); // Append next to title
 
                     toggleButton.addEventListener('click', () => {
                         if (currentMaterialViewMode === 'card') {
@@ -3142,7 +3149,12 @@
                                 return { id: userId, profile: profileData, purchases: purchases };
                             }
                         } catch (e) {
-                            console.warn(`Could not load profile or purchases for user ${userId}: ${e.message}`);
+                            // Catch specific permission errors and log them clearly
+                            if (e.code === 'permission-denied') {
+                                console.warn(`Permission denied for user ${userId}. Ensure security rules allow teachers to read student data.`);
+                            } else {
+                                console.warn(`Could not load profile or purchases for user ${userId}: ${e.message}`);
+                            }
                         }
                         return null;
                     })());
@@ -3151,7 +3163,7 @@
                 const students = (await Promise.all(studentPromises)).filter(Boolean); // Filter out nulls
 
                 if (students.length === 0) {
-                    container.innerHTML = '<p>No students have logged in yet.</p>';
+                    container.innerHTML = '<p>No students have logged in yet or you do not have permission to view their data.</p>';
                 } else {
                     students.forEach(student => {
                         const studentCard = document.createElement('div');
@@ -3193,7 +3205,7 @@
 
             } catch (error) {
                 console.error("Error loading student data:", error);
-                container.innerHTML = `<p class="error-message">Failed to load student data: ${error.message}</p>`;
+                container.innerHTML = `<p class="error-message">Failed to load student data: ${error.message}. Please check Firebase security rules.</p>`;
             } finally {
                 loadingIndicator.textContent = '';
             }
@@ -3211,7 +3223,7 @@
 
                         // Delete purchased items (get all and delete)
                         const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${studentId}/purchased_exercises`);
-                        const purchasedSnapshot = await getDocs(purchasesRef);
+                        const purchasedSnapshot = await getDocs(purchasedExercisesRef); /* Corrected from purchasesRef */
                         purchasedSnapshot.forEach(doc => batch.delete(doc.ref));
 
                         // Delete chat history
@@ -3269,7 +3281,7 @@
                     <form id="createAssignmentForm">
                         <div style="margin-bottom: 1rem;">
                             <label for="newAssignmentSubject">Subject</label>
-                            <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics, English">
+                            <select id="newAssignmentSubject" required><option value="">-- Select Subject --</option></select>
                         </div>
                         <div style="margin-bottom: 1rem;">
                             <label for="newAssignmentTitle">Assignment Title</label>
@@ -3297,6 +3309,7 @@
                 </div>
             `;
 
+            await populateSubjectDropdowns(); // Populate subject dropdown for teacher
             document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
             loadTeacherAssignments();
         }
@@ -3325,12 +3338,47 @@
                 });
                 showModal('Success', 'Assignment created successfully!');
                 form.reset();
+                await populateSubjectDropdowns(); // Re-populate to update subject list if new one was added
                 loadTeacherAssignments(); // Refresh the list
             } catch (error) {
                 console.error("Error creating assignment:", error);
                 showModal('Error', `Could not create assignment: ${error.message}`);
             }
         }
+        
+        // Helper function to get unique subjects from existing assignments
+        async function getUniqueAssignmentSubjects() {
+            const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
+            const subjectsSnapshot = await getDocs(subjectsRef);
+            const subjects = [];
+            subjectsSnapshot.forEach(doc => subjects.push(doc.id));
+            return subjects;
+        }
+
+        // Populates subject dropdowns for both teacher's create assignment and student's submission
+        async function populateSubjectDropdowns() {
+            const teacherSubjectDropdown = document.getElementById('newAssignmentSubject');
+            const studentSubjectDropdown = document.getElementById('studentSubmissionSubjectFilter');
+
+            const subjects = await getUniqueAssignmentSubjects();
+
+            // Populate teacher's dropdown
+            if (teacherSubjectDropdown) {
+                teacherSubjectDropdown.innerHTML = '<option value="">-- Select Subject --</option>';
+                subjects.forEach(subject => {
+                    teacherSubjectDropdown.add(new Option(subject, subject));
+                });
+            }
+
+            // Populate student's dropdown
+            if (studentSubjectDropdown) {
+                studentSubjectDropdown.innerHTML = '<option value="">-- Select Subject --</option>';
+                subjects.forEach(subject => {
+                    studentSubjectDropdown.add(new Option(subject, subject));
+                });
+            }
+        }
+
 
         async function loadTeacherAssignments() {
             const listContainer = document.getElementById('teacherAssignmentsList');
@@ -3566,6 +3614,7 @@
 
                         await batch.commit();
                         showModal('Success', 'Assignment and all submissions deleted.');
+                        await populateSubjectDropdowns(); // Re-populate subject dropdowns after deleting an assignment
                         loadTeacherAssignments(); // Refresh list
                     } catch (error) {
                         console.error("Error deleting assignment:", error);
@@ -3660,7 +3709,7 @@
             const assignmentFilter = document.getElementById('studentSubmissionAssignmentFilter');
             const submitForm = document.getElementById('submitHomeworkForm');
 
-            populateStudentAssignmentFilters(subjectFilter, assignmentFilter);
+            await populateSubjectDropdowns(); // Populate subject dropdown for student
             
             subjectFilter.addEventListener('change', () => {
                 const selectedSubject = subjectFilter.value;
@@ -3669,7 +3718,7 @@
                 document.getElementById('assignmentDetails').style.display = 'none';
 
                 if (selectedSubject) {
-                    populateStudentAssignmentFilters(subjectFilter, assignmentFilter, selectedSubject);
+                    populateStudentAssignmentDropdown(assignmentFilter, selectedSubject);
                     assignmentFilter.disabled = false;
                 }
             });
@@ -3696,48 +3745,27 @@
             loadMySubmissions();
         }
 
-        async function populateStudentAssignmentFilters(subjectSelect, assignmentSelect, selectedSubjectId = null) {
-            subjectSelect.innerHTML = `<option value="">-- Loading Subjects --</option>`;
-            if (!selectedSubjectId) {
-                assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
-                assignmentSelect.disabled = true;
-            }
-
+        async function populateStudentAssignmentDropdown(assignmentSelect, selectedSubjectId) {
+            assignmentSelect.innerHTML = `<option value="">-- Loading Assignments --</option>`;
             try {
-                const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
-                const subjectsSnapshot = await getDocs(subjectsRef);
+                const assignmentsRef = collection(db, getPath('assignments', [selectedSubjectId]));
+                const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
+                const assignmentsSnapshot = await getDocs(q);
                 
-                subjectSelect.innerHTML = `<option value="">-- Select Subject --</option>`;
-                if(subjectsSnapshot.empty) {
-                    subjectSelect.innerHTML += `<option value="" disabled>-- No Subjects with Assignments --</option>`;
+                assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
+                if (assignmentsSnapshot.empty) {
+                    assignmentSelect.innerHTML += `<option value="" disabled>-- No Assignments for this Subject --</option>`;
                 } else {
-                    subjectsSnapshot.forEach(doc => {
-                        subjectSelect.add(new Option(doc.id, doc.id)); // Subject ID is the document ID
+                    assignmentsSnapshot.forEach(doc => {
+                        assignmentSelect.add(new Option(doc.data().title, doc.id));
                     });
                 }
-
-                if (selectedSubjectId) {
-                    const assignmentsRef = collection(db, getPath('assignments', [selectedSubjectId]));
-                    const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                    const assignmentsSnapshot = await getDocs(q);
-                    
-                    assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
-                    if (assignmentsSnapshot.empty) {
-                        assignmentSelect.innerHTML += `<option value="" disabled>-- No Assignments for this Subject --</option>`;
-                    } else {
-                        assignmentsSnapshot.forEach(doc => {
-                            assignmentSelect.add(new Option(doc.data().title, doc.id));
-                        });
-                        assignmentSelect.disabled = false;
-                    }
-                }
-
             } catch (error) {
-                console.error("Error populating student assignment filters:", error);
-                subjectSelect.innerHTML = `<option value="">-- Error loading subjects --</option>`;
+                console.error("Error populating student assignment dropdown:", error);
                 assignmentSelect.innerHTML = `<option value="">-- Error loading assignments --</option>`;
             }
         }
+
 
         async function submitHomework(e) {
             e.preventDefault();
@@ -4024,7 +4052,7 @@
             const finderFileListContent = document.getElementById('finderFileListContent');
             
             finderCurrentType = type; // Set the current type for the finder window
-            finderCurrentPath = []; // Reset path when opening a new type
+            finderCurrentPath = [type]; // Initialize path with type when opening new type
 
             // Update title bar
             finderWindow.querySelector('.finder-titlebar span').textContent = materialsConfig[type].title;
@@ -4094,7 +4122,12 @@
             const finderFileListContent = document.getElementById('finderFileListContent');
             finderFileListContent.innerHTML = `<p class="loading-indicator">Loading items...</p>`;
             const config = materialsConfig[type];
-            const collectionRef = collection(db, getPath(type, parentIds));
+            // Adjust path for assignments
+            const collectionPath = type === 'assignments' 
+                                 ? `artifacts/${appId}/public/data/assignments/${parentIds[0]}/assignments`
+                                 : getPath(type, parentIds);
+            const collectionRef = collection(db, collectionPath);
+
             const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc')); // Order years descending
 
             try {
@@ -4119,8 +4152,11 @@
                     let size = ''; // Placeholder for file size
                     let kind = ''; // Placeholder for file type
                     let dateAdded = item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'N/A';
+                    if (type === 'assignments' && item.createdAt) {
+                        dateAdded = new Date(item.createdAt).toLocaleDateString();
+                    }
 
-                    if (level === 2) { // Folder for Level 2 (Topic/Year)
+                    if (level === 2) { // Folder for Level 2 (Topic/Year or Assignment for assignments)
                         el.classList.add('folder');
                         icon = '📁 ';
                         kind = config.level2;
@@ -4128,18 +4164,19 @@
                             finderCurrentPath = [...parentIds, doc.id];
                             await loadFinderFileList(type, finderCurrentPath, 3);
                         });
-                    } else if (level === 3) { // Actual file
+                    } else if (level === 3) { // Actual file (Video, Paper, Exercise, or Assignment itself for assignments)
                         el.classList.add('file');
                         icon = (type === 'tutorials' ? '🎬 ' : (type === 'exercises' ? '📝 ' : '📄 '));
                         kind = config.level3;
                         // For files, add a click listener to preview/download
                         el.addEventListener('click', () => {
+                            // If it's an assignment, the item.name is the title, so pass item itself to handlePreview
                             handlePreview(type, item);
                         });
                     }
 
                     el.innerHTML = `
-                        <div>${icon}${item.name}</div>
+                        <div>${icon}${item.name || item.title}</div>
                         <div>${size}</div>
                         <div>${kind}</div>
                         <div>${dateAdded}</div>
