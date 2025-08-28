@@ -352,7 +352,7 @@
             justify-content: center; /* Center content horizontally */
         }
         
-        #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection, #submissionSection {
+        #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
@@ -361,7 +361,7 @@
             margin: 0 auto; /* Center content within main */
         }
         
-        #gradingSection, #chatSection, #studentManagementSection, #submissionSection {
+        #gradingSection, #chatSection, #studentManagementSection {
             max-width: 900px; /* Consistent max-width for these sections */
             margin: 0 auto;
         }
@@ -605,9 +605,64 @@
             .hero-text, .hero-image { max-width: 100%; }
             .buttons { justify-content: center; }
             .finder-window-wrapper { display: none !important; }
+
+            /* Mobile adjustments for Submission Section */
+            .submission-main-container {
+                flex-direction: column;
+                max-width: 100%;
+                margin: 0;
+            }
+            .submission-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 1rem;
+            }
+            .submission-content {
+                width: 100%;
+                max-width: 100%;
+                padding-left: 0;
+                padding-top: 1.5rem;
+            }
         }
 
         /* Homework Submission Specific Styles */
+        #submissionSection { /* Override previous flex-direction: column */
+            display: flex; /* Ensure flex context for children */
+            flex-direction: row; /* Default to row for desktop */
+            gap: 2rem;
+            max-width: 1200px; /* Increase max-width for better two-column display */
+            margin: 0 auto;
+            align-items: flex-start; /* Align content to the top */
+        }
+
+        .submission-main-container {
+            display: flex;
+            flex-direction: row; /* Default to row for desktop */
+            width: 100%;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .submission-sidebar {
+            width: 280px; /* Fixed width for the sidebar */
+            flex-shrink: 0;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content; /* Adjust height to content */
+            position: sticky; /* Keep sidebar visible when scrolling main content */
+            top: 100px; /* Adjust based on header height */
+        }
+
+        .submission-content {
+            flex-grow: 1; /* Takes remaining space */
+            width: calc(100% - 280px - 2rem); /* Full width minus sidebar and gap */
+            max-width: 900px; /* Max width for content readability */
+            padding-left: 0; /* No extra padding here as main already has padding */
+        }
+
         .assignment-card {
             background-color: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -628,14 +683,16 @@
         .assignment-card .assignment-actions {
             margin-top: 1rem;
             display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
             gap: 0.5rem;
         }
         .assignment-submission-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column; /* Stack details and actions vertically */
+            gap: 0.5rem;
             padding: 0.75rem 0;
             border-bottom: 1px solid var(--border-color);
+            align-items: flex-start; /* Align items to the start */
         }
         .assignment-submission-item:last-child {
             border-bottom: none;
@@ -645,10 +702,17 @@
             font-size: 0.9rem;
         }
         .submission-actions button {
-            margin-left: 0.5rem;
+            margin-left: 0; /* Reset margin from general rules */
+            margin-right: 0.5rem; /* Add margin between action buttons */
             padding: 6px 10px;
             font-size: 0.8rem;
         }
+        .submission-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
         #submissionsListContainer {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
@@ -665,6 +729,9 @@
             font-size: 1.1rem;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
+        }
+        .my-submissions-container {
+            margin-top: 2rem;
         }
 
     </style>
@@ -726,7 +793,7 @@
             <div id="homeSection" style="display: block; opacity: 1;">
                 <section class="hero">
                     <div class="hero-text">
-                        <h2>AI helps you learn better</h2>
+                        <h2>Hi <span id="homeUserNamePlaceholder"></span>, how are you today?</h2>
                         <span>to fight DSE</span>
                         <div class="buttons">
                             <a href="#tutorial" id="homeTutorialLink">Tutorial Video</a>
@@ -808,8 +875,8 @@
             </div>
 
             <!-- Submission Section (New) -->
-            <div id="submissionSection">
-                <h2 class="section-title">Homework Submissions</h2>
+            <div id="submissionSection" class="submission-main-container">
+                <h2 class="section-title" style="display:none;">Homework Submissions</h2>
                 <!-- Content will be rendered based on user role -->
             </div>
 
@@ -1227,6 +1294,12 @@
             document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
             document.getElementById('toggleSubmissionsButton').style.display = 'block'; // Always show submissions button
 
+            // Set personalized greeting for home section
+            const homeUserNamePlaceholder = document.getElementById('homeUserNamePlaceholder');
+            if (homeUserNamePlaceholder) {
+                homeUserNamePlaceholder.textContent = currentUserName || 'there';
+            }
+
             initializeAllMaterialSections();
             await checkForSuccessfulPurchase();
 
@@ -1321,6 +1394,7 @@
                 if (section) {
                     const isTarget = id === sectionIdToShow;
                     // Adjusted display type for various sections
+                    // Submission section uses flex for its internal columns
                     section.style.display = isTarget ? (['chatSection', 'studentManagementSection', 'submissionSection'].includes(id) ? 'flex' : 'block') : 'none';
                     setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
                 }
@@ -3171,14 +3245,16 @@
 
                         let purchasesHtml = '<h4>Purchase History</h4>';
                         if (student.purchases.length > 0) {
+                            purchasesHtml += '<ul>';
                             student.purchases.forEach(item => {
                                 purchasesHtml += `
-                                    <div class="purchase-item">
+                                    <li class="purchase-item">
                                         <span>${item.name}</span>
                                         <span>$${item.price.toFixed(2)}</span>
-                                    </div>
+                                    </li>
                                 `;
                             });
+                            purchasesHtml += '</ul>';
                         } else {
                             purchasesHtml += '<p>No purchases made.</p>';
                         }
@@ -3263,26 +3339,43 @@
         // --- HOMEWORK SUBMISSION LOGIC (NEW) ---
         async function renderSubmissionSection() {
             const submissionSection = document.getElementById('submissionSection');
-            submissionSection.innerHTML = ''; // Clear previous content
+            // Clear content and ensure correct base layout for the submission section
+            submissionSection.innerHTML = `
+                <h2 class="section-title">Homework Submissions</h2>
+                <div class="submission-main-container">
+                    <div class="submission-sidebar" id="submissionSidebar">
+                        <!-- Subject dropdowns will go here -->
+                    </div>
+                    <div class="submission-content" id="submissionContent">
+                        <!-- Forms and lists will go here -->
+                    </div>
+                </div>
+            `;
+            const submissionContent = document.getElementById('submissionContent');
+            const submissionSidebar = document.getElementById('submissionSidebar');
 
             if (currentUserRole === 'teacher') {
-                renderTeacherSubmissionView(submissionSection);
+                renderTeacherSubmissionView(submissionContent, submissionSidebar);
             } else if (currentUserRole === 'student') {
-                renderStudentSubmissionView(submissionSection);
+                renderStudentSubmissionView(submissionContent, submissionSidebar);
             } else {
-                submissionSection.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
+                submissionContent.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
             }
         }
 
-        async function renderTeacherSubmissionView(container) {
-            container.innerHTML = `
+        async function renderTeacherSubmissionView(contentContainer, sidebarContainer) {
+            sidebarContainer.innerHTML = `
+                <div class="form-container" style="padding: 1rem;">
+                    <h3>Choose Subject</h3>
+                    <label for="newAssignmentSubject" style="margin-bottom: 0.5rem;">Subject</label>
+                    <select id="newAssignmentSubject" required><option value="">-- Select Subject --</option></select>
+                </div>
+            `;
+            
+            contentContainer.innerHTML = `
                 <div class="form-container">
                     <h3>Create New Assignment</h3>
                     <form id="createAssignmentForm">
-                        <div style="margin-bottom: 1rem;">
-                            <label for="newAssignmentSubject">Subject</label>
-                            <select id="newAssignmentSubject" required><option value="">-- Select Subject --</option></select>
-                        </div>
                         <div style="margin-bottom: 1rem;">
                             <label for="newAssignmentTitle">Assignment Title</label>
                             <input type="text" id="newAssignmentTitle" required placeholder="e.g., Chapter 3 Homework, Essay Outline">
@@ -3309,7 +3402,7 @@
                 </div>
             `;
 
-            await populateSubjectDropdowns(); // Populate subject dropdown for teacher
+            await populateSubjectDropdowns(sidebarContainer.querySelector('#newAssignmentSubject')); // Pass the specific dropdown
             document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
             loadTeacherAssignments();
         }
@@ -3338,7 +3431,10 @@
                 });
                 showModal('Success', 'Assignment created successfully!');
                 form.reset();
-                await populateSubjectDropdowns(); // Re-populate to update subject list if new one was added
+                // We need to re-populate all subject dropdowns (teacher's create form, student's filter)
+                // if a new subject was just created.
+                await populateSubjectDropdowns(document.getElementById('newAssignmentSubject')); 
+                await populateSubjectDropdowns(document.getElementById('studentSubmissionSubjectFilter')); 
                 loadTeacherAssignments(); // Refresh the list
             } catch (error) {
                 console.error("Error creating assignment:", error);
@@ -3348,35 +3444,40 @@
         
         // Helper function to get unique subjects from existing assignments
         async function getUniqueAssignmentSubjects() {
-            const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
-            const subjectsSnapshot = await getDocs(subjectsRef);
-            const subjects = [];
-            subjectsSnapshot.forEach(doc => subjects.push(doc.id));
-            return subjects;
+            const allSubjects = new Set();
+            const subjectsCollectionRef = collection(db, `artifacts/${appId}/public/data/assignments`);
+            
+            try {
+                const subjectsSnapshot = await getDocs(subjectsCollectionRef);
+                for (const doc of subjectsSnapshot.docs) {
+                    allSubjects.add(doc.id); // Add the subject name (which is the document ID)
+                }
+
+                // Also consider subjects from existing assignments directly, if any are added before a subject 'folder' is created
+                // This might not be strictly necessary with the current structure but adds robustness
+                // const assignmentsCollectionGroupRef = collectionGroup(db, 'assignments'); // Requires collection group index
+                // const assignmentsSnapshot = await getDocs(assignmentsCollectionGroupRef);
+                // assignmentsSnapshot.forEach(doc => allSubjects.add(doc.data().subjectName));
+
+            } catch (error) {
+                console.error("Error fetching unique assignment subjects:", error);
+            }
+            return Array.from(allSubjects).sort();
         }
 
-        // Populates subject dropdowns for both teacher's create assignment and student's submission
-        async function populateSubjectDropdowns() {
-            const teacherSubjectDropdown = document.getElementById('newAssignmentSubject');
-            const studentSubjectDropdown = document.getElementById('studentSubmissionSubjectFilter');
+        // Populates a *specific* subject dropdown (either teacher's create or student's filter)
+        async function populateSubjectDropdowns(dropdownElement) {
+            if (!dropdownElement) return;
 
             const subjects = await getUniqueAssignmentSubjects();
-
-            // Populate teacher's dropdown
-            if (teacherSubjectDropdown) {
-                teacherSubjectDropdown.innerHTML = '<option value="">-- Select Subject --</option>';
-                subjects.forEach(subject => {
-                    teacherSubjectDropdown.add(new Option(subject, subject));
-                });
+            dropdownElement.innerHTML = '<option value="">-- Select Subject --</option>';
+            if (subjects.length === 0) {
+                dropdownElement.innerHTML += '<option value="" disabled>-- No Subjects Available --</option>';
+                return;
             }
-
-            // Populate student's dropdown
-            if (studentSubjectDropdown) {
-                studentSubjectDropdown.innerHTML = '<option value="">-- Select Subject --</option>';
-                subjects.forEach(subject => {
-                    studentSubjectDropdown.add(new Option(subject, subject));
-                });
-            }
+            subjects.forEach(subject => {
+                dropdownElement.add(new Option(subject, subject));
+            });
         }
 
 
@@ -3614,7 +3715,8 @@
 
                         await batch.commit();
                         showModal('Success', 'Assignment and all submissions deleted.');
-                        await populateSubjectDropdowns(); // Re-populate subject dropdowns after deleting an assignment
+                        await populateSubjectDropdowns(document.getElementById('newAssignmentSubject')); // Re-populate teacher's dropdown
+                        await populateSubjectDropdowns(document.getElementById('studentSubmissionSubjectFilter')); // Re-populate student's dropdown
                         loadTeacherAssignments(); // Refresh list
                     } catch (error) {
                         console.error("Error deleting assignment:", error);
@@ -3658,15 +3760,19 @@
             ]);
         }
 
-        async function renderStudentSubmissionView(container) {
-            container.innerHTML = `
+        async function renderStudentSubmissionView(contentContainer, sidebarContainer) {
+            sidebarContainer.innerHTML = `
+                <div class="form-container" style="padding: 1rem;">
+                    <h3>Choose Subject</h3>
+                    <label for="studentSubmissionSubjectFilter" style="margin-bottom: 0.5rem;">Subject</label>
+                    <select id="studentSubmissionSubjectFilter" required><option value="">-- Select Subject --</option></select>
+                </div>
+            `;
+
+            contentContainer.innerHTML = `
                 <div class="form-container">
                     <h3>Submit Your Homework</h3>
                     <form id="submitHomeworkForm">
-                        <div style="margin-bottom: 1rem;">
-                            <label for="studentSubmissionSubjectFilter">Choose Subject</label>
-                            <select id="studentSubmissionSubjectFilter" required><option value="">-- Select Subject --</option></select>
-                        </div>
                         <div style="margin-bottom: 1rem;">
                             <label for="studentSubmissionAssignmentFilter">Choose Assignment</label>
                             <select id="studentSubmissionAssignmentFilter" required disabled><option value="">-- Select Assignment --</option></select>
@@ -3705,11 +3811,11 @@
                 </div>
             `;
 
-            const subjectFilter = document.getElementById('studentSubmissionSubjectFilter');
-            const assignmentFilter = document.getElementById('studentSubmissionAssignmentFilter');
-            const submitForm = document.getElementById('submitHomeworkForm');
+            const subjectFilter = sidebarContainer.querySelector('#studentSubmissionSubjectFilter');
+            const assignmentFilter = contentContainer.querySelector('#studentSubmissionAssignmentFilter');
+            const submitForm = contentContainer.querySelector('#submitHomeworkForm');
 
-            await populateSubjectDropdowns(); // Populate subject dropdown for student
+            await populateSubjectDropdowns(subjectFilter); // Populate subject dropdown for student
             
             subjectFilter.addEventListener('change', () => {
                 const selectedSubject = subjectFilter.value;
@@ -4418,6 +4524,16 @@
                 finderSection.style.left = '50%';
                 finderSection.style.top = '50%';
                 finderWindow.style.transform = 'translate(-50%, -50%)';
+            }
+
+            // Adjust submission section layout on resize
+            const submissionSection = document.getElementById('submissionSection');
+            if (submissionSection.style.display === 'flex') { // Only if submission section is active
+                if (window.innerWidth <= 768) {
+                    submissionSection.classList.add('mobile-layout');
+                } else {
+                    submissionSection.classList.remove('mobile-layout');
+                }
             }
         });
 
