@@ -6,8 +6,6 @@
     <title>AI Marker</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- Google Platform Library for reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <!-- Custom styles -->
     <style>
         /* --- MODERN BLACK & WHITE THEME --- */
@@ -309,7 +307,7 @@
         .dropdown-menu-content {
             display: none;
             position: absolute;
-            top: 110%; 
+            top: 110%; /* Adjusted to be clearly below the button */
             left: 0;
             background-color: var(--bg-secondary);
             min-width: 180px;
@@ -359,11 +357,11 @@
             transition: opacity 0.4s ease-in-out;
             width: 100%;
         }
-        #profileSection { max-width: 800px; margin: 0 auto; }
+        #profileSection, #submissionSection { max-width: 900px; margin: 0 auto; } /* Centered for better readability */
 
         /* --- FORMS --- */
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea {
+        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"] {
             width: 100%; 
             background-color: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
@@ -413,7 +411,7 @@
         .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
 
         /* --- CHAT --- */
-        #chatSection { display: none; flex-direction: column; gap: 1rem; max-width: 900px; margin: 0 auto; }
+        #chatSection { display: flex; flex-direction: column; gap: 1rem; max-width: 900px; margin: 0 auto; }
         #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .chat-message { max-width: 80%; padding: 12px 18px; border-radius: 20px; line-height: 1.5; word-wrap: break-word; }
         .chat-message.user { background-color: var(--accent-primary); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 6px; }
@@ -429,18 +427,33 @@
 
         /* --- UNIVERSAL STYLES --- */
         .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
-        .form-container { max-width: 600px; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
         /* --- STUDENT MANAGEMENT --- */
-        #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; }
-        .student-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+        .student-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; position: relative;}
         .student-card h3 { font-size: 1.25rem; margin-bottom: 1rem; }
         .student-info p { margin-bottom: 0.5rem; color: var(--text-secondary); }
         .student-info p strong { color: var(--text-primary); }
         .purchase-history { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
         .purchase-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
         .purchase-item:last-child { border-bottom: none; }
+        .delete-student-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+        }
+        .delete-student-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1); /* Light red hover */
+        }
 
 
         /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
@@ -480,7 +493,7 @@
             transition: max-height 0.3s ease-out;
             max-height: 0;
         }
-        .nested-container.expanded { max-height: 1000px; }
+        .nested-container.expanded { max-height: 1000px; } /* Sufficiently large to show content */
 
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; cursor: grab; }
         .sub-item:hover { background-color: var(--bg-tertiary); }
@@ -570,15 +583,6 @@
         .finder-file-list .row:hover { background: var(--finder-hover-bg); }
         .finder-file-list .row.folder { font-weight: bold; color: var(--text-primary); }
 
-        /* --- SUBMISSIONS PAGE --- */
-        #submissionSection { display: flex; flex-direction: column; gap: 2rem; }
-        .assignment-card { background-color: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .assignment-card h3 { margin-bottom: 0.5rem; }
-        .assignment-card p { color: var(--text-secondary); margin-bottom: 1rem; }
-        .submitted-files-list { margin-top: 1rem; }
-        .submitted-file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 6px; }
-        .submitted-file-item:hover { background-color: var(--bg-tertiary); }
-
         /* --- RESPONSIVENESS --- */
         @media (max-width: 992px) {
             .store-layout { flex-direction: column; }
@@ -595,11 +599,71 @@
             .buttons { justify-content: center; }
             .finder-window-wrapper { display: none !important; }
         }
+
+        /* Homework Submission Specific Styles */
+        .assignment-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .assignment-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .assignment-card p {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .assignment-card .assignment-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .assignment-submission-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .assignment-submission-item:last-child {
+            border-bottom: none;
+        }
+        .submission-detail {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .submission-actions button {
+            margin-left: 0.5rem;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        #submissionsListContainer {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .student-submission-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .student-submission-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
     </style>
 </head>
 <body>
 
-    <!-- The body content remains the same as it's functionality-driven -->
     <div id="authWrapper" style="display: none;">
         <div class="login-left-panel">
             <h1>AI Marker</h1>
@@ -607,7 +671,7 @@
         </div>
         <div class="login-right-panel">
             <div id="authContainer">
-                 <!-- Login/Register Forms will be injected here -->
+                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
             </div>
         </div>
     </div>
@@ -620,7 +684,7 @@
             </div>
             <div class="header-actions">
                 <button id="toggleHomeButton" class="tab active">Home</button>
-                <button id="toggleSubmissionsButton" class="tab" style="display: none;">Submissions</button>
+                
                 <div class="dropdown-menu">
                     <button class="tab" id="workWithAIButton">Work with AI</button>
                     <div class="dropdown-menu-content">
@@ -638,6 +702,7 @@
                     </div>
                 </div>
 
+                <button id="toggleSubmissionsButton" class="tab" style="display: none;">Submissions</button>
                 <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
                 <button id="toggleProfileButton" class="tab">Profile</button>
                 <button id="themeToggleButton" class="tab">Theme</button>
@@ -735,6 +800,13 @@
                  <p id="chatLoadingIndicator" class="loading-indicator"></p>
             </div>
 
+            <!-- Submission Section (New) -->
+            <div id="submissionSection">
+                <h2 class="section-title">Homework Submissions</h2>
+                <!-- Content will be rendered based on user role -->
+            </div>
+
+
             <!-- Student Management Section -->
             <div id="studentManagementSection">
                 <h2 class="section-title">Student Dashboard</h2>
@@ -748,15 +820,6 @@
             <div id="tutorialSection"></div>
             <div id="pastPapersSection"></div>
             <div id="exerciseSection"></div>
-
-            <!-- Submissions Section (from updated.html) -->
-            <div id="submissionSection" class="section">
-                <h2 class="section-title">My Submissions</h2>
-                <div id="assignmentsList">
-                    <!-- Assignments will be loaded here -->
-                    <p>No assignments to display.</p>
-                </div>
-            </div>
             
             <!-- Profile Section -->
             <div id="profileSection">
@@ -976,12 +1039,55 @@
         </div>
     </div>
 
-    <!-- The script remains the same as it's functionality-driven -->
+    <!-- New Assignment Modal -->
+    <div id="addAssignmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Create New Assignment</h3>
+            <form id="addAssignmentForm">
+                <div style="margin-bottom: 1rem;">
+                    <label for="assignmentSubject">Subject</label>
+                    <input type="text" id="assignmentSubject" required placeholder="e.g., Mathematics, English">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="assignmentTitle">Assignment Title</label>
+                    <input type="text" id="assignmentTitle" required placeholder="e.g., Chapter 3 Homework, Essay Outline">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="assignmentDescription">Description (Optional)</label>
+                    <textarea id="assignmentDescription" placeholder="Provide instructions or details for the assignment..."></textarea>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="assignmentDueDate">Due Date (Optional)</label>
+                    <input type="date" id="assignmentDueDate">
+                </div>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Create Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Submission Modal -->
+    <div id="viewSubmissionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="viewSubmissionTitle">Submission Details</h3>
+            <div id="submissionDetailsContent">
+                <!-- Submission file/text preview will be loaded here -->
+            </div>
+             <div id="submissionDownloadLink" style="margin-top: 1rem; text-align: center; display: none;">
+                <a id="submissionFileDownloadBtn" class="btn-primary" download target="_blank">Download File</a>
+            </div>
+        </div>
+    </div>
+
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- IMPORTANT CONFIGURATION ---
         // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
@@ -1006,7 +1112,6 @@
         const DEEPSEEK_WORKER_URL = "https://your-deepseek-proxy-worker.yourdomain.workers.dev/"; 
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
-        const RECAPTCHA_SITE_KEY = "6LeIxAcpAAAAAJu3J3f-2de_b-z-g-z-g-z-g-z-g"; // Added from updated.html
 
         pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -1024,72 +1129,22 @@
         const appSection = document.getElementById('appSection');
         const authContainer = document.getElementById('authContainer');
 
-        // Combined auth forms for both email/password and social login
-        function setupAuthForms() {
-            authContainer.innerHTML = `
-                <div id="loginForm" class="auth-form active">
-                    <h2>Sign In</h2>
-                    <form>
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" required>
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" required>
-                        <button type="submit" class="btn-primary" style="width:100%">Sign In</button>
-                        <p class="error-message" id="loginError"></p>
-                    </form>
-                    <div style="text-align:center; margin: 1rem 0; color: var(--text-secondary);">or</div>
-                    <button id="googleSignInButton" class="google-btn" style="width:100%; background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-                        <span>Sign in with Google</span>
-                    </button>
-                    <div class="form-switch">Don't have an account? <button id="switchToRegister">Register</button></div>
-                </div>
-                <div id="registerForm" class="auth-form">
-                    <h2>Register</h2>
-                    <form>
-                        <label for="registerName">Full Name</label>
-                        <input type="text" id="registerName" required>
-                        <label for="registerEmail">Email</label>
-                        <input type="email" id="registerEmail" required>
-                        <label for="registerPassword">Password (6+ characters)</label>
-                        <input type="password" id="registerPassword" required>
-                        <div class="g-recaptcha" data-sitekey="${RECAPTCHA_SITE_KEY}"></div>
-                        <button type="submit" class="btn-primary" style="width:100%">Register</button>
-                        <p class="error-message" id="registerError"></p>
-                    </form>
-                    <div class="form-switch">Already have an account? <button id="switchToLogin">Sign In</button></div>
-                </div>
-                 <div id="codeEntryForm" class="auth-form">
-                    <h2>Enter Access Code</h2>
-                    <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code to assign your role.</p>
-                    <input type="text" id="accessCodeInput" placeholder="Enter code here">
-                    <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-                    <p class="error-message" id="codeError"></p>
-                </div>
-            `;
-            document.getElementById('switchToRegister').addEventListener('click', () => toggleAuthForm('register'));
-            document.getElementById('switchToLogin').addEventListener('click', () => toggleAuthForm('login'));
-            document.getElementById('loginForm').querySelector('form').addEventListener('submit', handleEmailLogin);
-            document.getElementById('registerForm').querySelector('form').addEventListener('submit', handleEmailRegister);
-            document.getElementById('googleSignInButton').addEventListener('click', handleGoogleSignIn);
-            document.getElementById('submitCodeButton').addEventListener('click', () => handleSubmitCode());
-            document.getElementById('accessCodeInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSubmitCode();
-                }
-            });
-        }
+        const googleSignInTemplate = `
+            <h2>Sign In</h2>
+            <button id="googleSignInButton" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
+                <span>Sign in with Google</span>
+            </button>
+            <p id="authError" class="error-message"></p>
+        `;
 
-        function toggleAuthForm(formToShow) {
-            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-            document.getElementById(`${formToShow}Form`).classList.add('active');
-            // Reset reCAPTCHA if it exists and switching to register form
-            if (formToShow === 'register' && typeof grecaptcha !== 'undefined') {
-                grecaptcha.reset();
-            }
-        }
-
+        const codeEntryTemplate = `
+            <h2>Enter Access Code</h2>
+            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
+            <input type="text" id="accessCodeInput" placeholder="Enter code here">
+            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
+            <p id="codeError" class="error-message"></p>
+        `;
 
         try {
             app = initializeApp(firebaseConfig);
@@ -1109,21 +1164,15 @@
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 try {
                     const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists()) {
+                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
                         const profileData = userProfileDoc.data();
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || user.displayName;
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: serverTimestamp() }, { merge: true });
-                        
-                        if (currentUserRole && currentUserRole !== 'unassigned') {
-                            showApp();
-                        } else {
-                            showCodeEntry();
-                        }
+                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                        showApp();
                     } else {
                         currentUserName = user.displayName;
                         currentUserRole = 'unassigned';
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: 'unassigned', createdAt: serverTimestamp(), lastLogin: serverTimestamp() }, { merge: true });
                         showCodeEntry();
                     }
                 } catch (e) {
@@ -1143,17 +1192,25 @@
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
-            setupAuthForms();
-            toggleAuthForm('login');
+            authContainer.innerHTML = googleSignInTemplate;
+            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
 
         function showCodeEntry() {
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
-            setupAuthForms();
-            toggleAuthForm('codeEntry');
-            document.getElementById('accessCodeInput')?.focus();
+            authContainer.innerHTML = codeEntryTemplate;
+            const submitCodeBtn = document.getElementById('submitCodeButton');
+            const accessCodeInput = document.getElementById('accessCodeInput');
+            submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
+            accessCodeInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSubmitCode();
+                }
+            });
+            accessCodeInput?.focus();
         }
 
         async function showApp() {
@@ -1161,11 +1218,9 @@
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
-            document.getElementById('toggleSubmissionsButton').style.display = currentUserRole === 'student' ? 'block' : 'none'; // Only for students
-            
-            injectAllContent();
-            initializeAllMaterialSections(); // Ensure materials are setup
-            setupNav();
+            document.getElementById('toggleSubmissionsButton').style.display = 'block'; // Always show submissions button
+
+            initializeAllMaterialSections();
             await checkForSuccessfulPurchase();
 
             showSection('homeSection');
@@ -1173,52 +1228,10 @@
             if(currentUserRole === 'teacher') {
                 loadAuthorizedStudents();
             }
-        }
-        
-        async function handleEmailRegister(e) {
-            e.preventDefault();
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const errorEl = document.getElementById('registerError');
-            errorEl.textContent = '';
 
-            if (!name || !email || password.length < 6) {
-                errorEl.textContent = "Please fill all fields. Password must be at least 6 characters.";
-                return;
-            }
-
-            // reCAPTCHA verification (assuming grecaptcha is loaded)
-            const recaptchaResponse = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : '';
-            if (!recaptchaResponse) {
-                errorEl.textContent = "Please complete the reCAPTCHA.";
-                return;
-            }
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-                await setDoc(userProfileRef, { name: name, email: email, role: 'unassigned', createdAt: serverTimestamp(), lastLogin: serverTimestamp() });
-                showModal('Registration Successful', 'You have successfully registered. Please enter an access code to set your role.');
-            } catch (error) {
-                errorEl.textContent = error.message;
-            } finally {
-                if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
-            }
-        }
-
-        async function handleEmailLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const errorEl = document.getElementById('loginError');
-            errorEl.textContent = '';
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                errorEl.textContent = error.message;
-            }
+            document.getElementById('homeTutorialLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('tutorialSection'); });
+            document.getElementById('homeGraderLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('gradingSection'); });
+            document.getElementById('homeChatLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('chatSection'); });
         }
 
         async function handleGoogleSignIn() {
@@ -1226,7 +1239,7 @@
             try { 
                 await signInWithPopup(auth, provider); 
             } catch (error) { 
-                document.getElementById('loginError').textContent = `Sign-in failed. Error: ${error.message}`; 
+                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
                 console.error("Google Sign-In Error:", error);
             }
         }
@@ -1246,12 +1259,12 @@
             
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: serverTimestamp() }, { merge: true });
+                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                 currentUserRole = roleToSet;
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`; // Changed e.message to error.message
+                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
@@ -1272,9 +1285,9 @@
             const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection', 'submissionSection'];
             const buttons = {
                 toggleHomeButton: 'homeSection',
-                toggleSubmissionsButton: 'submissionSection',
                 workWithAIButton: ['gradingSection', 'chatSection'],
                 materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
+                toggleSubmissionsButton: 'submissionSection', // New submission button
                 manageStudentsButton: 'studentManagementSection',
                 toggleProfileButton: 'profileSection'
             };
@@ -1300,7 +1313,8 @@
                 const section = document.getElementById(id);
                 if (section) {
                     const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? (id === 'chatSection' || id === 'studentManagementSection' || id === 'submissionSection' ? 'flex' : 'block') : 'none'; // Submissions also flex
+                    // Adjusted display type for various sections
+                    section.style.display = isTarget ? (['chatSection', 'studentManagementSection', 'submissionSection'].includes(id) ? 'flex' : 'block') : 'none';
                     setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
                 }
             });
@@ -1329,18 +1343,18 @@
             if (sectionIdToShow === 'studentManagementSection' && currentUserRole === 'teacher') {
                 loadAuthorizedStudents();
             }
-            if (sectionIdToShow === 'submissionSection' && currentUserRole === 'student') {
-                renderSubmissionsPage();
+            if (sectionIdToShow === 'submissionSection') { // New: Handle submissions section
+                renderSubmissionSection();
             }
         }
 
-        function setupNav() { // Renamed from setupSectionToggle to setupNav
+        function setupSectionToggle() {
             document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
             document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
             document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
             document.getElementById('manageStudentsButton')?.addEventListener('click', () => showSection('studentManagementSection'));
             document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
-            document.getElementById('toggleSubmissionsButton')?.addEventListener('click', () => showSection('submissionSection')); // Added for submissions
+            document.getElementById('toggleSubmissionsButton')?.addEventListener('click', () => showSection('submissionSection')); // New event listener
             
             // Materials dropdown buttons
             document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
@@ -1372,11 +1386,8 @@
             });
             
             document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
-
-            document.getElementById('homeTutorialLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('tutorialSection'); });
-            document.getElementById('homeGraderLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('gradingSection'); });
-            document.getElementById('homeChatLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('chatSection'); });
         }
+        setupSectionToggle();
         
         // --- PROFILE MANAGEMENT ---
 
@@ -1445,19 +1456,40 @@
                 level3: 'Exercise',
                 modalId: 'addExerciseModal',
                 isPaid: true
+            },
+            assignments: { // New materials config for assignments
+                collectionName: 'assignments',
+                title: 'Homework Assignments',
+                level1: 'Subject',
+                level2: 'Assignment',
+                modalId: 'addAssignmentModal',
+                isPaid: false // Assignments are not for sale
             }
         };
 
         function getPath(type, ids = []) {
-            const collection = materialsConfig[type].collectionName;
-            const pathParts = [`artifacts/${appId}/public/data/${collection}`];
-            if (ids[0]) pathParts.push(ids[0], materialsConfig[type].level2.toLowerCase() + 's');
-            if (ids[1]) pathParts.push(ids[1], materialsConfig[type].level3.toLowerCase() + 's');
+            const config = materialsConfig[type];
+            const collection = config.collectionName;
+            let pathParts = [];
+
+            if (type === 'assignments') {
+                // Assignments are structured as: artifacts/{appId}/public/data/assignments/{subjectId}/assignments/{assignmentId}
+                pathParts = [`artifacts/${appId}/public/data/assignments`];
+                if (ids[0]) pathParts.push(ids[0], 'assignments'); // Subject ID
+                if (ids[1]) pathParts.push(ids[1]); // Assignment ID
+            } else {
+                // Existing structure for tutorials, pastPapers, exercises
+                pathParts = [`artifacts/${appId}/public/data/${collection}`];
+                if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
+                if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            }
             return pathParts.join('/');
         }
 
         function initializeAllMaterialSections() {
             for (const type in materialsConfig) {
+                // Skip 'assignments' as it's handled by renderSubmissionSection()
+                if (type === 'assignments') continue; 
                 setupMaterialSection(type);
             }
             // Add delegated event listener for YouTube thumbnails
@@ -1777,18 +1809,25 @@
                     videoPreviewContent.innerHTML = item.embedCode;
                 }
                 videoPreviewModal.style.display = 'flex';
-            } else if (type === 'pastPapers' || type === 'exercises') {
+            } else if (type === 'pastPapers' || type === 'exercises' || type === 'submissionFile') {
                 if (item.link) {
                     // Check if the link is a PDF
                     if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
                         showPdfPreviewModal(item.name, item.link);
+                    } else if (item.link.startsWith('data:image')) {
+                         // Directly display base64 image if it's a submission file preview
+                        showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Submission Preview">`);
+                    } else if (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { // Check for common image extensions
+                        showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Submission Preview">`);
                     } else {
-                        // For non-PDF links, open in a new tab
+                        // For other links, open in a new tab
                         window.open(item.link, '_blank');
                     }
                 } else {
                     showModal('Preview Error', 'No link available for this item.');
                 }
+            } else if (type === 'submissionText') {
+                showModal(item.name, `<div style="white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px;">${item.text}</div>`);
             }
         }
 
@@ -1836,7 +1875,7 @@
             }
         }
 
-        function handleDeleteItem(type, level, id, parentIds) {
+        async function handleDeleteItem(type, level, id, parentIds) {
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
 
@@ -1844,6 +1883,23 @@
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
+                        // For Level 3 items, check if a file needs to be deleted from storage
+                        if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
+                            const itemSnap = await getDoc(docRef);
+                            const itemData = itemSnap.data();
+                            if (itemData && itemData.link && !itemData.link.startsWith('https://drive.google.com')) {
+                                // Assume it's a Firebase Storage URL if not Google Drive
+                                const storagePath = ref(storage, itemData.link).fullPath;
+                                const fileRef = ref(storage, storagePath);
+                                try {
+                                    await deleteObject(fileRef);
+                                    console.log('File deleted from storage:', storagePath);
+                                } catch (storageError) {
+                                    console.warn('Could not delete file from storage (may not exist or external link):', storageError);
+                                }
+                            }
+                        }
+
                         await deleteDoc(docRef); // Note: This doesn't delete subcollections. A proper solution requires a cloud function for recursive deletes.
                         showModal('Success', `${levelName} deleted.`);
                         const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
@@ -1980,7 +2036,7 @@
 
             } catch (error) {
                 console.error("Error moving item:", error);
-                showModal('Move Error', `Could not move item. Error: ${error.message}`); // Changed e.message to error.message
+                showModal('Move Error', `Could not move item. Error: ${e.message}`);
             } finally {
                 draggedItem = null; // Reset dragged item
                 // Remove dragging class from original item if it still exists
@@ -2327,7 +2383,7 @@
                     });
 
                     // Redirect to Stripe
-                    const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                    const stripeUrl = `${STRIPE_PAYAPE_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
                     window.location.href = stripeUrl;
 
                 } catch (error) {
@@ -2604,13 +2660,14 @@
             buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
             let downloadURL = link; // Default to the pasted link
+            let filePath = ''; // Store the path if file is uploaded
 
             try {
                 // If a file is provided, it takes priority
                 if (file) {
                     buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
-                    const storagePath = `materials/past-papers/${Date.now()}_${file.name}`;
-                    const storageRef = ref(storage, storagePath);
+                    filePath = `materials/past-papers/${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, filePath);
                     const uploadResult = await uploadBytes(storageRef, file);
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
@@ -2620,7 +2677,7 @@
                 }
 
                 const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now() });
+                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now(), filePath: filePath }); // Save filePath
                 
                 showModal('Success', 'Past paper added.');
                 document.getElementById('addPastPaperModal').style.display = 'none';
@@ -2692,12 +2749,13 @@
             buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
             let downloadURL = link;
+            let filePath = ''; // Store the path if file is uploaded
 
             try {
                 if (file) {
                     buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...`;
-                    const storagePath = `materials/exercises/${Date.now()}_${file.name}`;
-                    const storageRef = ref(storage, storagePath);
+                    filePath = `materials/exercises/${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, filePath);
                     const uploadResult = await uploadBytes(storageRef, file);
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
@@ -2707,7 +2765,7 @@
                 }
 
                 const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
-                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now() });
+                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now(), filePath: filePath }); // Save filePath
                 
                 showModal('Success', 'Exercise added.');
                 document.getElementById('addExerciseModal').style.display = 'none';
@@ -2787,6 +2845,8 @@
         setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
         setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
         setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
+        // New: Homework submission dropzone
+        setupDropZone('homeworkDropZone', 'homeworkFile', 'homeworkFileName', 'homeworkFilePreview');
         
         async function loadPastSubmissions() { /* Placeholder for original function */ }
         document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
@@ -3061,24 +3121,32 @@
                 
                 let studentPromises = [];
 
-                usersSnapshot.forEach(userDoc => {
-                    const profileRef = doc(db, `artifacts/${appId}/users/${userDoc.id}/profile/data`);
-                    studentPromises.push(getDoc(profileRef).then(async profileSnap => {
-                        if (profileSnap.exists() && profileSnap.data().role === 'student') {
-                            const profileData = profileSnap.data();
-                            const purchasesRef = collection(db, `artifacts/${appId}/users/${userDoc.id}/purchased_exercises`);
-                            const purchasesSnapshot = await getDocs(purchasesRef);
-                            
-                            let purchases = [];
-                            purchasesSnapshot.forEach(purchaseDoc => {
-                                purchases.push(purchaseDoc.data());
-                            });
+                for (const userDoc of usersSnapshot.docs) {
+                    const userId = userDoc.id;
+                    const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
+                    
+                    studentPromises.push((async () => {
+                        try {
+                            const profileSnap = await getDoc(profileRef);
+                            if (profileSnap.exists() && profileSnap.data().role === 'student') {
+                                const profileData = profileSnap.data();
+                                
+                                const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${userId}/purchased_exercises`);
+                                const purchasedExercisesSnap = await getDocs(purchasedExercisesRef);
+                                
+                                let purchases = [];
+                                purchasedExercisesSnap.forEach(purchaseDoc => {
+                                    purchases.push(purchaseDoc.data());
+                                });
 
-                            return { id: userDoc.id, profile: profileData, purchases: purchases };
+                                return { id: userId, profile: profileData, purchases: purchases };
+                            }
+                        } catch (e) {
+                            console.warn(`Could not load profile or purchases for user ${userId}: ${e.message}`);
                         }
-                        return null; // Not a student or no profile
-                    }));
-                });
+                        return null;
+                    })());
+                }
 
                 const students = (await Promise.all(studentPromises)).filter(Boolean); // Filter out nulls
 
@@ -3108,13 +3176,18 @@
                             <div class="student-info">
                                 <p><strong>Email:</strong> ${student.profile.email || 'N/A'}</p>
                                 <p><strong>Electives:</strong> ${student.profile.electives || 'N/A'}</p>
-                                <p><strong>Last Login:</strong> ${new Date(student.profile.lastLogin.toDate()).toLocaleString()}</p>
+                                <p><strong>Last Login:</strong> ${new Date(student.profile.lastLogin).toLocaleString()}</p>
                             </div>
                             <div class="purchase-history">
                                 ${purchasesHtml}
                             </div>
+                            <button class="delete-student-btn" data-student-id="${student.id}">✖</button>
                         `;
                         container.appendChild(studentCard);
+                    });
+                     // Add event listeners for delete buttons
+                    container.querySelectorAll('.delete-student-btn').forEach(btn => {
+                        btn.addEventListener('click', () => deleteStudent(btn.dataset.studentId));
                     });
                 }
 
@@ -3126,157 +3199,724 @@
             }
         }
 
-        // --- SUBMISSION LOGIC (STUDENT) ---
-        async function renderSubmissionsPage() {
-            const submissionsSection = document.getElementById('submissionSection');
-            const assignmentsList = document.getElementById('assignmentsList');
-            assignmentsList.innerHTML = '<p class="loading-indicator">Loading assignments...</p>';
-
-            try {
-                // Fetch assignments from a public collection (teacher-defined)
-                const assignmentsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
-                const q = query(assignmentsRef, orderBy('dueDate', 'desc')); // Order by due date
-                const assignmentsSnapshot = await getDocs(q);
-
-                if (assignmentsSnapshot.empty) {
-                    assignmentsList.innerHTML = '<p>No assignments have been posted yet.</p>';
-                    return;
-                }
-
-                assignmentsList.innerHTML = ''; // Clear loading message
-
-                assignmentsSnapshot.forEach(async (assignmentDoc) => {
-                    const assignment = assignmentDoc.data();
-                    assignment.id = assignmentDoc.id;
-
-                    const assignmentCard = document.createElement('div');
-                    assignmentCard.className = 'assignment-card';
-                    let submittedFilesHtml = '';
-                    
-                    // Check for student's submission for this assignment
-                    const studentSubmissionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions/${assignment.id}/files`);
-                    const studentSubmissionsSnapshot = await getDocs(studentSubmissionRef);
-
-                    if (!studentSubmissionsSnapshot.empty) {
-                        submittedFilesHtml += '<h4>Your Submissions:</h4><div class="submitted-files-list">';
-                        studentSubmissionsSnapshot.forEach(submissionFileDoc => {
-                            const file = submissionFileDoc.data();
-                            submittedFilesHtml += `
-                                <div class="submitted-file-item">
-                                    <span>📄 ${file.name}</span>
-                                    <div>
-                                        <a href="${file.url}" target="_blank" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; margin-right: 5px;">View</a>
-                                        <button class="logout-btn delete-submission-file-btn" data-assignment-id="${assignment.id}" data-file-id="${submissionFileDoc.id}">Delete</button>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        submittedFilesHtml += '</div>';
-                    }
-
-                    assignmentCard.innerHTML = `
-                        <h3>${assignment.title}</h3>
-                        <p><strong>Due Date:</strong> ${new Date(assignment.dueDate.toDate()).toLocaleString()}</p>
-                        <p>${assignment.description}</p>
-                        ${submittedFilesHtml}
-                        <div class="drop-zone" data-assignment-id="${assignment.id}" id="submissionDropZone-${assignment.id}">
-                            <span>Drag & Drop your file here or click to upload</span>
-                            <input type="file" hidden multiple id="submissionFileInput-${assignment.id}" data-assignment-id="${assignment.id}">
-                        </div>
-                        <p id="submissionStatus-${assignment.id}" class="loading-indicator"></p>
-                    `;
-                    assignmentsList.appendChild(assignmentCard);
-
-                    // Setup dropzone for each assignment
-                    const dropZoneEl = document.getElementById(`submissionDropZone-${assignment.id}`);
-                    const fileInputEl = document.getElementById(`submissionFileInput-${assignment.id}`);
-                    const submissionStatusEl = document.getElementById(`submissionStatus-${assignment.id}`);
-
-                    if (dropZoneEl && fileInputEl) {
-                        dropZoneEl.addEventListener('click', () => fileInputEl.click());
-                        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZoneEl.addEventListener(eName, e => {e.preventDefault(); e.stopPropagation();}));
-                        ['dragenter', 'dragover'].forEach(eName => dropZoneEl.addEventListener(eName, () => dropZoneEl.classList.add('highlight')));
-                        ['dragleave', 'drop'].forEach(eName => dropZoneEl.addEventListener(eName, () => dropZoneEl.classList.remove('highlight')));
-
-                        dropZoneEl.addEventListener('drop', (e) => {
-                            fileInputEl.files = e.dataTransfer.files;
-                            handleSubmissionFileSelect(fileInputEl, submissionStatusEl);
-                        });
-
-                        fileInputEl.addEventListener('change', () => handleSubmissionFileSelect(fileInputEl, submissionStatusEl));
-                    }
-                });
-
-                // Attach delegated event listener for delete buttons
-                assignmentsList.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('delete-submission-file-btn')) {
-                        const assignmentId = e.target.dataset.assignmentId;
-                        const fileId = e.target.dataset.fileId;
-                        deleteSubmissionFile(assignmentId, fileId);
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error loading assignments:", error);
-                assignmentsList.innerHTML = `<p class="error-message">Failed to load assignments: ${error.message}</p>`;
-            }
-        }
-
-        async function handleSubmissionFileSelect(fileInput, statusEl) {
-            const files = fileInput.files;
-            const assignmentId = fileInput.dataset.assignmentId;
-
-            if (files.length === 0) return;
-
-            statusEl.textContent = 'Uploading files...';
-            const uploadPromises = [];
-
-            for (const file of files) {
-                const storagePath = `submissions/${currentUserId}/${assignmentId}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, storagePath);
-                
-                uploadPromises.push(uploadBytes(storageRef, file).then(async (snapshot) => {
-                    const downloadURL = await getDownloadURL(snapshot.ref);
-                    const submissionFileRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions/${assignmentId}/files`);
-                    await addDoc(submissionFileRef, {
-                        name: file.name,
-                        url: downloadURL,
-                        uploadedAt: serverTimestamp(),
-                        assignmentId: assignmentId
-                    });
-                    console.log(`File ${file.name} uploaded and saved.`);
-                }));
-            }
-
-            try {
-                await Promise.all(uploadPromises);
-                statusEl.textContent = 'Files uploaded successfully!';
-                showModal('Success', 'Your files have been submitted!');
-                renderSubmissionsPage(); // Re-render to show updated submissions
-            } catch (error) {
-                console.error("Error uploading submission files:", error);
-                statusEl.textContent = `Error uploading files: ${error.message}`;
-                showModal('Upload Error', `Failed to upload one or more files: ${error.message}`);
-            }
-        }
-
-        async function deleteSubmissionFile(assignmentId, fileId) {
-            showModal('Confirm Deletion', 'Are you sure you want to delete this submitted file? This action cannot be undone.', [
+        async function deleteStudent(studentId) {
+            showModal('Confirm Deletion', `Are you sure you want to delete this student's account and all their data (profile, purchases, chat history, submissions)? This action cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     try {
-                        const fileDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/submissions/${assignmentId}/files`, fileId);
-                        await deleteDoc(fileDocRef);
-                        showModal('Success', 'File deleted successfully.');
-                        renderSubmissionsPage(); // Re-render the submissions page
+                        const batch = writeBatch(db);
+
+                        // Delete profile document
+                        const profileDocRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
+                        batch.delete(profileDocRef);
+
+                        // Delete purchased items (get all and delete)
+                        const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${studentId}/purchased_exercises`);
+                        const purchasedSnapshot = await getDocs(purchasesRef);
+                        purchasedSnapshot.forEach(doc => batch.delete(doc.ref));
+
+                        // Delete chat history
+                        const chatHistoryDocRef = doc(db, CHAT_HISTORY_DOC_PATH(studentId));
+                        batch.delete(chatHistoryDocRef);
+                        
+                        // Delete submissions for the student
+                        const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
+                        const submissionsSnapshot = await getDocs(submissionsRef);
+                        for (const submissionDoc of submissionsSnapshot.docs) {
+                            const submissionData = submissionDoc.data();
+                            if (submissionData.filePath) { // Delete file from storage if it exists
+                                try {
+                                    const fileRef = ref(storage, submissionData.filePath);
+                                    await deleteObject(fileRef);
+                                    console.log('Submission file deleted from storage:', submissionData.filePath);
+                                } catch (storageError) {
+                                    console.warn('Could not delete submission file from storage (may not exist):', storageError);
+                                }
+                            }
+                            batch.delete(submissionDoc.ref);
+                        }
+
+                        await batch.commit();
+
+                        showModal('Success', 'Student account and associated data deleted.');
+                        loadAuthorizedStudents(); // Refresh the list
                     } catch (error) {
-                        console.error("Error deleting submission file:", error);
-                        showModal('Error', `Could not delete file: ${error.message}`);
+                        console.error("Error deleting student:", error);
+                        showModal('Error', `Could not delete student: ${error.message}`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
             ]);
         }
 
+        // --- HOMEWORK SUBMISSION LOGIC (NEW) ---
+        async function renderSubmissionSection() {
+            const submissionSection = document.getElementById('submissionSection');
+            submissionSection.innerHTML = ''; // Clear previous content
+
+            if (currentUserRole === 'teacher') {
+                renderTeacherSubmissionView(submissionSection);
+            } else if (currentUserRole === 'student') {
+                renderStudentSubmissionView(submissionSection);
+            } else {
+                submissionSection.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
+            }
+        }
+
+        async function renderTeacherSubmissionView(container) {
+            container.innerHTML = `
+                <div class="form-container">
+                    <h3>Create New Assignment</h3>
+                    <form id="createAssignmentForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="newAssignmentSubject">Subject</label>
+                            <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics, English">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="newAssignmentTitle">Assignment Title</label>
+                            <input type="text" id="newAssignmentTitle" required placeholder="e.g., Chapter 3 Homework, Essay Outline">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="newAssignmentDescription">Description (Optional)</label>
+                            <textarea id="newAssignmentDescription" placeholder="Provide instructions or details for the assignment..."></textarea>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="newAssignmentDueDate">Due Date (Optional)</label>
+                            <input type="date" id="newAssignmentDueDate">
+                        </div>
+                        <button type="submit" class="btn-primary">Create Assignment</button>
+                    </form>
+                </div>
+
+                <div class="assignment-list-container">
+                    <h3>Active Assignments</h3>
+                    <p id="assignmentsLoading" class="loading-indicator">Loading assignments...</p>
+                    <div id="teacherAssignmentsList">
+                        <!-- Assignments will be loaded here -->
+                        <p>No assignments created yet.</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
+            loadTeacherAssignments();
+        }
+
+        async function createAssignment(e) {
+            e.preventDefault();
+            const form = e.target;
+            const subject = document.getElementById('newAssignmentSubject').value.trim();
+            const title = document.getElementById('newAssignmentTitle').value.trim();
+            const description = document.getElementById('newAssignmentDescription').value.trim();
+            const dueDate = document.getElementById('newAssignmentDueDate').value;
+
+            if (!subject || !title) {
+                return showModal('Input Error', 'Please provide both a subject and an assignment title.');
+            }
+
+            const assignmentsRef = collection(db, getPath('assignments', [subject]));
+            try {
+                await addDoc(assignmentsRef, {
+                    subjectName: subject,
+                    title: title,
+                    description: description,
+                    dueDate: dueDate ? new Date(dueDate).getTime() : null,
+                    createdAt: Date.now(),
+                    createdBy: currentUserId
+                });
+                showModal('Success', 'Assignment created successfully!');
+                form.reset();
+                loadTeacherAssignments(); // Refresh the list
+            } catch (error) {
+                console.error("Error creating assignment:", error);
+                showModal('Error', `Could not create assignment: ${error.message}`);
+            }
+        }
+
+        async function loadTeacherAssignments() {
+            const listContainer = document.getElementById('teacherAssignmentsList');
+            const loadingIndicator = document.getElementById('assignmentsLoading');
+            loadingIndicator.style.display = 'block';
+            listContainer.innerHTML = '';
+
+            try {
+                // Get all subjects that have assignments
+                const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
+                const subjectsSnapshot = await getDocs(subjectsRef);
+
+                if (subjectsSnapshot.empty) {
+                    listContainer.innerHTML = '<p>No assignments created yet.</p>';
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+
+                let allAssignments = [];
+                for (const subjectDoc of subjectsSnapshot.docs) {
+                    const subjectId = subjectDoc.id;
+                    const assignmentsRef = collection(db, getPath('assignments', [subjectId]));
+                    const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
+                    const assignmentsSnapshot = await getDocs(q);
+
+                    assignmentsSnapshot.forEach(assignmentDoc => {
+                        allAssignments.push({ id: assignmentDoc.id, subjectId: subjectId, ...assignmentDoc.data() });
+                    });
+                }
+                
+                if (allAssignments.length === 0) {
+                    listContainer.innerHTML = '<p>No assignments created yet.</p>';
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+
+                allAssignments.sort((a, b) => b.createdAt - a.createdAt); // Newest first
+
+                allAssignments.forEach(assignment => {
+                    const assignmentCard = document.createElement('div');
+                    assignmentCard.className = 'assignment-card';
+                    const dueDateText = assignment.dueDate ? `Due: ${new Date(assignment.dueDate).toLocaleDateString()}` : 'No due date';
+
+                    assignmentCard.innerHTML = `
+                        <h3>${assignment.subjectName}: ${assignment.title}</h3>
+                        <p>${assignment.description || 'No description provided.'}</p>
+                        <p>${dueDateText}</p>
+                        <div class="assignment-actions">
+                            <button class="btn-primary view-submissions-btn" 
+                                data-assignment-id="${assignment.id}" 
+                                data-subject-id="${assignment.subjectId}"
+                                data-assignment-title="${assignment.title}"
+                                >View Submissions</button>
+                            <button class="logout-btn delete-assignment-btn" 
+                                data-assignment-id="${assignment.id}" 
+                                data-subject-id="${assignment.subjectId}"
+                                >Delete Assignment</button>
+                        </div>
+                        <div id="submissionsListContainer-${assignment.id}" style="display:none; margin-top:1.5rem;">
+                            <h4>Student Submissions:</h4>
+                            <p class="loading-indicator">Loading submissions...</p>
+                            <div id="submissionsForAssignment-${assignment.id}"></div>
+                        </div>
+                    `;
+                    listContainer.appendChild(assignmentCard);
+                });
+
+                listContainer.querySelectorAll('.view-submissions-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const assignmentId = e.target.dataset.assignmentId;
+                        const subjectId = e.target.dataset.subjectId;
+                        const assignmentTitle = e.target.dataset.assignmentTitle;
+                        toggleSubmissionList(assignmentId, subjectId, assignmentTitle);
+                    });
+                });
+
+                listContainer.querySelectorAll('.delete-assignment-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const assignmentId = e.target.dataset.assignmentId;
+                        const subjectId = e.target.dataset.subjectId;
+                        deleteAssignment(assignmentId, subjectId);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading teacher assignments:", error);
+                listContainer.innerHTML = `<p class="error-message">Failed to load assignments: ${error.message}</p>`;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
+        async function toggleSubmissionList(assignmentId, subjectId, assignmentTitle) {
+            const container = document.getElementById(`submissionsListContainer-${assignmentId}`);
+            const submissionsDiv = document.getElementById(`submissionsForAssignment-${assignmentId}`);
+            const loadingIndicator = container.querySelector('.loading-indicator');
+
+            const isVisible = container.style.display === 'block';
+            if (isVisible) {
+                container.style.display = 'none';
+            } else {
+                container.style.display = 'block';
+                loadingIndicator.style.display = 'block';
+                submissionsDiv.innerHTML = ''; // Clear previous
+                await loadStudentSubmissionsForTeacher(assignmentId, subjectId, submissionsDiv);
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, submissionsDiv) {
+            submissionsDiv.innerHTML = '';
+            try {
+                const usersRef = collection(db, `artifacts/${appId}/users`);
+                const usersSnapshot = await getDocs(usersRef);
+
+                let allSubmissions = [];
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const studentId = userDoc.id;
+                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
+                    const studentProfileSnap = await getDoc(studentProfileRef);
+                    const studentName = studentProfileSnap.exists() ? (studentProfileSnap.data().name || studentProfileSnap.data().email) : `Student ${studentId.substring(0, 8)}...`;
+
+                    const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
+                    const q = query(submissionsRef, where('assignmentId', '==', assignmentId), orderBy('submittedAt', 'desc'));
+                    const submissionsSnapshot = await getDocs(q);
+
+                    submissionsSnapshot.forEach(submissionDoc => {
+                        allSubmissions.push({ 
+                            id: submissionDoc.id, 
+                            studentId: studentId,
+                            studentName: studentName,
+                            ...submissionDoc.data() 
+                        });
+                    });
+                }
+
+                if (allSubmissions.length === 0) {
+                    submissionsDiv.innerHTML = '<p>No submissions yet for this assignment.</p>';
+                    return;
+                }
+
+                allSubmissions.forEach(submission => {
+                    const submissionItem = document.createElement('div');
+                    submissionItem.className = 'assignment-submission-item';
+                    const submittedAt = new Date(submission.submittedAt).toLocaleString();
+
+                    let previewContent;
+                    if (submission.fileLink) {
+                        previewContent = `<button class="btn-primary preview-submission-file-btn" data-file-link="${submission.fileLink}" data-file-name="${submission.fileName || 'Submission'}">Preview/Download File</button>`;
+                    } else if (submission.textAnswer) {
+                        previewContent = `<button class="btn-primary preview-submission-text-btn" data-text-answer="${submission.textAnswer}" data-assignment-title="${submission.assignmentTitle}">View Text</button>`;
+                    } else {
+                        previewContent = 'No content provided.';
+                    }
+
+                    submissionItem.innerHTML = `
+                        <div>
+                            <strong>${submission.studentName}</strong> <span class="submission-detail">(${submittedAt})</span>
+                            <p class="submission-detail">${submission.fileName ? `File: ${submission.fileName}` : 'Text Submission'}</p>
+                        </div>
+                        <div class="submission-actions">
+                            ${previewContent}
+                            <button class="logout-btn delete-submission-btn" 
+                                data-student-id="${submission.studentId}" 
+                                data-submission-id="${submission.id}"
+                                data-file-path="${submission.filePath || ''}"
+                                >Delete</button>
+                        </div>
+                    `;
+                    submissionsDiv.appendChild(submissionItem);
+                });
+
+                submissionsDiv.querySelectorAll('.preview-submission-file-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const fileLink = e.target.dataset.fileLink;
+                        const fileName = e.target.dataset.fileName;
+                        handlePreview('submissionFile', { name: fileName, link: fileLink });
+                    });
+                });
+                submissionsDiv.querySelectorAll('.preview-submission-text-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const textAnswer = e.target.dataset.textAnswer;
+                        const assignmentTitle = e.target.dataset.assignmentTitle;
+                        handlePreview('submissionText', { name: assignmentTitle, text: textAnswer });
+                    });
+                });
+                 submissionsDiv.querySelectorAll('.delete-submission-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const studentId = e.target.dataset.studentId;
+                        const submissionId = e.target.dataset.submissionId;
+                        const filePath = e.target.dataset.filePath;
+                        deleteSubmission(studentId, submissionId, assignmentId, subjectId, filePath);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading student submissions for teacher:", error);
+                submissionsDiv.innerHTML = `<p class="error-message">Failed to load student submissions: ${error.message}</p>`;
+            }
+        }
+
+        async function deleteAssignment(assignmentId, subjectId) {
+            showModal('Confirm Deletion', `Are you sure you want to delete this assignment? This will also delete all student submissions for it. This action cannot be undone.`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    try {
+                        const batch = writeBatch(db);
+                        const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
+                        batch.delete(assignmentDocRef);
+
+                        // Delete all associated student submissions
+                        const usersRef = collection(db, `artifacts/${appId}/users`);
+                        const usersSnapshot = await getDocs(usersRef);
+                        for (const userDoc of usersSnapshot.docs) {
+                            const studentId = userDoc.id;
+                            const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
+                            const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
+                            const submissionsSnapshot = await getDocs(q);
+                            for (const submissionDoc of submissionsSnapshot.docs) {
+                                const submissionData = submissionDoc.data();
+                                if (submissionData.filePath) { // Delete file from storage if it exists
+                                    try {
+                                        const fileRef = ref(storage, submissionData.filePath);
+                                        await deleteObject(fileRef);
+                                        console.log('Submission file deleted from storage:', submissionData.filePath);
+                                    } catch (storageError) {
+                                        console.warn('Could not delete submission file from storage (may not exist):', storageError);
+                                    }
+                                }
+                                batch.delete(submissionDoc.ref);
+                            }
+                        }
+
+                        await batch.commit();
+                        showModal('Success', 'Assignment and all submissions deleted.');
+                        loadTeacherAssignments(); // Refresh list
+                    } catch (error) {
+                        console.error("Error deleting assignment:", error);
+                        showModal('Error', `Could not delete assignment: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
+        async function deleteSubmission(studentId, submissionId, assignmentId, subjectId, filePath) {
+            showModal('Confirm Deletion', `Are you sure you want to delete this student's submission? This action cannot be undone.`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    try {
+                        const submissionDocRef = doc(db, `artifacts/${appId}/users/${studentId}/submissions`, submissionId);
+                        
+                        // Delete file from storage if it exists
+                        if (filePath) {
+                            try {
+                                const fileRef = ref(storage, filePath);
+                                await deleteObject(fileRef);
+                                console.log('Submission file deleted from storage:', filePath);
+                            } catch (storageError) {
+                                console.warn('Could not delete submission file from storage (may not exist):', storageError);
+                            }
+                        }
+                        
+                        await deleteDoc(submissionDocRef);
+                        showModal('Success', 'Submission deleted.');
+                        // Re-load submissions for this assignment to update the view
+                        const submissionsDiv = document.getElementById(`submissionsForAssignment-${assignmentId}`);
+                        if (submissionsDiv) {
+                            await loadStudentSubmissionsForTeacher(assignmentId, subjectId, submissionsDiv);
+                        }
+                    } catch (error) {
+                        console.error("Error deleting submission:", error);
+                        showModal('Error', `Could not delete submission: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
+        async function renderStudentSubmissionView(container) {
+            container.innerHTML = `
+                <div class="form-container">
+                    <h3>Submit Your Homework</h3>
+                    <form id="submitHomeworkForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="studentSubmissionSubjectFilter">Choose Subject</label>
+                            <select id="studentSubmissionSubjectFilter" required><option value="">-- Select Subject --</option></select>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="studentSubmissionAssignmentFilter">Choose Assignment</label>
+                            <select id="studentSubmissionAssignmentFilter" required disabled><option value="">-- Select Assignment --</option></select>
+                        </div>
+                        <div id="assignmentDetails" style="margin-bottom: 1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: none;">
+                            <p><strong>Description:</strong> <span id="assignmentDescriptionText"></span></p>
+                            <p><strong>Due Date:</strong> <span id="assignmentDueDateText"></span></p>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label>Upload Homework File (PDF, Image)</label>
+                            <div id="homeworkDropZone" class="drop-zone">
+                                <span>Drag & Drop File Here or click to select</span>
+                                <input type="file" id="homeworkFile" accept="image/*,application/pdf" hidden>
+                            </div>
+                            <span id="homeworkFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                            <img id="homeworkFilePreview" class="file-preview mx-auto" style="display: none;" alt="Homework Preview">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label for="homeworkTextAnswer">Or Type Your Answer:</label>
+                            <textarea id="homeworkTextAnswer" placeholder="Type your homework answer here..."></textarea>
+                        </div>
+                        <p id="homeworkSubmissionError" class="error-message"></p>
+                        <button type="submit" class="btn-primary">Submit Homework</button>
+                    </form>
+                </div>
+
+                <div class="my-submissions-container">
+                    <h3>My Past Submissions</h3>
+                    <p id="mySubmissionsLoading" class="loading-indicator">Loading your submissions...</p>
+                    <div id="mySubmissionsList">
+                        <!-- Student's past submissions will be loaded here -->
+                        <p>No submissions yet.</p>
+                    </div>
+                </div>
+            `;
+
+            const subjectFilter = document.getElementById('studentSubmissionSubjectFilter');
+            const assignmentFilter = document.getElementById('studentSubmissionAssignmentFilter');
+            const submitForm = document.getElementById('submitHomeworkForm');
+
+            populateStudentAssignmentFilters(subjectFilter, assignmentFilter);
+            
+            subjectFilter.addEventListener('change', () => {
+                const selectedSubject = subjectFilter.value;
+                assignmentFilter.innerHTML = `<option value="">-- Select Assignment --</option>`;
+                assignmentFilter.disabled = true;
+                document.getElementById('assignmentDetails').style.display = 'none';
+
+                if (selectedSubject) {
+                    populateStudentAssignmentFilters(subjectFilter, assignmentFilter, selectedSubject);
+                    assignmentFilter.disabled = false;
+                }
+            });
+
+            assignmentFilter.addEventListener('change', async () => {
+                const selectedAssignmentId = assignmentFilter.value;
+                const assignmentDetailsDiv = document.getElementById('assignmentDetails');
+                if (selectedAssignmentId) {
+                    const subjectId = subjectFilter.value;
+                    const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), selectedAssignmentId);
+                    const docSnap = await getDoc(assignmentDocRef);
+                    if (docSnap.exists()) {
+                        const assignmentData = docSnap.data();
+                        document.getElementById('assignmentDescriptionText').textContent = assignmentData.description || 'No description provided.';
+                        document.getElementById('assignmentDueDateText').textContent = assignmentData.dueDate ? new Date(assignmentData.dueDate).toLocaleDateString() : 'No due date.';
+                        assignmentDetailsDiv.style.display = 'block';
+                    }
+                } else {
+                    assignmentDetailsDiv.style.display = 'none';
+                }
+            });
+
+            submitForm.addEventListener('submit', submitHomework);
+            loadMySubmissions();
+        }
+
+        async function populateStudentAssignmentFilters(subjectSelect, assignmentSelect, selectedSubjectId = null) {
+            subjectSelect.innerHTML = `<option value="">-- Loading Subjects --</option>`;
+            if (!selectedSubjectId) {
+                assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
+                assignmentSelect.disabled = true;
+            }
+
+            try {
+                const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
+                const subjectsSnapshot = await getDocs(subjectsRef);
+                
+                subjectSelect.innerHTML = `<option value="">-- Select Subject --</option>`;
+                if(subjectsSnapshot.empty) {
+                    subjectSelect.innerHTML += `<option value="" disabled>-- No Subjects with Assignments --</option>`;
+                } else {
+                    subjectsSnapshot.forEach(doc => {
+                        subjectSelect.add(new Option(doc.id, doc.id)); // Subject ID is the document ID
+                    });
+                }
+
+                if (selectedSubjectId) {
+                    const assignmentsRef = collection(db, getPath('assignments', [selectedSubjectId]));
+                    const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
+                    const assignmentsSnapshot = await getDocs(q);
+                    
+                    assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
+                    if (assignmentsSnapshot.empty) {
+                        assignmentSelect.innerHTML += `<option value="" disabled>-- No Assignments for this Subject --</option>`;
+                    } else {
+                        assignmentsSnapshot.forEach(doc => {
+                            assignmentSelect.add(new Option(doc.data().title, doc.id));
+                        });
+                        assignmentSelect.disabled = false;
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error populating student assignment filters:", error);
+                subjectSelect.innerHTML = `<option value="">-- Error loading subjects --</option>`;
+                assignmentSelect.innerHTML = `<option value="">-- Error loading assignments --</option>`;
+            }
+        }
+
+        async function submitHomework(e) {
+            e.preventDefault();
+            const form = e.target;
+            const subjectId = document.getElementById('studentSubmissionSubjectFilter').value;
+            const assignmentId = document.getElementById('studentSubmissionAssignmentFilter').value;
+            const homeworkFile = document.getElementById('homeworkFile').files[0];
+            const homeworkTextAnswer = document.getElementById('homeworkTextAnswer').value.trim();
+            const submissionError = document.getElementById('homeworkSubmissionError');
+
+            submissionError.textContent = ''; // Clear previous errors
+
+            if (!subjectId || !assignmentId) {
+                submissionError.textContent = 'Please select a subject and an assignment.';
+                return;
+            }
+            if (!homeworkFile && !homeworkTextAnswer) {
+                submissionError.textContent = 'Please either upload a file or type your answer.';
+                return;
+            }
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+
+            let fileLink = '';
+            let filePath = '';
+            let assignmentTitle = '';
+
+            try {
+                const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
+                const assignmentSnap = await getDoc(assignmentDocRef);
+                if (assignmentSnap.exists()) {
+                    assignmentTitle = assignmentSnap.data().title;
+                } else {
+                    throw new Error('Selected assignment not found.');
+                }
+
+                if (homeworkFile) {
+                    filePath = `submissions/${currentUserId}/${subjectId}/${assignmentId}/${Date.now()}_${homeworkFile.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadResult = await uploadBytes(storageRef, homeworkFile);
+                    fileLink = await getDownloadURL(uploadResult.ref);
+                }
+
+                const submissionsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
+                await addDoc(submissionsCollectionRef, {
+                    assignmentId: assignmentId,
+                    subjectId: subjectId,
+                    assignmentTitle: assignmentTitle,
+                    fileLink: fileLink,
+                    fileName: homeworkFile ? homeworkFile.name : null,
+                    filePath: filePath, // Store for easy deletion
+                    textAnswer: homeworkTextAnswer,
+                    submittedAt: Date.now(),
+                    submittedBy: currentUserId
+                });
+
+                showModal('Success', 'Your homework has been submitted successfully!');
+                form.reset();
+                document.getElementById('homeworkFileName').textContent = 'No file chosen';
+                document.getElementById('homeworkFilePreview').style.display = 'none';
+                document.getElementById('homeworkFilePreview').src = '';
+                loadMySubmissions(); // Refresh student's submissions list
+            } catch (error) {
+                console.error("Error submitting homework:", error);
+                submissionError.textContent = `Submission failed: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        }
+
+        async function loadMySubmissions() {
+            const mySubmissionsList = document.getElementById('mySubmissionsList');
+            const loadingIndicator = document.getElementById('mySubmissionsLoading');
+            loadingIndicator.style.display = 'block';
+            mySubmissionsList.innerHTML = '';
+
+            try {
+                const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
+                const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    mySubmissionsList.innerHTML = '<p>You have not submitted any homework yet.</p>';
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const submission = doc.data();
+                    const submissionCard = document.createElement('div');
+                    submissionCard.className = 'student-submission-card';
+                    const submittedAt = new Date(submission.submittedAt).toLocaleString();
+
+                    let contentPreview = '';
+                    let previewButton = '';
+
+                    if (submission.fileLink) {
+                        contentPreview = `<p>File: ${submission.fileName || 'Uploaded File'}</p>`;
+                        previewButton = `<button class="btn-primary preview-my-submission-file-btn" data-file-link="${submission.fileLink}" data-file-name="${submission.fileName || 'Submission'}">Preview/Download</button>`;
+                    } else if (submission.textAnswer) {
+                        contentPreview = `<p>Text: ${submission.textAnswer.substring(0, 100)}${submission.textAnswer.length > 100 ? '...' : ''}</p>`;
+                        previewButton = `<button class="btn-primary preview-my-submission-text-btn" data-text-answer="${submission.textAnswer}" data-assignment-title="${submission.assignmentTitle}">View Text</button>`;
+                    }
+
+                    submissionCard.innerHTML = `
+                        <h4>${submission.assignmentTitle}</h4>
+                        <p>Subject: ${submission.subjectId}</p>
+                        <p>Submitted On: ${submittedAt}</p>
+                        ${contentPreview}
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                            ${previewButton}
+                            <button class="logout-btn delete-my-submission-btn" data-submission-id="${doc.id}" data-file-path="${submission.filePath || ''}">Delete</button>
+                        </div>
+                    `;
+                    mySubmissionsList.appendChild(submissionCard);
+                });
+
+                mySubmissionsList.querySelectorAll('.preview-my-submission-file-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const fileLink = e.target.dataset.fileLink;
+                        const fileName = e.target.dataset.fileName;
+                        handlePreview('submissionFile', { name: fileName, link: fileLink });
+                    });
+                });
+                mySubmissionsList.querySelectorAll('.preview-my-submission-text-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const textAnswer = e.target.dataset.textAnswer;
+                        const assignmentTitle = e.target.dataset.assignmentTitle;
+                        handlePreview('submissionText', { name: assignmentTitle, text: textAnswer });
+                    });
+                });
+                mySubmissionsList.querySelectorAll('.delete-my-submission-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const submissionId = e.target.dataset.submissionId;
+                        const filePath = e.target.dataset.filePath;
+                        deleteMySubmission(submissionId, filePath);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading my submissions:", error);
+                mySubmissionsList.innerHTML = `<p class="error-message">Failed to load your submissions: ${error.message}</p>`;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        async function deleteMySubmission(submissionId, filePath) {
+            showModal('Confirm Deletion', `Are you sure you want to delete this submission? This action cannot be undone.`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    try {
+                        const submissionDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/submissions`, submissionId);
+                        
+                        // Delete file from storage if it exists
+                        if (filePath) {
+                            try {
+                                const fileRef = ref(storage, filePath);
+                                await deleteObject(fileRef);
+                                console.log('Submission file deleted from storage:', filePath);
+                            } catch (storageError) {
+                                console.warn('Could not delete submission file from storage (may not exist):', storageError);
+                            }
+                        }
+                        
+                        await deleteDoc(submissionDocRef);
+                        showModal('Success', 'Submission deleted.');
+                        loadMySubmissions(); // Refresh student's submissions list
+                    } catch (error) {
+                        console.error("Error deleting my submission:", error);
+                        showModal('Error', `Could not delete submission: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
 
         function showModal(title, message, buttons = []) {
             const messageModal = document.getElementById('messageModal');
@@ -3478,7 +4118,7 @@
                     let icon = '';
                     let size = ''; // Placeholder for file size
                     let kind = ''; // Placeholder for file type
-                    let dateAdded = new Date(item.timestamp).toLocaleDateString();
+                    let dateAdded = item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'N/A';
 
                     if (level === 2) { // Folder for Level 2 (Topic/Year)
                         el.classList.add('folder');
@@ -3845,46 +4485,6 @@
         function updatePdfNavButtons() {
             prevPdfPageBtn.disabled = pageNum <= 1;
             nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
-        }
-
-        function injectAllContent() {
-            // Inject HTML for sections that are static to avoid cluttering the main body
-            document.getElementById('homeSection').innerHTML = `<h2>Welcome, ${currentUserName}!</h2><p>Select an option from the header to get started.</p>`;
-            document.getElementById('gradingSection').innerHTML = `
-                <h2 class="section-title">Exam Grader</h2>
-                <!-- Grading form HTML here -->
-            `;
-            document.getElementById('chatSection').innerHTML = `
-                <h2 class="section-title">Chat with AI</h2>
-                <!-- Chat interface HTML here -->
-            `;
-            document.getElementById('profileSection').innerHTML = `
-                <h2 class="section-title">Edit Your Profile</h2>
-                <form id="profileForm" class="form-container">
-                    <!-- Profile form fields here -->
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileName">Display Name</label>
-                        <input type="text" id="profileName" name="name" required>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileAge">Age</label>
-                        <input type="number" id="profileAge" name="age">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileGrade">Year/Grade</label>
-                        <input type="text" id="profileGrade" name="grade">
-                    </div>
-                     <div style="margin-bottom: 1rem;">
-                        <label for="profileSchool">School</label>
-                        <input type="text" id="profileSchool" name="school">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileElectives">Elective Subjects</label>
-                        <textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science, Art"></textarea>
-                    </div>
-                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
-                </form>
-            `;
         }
 
     </script>
