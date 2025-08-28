@@ -6,6 +6,8 @@
     <title>AI Marker</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Google Platform Library for reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <!-- Custom styles -->
     <style>
         /* --- MODERN BLACK & WHITE THEME --- */
@@ -55,360 +57,91 @@
             --finder-active-text: #ffffff;
         }
 
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--text-primary);
             background-color: var(--bg-primary);
             overflow-x: hidden;
-            scroll-behavior: smooth;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
         }
 
-        button,
-        input,
-        textarea,
-        select {
+        button, input, textarea, select {
             transition: all .2s ease-in-out;
             font-family: inherit;
         }
 
-        button:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
+        button:disabled { opacity: .5; cursor: not-allowed; }
 
         /* Keyframe animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* --- LOGIN PAGE --- */
-        #authWrapper {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            z-index: 1001;
-        }
-
-        .login-left-panel,
-        .login-right-panel {
-            width: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        .login-left-panel {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .login-left-panel h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 1rem;
-        }
-
-        .login-left-panel p {
-            font-size: 1.25rem;
-            font-weight: 400;
-            line-height: 1.5;
-            margin-bottom: .5rem;
-            color: var(--text-secondary);
-        }
-
-        .login-right-panel {
-            background: var(--bg-secondary);
-            flex-direction: column;
-        }
-        
-        #authContainer {
-            width: 100%;
-            max-width: 380px;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            background-color: var(--bg-primary);
-            padding: 2.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        #authContainer h2 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: .75rem;
-            cursor: pointer;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
-        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
-        .google-btn img { height: 20px; }
-        
-        #accessCodeInput {
-             background-color: var(--bg-secondary);
-             border: 1px solid var(--border-color);
-             color: var(--text-primary);
-             padding: 12px;
-             border-radius: 8px;
-             width: 100%;
-             margin-bottom: 1rem;
-             text-align: center;
-             font-size: 1rem;
-        }
-        #accessCodeInput:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px var(--focus-ring-color);
-        }
-
-        .btn-primary {
-             background-color: var(--accent-primary);
-             color: var(--bg-primary);
-             padding: .75rem 1.5rem;
-             border-radius: 8px;
-             border: none;
-             cursor: pointer;
-             font-weight: 600;
-             font-size: 1rem;
-        }
-        
-        body.light-theme .btn-primary {
-            color: var(--bg-primary);
-        }
-
-        .btn-primary:hover {
-             opacity: 0.85;
-             transform: translateY(-1px);
-        }
-        
-        #appSection {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-            background-color: var(--bg-primary);
-            animation: fadeIn .6s ease-out both;
-        }
+        /* --- AUTHENTICATION PAGE --- */
+        #authWrapper { display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001; }
+        .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; }
+        .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 1rem; }
+        .login-left-panel p { font-size: 1.25rem; font-weight: 400; line-height: 1.5; color: var(--text-secondary); }
+        .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
+        #authContainer { width: 100%; max-width: 400px; background-color: var(--bg-primary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        #authContainer h2 { font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
+        .auth-form { display: none; } .auth-form.active { display: block; animation: fadeIn 0.3s; }
+        .form-switch { text-align: center; margin-top: 1.5rem; color: var(--text-secondary); }
+        .form-switch button { background: none; border: none; color: var(--accent-primary); cursor: pointer; text-decoration: underline; font-size: 1rem; }
+        .g-recaptcha { margin: 1rem auto; width: 304px; }
         
         /* --- HEADER --- */
-        header {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            height: 64px;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
-        
+        header { background: var(--bg-primary); display: flex; align-items: center; padding: 0 24px; height: 64px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 1rem; }
         .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
         .logo-container p { font-weight: 400; color: var(--text-secondary); }
-        
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-
-        /* Modernized Header Buttons */
-        .header-actions .tab {
-            padding: 8px 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: .2s;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            font-weight: 500;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-        
-        .header-actions .tab:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-        
-        .header-actions .tab.active {
-            background: var(--bg-secondary);
-            color: var(--accent-primary);
-            font-weight: 600;
-        }
-
+        .header-actions .tab { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; transition: .2s; border: none; border-radius: 8px; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; }
+        .header-actions .tab:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .header-actions .tab.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
         #userDisplayName { font-weight: 500; cursor: pointer; }
         .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
         .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
-        
-        #switchRoleButton {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            font-weight: 600;
-        }
-        #switchRoleButton:hover {
-            background-color: var(--bg-tertiary);
-            border-color: var(--text-secondary);
-        }
+        #switchRoleButton { background-color: var(--bg-secondary); color: var(--text-primary); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; }
+        #switchRoleButton:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
 
         /* --- DROPDOWN MENU --- */
-        .dropdown-menu {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-menu-content {
-            display: none;
-            position: absolute;
-            top: 110%; 
-            left: 0;
-            background-color: var(--bg-secondary);
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-            z-index: 10;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 4px;
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        .dropdown-menu-content button {
-            color: var(--text-secondary);
-            padding: 8px 12px;
-            text-decoration: none;
-            display: block;
-            background: none;
-            border: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-        
-        .dropdown-menu-content button:hover {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .dropdown-menu:hover .dropdown-menu-content {
-            display: block;
-        }
+        .dropdown-menu { position: relative; display: inline-block; }
+        .dropdown-menu-content { display: none; position: absolute; top: 110%; left: 0; background-color: var(--bg-secondary); min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 10; border-radius: 8px; border: 1px solid var(--border-color); padding: 4px; animation: fadeIn 0.2s ease-out; }
+        .dropdown-menu-content button { color: var(--text-secondary); padding: 8px 12px; display: block; background: none; border: none; width: 100%; text-align: left; cursor: pointer; border-radius: 6px; font-size: 0.875rem; }
+        .dropdown-menu-content button:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .dropdown-menu:hover .dropdown-menu-content { display: block; }
 
         /* --- MAIN CONTENT --- */
-        main {
-            flex: 1;
-            display: flex;
-            overflow-y: auto;
-            padding: 32px;
-            gap: 32px;
-        }
-        
-        #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-            width: 100%;
-        }
+        main { flex: 1; display: flex; overflow-y: auto; padding: 32px; gap: 32px; }
+        .section { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; width: 100%; }
         #profileSection { max-width: 800px; margin: 0 auto; }
 
         /* --- FORMS --- */
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea {
-            width: 100%; 
-            background-color: var(--bg-secondary); 
-            border: 1px solid var(--border-color); 
-            color: var(--text-primary);
-            padding: 12px; 
-            border-radius: 8px; 
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
+        input, select, textarea { width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 1rem; }
         textarea { resize: vertical; min-height: 120px; }
-        input:focus, textarea:focus, select:focus { 
-            outline: none; 
-            border-color: var(--accent-primary); 
-            box-shadow: 0 0 0 3px var(--focus-ring-color); 
-        }
-        
-        .drop-zone { 
-            border: 2px dashed var(--border-color); 
-            border-radius: 8px; 
-            min-height: 140px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            color: var(--text-secondary); 
-            font-size: 1rem; 
-            margin-bottom: 1.5rem; 
-            cursor: pointer; 
-            word-wrap: break-word; 
-            padding: 1rem; 
-            text-align: center; 
-        }
-        .drop-zone.highlight { 
-            border-color: var(--accent-primary); 
-            background: rgba(245, 245, 245, .05); 
-        }
-        
-        body.light-theme .drop-zone.highlight {
-            background: rgba(10, 10, 10, .05);
-        }
-
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
+        .drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; word-wrap: break-word; padding: 1rem; text-align: center; }
+        .drop-zone.highlight { border-color: var(--accent-primary); background: rgba(245, 245, 245, .05); }
+        body.light-theme .drop-zone.highlight { background: rgba(10, 10, 10, .05); }
         .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
         .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
-
-        #resultContainer { margin-top: 1.5rem; padding: 1.5rem; border-radius: 8px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap; }
-        #pastSubmissions { margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        
+        /* --- SUBMISSIONS SECTION STYLES (MERGED) --- */
+        #submissionSection { display: flex; flex-direction: column; gap: 2rem; }
+        .assignment-card { background-color: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .assignment-card h3 { margin-bottom: 0.5rem; }
+        .assignment-card p { color: var(--text-secondary); margin-bottom: 1rem; }
+        .submitted-files-list { margin-top: 1rem; }
+        .submitted-file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 6px; }
+        .submitted-file-item:hover { background-color: var(--bg-tertiary); }
 
         /* --- CHAT --- */
         #chatSection { display: none; flex-direction: column; gap: 1rem; max-width: 900px; margin: 0 auto; }
@@ -429,6 +162,9 @@
         .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
         .form-container { max-width: 600px; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .btn-primary { background-color: var(--accent-primary); color: var(--bg-primary); padding: .75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 1rem; }
+        body.light-theme .btn-primary { color: var(--bg-primary); }
+        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
 
         /* --- STUDENT MANAGEMENT --- */
         #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -440,7 +176,6 @@
         .purchase-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
         .purchase-item:last-child { border-bottom: none; }
 
-
         /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
         .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
@@ -450,45 +185,19 @@
         .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
         
         /* --- TEACHER CONTENT MANAGEMENT --- */
-        .content-item { 
-            padding: 1rem; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            margin-bottom: 1rem; 
-            background: var(--bg-primary); 
-            transition: background-color 0.2s ease-in-out;
-        }
-        .content-item.drag-over {
-            background-color: rgba(245, 245, 245, 0.1);
-            border-color: var(--accent-primary);
-        }
-        body.light-theme .content-item.drag-over {
-            background-color: rgba(10, 10, 10, 0.1);
-        }
-
+        .content-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background: var(--bg-primary); transition: background-color 0.2s ease-in-out; }
+        .content-item.drag-over { background-color: rgba(245, 245, 245, 0.1); border-color: var(--accent-primary); }
+        body.light-theme .content-item.drag-over { background-color: rgba(10, 10, 10, 0.1); }
         .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
         .content-header h3, .content-header h4 { margin: 0; }
         .item-actions button { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; }
-        
-        .nested-container { 
-            padding-left: 1.5rem; 
-            margin-top: 0.5rem;
-            border-left: 2px solid var(--border-color); 
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            max-height: 0;
-        }
+        .nested-container { padding-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border-color); overflow: hidden; transition: max-height 0.3s ease-out; max-height: 0; }
         .nested-container.expanded { max-height: 1000px; }
-
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; cursor: grab; }
         .sub-item:hover { background-color: var(--bg-tertiary); }
         .sub-item a { color: var(--text-primary); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
-
-        .collapse-arrow {
-            margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0;
-            border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary);
-        }
+        .collapse-arrow { margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary); }
         .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
         .content-header[aria-expanded="false"] .collapse-arrow { transform: rotate(0deg); }
 
@@ -497,14 +206,12 @@
         .video-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
         .play-button-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 15px rgba(0, 0, 0, 0.5); pointer-events: none; transition: all 0.2s ease; }
         .material-card-thumbnail:hover .play-button-overlay { color: #fff; transform: translate(-50%, -50%) scale(1.1); }
-
         .hero { display: flex; align-items: center; justify-content: space-between; padding: 2rem 1.5rem; }
         .hero-text { max-width: 50%; opacity: 0; animation: slideInUp 1s ease-out forwards; }
         .hero-text h2 { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
         .hero-text span { display: block; font-size: 1.5rem; font-weight: normal; margin-top: 0.5rem; color: var(--text-secondary); }
         .hero-image { max-width: 40%; opacity: 0; animation: slideInUp 1s 0.2s ease-out forwards; }
         .hero-image img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-
         .buttons { margin-top: 1.5rem; display: flex; gap: 1rem; }
         .buttons a { padding: 0.75rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; transition: background 0.2s, color 0.2s; color: var(--text-primary); text-decoration: none; }
         .buttons a:hover { background: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
@@ -535,7 +242,6 @@
         .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-
         #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
         #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
@@ -588,7 +294,6 @@
 </head>
 <body>
 
-    <!-- The body content remains the same as it's functionality-driven -->
     <div id="authWrapper" style="display: none;">
         <div class="login-left-panel">
             <h1>AI Marker</h1>
@@ -596,7 +301,7 @@
         </div>
         <div class="login-right-panel">
             <div id="authContainer">
-                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
+                 <!-- Auth forms will be injected by JS -->
             </div>
         </div>
     </div>
@@ -609,6 +314,7 @@
             </div>
             <div class="header-actions">
                 <button id="toggleHomeButton" class="tab active">Home</button>
+                <button id="toggleSubmissionsButton" class="tab">Submissions</button>
                 
                 <div class="dropdown-menu">
                     <button class="tab" id="workWithAIButton">Work with AI</button>
@@ -640,7 +346,7 @@
         
         <main>
             <!-- Home Section -->
-            <div id="homeSection" style="display: block; opacity: 1;">
+            <div id="homeSection" class="section">
                 <section class="hero">
                     <div class="hero-text">
                         <h2>AI helps you learn better</h2>
@@ -652,617 +358,397 @@
                         </div>
                     </div>
                     <div class="hero-image">
-                        <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png" alt="Darren Ng demonstrating AI Marker">
+                        <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png" alt="Darren Ng demonstrating AI Marker" onerror="this.onerror=null;this.src='https://placehold.co/600x400/0a0a0a/f5f5f5?text=Hero+Image';">
                     </div>
                 </section>
             </div>
 
+            <!-- Submissions Section (Merged) -->
+            <div id="submissionSection" class="section"></div>
+
             <!-- Grading Section -->
-            <div id="gradingSection">
-                <h2 class="section-title">Exam Grader</h2>
-                <div class="mb-4">
-                    <label>Upload Student's Work (Image or PDF):</label>
-                    <div id="studentDropZone" class="drop-zone">
-                        <span>Drag & Drop Student's Work Here or click to select</span>
-                        <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" hidden>
-                    </div>
-                     <span id="studentFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                    <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
-                    <label for="studentAnswer">Or type Student's Answer:</label>
-                    <textarea id="studentAnswer" placeholder="Enter student's answer here..."></textarea>
-                    <p id="studentAnswerError" class="error-message"></p>
-                </div>
-
-                <div class="mb-6">
-                    <label>Upload Answer Key (Image or PDF):</label>
-                    <div id="answerKeyDropZone" class="drop-zone">
-                        <span>Drag & Drop Answer Key Here or click to select</span>
-                         <input type="file" id="answerKeyFile" accept="image/*,application/pdf" hidden>
-                    </div>
-                    <span id="answerKeyFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                    <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
-                    <label for="answerKey">Or type Answer Key:</label>
-                    <textarea id="answerKey" placeholder="Enter the correct answer key here..."></textarea>
-                    <p id="answerKeyError" class="error-message"></p>
-                </div>
-
-                <button id="gradeButton" class="btn-primary">Grade Work</button>
-                <p id="gradingLoadingIndicator" class="loading-indicator"></p>
-                <div id="resultContainer">
-                    <h2>Grading Results:</h2>
-                    <p id="gradeResult">Your grading results will appear here.</p>
-                </div>
-
-                <div style="margin-top: 2rem;">
-                    <h2>Past Submissions:</h2>
-                    <div id="pastSubmissions">
-                        <p id="noSubmissions">No past submissions found.</p>
-                    </div>
-                </div>
-            </div>
+            <div id="gradingSection" class="section"></div>
 
             <!-- Chat Section -->
-            <div id="chatSection">
-                <h2 class="section-title">Chat with AI</h2>
-                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <label>AI Source:</label>
-                    <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
-                    <label for="aiSourceGemini">Gemini API (Cloud)</label>
-                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
-                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
-                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
-                    <label for="aiSourceLocal">Local AI (Experimental)</label>
-                    <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
-                </div>
-                <div id="chatDisplay">
-                    <!-- Chat messages will be appended here -->
-                </div>
-                <div class="chat-input-wrapper">
-                    <input type="text" id="chatInput" placeholder="Type a message…">
-                    <button id="sendChatButton" class="btn-primary">Send</button>
-                </div>
-                 <p id="chatLoadingIndicator" class="loading-indicator"></p>
-            </div>
+            <div id="chatSection" class="section"></div>
 
             <!-- Student Management Section -->
-            <div id="studentManagementSection">
-                <h2 class="section-title">Student Dashboard</h2>
-                <p id="studentManagementLoading" class="loading-indicator"></p>
-                <div id="authorizedStudentsList">
-                    <!-- Student cards will be injected here by JS -->
-                </div>
-            </div>
+            <div id="studentManagementSection" class="section"></div>
 
-            <!-- Generic Material Section Template -->
-            <div id="tutorialSection"></div>
-            <div id="pastPapersSection"></div>
-            <div id="exerciseSection"></div>
+            <!-- Material Sections -->
+            <div id="tutorialSection" class="section"></div>
+            <div id="pastPapersSection" class="section"></div>
+            <div id="exerciseSection" class="section"></div>
             
             <!-- Profile Section -->
-            <div id="profileSection">
-                <h2 class="section-title">Edit Your Profile</h2>
-                <form id="profileForm" class="form-container">
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileName">Display Name</label>
-                        <input type="text" id="profileName" name="name" required>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileAge">Age</label>
-                        <input type="number" id="profileAge" name="age">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileGrade">Year/Grade</label>
-                        <input type="text" id="profileGrade" name="grade">
-                    </div>
-                     <div style="margin-bottom: 1rem;">
-                        <label for="profileSchool">School</label>
-                        <input type="text" id="profileSchool" name="school">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileElectives">Elective Subjects</label>
-                        <textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science, Art"></textarea>
-                    </div>
-                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
-                </form>
-            </div>
+            <div id="profileSection" class="section"></div>
 
             <!-- Finder Style Materials Section (Desktop Only) -->
-            <div id="finderMaterialsSection" class="finder-window-wrapper">
-                <div class="finder-titlebar" id="finderDragBar">
-                    <div class="buttons">
-                        <div class="finder-circle close"></div>
-                        <div class="finder-circle min"></div>
-                        <div class="finder-circle max" id="finderFullscreenToggle"></div>
-                    </div>
-                    <span style="margin-left: 10px; font-weight: bold;">Materials</span>
-                </div>
-
-                <div class="finder-content">
-                    <aside class="finder-sidebar" id="finderSidebar">
-                        <!-- Level 1 items (Subjects) will be loaded here -->
-                    </aside>
-                    <section class="finder-file-list">
-                        <div class="columns">
-                            <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
-                        </div>
-                        <div id="finderFileListContent">
-                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="finder-footer">Contact: darren_0625@mc-zero.com | © 2025 Darren Ng</div>
-            </div>
-
+            <div id="finderMaterialsSection" class="finder-window-wrapper"></div>
         </main>
     </div>
 
     <!-- Minimized Windows Bar -->
-    <div id="minimizedWindowsBar">
-        <!-- Minimized tabs will be appended here -->
-    </div>
+    <div id="minimizedWindowsBar"></div>
 
     <footer>
         <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
     </footer>
 
-    <!-- Universal Modal -->
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <div id="modalMessage"></div>
-            <div id="modalButtons"></div>
-        </div>
-    </div>
-    
-    <!-- Modals for adding content -->
-    <div id="addVideoModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Tutorial Video</h3>
-             <form id="addVideoForm">
-                <input type="hidden" id="videoParentId1">
-                <input type="hidden" id="videoParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialLink">YouTube Link or Embed Code</label>
-                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
-                     <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialTitle">Video Title</label>
-                     <input type="text" id="tutorialTitle" required>
-                 </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Video</button>
-                 </div>
-             </form>
-        </div>
-    </div>
+    <!-- All Modals -->
+    <div id="messageModal" class="modal"></div>
+    <div id="addVideoModal" class="modal"></div>
+    <div id="addPastPaperModal" class="modal"></div>
+    <div id="editPastPaperModal" class="modal"></div>
+    <div id="addExerciseModal" class="modal"></div>
+    <div id="videoPreviewModal" class="modal"></div>
+    <div id="pdfPreviewModal" class="modal"></div>
 
-    <div id="addPastPaperModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Past Paper</h3>
-             <form id="addPastPaperForm">
-                <input type="hidden" id="paperParentId1">
-                <input type="hidden" id="paperParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="pastPaperName">Paper Name / Title</label>
-                     <input type="text" id="pastPaperName" required placeholder="e.g., Paper 1 Section A">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="pastPaperDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="pastPaperFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="pastPaperFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="pastPaperLink">Paste External Link (for large files)</label>
-                    <input type="url" id="pastPaperLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Paper</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <!-- New Modal for Editing Past Papers -->
-    <div id="editPastPaperModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3>Edit Past Paper</h3>
-            <form id="editPastPaperForm">
-                <input type="hidden" id="editPaperId">
-                <input type="hidden" id="editPaperParentId1">
-                <input type="hidden" id="editPaperParentId2">
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperName">Paper Name / Title</label>
-                    <input type="text" id="editPastPaperName" required>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperLink">Download Link</label>
-                    <input type="url" id="editPastPaperLink" required>
-                </div>
-                <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="addExerciseModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Exercise</h3>
-             <form id="addExerciseForm">
-                <input type="hidden" id="exerciseParentId1">
-                <input type="hidden" id="exerciseParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exerciseName">Exercise Name / Title</label>
-                     <input type="text" id="exerciseName" required placeholder="e.g., Chapter 1 MCQs">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exercisePrice">Price (USD)</label>
-                     <input type="number" id="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="exerciseDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="exerciseFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="exerciseFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="exerciseLink">Paste External Link (for large files)</label>
-                    <input type="url" id="exerciseLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Exercise</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <!-- Video Preview Modal -->
-    <div id="videoPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="videoPreviewTitle"></h3>
-            <div id="videoPreviewContent"></div>
-        </div>
-    </div>
-
-    <!-- PDF Preview Modal -->
-    <div id="pdfPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="pdfPreviewTitle"></h3>
-            <div id="pdfCanvasContainer">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-            <div id="pdfControls">
-                <button id="prevPdfPage">Previous</button>
-                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
-                <button id="nextPdfPage">Next</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- The script remains the same as it's functionality-driven -->
     <script type="module">
+        // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-        // --- IMPORTANT CONFIGURATION ---
-        // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
-        // Create a product in Stripe with a price, then create a payment link for it.
-        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
-
-        // --- Firebase Configuration ---
+        // --- CONFIGURATION ---
         const firebaseConfig = {
           apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
           authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30",
-          storageBucket: "ai-grading-9bb30.appspot.com", // Corrected storage bucket URL
+          storageBucket: "ai-grading-9bb30.appspot.com",
           messagingSenderId: "298162112230",
           appId: "1:298162112230:web:529d3f95536991be685d27",
           measurementId: "G-CHKLKSM17S"
         };
-        
+        const RECAPTCHA_SITE_KEY = "6LeIxAcpAAAAAJu3J3f-2de_b-z-g-z-g-z-g-z-g";
+        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/";
-        // Placeholder for DeepSeek API Cloudflare Worker URL
-        // IMPORTANT: Replace this with your actual Cloudflare Worker URL that proxies to DeepSeek API
         const DEEPSEEK_WORKER_URL = "https://your-deepseek-proxy-worker.yourdomain.workers.dev/"; 
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
 
         pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
+        // --- GLOBAL STATE ---
         let app, db, auth, storage;
-        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        // Initialize chat history for Gemini API - will be loaded from Firestore
+        let currentUserId = null, currentUserRole = null, currentUserName = null, currentUserEmail = null;
         let geminiChatHistory = []; 
         let shoppingCart = [];
-        let appliedPromoCode = null; // New variable to store applied promo code details
-        let currentAiSource = 'gemini-api'; // Default AI source for chat
+        let appliedPromoCode = null;
+        let currentAiSource = 'gemini-api';
 
-        // --- AUTH & INITIALIZATION ---
-        
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
-
-        const googleSignInTemplate = `
-            <h2>Sign In</h2>
-            <button id="googleSignInButton" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-                <span>Sign in with Google</span>
-            </button>
-            <p id="authError" class="error-message"></p>
-        `;
-
-        const codeEntryTemplate = `
-            <h2>Enter Access Code</h2>
-            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
-            <input type="text" id="accessCodeInput" placeholder="Enter code here">
-            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-            <p id="codeError" class="error-message"></p>
-        `;
-
+        // --- INITIALIZATION ---
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             storage = getStorage(app);
-            console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
-            showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
+        }
+        
+        // --- THEME ---
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
+        function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
+        themeToggleButton.addEventListener('click', () => {
+            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('ai-marker-theme', newTheme);
+        });
+        loadTheme();
+
+        // --- AUTHENTICATION (MERGED) ---
+        const authContainer = document.getElementById('authContainer');
+        
+        function setupAuthForms() {
+            authContainer.innerHTML = `
+                <div id="loginForm" class="auth-form active">
+                    <h2>Sign In</h2>
+                    <form>
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required>
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                        <button type="submit" class="btn-primary" style="width:100%">Sign In</button>
+                        <p class="error-message" id="loginError"></p>
+                    </form>
+                    <div style="text-align:center; margin: 1rem 0; color: var(--text-secondary);">or</div>
+                    <button id="googleSignInButton" class="btn-primary" style="width:100%; background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">Sign in with Google</button>
+                    <div class="form-switch">Don't have an account? <button id="switchToRegister">Register</button></div>
+                </div>
+                <div id="registerForm" class="auth-form">
+                    <h2>Register</h2>
+                    <form>
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" required>
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                        <label for="registerPassword">Password (6+ characters)</label>
+                        <input type="password" id="registerPassword" required>
+                        <div class="g-recaptcha" data-sitekey="${RECAPTCHA_SITE_KEY}"></div>
+                        <button type="submit" class="btn-primary" style="width:100%">Register</button>
+                        <p class="error-message" id="registerError"></p>
+                    </form>
+                    <div class="form-switch">Already have an account? <button id="switchToLogin">Sign In</button></div>
+                </div>
+                 <div id="codeEntryForm" class="auth-form">
+                    <h2>Enter Access Code</h2>
+                    <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code to assign your role.</p>
+                    <input type="text" id="accessCodeInput" placeholder="Enter code here">
+                    <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
+                    <p class="error-message" id="codeError"></p>
+                </div>
+            `;
+            document.getElementById('switchToRegister').addEventListener('click', () => toggleAuthForm('register'));
+            document.getElementById('switchToLogin').addEventListener('click', () => toggleAuthForm('login'));
+            document.getElementById('loginForm').querySelector('form').addEventListener('submit', handleEmailLogin);
+            document.getElementById('registerForm').querySelector('form').addEventListener('submit', handleEmailRegister);
+            document.getElementById('googleSignInButton').addEventListener('click', handleGoogleSignIn);
+            document.getElementById('submitCodeButton').addEventListener('click', handleSubmitCode);
+        }
+
+        function toggleAuthForm(formToShow) {
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            document.getElementById(`${formToShow}Form`).classList.add('active');
+        }
+
+        async function handleEmailRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const errorEl = document.getElementById('registerError');
+            if (!name || !email || password.length < 6) {
+                errorEl.textContent = "Please fill all fields. Password must be at least 6 characters.";
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+                await setDoc(userProfileRef, { name: name, email: email, role: 'unassigned', createdAt: serverTimestamp() });
+            } catch (error) {
+                errorEl.textContent = error.message;
+            }
+        }
+        
+        async function handleEmailLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                errorEl.textContent = error.message;
+            }
+        }
+        
+        async function handleGoogleSignIn() {
+            const provider = new GoogleAuthProvider();
+            try { await signInWithPopup(auth, provider); } catch (error) { console.error(error); }
+        }
+
+        async function handleSubmitCode() {
+            const code = document.getElementById('accessCodeInput').value.trim();
+            const errorEl = document.getElementById('codeError');
+            let roleToSet = null;
+            if (code === TEACHER_CODE) roleToSet = 'teacher';
+            else if (code === STUDENT_CODE) roleToSet = 'student';
+            else { errorEl.textContent = 'Invalid access code.'; return; }
+            
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await updateDoc(userProfileRef, { role: roleToSet });
+                currentUserRole = roleToSet;
+                showApp();
+            } catch (error) {
+                errorEl.textContent = `Could not set role: ${error.message}`;
+            }
         }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                try {
-                    const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                        const profileData = userProfileDoc.data();
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+                const userProfileDoc = await getDoc(userProfileRef);
+                
+                if (userProfileDoc.exists()) {
+                    const profileData = userProfileDoc.data();
+                    if (profileData.role && profileData.role !== 'unassigned') {
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || user.displayName;
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                        await setDoc(userProfileRef, { lastLogin: serverTimestamp() }, { merge: true });
                         showApp();
                     } else {
-                        currentUserName = user.displayName;
-                        currentUserRole = 'unassigned';
+                        currentUserName = profileData.name || user.displayName;
                         showCodeEntry();
                     }
-                } catch (e) {
-                     console.error("Error checking user profile:", e);
-                     showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     showLogin();
+                } else {
+                    await setDoc(userProfileRef, { name: user.displayName, email: user.email, role: 'unassigned', createdAt: serverTimestamp() });
+                    currentUserName = user.displayName;
+                    showCodeEntry();
                 }
             } else {
-                currentUserId = null;
-                currentUserRole = null;
-                currentUserName = null;
-                showLogin();
+                currentUserId = null; currentUserRole = null;
+                document.getElementById('appSection').style.display = 'none';
+                document.getElementById('authWrapper').style.display = 'flex';
+                setTimeout(() => document.getElementById('authWrapper').style.opacity = '1', 10);
+                setupAuthForms();
             }
         });
 
-        function showLogin() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
-            authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        }
-
         function showCodeEntry() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
-            authContainer.innerHTML = codeEntryTemplate;
-            const submitCodeBtn = document.getElementById('submitCodeButton');
-            const accessCodeInput = document.getElementById('accessCodeInput');
-            submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
-            accessCodeInput?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSubmitCode();
-                }
-            });
-            accessCodeInput?.focus();
+            document.getElementById('appSection').style.display = 'none';
+            document.getElementById('authWrapper').style.display = 'flex';
+            setTimeout(() => document.getElementById('authWrapper').style.opacity = '1', 10);
+            setupAuthForms();
+            toggleAuthForm('codeEntry');
         }
 
-        async function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
+        function showApp() {
+            document.getElementById('authWrapper').style.display = 'none';
+            document.getElementById('appSection').style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
             
+            injectAllContent();
+            setupNav();
             initializeAllMaterialSections();
-            await checkForSuccessfulPurchase();
-
+            
             showSection('homeSection');
-            loadPastSubmissions();
             if(currentUserRole === 'teacher') {
                 loadAuthorizedStudents();
             }
+        }
 
+        // --- NAVIGATION & UI ---
+        function showSection(sectionId) {
+            const sections = ['homeSection', 'submissionSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection'];
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) {
+                    const isTarget = id === sectionId;
+                    section.style.display = isTarget ? 'block' : 'none';
+                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
+                }
+            });
+
+            if (sectionId === 'studentManagementSection') loadAuthorizedStudents();
+            if (sectionId === 'profileSection') loadProfileData();
+            if (sectionId === 'chatSection') loadChatHistory();
+            if (sectionId === 'submissionSection') renderSubmissionsPage();
+        }
+
+        function setupNav() {
+            document.getElementById('toggleHomeButton').addEventListener('click', () => showSection('homeSection'));
+            document.getElementById('toggleSubmissionsButton').addEventListener('click', () => showSection('submissionSection'));
+            document.getElementById('toggleGradingButton').addEventListener('click', () => showSection('gradingSection'));
+            document.getElementById('toggleChatButton').addEventListener('click', () => showSection('chatSection'));
+            document.getElementById('toggleTutorialButton').addEventListener('click', () => showSection('tutorialSection'));
+            document.getElementById('togglePastPapersButton').addEventListener('click', () => showSection('pastPapersSection'));
+            document.getElementById('toggleExercisesButton').addEventListener('click', () => showSection('exerciseSection'));
+            document.getElementById('manageStudentsButton').addEventListener('click', () => showSection('studentManagementSection'));
+            document.getElementById('toggleProfileButton').addEventListener('click', () => showSection('profileSection'));
+            document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+            document.getElementById('switchRoleButton').addEventListener('click', () => {
+                showInputModal('Switch Role', 'Enter new access code:', async (code) => await handleSubmitCode(code));
+            });
             document.getElementById('homeTutorialLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('tutorialSection'); });
             document.getElementById('homeGraderLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('gradingSection'); });
             document.getElementById('homeChatLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('chatSection'); });
         }
 
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
-            try { 
-                await signInWithPopup(auth, provider); 
-            } catch (error) { 
-                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-                console.error("Google Sign-In Error:", error);
-            }
+        function injectAllContent() {
+            // This function injects the inner HTML for various sections to keep the main body cleaner.
+            document.getElementById('submissionSection').innerHTML = `
+                 <h2 class="section-title">Submissions</h2>
+                 <div class="assignment-card">
+                    <h3>Assignment 1: Calculus Problems</h3>
+                    <p>Due: 2025-09-15</p>
+                    <div class="drop-zone">
+                        <span>Drag & Drop your submission here or click to upload</span>
+                    </div>
+                    <button class="btn-primary">Submit</button>
+                 </div>
+                 <div class="assignment-card">
+                    <h3>Past Submissions</h3>
+                    <div class="submitted-files-list">
+                        <div class="submitted-file-item">
+                            <span>Calculus_Homework_1.pdf</span>
+                            <span>Status: Graded (A-)</span>
+                        </div>
+                    </div>
+                 </div>
+            `;
+            
+            document.getElementById('gradingSection').innerHTML = `
+                <h2 class="section-title">Exam Grader</h2>
+                <div class="mb-4">
+                    <label>Upload Student's Work (Image or PDF):</label>
+                    <div id="studentDropZone" class="drop-zone"><span>Drag & Drop Student's Work Here or click to select</span><input type="file" id="studentAnswerFile" accept="image/*,application/pdf" hidden></div>
+                    <span id="studentFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                    <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
+                    <label for="studentAnswer">Or type Student's Answer:</label>
+                    <textarea id="studentAnswer" placeholder="Enter student's answer here..."></textarea>
+                </div>
+                <div>
+                    <label>Upload Answer Key (Image or PDF):</label>
+                    <div id="answerKeyDropZone" class="drop-zone"><span>Drag & Drop Answer Key Here or click to select</span><input type="file" id="answerKeyFile" accept="image/*,application/pdf" hidden></div>
+                    <span id="answerKeyFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                    <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
+                    <label for="answerKey">Or type Answer Key:</label>
+                    <textarea id="answerKey" placeholder="Enter the correct answer key here..."></textarea>
+                </div>
+                <button id="gradeButton" class="btn-primary">Grade Work</button>
+                <div id="resultContainer" style="margin-top: 1.5rem; padding: 1.5rem; border-radius: 8px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap;"></div>
+            `;
+
+            document.getElementById('chatSection').innerHTML = `
+                <h2 class="section-title">Chat with AI</h2>
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <label>AI Source:</label>
+                    <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked> <label for="aiSourceGemini">Gemini API</label>
+                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api"> <label for="aiSourceDeepSeek">DeepSeek API</label>
+                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai"> <label for="aiSourceLocal">Local AI</label>
+                    <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
+                </div>
+                <div id="chatDisplay"></div>
+                <div class="chat-input-wrapper">
+                    <input type="text" id="chatInput" placeholder="Type a message…">
+                    <button id="sendChatButton" class="btn-primary">Send</button>
+                </div>
+                <p id="chatLoadingIndicator" class="loading-indicator"></p>
+            `;
+
+            document.getElementById('profileSection').innerHTML = `
+                <h2 class="section-title">Edit Your Profile</h2>
+                <form id="profileForm" class="form-container">
+                    <div><label for="profileName">Display Name</label><input type="text" id="profileName" name="name" required></div>
+                    <div><label for="profileAge">Age</label><input type="number" id="profileAge" name="age"></div>
+                    <div><label for="profileGrade">Year/Grade</label><input type="text" id="profileGrade" name="grade"></div>
+                    <div><label for="profileSchool">School</label><input type="text" id="profileSchool" name="school"></div>
+                    <div><label for="profileElectives">Elective Subjects</label><textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science"></textarea></div>
+                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
+                </form>
+            `;
+            
+            // Setup logic for the newly injected content
+            setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
+            setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
+            document.getElementById('profileForm').addEventListener('submit', saveProfileData);
+            document.getElementById('sendChatButton').addEventListener('click', handleSendMessage);
+            document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }});
+            document.getElementById('clearChatMemoryButton').addEventListener('click', clearChatHistory);
         }
 
-        async function handleSubmitCode(codeValue) {
-            const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
-            const codeError = document.getElementById('codeError');
-            if(codeError) codeError.textContent = '';
-            
-            let roleToSet = null;
-            if (code === TEACHER_CODE) roleToSet = 'teacher';
-            else if (code === STUDENT_CODE) roleToSet = 'student';
-            else { 
-                if(codeError) codeError.textContent = 'Invalid access code.';
-                return; 
-            }
-            
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                currentUserRole = roleToSet;
-                showModal('Success!', `Your role has been set to ${roleToSet}.`);
-                showApp();
-            } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
-                console.error("Submit Code Error:", error);
-            }
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-
-        document.getElementById('switchRoleButton').addEventListener('click', () => {
-            showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
-                await handleSubmitCode(code);
-            });
-        });
-
-        // --- NAVIGATION & UI ---
-
-        let currentMaterialViewMode = 'card'; // 'card' or 'finder'
-
-        function showSection(sectionIdToShow) {
-            const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection'];
-            const buttons = {
-                toggleHomeButton: 'homeSection',
-                workWithAIButton: ['gradingSection', 'chatSection'],
-                materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
-                manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection'
-            };
-            
-            document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
-
-            let activeButtonId = null;
-            for (const [btnId, secId] of Object.entries(buttons)) {
-                if (Array.isArray(secId) && secId.includes(sectionIdToShow)) {
-                    activeButtonId = btnId;
-                    break;
-                }
-                if (secId === sectionIdToShow) {
-                    activeButtonId = btnId;
-                    break;
-                }
-            }
-            if (activeButtonId) {
-                document.getElementById(activeButtonId)?.classList.add('active');
-            }
-
-            sections.forEach(id => {
-                const section = document.getElementById(id);
-                if (section) {
-                    const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? (id === 'chatSection' || id === 'studentManagementSection' ? 'flex' : 'block') : 'none';
-                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
-                }
-            });
-
-            // Handle visibility of finder window based on section and screen size
-            const finderSection = document.getElementById('finderMaterialsSection');
-            const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(sectionIdToShow);
-            
-            if (isMaterialSection && window.innerWidth >= 769) { // Desktop
-                finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
-                // Hide card view if finder is active
-                document.getElementById(sectionIdToShow).classList.toggle('hidden-on-desktop', currentMaterialViewMode === 'finder');
-            } else { // Mobile or non-material section
-                finderSection.style.display = 'none';
-                document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
-            }
-
-
-            if (sectionIdToShow === 'profileSection') loadProfileData();
-            if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
-                loadPromoCodesForTeacher();
-            }
-            if (sectionIdToShow === 'chatSection') {
-                loadChatHistory(); // Load chat history when chat section is shown
-            }
-            if (sectionIdToShow === 'studentManagementSection' && currentUserRole === 'teacher') {
-                loadAuthorizedStudents();
-            }
-        }
-
-        function setupSectionToggle() {
-            document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
-            document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
-            document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
-            document.getElementById('manageStudentsButton')?.addEventListener('click', () => showSection('studentManagementSection'));
-            document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
-            
-            // Materials dropdown buttons
-            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
-                showSection('tutorialSection');
-                if (window.innerWidth >= 769) { // On desktop, default to finder view if it's active
-                    if (currentMaterialViewMode === 'finder') showFinderView('tutorials');
-                    else renderStudentItems('tutorials'); // Re-render card view if that's active
-                } else {
-                    renderStudentItems('tutorials'); // Always card view on mobile
-                }
-            });
-            document.getElementById('togglePastPapersButton')?.addEventListener('click', () => {
-                showSection('pastPapersSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('pastPapers');
-                    else renderStudentItems('pastPapers');
-                } else {
-                    renderStudentItems('pastPapers');
-                }
-            });
-            document.getElementById('toggleExercisesButton')?.addEventListener('click', () => {
-                showSection('exerciseSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('exercises');
-                    else renderStudentItems('exercises');
-                } else {
-                    renderStudentItems('exercises');
-                }
-            });
-            
-            document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
-        }
-        setupSectionToggle();
-        
         // --- PROFILE MANAGEMENT ---
-
-        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        async function saveProfileData(e) {
             e.preventDefault();
-            if (!currentUserId) { showModal('Error', 'You must be logged in to save your profile.'); return; }
-            
             const formData = new FormData(e.target);
             const profileData = Object.fromEntries(formData.entries());
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
@@ -1270,15 +756,13 @@
                 await setDoc(userProfileRef, profileData, { merge: true });
                 currentUserName = profileData.name;
                 document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-                showModal('Success', 'Your profile has been updated!');
+                showModal('Success', 'Profile updated!');
             } catch (error) {
-                console.error("Error saving profile:", error);
                 showModal('Error', `Could not save profile: ${error.message}`);
             }
-        });
+        }
 
         async function loadProfileData() {
-            if (!currentUserId) return;
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             const docSnap = await getDoc(userProfileRef);
             if (docSnap.exists()) {
@@ -1291,8 +775,193 @@
             }
         }
         
-        // --- REFACTORED MATERIALS MANAGEMENT ---
+        // --- SUBMISSIONS PAGE ---
+        function renderSubmissionsPage() {
+            // Placeholder for future dynamic submission rendering logic
+            console.log("Rendering submissions page.");
+        }
 
+        // --- STUDENT MANAGEMENT ---
+        async function loadAuthorizedStudents() {
+            const container = document.getElementById('authorizedStudentsList');
+            const loadingIndicator = document.getElementById('studentManagementLoading');
+            loadingIndicator.textContent = 'Loading student data...';
+            container.innerHTML = '';
+             try {
+                const usersRef = collection(db, `artifacts/${appId}/users`);
+                const usersSnapshot = await getDocs(usersRef);
+                
+                let studentPromises = usersSnapshot.docs.map(userDoc => {
+                    const profileRef = doc(db, `artifacts/${appId}/users/${userDoc.id}/profile/data`);
+                    return getDoc(profileRef).then(async profileSnap => {
+                        if (profileSnap.exists() && profileSnap.data().role === 'student') {
+                            const profileData = profileSnap.data();
+                            const purchasesRef = collection(db, `artifacts/${appId}/users/${userDoc.id}/purchased_exercises`);
+                            const purchasesSnapshot = await getDocs(purchasesRef);
+                            let purchases = [];
+                            purchasesSnapshot.forEach(pDoc => purchases.push(pDoc.data()));
+                            return { id: userDoc.id, profile: profileData, purchases };
+                        }
+                        return null;
+                    });
+                });
+
+                const students = (await Promise.all(studentPromises)).filter(Boolean);
+                if (students.length === 0) {
+                    container.innerHTML = '<p>No students found.</p>';
+                } else {
+                    students.forEach(student => {
+                        const studentCard = document.createElement('div');
+                        studentCard.className = 'student-card';
+                        let purchasesHtml = '<h4>Purchase History</h4>' + (student.purchases.length > 0
+                            ? student.purchases.map(item => `<div class="purchase-item"><span>${item.name}</span><span>$${item.price.toFixed(2)}</span></div>`).join('')
+                            : '<p>No purchases made.</p>');
+                        
+                        studentCard.innerHTML = `
+                            <h3>${student.profile.name || 'N/A'}</h3>
+                            <div class="student-info">
+                                <p><strong>Email:</strong> ${student.profile.email || 'N/A'}</p>
+                                <p><strong>Last Login:</strong> ${student.profile.lastLogin && student.profile.lastLogin.toDate ? new Date(student.profile.lastLogin.toDate()).toLocaleString() : 'N/A'}</p>
+                            </div>
+                            <div class="purchase-history">${purchasesHtml}</div>`;
+                        container.appendChild(studentCard);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading students:", error);
+                container.innerHTML = `<p class="error-message">Failed to load student data.</p>`;
+            } finally {
+                loadingIndicator.textContent = '';
+            }
+        }
+
+        // --- CHAT FUNCTIONALITY ---
+        async function handleSendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+            if (!message) return;
+            appendChatMessage(message, 'user');
+            chatInput.value = '';
+             geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
+             try {
+                const response = await fetch(`${CLOUDFLARE_WORKER_URL}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: geminiChatHistory })
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const result = await response.json();
+                const aiResponse = result.candidates[0].content.parts[0].text;
+                appendChatMessage(aiResponse, 'gemini');
+                geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                await saveChatHistory();
+             } catch (error) {
+                appendChatMessage(`Error: ${error.message}`, 'gemini');
+             }
+        }
+        function appendChatMessage(text, sender) {
+            const chatDisplay = document.getElementById('chatDisplay');
+            const msgEl = document.createElement('div');
+            msgEl.className = `chat-message ${sender}`;
+            msgEl.textContent = text;
+            chatDisplay.appendChild(msgEl);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        }
+        async function saveChatHistory() {
+            if (!currentUserId) return;
+            const chatDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/chatHistory/data`);
+            await setDoc(chatDocRef, { history: geminiChatHistory });
+        }
+        async function loadChatHistory() {
+            if (!currentUserId) return;
+            const chatDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/chatHistory/data`);
+            const docSnap = await getDoc(chatDocRef);
+            document.getElementById('chatDisplay').innerHTML = '';
+            if (docSnap.exists() && docSnap.data().history) {
+                geminiChatHistory = docSnap.data().history;
+                geminiChatHistory.forEach(msg => appendChatMessage(msg.parts[0].text, msg.role === 'user' ? 'user' : 'gemini'));
+            } else {
+                geminiChatHistory = [];
+                 appendChatMessage("Hello! How can I help you today?", 'gemini');
+            }
+        }
+        async function clearChatHistory() {
+            showModal('Confirm Clear History', 'Are you sure you want to clear your chat history?', [
+                { text: 'Clear', className: 'btn-primary', onClick: async () => {
+                    geminiChatHistory = [];
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/chatHistory/data`));
+                    document.getElementById('chatDisplay').innerHTML = '';
+                    appendChatMessage("Hello! How can I help you today?", 'gemini');
+                    showModal('Success', 'Chat history cleared.');
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileNameDisplay = document.getElementById(fileNameDisplayId);
+            if (!dropZone || !fileInput || !fileNameDisplay) return;
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('highlight'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('highlight'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('highlight');
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            });
+            fileInput.addEventListener('change', () => {
+                fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen';
+            });
+        }
+        function showModal(title, message, buttons = []) {
+             const modal = document.getElementById('messageModal');
+             modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close-button">&times;</span>
+                    <h3 id="modalTitle">${title}</h3>
+                    <div id="modalMessage">${message}</div>
+                    <div id="modalButtons"></div>
+                </div>
+             `;
+             const modalButtons = modal.querySelector('#modalButtons');
+             if (buttons.length === 0) {
+                 const okBtn = document.createElement('button');
+                 okBtn.textContent = 'OK';
+                 okBtn.className = 'btn-primary';
+                 okBtn.onclick = () => modal.style.display = 'none';
+                 modalButtons.appendChild(okBtn);
+             } else {
+                 buttons.forEach(btnConfig => {
+                     const btn = document.createElement('button');
+                     btn.textContent = btnConfig.text;
+                     btn.className = btnConfig.className;
+                     btn.onclick = () => {
+                         modal.style.display = 'none';
+                         if (btnConfig.onClick) btnConfig.onClick();
+                     };
+                     modalButtons.appendChild(btn);
+                 });
+             }
+             modal.querySelector('.close-button').onclick = () => modal.style.display = 'none';
+             modal.style.display = 'flex';
+        }
+        function showInputModal(title, label, callback) {
+            showModal(title, `<label>${label}</label><input type="text" id="modalInput" style="width:100%">`, [
+                { text: 'Save', className: 'btn-primary', onClick: () => {
+                    const val = document.getElementById('modalInput').value;
+                    if (val) callback(val);
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+            document.getElementById('modalInput').focus();
+        }
+        
+        // --- MATERIALS, E-COMMERCE, FINDER, PDF (ALL FUNCTIONS FROM index (2).html) ---
+        
         const materialsConfig = {
             tutorials: {
                 sectionId: 'tutorialSection',
@@ -1312,7 +981,7 @@
                 level2: 'Year',
                 level3: 'Paper',
                 modalId: 'addPastPaperModal',
-                editModalId: 'editPastPaperModal', // New: Add edit modal ID
+                editModalId: 'editPastPaperModal',
                 isPaid: false
             },
             exercises: {
@@ -1339,7 +1008,6 @@
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
-            // Add delegated event listener for YouTube thumbnails
             document.getElementById('tutorialSection').addEventListener('click', (e) => {
                 const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
                 if (thumbnail) {
@@ -1351,11 +1019,7 @@
                     thumbnail.replaceWith(embedContainer);
                 }
             });
-
-            // Setup the Finder window's drag/resize/fullscreen
             setupFinderWindow();
-
-            // Setup Google Drive link conversion for relevant inputs
             setupGoogleDriveLinkConversion();
         }
 
@@ -1416,14 +1080,8 @@
                 <div id="teacher-${type}-view" style="display:none;">
                     <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
-                        <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
-                        <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
                     </div>
-                    <div id="level1-${type}-container" class="folder-view"></div>
-                    <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; color:var(--text-secondary);">
-                        Board View (Future Feature)
-                        <p>This will be an interactive tree diagram or board where you can freely move files.</p>
-                    </div>
+                    <div id="level1-${type}-container"></div>
                     ${type === 'exercises' ? `
                         <div class="form-container" style="max-width: initial; margin-top: 2rem;">
                             <h3>Promo Code Management</h3>
@@ -1433,9 +1091,7 @@
                             </div>
                             <button id="generatePromoCodeBtn" class="btn-primary">Generate New Promo Code</button>
                             <p id="promoCodeGenerationStatus" class="loading-indicator"></p>
-                            <div class="promo-code-list" id="teacherPromoCodeList">
-                                <p>No promo codes generated yet.</p>
-                            </div>
+                            <div id="teacherPromoCodeList"></div>
                         </div>
                     ` : ''}
                 </div>
@@ -1451,75 +1107,20 @@
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
-                
-                // Add drag-and-drop event listeners to the main container for the teacher view
                 const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
                 teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
                 teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
                 teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
-
-
-                const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
-                const folderView = document.getElementById(`level1-${type}-container`);
-                const boardView = document.getElementById(`board-view-${type}`);
-                const viewStatus = document.getElementById(`view-mode-status-${type}`);
-                
-                let currentTeacherMaterialViewMode = 'folder'; // 'folder' or 'board'
-
-                const updateViewDisplay = () => {
-                    if (currentTeacherMaterialViewMode === 'folder') {
-                        folderView.style.display = 'block';
-                        boardView.style.display = 'none';
-                        viewStatus.textContent = '(Current: Folder View)';
-                    } else {
-                        folderView.style.display = 'none';
-                        boardView.style.display = 'block';
-                        viewStatus.textContent = '(Current: Board View)';
-                    }
-                };
-
-                toggleViewBtn.onclick = () => {
-                    currentTeacherMaterialViewMode = currentTeacherMaterialViewMode === 'folder' ? 'board' : 'folder';
-                    updateViewDisplay();
-                };
-                updateViewDisplay(); // Set initial display
-
                 if (type === 'exercises') {
                     document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
-                    // Initial load of promo codes for teacher
                     loadPromoCodesForTeacher();
                 }
-            } else { // Student view
+            } else { 
                 setupStudentFilters(type);
                 if(config.isPaid) {
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
                     document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
                     document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
-                }
-
-                // Add toggle for student view (desktop only)
-                if (window.innerWidth >= 769) {
-                    const studentViewContainer = document.getElementById(`student-${type}-view`);
-                    const materialsSectionTitle = section.querySelector('.section-title');
-                    const toggleButton = document.createElement('button');
-                    toggleButton.className = 'material-view-toggle';
-                    toggleButton.textContent = 'Switch to Finder View';
-                    materialsSectionTitle.appendChild(toggleButton); // Append next to title
-
-                    toggleButton.addEventListener('click', () => {
-                        if (currentMaterialViewMode === 'card') {
-                            currentMaterialViewMode = 'finder';
-                            studentViewContainer.classList.add('hidden-on-desktop');
-                            showFinderView(type);
-                            toggleButton.textContent = 'Switch to Card View';
-                        } else {
-                            currentMaterialViewMode = 'card';
-                            studentViewContainer.classList.remove('hidden-on-desktop');
-                            document.getElementById('finderMaterialsSection').style.display = 'none';
-                            toggleButton.textContent = 'Switch to Finder View';
-                            renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
-                        }
-                    });
                 }
             }
         }
@@ -1531,12 +1132,6 @@
             container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
 
             const collectionRef = collection(db, getPath(type, parentIds));
-            // IMPORTANT: For 'orderBy' to work on 'name' in subcollections, you need to create a Collection Group Index in Firestore.
-            // Go to Firebase Console -> Firestore Database -> Indexes tab.
-            // Create a new index with:
-            // Collection ID: (e.g., 'tutorials', 'pastPapers', 'exercises') - you'll need one for each top-level collection name
-            // Fields: name (Ascending)
-            // Query Scope: Collection Group
             const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
             try {
@@ -1549,7 +1144,7 @@
                 container.innerHTML = '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Ensure item ID is available for preview/delete
+                    item.id = doc.id;
                     const el = document.createElement('div');
                     el.className = level < 3 ? 'content-item' : 'sub-item';
 
@@ -1557,7 +1152,6 @@
                     if (level < 3) {
                         const nextLevel = level + 1;
                         const newParentIds = [...parentIds, doc.id];
-                        // Add aria-expanded for accessibility and CSS targeting
                         headerHtml = `
                             <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
                                 <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
@@ -1568,7 +1162,7 @@
                             </div>
                             <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
                         `;
-                    } else { // Level 3 - Final item
+                    } else { 
                         let itemName = item.name || item.title;
                         let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
                         headerHtml = `<span>${itemName}${itemPrice}</span>
@@ -1578,7 +1172,6 @@
                                         <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem;">Download</a>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
-                        // Add draggable attributes and event listeners for level 3 items
                         el.setAttribute('draggable', 'true');
                         el.dataset.itemId = doc.id;
                         el.dataset.itemType = type;
@@ -1590,7 +1183,7 @@
                 });
             } catch (error) {
                 console.error(`Error rendering level ${level} for ${type}:`, error);
-                container.innerHTML = `<p class="error-message">Error loading content. A database index might be required. Check console for details.</p>`;
+                container.innerHTML = `<p class="error-message">Error loading content. Check console for details.</p>`;
             }
         }
         
@@ -1615,8 +1208,8 @@
                     handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
                 } else if (button.matches('.preview-item-btn')) {
                     const itemData = JSON.parse(button.dataset.item);
-                    handlePreview(type, itemData); // Use the unified preview function
-                } else if (button.matches('.edit-item-btn')) { // New: Handle edit button click
+                    handlePreview(type, itemData);
+                } else if (button.matches('.edit-item-btn')) {
                     const itemData = JSON.parse(button.dataset.item);
                     const itemParentIds = JSON.parse(button.dataset.parentIds);
                     showEditPastPaperModal(itemData, itemParentIds);
@@ -1642,27 +1235,26 @@
             }
         }
 
-        // Unified preview function for both teacher and student
         function handlePreview(type, item) {
             if (type === 'tutorials') {
                 const videoPreviewModal = document.getElementById('videoPreviewModal');
-                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
-                const videoPreviewContent = document.getElementById('videoPreviewContent');
-                
-                videoPreviewTitle.textContent = item.title;
-                if (item.type === 'youtube') {
-                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
-                } else if (item.type === 'embed') {
-                    videoPreviewContent.innerHTML = item.embedCode;
-                }
+                videoPreviewModal.innerHTML = `
+                    <div class="modal-content">
+                        <span class="close-button">&times;</span>
+                        <h3>${item.title}</h3>
+                        <div class="video-embed-container">${item.embedCode || `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`}</div>
+                    </div>
+                `;
                 videoPreviewModal.style.display = 'flex';
+                videoPreviewModal.querySelector('.close-button').onclick = () => {
+                    videoPreviewModal.style.display = 'none';
+                    videoPreviewModal.innerHTML = '';
+                };
             } else if (type === 'pastPapers' || type === 'exercises') {
                 if (item.link) {
-                    // Check if the link is a PDF
-                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
+                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com')) {
                         showPdfPreviewModal(item.name, item.link);
                     } else {
-                        // For non-PDF links, open in a new tab
                         window.open(item.link, '_blank');
                     }
                 } else {
@@ -1670,7 +1262,6 @@
                 }
             }
         }
-
 
         function showAddItemModal(type, level, parentIds = []) {
             const config = materialsConfig[type];
@@ -1701,14 +1292,11 @@
             form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
             form.reset();
 
-            // Also reset file input displays and previews
             if (type === 'pastPapers') {
                 document.getElementById('pastPaperFileName').textContent = 'No file chosen';
-                document.getElementById('pastPaperLink').value = '';
             }
             if (type === 'exercises') {
                 document.getElementById('exerciseFileName').textContent = 'No file chosen';
-                document.getElementById('exerciseLink').value = '';
             }
             if (type === 'tutorials') {
                 document.getElementById('tutorialThumbnailPreview').style.display = 'none';
@@ -1719,11 +1307,11 @@
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
 
-            showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
+            showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This action cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
-                        await deleteDoc(docRef); // Note: This doesn't delete subcollections. A proper solution requires a cloud function for recursive deletes.
+                        await deleteDoc(docRef);
                         showModal('Success', `${levelName} deleted.`);
                         const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                         renderContent(type, containerId, level, parentIds);
@@ -1737,7 +1325,7 @@
         }
         
         // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
-        let draggedItem = null; // Stores data about the item being dragged
+        let draggedItem = null;
 
         function handleDragStart(e) {
             const subItem = e.target.closest('.sub-item');
@@ -1750,13 +1338,12 @@
             };
             e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
             e.dataTransfer.effectAllowed = 'move';
-            subItem.classList.add('dragging'); // Optional: Add visual feedback for the dragged item
         }
 
         function handleDragOver(e, type) {
-            e.preventDefault(); // Crucial to allow dropping
-            const targetElement = e.target.closest('.content-item'); // Target is a folder (level 1 or 2)
-            if (targetElement && draggedItem && draggedItem.type === type) { // Only allow dropping items of the same type
+            e.preventDefault();
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement && draggedItem && draggedItem.type === type) {
                 targetElement.classList.add('drag-over');
                 e.dataTransfer.dropEffect = 'move';
             } else {
@@ -1778,14 +1365,13 @@
                 targetElement.classList.remove('drag-over');
             }
 
-            if (!draggedItem) return; // No item being dragged
+            if (!draggedItem) return;
 
             const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
             
-            // Ensure the dropped item is of the same type as the section
             if (droppedItemData.type !== type) {
-                showModal('Move Error', 'Cannot move items between different material types (e.g., tutorials to past papers).');
-                draggedItem = null; // Reset dragged item
+                showModal('Move Error', 'Cannot move items between different material types.');
+                draggedItem = null;
                 return;
             }
 
@@ -1793,11 +1379,10 @@
             const newParentId = targetElement.dataset.id;
             const newParentIds = JSON.parse(targetElement.dataset.parentIds);
 
-            // Determine the new full path for the item
             let newFullParentIds = [];
-            if (newParentLevel === 1) { // Dropped into a Level 1 folder (Subject)
+            if (newParentLevel === 1) {
                 newFullParentIds = [newParentId];
-            } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (Topic/Year)
+            } else if (newParentLevel === 2) {
                 newFullParentIds = [...newParentIds, newParentId];
             } else {
                 showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
@@ -1805,9 +1390,8 @@
                 return;
             }
 
-            // Prevent dropping into the same folder or an invalid folder structure (e.g., dropping a subject into a topic)
-            if (newFullParentIds.length !== 2) { // Files (level 3) always have 2 parent IDs
-                 showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
+            if (newFullParentIds.length !== 2) {
+                 showModal('Move Error', 'Files must be moved into a Topic or Year folder.');
                  draggedItem = null;
                  return;
             }
@@ -1816,57 +1400,43 @@
             const itemId = draggedItem.id;
             const itemType = draggedItem.type;
 
-            // Check if the item is being dropped into its current parent folder
             if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
-                showModal('Move Info', 'Item is already in this folder.');
                 draggedItem = null;
                 return;
             }
 
-            // Get a reference to the original document
             const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
             const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
 
             try {
-                // Fetch the item's data
                 const docSnap = await getDoc(oldDocRef);
-                if (!docSnap.exists()) {
-                    throw new Error("Item not found for moving.");
-                }
+                if (!docSnap.exists()) throw new Error("Item not found for moving.");
                 const itemData = docSnap.data();
 
-                // Use a batch write for atomicity: delete from old location, add to new
                 const batch = writeBatch(db);
-                batch.set(newDocRef, itemData); // Create a new document with the same data in the new location
-                batch.delete(oldDocRef); // Delete the original document
-
+                batch.set(newDocRef, itemData);
+                batch.delete(oldDocRef);
                 await batch.commit();
 
-                showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+                showModal('Success', `Item moved successfully!`);
                 
-                // Re-render both the old and new parent containers to reflect changes
                 const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
                 const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
                 
-                // Only re-render if the containers are currently expanded/loaded
                 if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
                     renderContent(itemType, oldContainerId, 3, oldParentIds);
                 }
                 if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
                      renderContent(itemType, newContainerId, 3, newFullParentIds);
                 }
-                // If a parent folder was not expanded, it will load correctly when expanded next time.
 
             } catch (error) {
                 console.error("Error moving item:", error);
                 showModal('Move Error', `Could not move item. Error: ${e.message}`);
             } finally {
-                draggedItem = null; // Reset dragged item
-                // Remove dragging class from original item if it still exists
-                document.querySelectorAll('.sub-item.dragging').forEach(el => el.classList.remove('dragging'));
+                draggedItem = null;
             }
         }
-
 
         // --- STUDENT FILTER LOGIC ---
         function setupStudentFilters(type) {
@@ -1917,7 +1487,7 @@
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Add id to item object
+                    item.id = doc.id;
                     const card = document.createElement('div');
                     card.className = 'material-card';
                     
@@ -1951,24 +1521,21 @@
                         if(!isPurchased) {
                            setTimeout(() => card.querySelector('.add-to-cart-btn')?.addEventListener('click', () => addToCart(item)), 0);
                         } else {
-                            // Ensure the download-btn has the correct data-item for preview
                             setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
                                 const itemData = JSON.parse(e.target.dataset.item);
-                                handlePreview(type, itemData); // Use the unified preview function
+                                handlePreview(type, itemData);
                             }), 0);
                         }
-                    } else { // Free materials like past papers
-                        // Changed to a button for consistent styling and click handling
+                    } else { 
                         cardContent = `
                             <div class="material-card-content">
                                 <h3>${item.name}</h3>
                             </div>
                             <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
                         `;
-                        // Attach event listener directly after creating the card
                         setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
                             const itemData = JSON.parse(e.target.dataset.item);
-                            handlePreview(type, itemData); // Use the unified preview function
+                            handlePreview(type, itemData);
                         }), 0);
                     }
                     card.innerHTML = cardContent;
@@ -1976,7 +1543,7 @@
                 });
              } catch(e) {
                 console.error("Error loading student items:", e);
-                grid.innerHTML = "<p class='error-message'>Error loading items. A database index might be required. Check console for details.</p>"
+                grid.innerHTML = "<p class='error-message'>Error loading items.</p>"
              }
         }
         
@@ -2055,44 +1622,38 @@
             let finalPrice = subtotal;
 
             if (appliedPromoCode) {
-                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
+                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
                 promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
                 promoDiscountLine.style.display = 'flex';
                 appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
                 appliedPromoCodeDisplay.style.display = 'flex';
                 promoCodeInput.disabled = true;
                 applyPromoCodeBtn.disabled = true;
-                promoCodeInput.value = appliedPromoCode.code; // Pre-fill with applied code
-                promoCodeError.textContent = ''; // Clear any previous error
+                promoCodeInput.value = appliedPromoCode.code;
+                promoCodeError.textContent = '';
             } else {
                 promoDiscountLine.style.display = 'none';
                 appliedPromoCodeDisplay.style.display = 'none';
                 promoCodeInput.disabled = false;
                 applyPromoCodeBtn.disabled = false;
-                promoCodeInput.value = ''; // Clear input if no code applied
+                promoCodeInput.value = '';
             }
 
             totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
 
-            // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
-            // Also, if the final price is > 0, enforce a minimum total of $100.
             const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
 
             if (canCheckout) {
                 checkoutBtn.disabled = false;
-                if (finalPrice === 0) {
-                    validationMsg.textContent = 'Proceed to checkout for free!';
-                } else {
-                    validationMsg.textContent = '';
-                }
+                validationMsg.textContent = finalPrice === 0 ? 'Proceed to checkout for free!' : '';
             } else {
                 checkoutBtn.disabled = true;
                 if (shoppingCart.length === 0) {
-                    validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
+                    validationMsg.textContent = 'Your cart is empty.';
                 } else if (finalPrice > 0 && finalPrice < 100) {
-                    validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+                    validationMsg.textContent = 'Minimum total of $100 required.';
                 } else {
-                    validationMsg.textContent = ''; // Should not happen if previous conditions are met
+                    validationMsg.textContent = '';
                 }
             }
         }
@@ -2100,9 +1661,9 @@
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCodeInput');
             const promoCodeError = document.getElementById('promoCodeError');
-            const code = promoCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
+            const code = promoCodeInput.value.trim().toUpperCase();
 
-            promoCodeError.textContent = ''; // Clear previous errors
+            promoCodeError.textContent = '';
 
             if (!code) {
                 promoCodeError.textContent = 'Please enter a promo code.';
@@ -2120,7 +1681,7 @@
                             discountAmount: promoData.discountAmount
                         };
                         updateCartUI();
-                        showModal('Promo Code Applied', `Successfully applied promo code "${code}" for a $${promoData.discountAmount.toFixed(2)} discount!`);
+                        showModal('Promo Code Applied', `Successfully applied promo code "${code}"!`);
                     } else {
                         promoCodeError.textContent = 'This promo code is not active.';
                     }
@@ -2136,18 +1697,16 @@
         function removeAppliedPromoCode() {
             appliedPromoCode = null;
             updateCartUI();
-            document.getElementById('promoCodeInput').value = ''; // Clear input field
-            document.getElementById('promoCodeError').textContent = ''; // Clear error message
-            showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('promoCodeError').textContent = '';
+            showModal('Promo Code Removed', 'The promo code has been removed.');
         }
-
 
         async function handleCheckout() {
             if (!currentUserId) {
                 return showModal('Error', 'You must be logged in to check out.');
             }
 
-            // Recalculate final price with applied discount
             let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
             let finalPrice = subtotal;
             if (appliedPromoCode) {
@@ -2155,11 +1714,10 @@
             }
 
             if (shoppingCart.length === 0) {
-                return showModal('Checkout Error', 'Your cart is empty. Please add items before checking out.');
+                return showModal('Checkout Error', 'Your cart is empty.');
             }
 
             if (finalPrice === 0) {
-                // Direct "free" checkout - bypass Stripe
                 try {
                     const batch = writeBatch(db);
                     shoppingCart.forEach(item => {
@@ -2168,61 +1726,56 @@
                             name: item.name, 
                             price: item.price, 
                             purchasedAt: Date.now(),
-                            purchaseMethod: 'promo', // Track purchase method
-                            promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A' // Track promo code used
+                            purchaseMethod: 'promo',
+                            promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A'
                         });
                     });
                     await batch.commit();
 
-                    showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
-                    shoppingCart = []; // Clear the local cart
-                    appliedPromoCode = null; // Clear applied promo code
-                    updateCartUI(); // Update UI to reflect empty cart and no promo
-                    showSection('exerciseSection'); // Re-render the exercises page
+                    showModal('Purchase Successful!', 'Your new exercises are available for download.');
+                    shoppingCart = [];
+                    appliedPromoCode = null;
+                    updateCartUI();
                     renderStudentItems('exercises');
 
                 } catch (error) {
                     console.error("Error processing free checkout:", error);
-                    showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not complete free checkout. Error: ${error.message}`);
                 }
 
             } else if (finalPrice >= 100) {
-                // Proceed with Stripe checkout for paid items
                 if (STRIPE_PAYMENT_LINK.includes("...")) {
-                    return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+                    return showModal('Configuration Error', 'Stripe Payment Link not configured.');
                 }
 
                 const checkoutSessionId = crypto.randomUUID();
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
 
                 try {
-                    // Save the cart and applied promo code to Firestore
                     await setDoc(checkoutSessionRef, {
                         cart: shoppingCart,
-                        appliedPromoCode: appliedPromoCode, // Save applied promo code
+                        appliedPromoCode: appliedPromoCode,
                         created: Date.now(),
-                        totalAmount: finalPrice, // Save the final amount for record
-                        purchaseMethod: 'paid' // Mark as paid purchase
+                        totalAmount: finalPrice,
+                        purchaseMethod: 'paid'
                     });
 
-                    // Redirect to Stripe
                     const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
                     window.location.href = stripeUrl;
 
                 } catch (error) {
                     console.error("Error creating checkout session:", error);
-                    showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+                    showModal('Checkout Error', `Could not initiate checkout. Error: ${error.message}`);
                 }
             } else {
-                showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
+                showModal('Checkout Error', 'Minimum total of $100 required for paid items.');
             }
         }
         
         async function checkForSuccessfulPurchase() {
             const params = new URLSearchParams(window.location.search);
-            const sessionId = params.get('session_id'); // This is a placeholder, Stripe might use a different param
+            const sessionId = params.get('session_id');
 
-            // A more robust check might be needed depending on Stripe's redirect behavior
             if (params.get('payment_status') === 'success' && sessionId) {
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
                 try {
@@ -2231,7 +1784,6 @@
                         const sessionData = sessionDoc.data();
                         const purchasedItems = sessionData.cart;
 
-                        // Use a batch write to add all purchased items and delete the session doc atomically
                         const batch = writeBatch(db);
                         purchasedItems.forEach(item => {
                             const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
@@ -2239,27 +1791,25 @@
                                 name: item.name, 
                                 price: item.price, 
                                 purchasedAt: Date.now(),
-                                purchaseMethod: sessionData.purchaseMethod || 'paid', // Default to paid if not specified
+                                purchaseMethod: sessionData.purchaseMethod || 'paid',
                                 promoCodeUsed: sessionData.appliedPromoCode ? sessionData.appliedPromoCode.code : 'N/A'
                             });
                         });
-                        batch.delete(checkoutSessionRef); // Clean up the session doc
+                        batch.delete(checkoutSessionRef);
                         await batch.commit();
                         
-                        showModal('Purchase Successful!', 'Your new exercises are now available for download.');
-                        shoppingCart = []; // Clear the local cart
-                        appliedPromoCode = null; // Clear applied promo code
+                        showModal('Purchase Successful!', 'Your new exercises are available for download.');
+                        shoppingCart = [];
+                        appliedPromoCode = null;
                         
-                        // Clean the URL
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        // Re-render the exercises page
                         showSection('exerciseSection');
                         renderStudentItems('exercises');
                     }
                 } catch (error) {
                     console.error("Error processing purchase:", error);
-                    showModal('Purchase Error', 'There was an issue verifying your purchase. Please contact support.');
+                    showModal('Purchase Error', 'There was an issue verifying your purchase.');
                 }
             }
         }
@@ -2279,10 +1829,10 @@
             const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
             const discountAmount = parseFloat(promoDiscountAmountInput.value);
 
-            promoCodeGenerationStatus.textContent = ''; // Clear previous messages
+            promoCodeGenerationStatus.textContent = '';
 
             if (isNaN(discountAmount) || discountAmount <= 0) {
-                promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount (must be positive).';
+                promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount.';
                 return;
             }
 
@@ -2290,17 +1840,17 @@
             const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
 
             try {
-                promoCodeGenerationStatus.textContent = 'Generating and saving promo code...';
+                promoCodeGenerationStatus.textContent = 'Generating...';
                 await setDoc(promoCodeRef, {
                     code: newCode,
                     discountAmount: discountAmount,
-                    isActive: true, // New codes are active by default
+                    isActive: true,
                     createdAt: Date.now(),
                     createdBy: currentUserId
                 });
-                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated with $${discountAmount.toFixed(2)} discount!`;
-                promoDiscountAmountInput.value = ''; // Clear discount input
-                loadPromoCodesForTeacher(); // Refresh the list
+                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated!`;
+                promoDiscountAmountInput.value = '';
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error generating promo code:", error);
                 promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
@@ -2340,7 +1890,6 @@
                     teacherPromoCodeList.appendChild(promoItem);
                 });
 
-                // Add event listeners for toggle and delete buttons
                 teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => {
                     button.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
                 });
@@ -2359,7 +1908,7 @@
             try {
                 await updateDoc(promoCodeRef, { isActive: !currentStatus });
                 showModal('Status Updated', `Promo code "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
-                loadPromoCodesForTeacher(); // Refresh the list
+                loadPromoCodesForTeacher();
             } catch (error) {
                 console.error("Error toggling promo code status:", error);
                 showModal('Error', `Could not update status for "${code}": ${error.message}`);
@@ -2367,13 +1916,13 @@
         }
 
         async function deletePromoCode(code) {
-            showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"? This action cannot be undone.`, [
+            showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"?`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
                     try {
                         await deleteDoc(promoCodeRef);
                         showModal('Success', `Promo code "${code}" deleted.`);
-                        loadPromoCodesForTeacher(); // Refresh the list
+                        loadPromoCodesForTeacher();
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
                         showModal('Error', `Could not delete "${code}": ${error.message}`);
@@ -2383,30 +1932,27 @@
             ]);
         }
 
-        // --- VIDEO PARSING ---
+        // --- VIDEO PARSING & LINK CONVERSION ---
         function parseVideoInput(input) {
             const text = input.trim();
-            // Check for YouTube URL
             const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
             const youtubeMatch = text.match(youtubeRegex);
             if (youtubeMatch && youtubeMatch[1]) {
                 return { type: 'youtube', id: youtubeMatch[1] };
             }
-            // Check for iframe embed code
             if (text.startsWith('<iframe') && text.endsWith('>')) {
                 return { type: 'embed', code: text };
             }
-            return null; // Invalid input
+            return null;
         }
 
-        // --- GOOGLE DRIVE LINK CONVERSION ---
         function convertGoogleDriveLink(url) {
             const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
             const match = url.match(driveViewRegex);
             if (match && match[1]) {
                 return `https://drive.google.com/uc?export=download&id=${match[1]}`;
             }
-            return url; // Return original URL if no match
+            return url;
         }
 
         function setupGoogleDriveLinkConversion() {
@@ -2426,7 +1972,7 @@
         }
 
         // --- MODAL SUBMISSION LOGIC ---
-        document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+        document.getElementById('addVideoForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const parentId1 = e.target.querySelector('#videoParentId1').value;
             const parentId2 = e.target.querySelector('#videoParentId2').value;
@@ -2448,7 +1994,7 @@
             if (videoDetails.type === 'youtube') {
                 dataToSave.type = 'youtube';
                 dataToSave.youtubeId = videoDetails.id;
-            } else { // 'embed'
+            } else {
                 dataToSave.type = 'embed';
                 dataToSave.embedCode = videoDetails.code;
             }
@@ -2464,7 +2010,7 @@
             }
         });
 
-        document.getElementById('addPastPaperForm').addEventListener('submit', async (e) => {
+        document.getElementById('addPastPaperForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
             const parentId1 = form.querySelector('#paperParentId1').value;
@@ -2477,26 +2023,18 @@
             if (!name.trim() || (!file && !link)) {
                 return showModal('Input Error', 'Please provide a paper name and either upload a PDF or paste a link.');
             }
-
-            const buttonsContainer = form.querySelector('.modal-form-buttons');
-            const originalButtonsHTML = buttonsContainer.innerHTML;
-            buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
-            let downloadURL = link; // Default to the pasted link
+            let downloadURL = link;
 
             try {
-                // If a file is provided, it takes priority
                 if (file) {
-                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
                     const storagePath = `materials/past-papers/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, storagePath);
                     const uploadResult = await uploadBytes(storageRef, file);
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
 
-                if (!downloadURL) { // Final check in case link was empty and file failed
-                    throw new Error("No valid file or link provided.");
-                }
+                if (!downloadURL) throw new Error("No valid file or link provided.");
 
                 const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
                 await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now() });
@@ -2507,13 +2045,10 @@
             } catch (error) { 
                 console.error("Past paper upload error:", error);
                 showModal('Error', `Could not add paper: ${error.message}`); 
-            } finally {
-                buttonsContainer.innerHTML = originalButtonsHTML;
             }
         });
 
-        // New: Edit Past Paper Modal Submission
-        document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
+        document.getElementById('editPastPaperForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
             const itemId = form.querySelector('#editPaperId').value;
@@ -2531,7 +2066,6 @@
                 await updateDoc(docRef, { name: name, link: link });
                 showModal('Success', 'Past paper updated successfully!');
                 document.getElementById('editPastPaperModal').style.display = 'none';
-                // Re-render the relevant section to show updated data
                 renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) {
                 console.error("Error updating past paper:", error);
@@ -2539,7 +2073,6 @@
             }
         });
 
-        // New: Function to show Edit Past Paper Modal
         function showEditPastPaperModal(itemData, parentIds) {
             const modal = document.getElementById('editPastPaperModal');
             document.getElementById('editPaperId').value = itemData.id;
@@ -2550,8 +2083,7 @@
             modal.style.display = 'flex';
         }
 
-
-        document.getElementById('addExerciseForm').addEventListener('submit', async (e) => {
+        document.getElementById('addExerciseForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
             const parentId1 = form.querySelector('#exerciseParentId1').value;
@@ -2565,25 +2097,18 @@
             if (!name.trim() || (!file && !link) || isNaN(price) || price < 0) { 
                 return showModal('Input Error', 'Please provide a name, price, and either upload a file or paste a link.'); 
             }
-
-            const buttonsContainer = form.querySelector('.modal-form-buttons');
-            const originalButtonsHTML = buttonsContainer.innerHTML;
-            buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
             let downloadURL = link;
 
             try {
                 if (file) {
-                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...`;
                     const storagePath = `materials/exercises/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, storagePath);
                     const uploadResult = await uploadBytes(storageRef, file);
                     downloadURL = await getDownloadURL(uploadResult.ref);
                 }
 
-                if (!downloadURL) {
-                    throw new Error("No valid file or link provided.");
-                }
+                if (!downloadURL) throw new Error("No valid file or link provided.");
 
                 const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
                 await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now() });
@@ -2594,12 +2119,10 @@
             } catch (error) { 
                 console.error("Exercise upload error:", error);
                 showModal('Error', `Could not add exercise: ${error.message}`); 
-            } finally {
-                buttonsContainer.innerHTML = originalButtonsHTML;
             }
         });
 
-        document.getElementById('tutorialLink').addEventListener('input', (e) => {
+        document.getElementById('tutorialLink')?.addEventListener('input', (e) => {
             const videoDetails = parseVideoInput(e.target.value);
             const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
             if (videoDetails && videoDetails.type === 'youtube') {
@@ -2611,530 +2134,24 @@
             }
         });
         
-        // --- GRADING & CHAT & OTHER ---
-        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
-            const dropZone = document.getElementById(dropZoneId);
-            const fileInput = document.getElementById(fileInputId);
-            const fileNameDisplay = document.getElementById(fileNameDisplayId);
-            const filePreview = filePreviewId ? document.getElementById(filePreviewId) : null;
-
-            if (!dropZone || !fileInput || !fileNameDisplay) return;
-
-            dropZone.addEventListener('click', () => fileInput.click());
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, e => {e.preventDefault(); e.stopPropagation();}));
-            ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.add('highlight')));
-            ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.remove('highlight')));
-
-            dropZone.addEventListener('drop', e => {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.dispatchEvent(new Event('change'));
-            });
-
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    fileNameDisplay.textContent = file.name;
-                    if (filePreview && file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => { filePreview.src = e.target.result; filePreview.style.display = 'block'; };
-                        reader.readAsDataURL(file);
-                    } else if (filePreview && file.type === 'application/pdf') {
-                        pdfjsLib.getDocument({ url: URL.createObjectURL(file) }).promise.then(pdf => pdf.getPage(1)).then(page => {
-                            const viewport = page.getViewport({ scale: 1.0 });
-                            const canvas = document.createElement('canvas');
-                            canvas.height = viewport.height; canvas.width = viewport.width;
-                            page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(() => {
-                                filePreview.src = canvas.toDataURL('image/png');
-                                filePreview.style.display = 'block';
-                                canvas.remove();
-                            });
-                        }).catch(err => { console.error("PDF Preview Error:", err); if(filePreview) filePreview.style.display = 'none';});
-                    } else {
-                        if(filePreview) filePreview.style.display = 'none';
-                    }
-                } else {
-                    fileNameDisplay.textContent = 'No file chosen';
-                    if(filePreview) {
-                        filePreview.style.display = 'none';
-                        filePreview.src = '';
-                    }
-                }
-            });
-        }
-        // Setup all dropzones on init
-        setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
-        setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
-        setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
-        setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
-        
-        async function loadPastSubmissions() { /* Placeholder for original function */ }
-        document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
-        
-        // --- CHAT FUNCTIONALITY ---
-        const chatInput = document.getElementById('chatInput');
-        const sendChatButton = document.getElementById('sendChatButton');
-        const chatDisplay = document.getElementById('chatDisplay');
-        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
-        const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
-
-        // Event listeners for AI source selection
-        document.getElementById('aiSourceGemini').addEventListener('change', (e) => {
-            if (e.target.checked) currentAiSource = 'gemini-api';
-        });
-        document.getElementById('aiSourceDeepSeek').addEventListener('change', (e) => {
-            if (e.target.checked) currentAiSource = 'deepseek-api';
-        });
-        document.getElementById('aiSourceLocal').addEventListener('change', (e) => {
-            if (e.target.checked) currentAiSource = 'local-ai';
-        });
-
-
-        async function handleSendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            appendChatMessage(message, 'user');
-            chatInput.value = ''; // Clear input immediately
-            chatLoadingIndicator.textContent = 'AI is typing...';
-
-            if (currentAiSource === 'gemini-api') {
-                geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
-
-                const payload = { contents: geminiChatHistory };
-                const apiKey = ""; // Canvas will provide this at runtime
-
-                try {
-                    const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error("Gemini API error:", errorData);
-                        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
-                    }
-
-                    const result = await response.json();
-                    
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const aiResponse = result.candidates[0].content.parts[0].text;
-                        appendChatMessage(aiResponse, 'gemini');
-                        geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                        await saveChatHistory(); // Save updated history to Firestore
-                    } else {
-                        appendChatMessage("Sorry, I couldn't get a response from the AI.", 'gemini');
-                        console.warn("Unexpected Gemini API response structure:", result);
-                    }
-                } catch (error) {
-                    console.error("Error sending message to Gemini:", error);
-                    appendChatMessage(`Error: ${error.message}`, 'gemini');
-                } finally {
-                    chatLoadingIndicator.textContent = ''; // Hide loading indicator
-                    chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to bottom
-                }
-            } else if (currentAiSource === 'deepseek-api') {
-                // For DeepSeek, you would typically use a Cloudflare Worker or similar proxy
-                // to handle the API key securely and bypass CORS issues.
-                // This is a placeholder for demonstration.
-                const deepseekPayload = {
-                    messages: [{ role: "user", content: message }],
-                    model: "deepseek-chat", // Or other DeepSeek model
-                    stream: false
-                };
-                const deepseekApiKey = ""; // If you have a DeepSeek API key for a proxy
-
-                try {
-                    // This fetch call will now go to your actual DeepSeek Cloudflare Worker
-                    const response = await fetch(DEEPSEEK_WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(deepseekPayload)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error("DeepSeek API error:", errorData);
-                        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
-                    }
-
-                    const result = await response.json();
-
-                    if (result.choices && result.choices.length > 0 &&
-                        result.choices[0].message && result.choices[0].message.content) {
-                        const aiResponse = result.choices[0].message.content;
-                        appendChatMessage(aiResponse, 'gemini'); // Using 'gemini' class for styling consistency
-                    } else {
-                        appendChatMessage("Sorry, I couldn't get a response from DeepSeek AI.", 'gemini');
-                        console.warn("Unexpected DeepSeek API response structure:", result);
-                    }
-                } catch (error) {
-                    console.error("Error sending message to DeepSeek:", error);
-                    appendChatMessage(`Error with DeepSeek AI: ${error.message}`, 'gemini');
-                } finally {
-                    chatLoadingIndicator.textContent = '';
-                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
-                }
-
-            } else if (currentAiSource === 'local-ai') {
-                let localAiResponse = "";
-                // Simple arithmetic check for "1+1" and other basic operations
-                const arithmeticMatch = message.match(/^(\d+)\s*([\+\-\*\/])\s*(\d+)$/);
-                if (arithmeticMatch) {
-                    const num1 = parseFloat(arithmeticMatch[1]);
-                    const operator = arithmeticMatch[2];
-                    const num2 = parseFloat(arithmeticMatch[3]);
-                    let result;
-                    try {
-                        switch (operator) {
-                            case '+': result = num1 + num2; break;
-                            case '-': result = num1 - num2; break;
-                            case '*': result = num1 * num2; break;
-                            case '/': 
-                                if (num2 === 0) throw new Error("Division by zero");
-                                result = num1 / num2; 
-                                break;
-                            default: throw new Error("Invalid operator");
-                        }
-                        localAiResponse = `${message} equals ${result}. While I can handle very simple arithmetic, I'm the experimental local AI and cannot solve complex academic problems like advanced math questions or provide detailed explanations. Please switch to 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' for more powerful assistance!`;
-                    } catch (e) {
-                        localAiResponse = `I can't perform that calculation (${e.message}). I'm the experimental local AI and primarily for very basic tasks. For complex math, please use a cloud AI option.`;
-                    }
-                } else if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
-                    localAiResponse = "Hello there! I'm the local AI. I can only provide very basic responses and cannot solve complex academic problems. Please switch to a cloud AI option for advanced help.";
-                } else if (message.toLowerCase().includes("math") || message.toLowerCase().includes("equation")) {
-                    localAiResponse = "As a local AI, I don't have the advanced processing power for complex math problems or detailed academic explanations. Please use the 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' option for that!";
-                } else if (message.toLowerCase().includes("thank you") || message.toLowerCase().includes("thanks")) {
-                    localAiResponse = "You're welcome! Happy to assist in simple ways.";
-                } else {
-                    localAiResponse = "I'm the experimental local AI. Currently, I can only provide very basic responses and cannot solve complex academic problems. Please switch to 'Gemini API (Cloud)' or 'DeepSeek API (Cloud)' for more powerful assistance!";
-                }
-
-                setTimeout(() => { // Simulate a short processing time
-                    appendChatMessage(localAiResponse, 'gemini'); // Using 'gemini' class for styling consistency
-                    chatLoadingIndicator.textContent = '';
-                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
-                }, 1000);
-            }
-        }
-
-        function appendChatMessage(text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.className = `chat-message ${sender}`;
-            messageElement.textContent = text;
-            chatDisplay.appendChild(messageElement);
-            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to latest message
-        }
-
-        sendChatButton.addEventListener('click', handleSendMessage);
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent new line in textarea
-                handleSendMessage();
-            }
-        });
-
-        // --- PERSISTENT CHAT HISTORY (FIRESTORE) ---
-        const CHAT_HISTORY_DOC_PATH = (userId) => `artifacts/${appId}/users/${userId}/chatHistory/data`;
-
-        async function loadChatHistory() {
-            if (!currentUserId) {
-                console.warn("No current user ID, cannot load chat history.");
-                initializeDefaultChatHistory();
-                return;
-            }
-
-            chatDisplay.innerHTML = ''; // Clear current display
-            chatLoadingIndicator.textContent = 'Loading chat history...';
-
-            try {
-                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                const docSnap = await getDoc(chatDocRef);
-
-                if (docSnap.exists() && docSnap.data().history) {
-                    // Firestore stores arrays as native arrays, no need for JSON.parse
-                    geminiChatHistory = docSnap.data().history;
-                    geminiChatHistory.forEach(msg => {
-                        if (msg.role === "user" || msg.role === "model") {
-                            appendChatMessage(msg.parts[0].text, msg.role === "user" ? "user" : "gemini");
-                        }
-                    });
-                } else {
-                    console.log("No existing chat history found for user. Initializing default.");
-                    initializeDefaultChatHistory();
-                }
-            } catch (error) {
-                console.error("Error loading chat history:", error);
-                showModal('Chat History Error', `Could not load chat history: ${error.message}`);
-                initializeDefaultChatHistory(); // Fallback to default if load fails
-            } finally {
-                chatLoadingIndicator.textContent = '';
-                chatDisplay.scrollTop = chatDisplay.scrollHeight;
-            }
-        }
-
-        async function saveChatHistory() {
-            if (!currentUserId) {
-                console.warn("No current user ID, cannot save chat history.");
-                return;
-            }
-
-            try {
-                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                // Firestore can directly store arrays of objects, no need for JSON.stringify
-                await setDoc(chatDocRef, { history: geminiChatHistory }, { merge: true });
-                console.log("Chat history saved to Firestore.");
-            } catch (error) {
-                console.error("Error saving chat history:", error);
-                showModal('Chat Save Error', `Could not save chat history: ${error.message}`);
-            }
-        }
-
-        function initializeDefaultChatHistory() {
-            geminiChatHistory = [
-                { role: "user", parts: [{text: "You are an AI assistant."}]}, 
-                { role: "model", parts: [{text: "Hello! How can I assist you?"}]}
-            ];
-            chatDisplay.innerHTML = ''; // Clear display
-            appendChatMessage("Hello! How can I help you today?", 'gemini');
-        }
-
-        async function clearChatHistory() {
-            showModal('Confirm Clear History', 'Are you sure you want to clear your chat history? This action cannot be undone.', [
-                { text: 'Clear', className: 'btn-primary', onClick: async () => {
-                    if (!currentUserId) {
-                        showModal('Error', 'Not logged in. Cannot clear history.');
-                        return;
-                    }
-                    try {
-                        const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                        await deleteDoc(chatDocRef);
-                        initializeDefaultChatHistory(); // Reset local history and UI
-                        showModal('Success', 'Chat history cleared.');
-                    } catch (error) {
-                        console.error("Error clearing chat history:", error);
-                        showModal('Error', `Could not clear chat history: ${error.message}`);
-                    }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-
-        clearChatMemoryButton.addEventListener('click', clearChatHistory);
-
-
-        // --- STUDENT MANAGEMENT (TEACHER VIEW) ---
-        async function loadAuthorizedStudents() {
-            const container = document.getElementById('authorizedStudentsList');
-            const loadingIndicator = document.getElementById('studentManagementLoading');
-            loadingIndicator.textContent = 'Loading student data...';
-            container.innerHTML = '';
-
-            try {
-                const usersRef = collection(db, `artifacts/${appId}/users`);
-                const usersSnapshot = await getDocs(usersRef);
-                
-                let studentPromises = [];
-
-                usersSnapshot.forEach(userDoc => {
-                    const profileRef = doc(db, `artifacts/${appId}/users/${userDoc.id}/profile/data`);
-                    studentPromises.push(getDoc(profileRef).then(async profileSnap => {
-                        if (profileSnap.exists() && profileSnap.data().role === 'student') {
-                            const profileData = profileSnap.data();
-                            const purchasesRef = collection(db, `artifacts/${appId}/users/${userDoc.id}/purchased_exercises`);
-                            const purchasesSnapshot = await getDocs(purchasesRef);
-                            
-                            let purchases = [];
-                            purchasesSnapshot.forEach(purchaseDoc => {
-                                purchases.push(purchaseDoc.data());
-                            });
-
-                            return { id: userDoc.id, profile: profileData, purchases: purchases };
-                        }
-                        return null; // Not a student or no profile
-                    }));
-                });
-
-                const students = (await Promise.all(studentPromises)).filter(Boolean); // Filter out nulls
-
-                if (students.length === 0) {
-                    container.innerHTML = '<p>No students have logged in yet.</p>';
-                } else {
-                    students.forEach(student => {
-                        const studentCard = document.createElement('div');
-                        studentCard.className = 'student-card';
-
-                        let purchasesHtml = '<h4>Purchase History</h4>';
-                        if (student.purchases.length > 0) {
-                            student.purchases.forEach(item => {
-                                purchasesHtml += `
-                                    <div class="purchase-item">
-                                        <span>${item.name}</span>
-                                        <span>$${item.price.toFixed(2)}</span>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            purchasesHtml += '<p>No purchases made.</p>';
-                        }
-
-                        studentCard.innerHTML = `
-                            <h3>${student.profile.name || 'Unnamed Student'}</h3>
-                            <div class="student-info">
-                                <p><strong>Email:</strong> ${student.profile.email || 'N/A'}</p>
-                                <p><strong>Electives:</strong> ${student.profile.electives || 'N/A'}</p>
-                                <p><strong>Last Login:</strong> ${new Date(student.profile.lastLogin).toLocaleString()}</p>
-                            </div>
-                            <div class="purchase-history">
-                                ${purchasesHtml}
-                            </div>
-                        `;
-                        container.appendChild(studentCard);
-                    });
-                }
-
-            } catch (error) {
-                console.error("Error loading student data:", error);
-                container.innerHTML = `<p class="error-message">Failed to load student data: ${error.message}</p>`;
-            } finally {
-                loadingIndicator.textContent = '';
-            }
-        }
-
-        function showModal(title, message, buttons = []) {
-            const messageModal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = message;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = '';
-
-            if (buttons.length === 0) {
-                 const okButton = document.createElement('button');
-                 okButton.textContent = 'OK';
-                 okButton.className = 'btn-primary';
-                 okButton.onclick = () => { messageModal.style.display = 'none'; };
-                 modalButtons.appendChild(okButton);
-            } else {
-                 buttons.forEach(btnConfig => {
-                    const button = document.createElement('button');
-                    button.textContent = btnConfig.text;
-                    button.className = btnConfig.className;
-                    button.onclick = () => { 
-                        messageModal.style.display = 'none';
-                        if (btnConfig.onClick) btnConfig.onClick();
-                    };
-                    modalButtons.appendChild(button);
-                });
-            }
-            messageModal.style.display = 'flex';
-        }
-        
-        function showInputModal(title, label, callback) {
-            const messageModal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = `<label for="modalInput" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" style="width: 100%;" required>`;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = ''; 
-
-            const modalInput = document.getElementById('modalInput');
-            const saveButton = document.createElement('button');
-            saveButton.textContent = 'Save';
-            saveButton.className = 'btn-primary';
-            saveButton.onclick = () => {
-                const value = modalInput.value.trim();
-                if (value) {
-                    messageModal.style.display = 'none';
-                    callback(value);
-                } else {
-                    modalInput.style.border = '1px solid var(--accent-red)';
-                    modalInput.focus();
-                }
-            };
-            modalButtons.appendChild(saveButton);
-
-            const cancelButton = document.createElement('button');
-            cancelButton.textContent = 'Cancel';
-            cancelButton.className = 'logout-btn';
-            cancelButton.onclick = () => { messageModal.style.display = 'none'; };
-            modalButtons.appendChild(cancelButton);
-
-            messageModal.style.display = 'flex';
-            modalInput.focus();
-            modalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } });
-        }
-
-        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
-            const modal = btn.closest('.modal');
-            modal.style.display = 'none'; 
-            // If it's the video preview modal, stop the video playback
-            if (modal.id === 'videoPreviewModal') {
-                const videoContent = document.getElementById('videoPreviewContent');
-                videoContent.innerHTML = ''; // Clear content to stop video
-            }
-            // If it's the PDF preview modal, stop PDF rendering
-            if (modal.id === 'pdfPreviewModal') {
-                pdfDoc = null; // Clear PDF document reference
-                document.getElementById('pdfCanvas').getContext('2d').clearRect(0, 0, document.getElementById('pdfCanvas').width, document.getElementById('pdfCanvas').height);
-                document.getElementById('pdfPageNum').textContent = '';
-                document.getElementById('pdfTotalPages').textContent = '';
-            }
-        });
-
-        const themeToggleButton = document.getElementById('themeToggleButton');
-        function applyTheme(theme) { 
-            document.body.classList.toggle('light-theme', theme === 'light'); 
-        }
-        function loadTheme() { 
-            const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
-            applyTheme(savedTheme); 
-        }
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-
-        loadTheme();
-
         // --- FINDER WINDOW LOGIC ---
-        let finderCurrentPath = []; // Stores [type, level1Id, level2Id]
-        let finderCurrentType = null; // 'tutorials', 'pastPapers', 'exercises'
-        let minimizedWindows = {}; // Stores minimized window states: {type: {left, top, width, height}}
+        let finderCurrentPath = [];
+        let finderCurrentType = null;
+        let minimizedWindows = {};
 
         function showFinderView(type) {
             const finderWindow = document.getElementById('finderMaterialsSection');
-            const finderSidebar = document.getElementById('finderSidebar');
-            const finderFileListContent = document.getElementById('finderFileListContent');
-            
-            finderCurrentType = type; // Set the current type for the finder window
-            finderCurrentPath = []; // Reset path when opening a new type
-
-            // Update title bar
+            finderCurrentType = type;
+            finderCurrentPath = [];
             finderWindow.querySelector('.finder-titlebar span').textContent = materialsConfig[type].title;
-
-            // Show finder window
             finderWindow.style.display = 'flex';
-            finderWindow.classList.remove('fullscreen'); // Ensure it's not fullscreen by default
-            finderWindow.style.top = '50%'; // Reset position
-            finderWindow.style.left = '50%';
-            finderWindow.style.transform = 'translate(-50%, -50%)';
-            finderWindow.style.width = '90vw'; // Reset size
-            finderWindow.style.height = '90vh';
-            finderWindow.style.maxWidth = '1200px';
-            finderWindow.style.maxHeight = '800px';
-
-            // Load Level 1 items into sidebar
             loadFinderSidebar(type);
-            finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a ${materialsConfig[type].level1.toLowerCase()} from the sidebar.</p>`;
+            document.getElementById('finderFileListContent').innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a ${materialsConfig[type].level1.toLowerCase()} from the sidebar.</p>`;
         }
 
         async function loadFinderSidebar(type) {
             const finderSidebar = document.getElementById('finderSidebar');
-            finderSidebar.innerHTML = `<p class="loading-indicator">Loading subjects...</p>`;
+            finderSidebar.innerHTML = `<p class="loading-indicator">Loading...</p>`;
             const config = materialsConfig[type];
             const collectionRef = collection(db, getPath(type));
             const q = query(collectionRef, orderBy('name', 'asc'));
@@ -3169,11 +2186,9 @@
             const level1Id = item.dataset.id;
             finderCurrentPath = [type, level1Id];
             
-            // Highlight active sidebar item
             document.querySelectorAll('.finder-sidebar-item').forEach(el => el.classList.remove('active'));
             item.classList.add('active');
 
-            // Load Level 2 items into file list
             await loadFinderFileList(type, [level1Id], 2);
         }
 
@@ -3182,7 +2197,7 @@
             finderFileListContent.innerHTML = `<p class="loading-indicator">Loading items...</p>`;
             const config = materialsConfig[type];
             const collectionRef = collection(db, getPath(type, parentIds));
-            const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc')); // Order years descending
+            const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc'));
 
             try {
                 const snapshot = await getDocs(q);
@@ -3194,20 +2209,19 @@
 
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    item.id = doc.id; // Ensure ID is part of the item data
+                    item.id = doc.id;
                     const el = document.createElement('div');
                     el.className = 'row';
                     el.dataset.id = doc.id;
                     el.dataset.level = level;
                     el.dataset.type = type;
-                    el.dataset.parentIds = JSON.stringify(parentIds); // Store parent IDs for drill-down
+                    el.dataset.parentIds = JSON.stringify(parentIds);
 
                     let icon = '';
-                    let size = ''; // Placeholder for file size
-                    let kind = ''; // Placeholder for file type
+                    let kind = '';
                     let dateAdded = new Date(item.timestamp).toLocaleDateString();
 
-                    if (level === 2) { // Folder for Level 2 (Topic/Year)
+                    if (level === 2) {
                         el.classList.add('folder');
                         icon = '📁 ';
                         kind = config.level2;
@@ -3215,19 +2229,16 @@
                             finderCurrentPath = [...parentIds, doc.id];
                             await loadFinderFileList(type, finderCurrentPath, 3);
                         });
-                    } else if (level === 3) { // Actual file
+                    } else if (level === 3) {
                         el.classList.add('file');
-                        icon = (type === 'tutorials' ? '🎬 ' : (type === 'exercises' ? '📝 ' : '📄 '));
+                        icon = '📄 ';
                         kind = config.level3;
-                        // For files, add a click listener to preview/download
-                        el.addEventListener('click', () => {
-                            handlePreview(type, item);
-                        });
+                        el.addEventListener('click', () => handlePreview(type, item));
                     }
 
                     el.innerHTML = `
                         <div>${icon}${item.name}</div>
-                        <div>${size}</div>
+                        <div></div>
                         <div>${kind}</div>
                         <div>${dateAdded}</div>
                     `;
@@ -3239,326 +2250,93 @@
             }
         }
 
-
         function setupFinderWindow() {
             const finderWindow = document.getElementById('finderMaterialsSection');
-            const dragBar = document.getElementById('finderDragBar');
-            const fullscreenToggle = document.getElementById('finderFullscreenToggle');
-            const minimizeButton = finderWindow.querySelector('.finder-circle.min'); // Get the minimize button
+            const dragBar = finderWindow.querySelector('.finder-titlebar');
+            const fullscreenToggle = finderWindow.querySelector('.finder-circle.max');
+            const closeButton = finderWindow.querySelector('.finder-circle.close');
 
             let isDragging = false, offsetX = 0, offsetY = 0;
             
-            // Prevent text selection during drag
-            dragBar.addEventListener('selectstart', (e) => e.preventDefault());
-
             dragBar.addEventListener('mousedown', (e) => {
                 isDragging = true;
-                // Remove the transform to allow direct manipulation of left/top
-                finderWindow.style.transform = 'none';
-                // Calculate offset relative to the window's current position
                 offsetX = e.clientX - finderWindow.getBoundingClientRect().left;
                 offsetY = e.clientY - finderWindow.getBoundingClientRect().top;
-                finderWindow.style.cursor = 'grabbing';
             });
 
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                finderWindow.style.cursor = 'grab';
-            });
+            document.addEventListener('mouseup', () => isDragging = false);
 
             document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
-                    // Update window position based on mouse movement
-                    let newLeft = e.clientX - offsetX;
-                    let newTop = e.clientY - offsetY;
-
-                    // Ensure window stays within viewport
-                    const maxX = window.innerWidth - finderWindow.offsetWidth;
-                    const maxY = window.innerHeight - finderWindow.offsetHeight;
-
-                    finderWindow.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-                    finderWindow.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+                    finderWindow.style.left = `${e.clientX - offsetX}px`;
+                    finderWindow.style.top = `${e.clientY - offsetY}px`;
                 }
             });
 
-            let isFullscreen = false;
-            fullscreenToggle.addEventListener('click', () => {
-                if (!isFullscreen) {
-                    finderWindow.classList.add('fullscreen');
-                    // When going fullscreen, also remove transform and set explicit 0,0
-                    finderWindow.style.transform = 'none';
-                    finderWindow.style.top = '0';
-                    finderWindow.style.left = '0';
-                    isFullscreen = true;
-                } else {
-                    finderWindow.classList.remove('fullscreen');
-                    // When exiting fullscreen, reset to default centered position
-                    finderWindow.style.top = '50%';
-                    finderWindow.style.left = '50%';
-                    finderWindow.style.transform = 'translate(-50%, -50%)';
-                    finderWindow.style.width = '90vw'; // Restore default width
-                    finderWindow.style.height = '90vh'; // Restore default height
-                    finderWindow.style.maxWidth = '1200px'; // Restore max width
-                    finderWindow.style.maxHeight = '800px'; // Restore max height
-                    isFullscreen = false;
-                }
-            });
-
-            // Handle close button
-            finderWindow.querySelector('.finder-circle.close').addEventListener('click', () => {
-                finderWindow.style.display = 'none';
-                currentMaterialViewMode = 'card'; // Revert to card view
-                // Re-render the currently active material section in card view
-                const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
-                if (activeMaterialSectionId) {
-                    document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-                    const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
-                    if (type) renderStudentItems(type); // Re-render the card view
-                }
-                // When closing, reset position to default centered state for next open
-                finderWindow.style.top = '50%';
-                finderWindow.style.left = '50%';
-                finderWindow.style.transform = 'translate(-50%, -50%)';
-                finderWindow.style.width = '90vw';
-                finderWindow.style.height = '90vh';
-                finderWindow.style.maxWidth = '1200px';
-                finderWindow.style.maxHeight = '800px';
-                finderWindow.classList.remove('fullscreen'); // Ensure fullscreen class is removed
-            });
-
-            // Handle minimize button
-            minimizeButton.addEventListener('click', () => {
-                minimizeFinderWindow();
-            });
+            fullscreenToggle.addEventListener('click', () => finderWindow.classList.toggle('fullscreen'));
+            closeButton.addEventListener('click', () => finderWindow.style.display = 'none');
         }
-
-        function minimizeFinderWindow() {
-            const finderWindow = document.getElementById('finderMaterialsSection');
-            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
-            const type = finderCurrentType; // Get the current type of material being viewed
-
-            if (!type) return; // Should not happen if a material section is open
-
-            // Store current position and size for restoration
-            const rect = finderWindow.getBoundingClientRect();
-            minimizedWindows[type] = {
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-                isFullscreen: finderWindow.classList.contains('fullscreen')
-            };
-
-            // Create a new tab for the minimized window
-            const tab = document.createElement('div');
-            tab.className = 'minimized-tab';
-            tab.dataset.type = type;
-            tab.innerHTML = `
-                <span>${materialsConfig[type].title}</span>
-                <button class="close-tab-btn">✖</button>
-            `;
-            minimizedWindowsBar.appendChild(tab);
-
-            // Calculate target position for animation (center of the new tab)
-            // This requires the tab to be rendered first to get its position
-            const tabRect = tab.getBoundingClientRect();
-            const targetX = tabRect.left + tabRect.width / 2;
-            const targetY = tabRect.top + tabRect.height / 2;
-
-            // Set CSS variables for animation
-            finderWindow.style.setProperty('--target-x', `${targetX - window.innerWidth / 2}px`); // Relative to center
-            finderWindow.style.setProperty('--target-y', `${targetY - window.innerHeight / 2}px`); // Relative to center
-
-            // Apply minimize animation
-            finderWindow.classList.add('minimizing');
-            finderWindow.classList.remove('restoring'); // Ensure no conflicting animation
-
-            finderWindow.addEventListener('animationend', function handler() {
-                finderWindow.style.display = 'none';
-                finderWindow.classList.remove('minimizing');
-                minimizedWindowsBar.classList.add('active'); // Show the bar
-                this.removeEventListener('animationend', handler);
-            });
-
-            // Handle click on the minimized tab to restore
-            tab.addEventListener('click', (e) => {
-                if (e.target.classList.contains('close-tab-btn')) {
-                    // If close button on tab is clicked, remove the tab and clear state
-                    e.stopPropagation(); // Prevent tab click from restoring
-                    delete minimizedWindows[type];
-                    tab.remove();
-                    if (Object.keys(minimizedWindows).length === 0) {
-                        minimizedWindowsBar.classList.remove('active');
-                    }
-                } else {
-                    restoreFinderWindow(type, tab);
-                }
-            });
-        }
-
-        function restoreFinderWindow(type, tabElement) {
-            const finderWindow = document.getElementById('finderMaterialsSection');
-            const minimizedWindowsBar = document.getElementById('minimizedWindowsBar');
-            const storedState = minimizedWindows[type];
-
-            if (!storedState) return; // No stored state for this window
-
-            // Remove the tab from the bar
-            tabElement.remove();
-            delete minimizedWindows[type];
-            if (Object.keys(minimizedWindows).length === 0) {
-                minimizedWindowsBar.classList.remove('active');
-            }
-
-            // Calculate start position for animation (center of the tab)
-            const tabRect = tabElement.getBoundingClientRect();
-            const startX = tabRect.left + tabRect.width / 2;
-            const startY = tabRect.top + tabRect.height / 2;
-
-            // Set CSS variables for animation
-            finderWindow.style.setProperty('--start-x', `${startX - window.innerWidth / 2}px`); // Relative to center
-            finderWindow.style.setProperty('--start-y', `${startY - window.innerHeight / 2}px`); // Relative to center
-
-            // Reset position and size before animation starts
-            finderWindow.style.display = 'flex';
-            finderWindow.style.left = `${storedState.left}px`;
-            finderWindow.style.top = `${storedState.top}px`;
-            finderWindow.style.width = `${storedState.width}px`;
-            finderWindow.style.height = `${storedState.height}px`;
-            finderWindow.style.transform = 'none'; // Ensure transform is not interfering initially
-
-            // Apply restore animation
-            finderWindow.classList.add('restoring');
-            finderWindow.classList.remove('minimizing'); // Ensure no conflicting animation
-
-            if (storedState.isFullscreen) {
-                finderWindow.classList.add('fullscreen');
-            }
-
-            finderWindow.addEventListener('animationend', function handler() {
-                finderWindow.classList.remove('restoring');
-                // Re-apply original transform for centering if not fullscreen
-                if (!storedState.isFullscreen) {
-                    finderWindow.style.transform = 'translate(-50%, -50%)';
-                }
-                this.removeEventListener('animationend', handler);
-            });
-        }
-
-        // Adjust view mode on window resize - ensure finder window state is handled
-        window.addEventListener('resize', () => {
-            const isDesktop = window.innerWidth >= 769;
-            const finderSection = document.getElementById('finderMaterialsSection');
-            const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
-            
-            if (isDesktop && currentMaterialViewMode === 'finder') {
-                finderSection.style.display = 'flex';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.add('hidden-on-desktop');
-            } else if (!isDesktop && currentMaterialViewMode === 'finder') {
-                finderSection.style.display = 'none';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-            } else if (isDesktop && currentMaterialViewMode === 'card') {
-                finderSection.style.display = 'none';
-                if (activeMaterialSectionId) document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
-            }
-            // If it's mobile and in card view, no change needed.
-
-            // Re-center finder window on resize if not fullscreen and not minimized
-            if (finderSection.style.display === 'flex' && !finderSection.classList.contains('fullscreen')) {
-                finderSection.style.left = '50%';
-                finderSection.style.top = '50%';
-                finderWindow.style.transform = 'translate(-50%, -50%)';
-            }
-        });
-
+        
         // --- PDF PREVIEW LOGIC ---
-        let pdfDoc = null; // Stores PDF document
-        let pageNum = 1; // Current page number
-
-        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
         const pdfCanvas = document.getElementById('pdfCanvas');
-        const pdfContext = pdfCanvas.getContext('2d');
-        const pdfPageNumSpan = document.getElementById('pdfPageNum');
-        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
-        const prevPdfPageBtn = document.getElementById('prevPdfPage');
-        const nextPdfPageBtn = document.getElementById('nextPdfPage');
-
-        prevPdfPageBtn.addEventListener('click', () => {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        });
-
-        nextPdfPageBtn.addEventListener('click', () => {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        });
+        const pdfContext = pdfCanvas?.getContext('2d');
 
         function showPdfPreviewModal(title, pdfUrl) {
-            document.getElementById('pdfPreviewTitle').textContent = title;
-            pdfPreviewModal.style.display = 'flex';
+            const modal = document.getElementById('pdfPreviewModal');
+            modal.innerHTML = `
+                <div class="modal-content">
+                     <span class="close-button">&times;</span>
+                     <h3 id="pdfPreviewTitle">${title}</h3>
+                     <div id="pdfCanvasContainer"><canvas id="pdfCanvas"></canvas></div>
+                     <div id="pdfControls">
+                         <button id="prevPdfPage">Previous</button>
+                         <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                         <button id="nextPdfPage">Next</button>
+                     </div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+            modal.querySelector('.close-button').onclick = () => modal.style.display = 'none';
+            document.getElementById('prevPdfPage').onclick = onPrevPage;
+            document.getElementById('nextPdfPage').onclick = onNextPage;
             loadPdf(pdfUrl);
         }
 
         async function loadPdf(pdfUrl) {
-            pdfDoc = null;
-            pageNum = 1;
-            pdfPageNumSpan.textContent = '';
-            pdfTotalPagesSpan.textContent = '';
-            pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height); // Clear canvas
-
             try {
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                pdfDoc = await loadingTask.promise;
-                pdfTotalPagesSpan.textContent = pdfDoc.numPages;
-                queueRenderPage(pageNum);
+                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                document.getElementById('pdfTotalPages').textContent = pdfDoc.numPages;
+                pageNum = 1;
+                renderPage(pageNum);
             } catch (error) {
                 console.error('Error loading PDF:', error);
                 showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
-                pdfPreviewModal.style.display = 'none'; // Close modal on error
             }
         }
 
-        let pageRendering = false;
-        let pageNumPending = null;
-
         function renderPage(num) {
             pageRendering = true;
-            pdfPageNumSpan.textContent = num;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.getElementById('pdfCanvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
 
-            // Fetch the page
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({ scale: 1.5 }); // Adjust scale as needed for better resolution
-                
-                // Set canvas dimensions to match viewport
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
-
-                // Render PDF page into canvas context
-                const renderContext = {
-                    canvasContext: pdfContext,
-                    viewport: viewport
-                };
-                const renderTask = page.render(renderContext);
-
-                // Wait for rendering to finish
-                renderTask.promise.then(function() {
+                const renderContext = { canvasContext: context, viewport: viewport };
+                page.render(renderContext).promise.then(() => {
                     pageRendering = false;
                     if (pageNumPending !== null) {
-                        // New page rendering is pending
                         renderPage(pageNumPending);
                         pageNumPending = null;
                     }
-                    updatePdfNavButtons();
                 });
-            }).catch(error => {
-                console.error('Error rendering PDF page:', error);
-                showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
-                pageRendering = false;
-                pageNumPending = null;
-                updatePdfNavButtons();
             });
+            document.getElementById('pdfPageNum').textContent = num;
         }
 
         function queueRenderPage(num) {
@@ -3569,10 +2347,20 @@
             }
         }
 
-        function updatePdfNavButtons() {
-            prevPdfPageBtn.disabled = pageNum <= 1;
-            nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+        function onPrevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
         }
+
+        function onNextPage() {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        // --- Initial App Setup ---
+        setupNav();
 
     </script>
 </body>
