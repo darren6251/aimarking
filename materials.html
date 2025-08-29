@@ -565,6 +565,55 @@
         margin-bottom: 0.25rem;
     }
 
+    /* Form and list containers for teacher sections */
+    .form-container, .list-container {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        width: 100%;
+        max-width: 900px; /* Adjust as needed for material page */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    .form-group input[type="text"],
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--focus-ring-color);
+    }
+    .error-message {
+        color: var(--accent-red);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+    .loading-indicator {
+        text-align: center;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-top: 1rem;
+    }
+
     /* Modals */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
     .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -753,6 +802,33 @@
           <div id="modalButtons"></div>
       </div>
   </div>
+  
+  <!-- Profile Edit Modal -->
+  <div id="profileEditModal" class="modal">
+      <div class="modal-content">
+          <span class="close-button profile-close-button">&times;</span>
+          <h3 id="profileModalTitle">Edit Profile</h3>
+          <div id="profileModalMessage">
+            <div class="form-group">
+                <label for="editUserName">Display Name:</label>
+                <input type="text" id="editUserName" class="modal-input">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="text" id="editUserEmail" class="modal-input" disabled>
+            </div>
+            <div class="form-group">
+                <label>Role:</label>
+                <input type="text" id="editUserRole" class="modal-input" disabled>
+            </div>
+          </div>
+          <div id="profileModalButtons" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+             <button id="saveProfileButton" class="btn-primary">Save Changes</button>
+             <button id="cancelProfileButton" class="logout-btn">Cancel</button>
+          </div>
+      </div>
+  </div>
+
 
   <!-- Firebase & App Script -->
   <script type="module">
@@ -786,6 +862,7 @@
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
+    const userDisplayNameSpan = document.getElementById('userDisplayName');
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -819,6 +896,7 @@
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
+            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 const userProfileDoc = await getDoc(userProfileRef);
@@ -875,7 +953,7 @@
     async function showApp() {
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
-        document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+        userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         
         initializeMaterialsPage();
     }
@@ -904,6 +982,7 @@
         }
         
         try {
+            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
             currentUserRole = roleToSet;
@@ -923,6 +1002,60 @@
         });
     });
 
+    // --- PROFILE EDITING ---
+    userDisplayNameSpan.addEventListener('click', async () => {
+        if (!currentUserId) {
+            showModal('Error', 'Please log in to edit your profile.');
+            return;
+        }
+
+        const profileEditModal = document.getElementById('profileEditModal');
+        const editUserNameInput = document.getElementById('editUserName');
+        const editUserEmailInput = document.getElementById('editUserEmail');
+        const editUserRoleInput = document.getElementById('editUserRole');
+        const saveProfileButton = document.getElementById('saveProfileButton');
+        const cancelProfileButton = document.getElementById('cancelProfileButton');
+
+        editUserNameInput.value = currentUserName || '';
+        editUserEmailInput.value = currentUserEmail || '';
+        editUserRoleInput.value = currentUserRole || '';
+
+        profileEditModal.style.display = 'flex';
+
+        const saveHandler = async () => {
+            const newName = editUserNameInput.value.trim();
+            if (!newName) {
+                editUserNameInput.style.border = '1px solid var(--accent-red)';
+                editUserNameInput.focus();
+                return;
+            }
+
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await updateDoc(userProfileRef, { name: newName });
+                currentUserName = newName;
+                userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
+                profileEditModal.style.display = 'none';
+                showModal('Success', 'Profile updated successfully!');
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                showModal('Error', `Failed to update profile: ${error.message}`);
+            }
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        const cancelHandler = () => {
+            profileEditModal.style.display = 'none';
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        saveProfileButton.addEventListener('click', saveHandler);
+        cancelProfileButton.addEventListener('click', cancelHandler);
+        document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
+    });
+
     // --- MATERIALS PAGE SPECIFIC LOGIC ---
     const materialsNavButtons = document.querySelectorAll('.materials-nav .tab');
     const folderTitle = document.getElementById('folderTitle');
@@ -935,8 +1068,12 @@
     const uploadBtn = document.getElementById('uploadBtn'); // Placeholder for upload, will not implement actual upload in this file
 
     let allExercises = []; // Global array to store all exercises
+    let allStudents = []; // Needed to display student names in teacher view
 
     async function initializeMaterialsPage() {
+        // Fetch all students for teacher view display names
+        await loadAllStudentsForTeacherView();
+
         // Set initial active folder based on URL parameter or default to 'exercises'
         const urlParams = new URLSearchParams(window.location.search);
         const initialFolder = urlParams.get('folder') || 'exercises'; // Default to exercises
@@ -1032,10 +1169,34 @@
         });
     });
 
+    // Helper to load all student names for teacher view
+    async function loadAllStudentsForTeacherView() {
+        const usersRef = collection(db, `artifacts/${appId}/users`);
+        const studentProfiles = [];
+        try {
+            const qSnapUsers = await getDocs(usersRef);
+            for (const userDoc of qSnapUsers.docs) {
+                const userId = userDoc.id;
+                // Corrected path for user profile: collection/document/collection/document/collection
+                const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
+                const profileDoc = await getDoc(profileRef);
+                if (profileDoc.exists() && profileDoc.data().role === 'student') {
+                    studentProfiles.push({ id: userId, name: profileDoc.data().name || profileDoc.data().email });
+                }
+            }
+            allStudents = studentProfiles;
+        } catch (error) {
+            console.error("Error loading all students for teacher view:", error);
+            showModal('Error', `Failed to load student names for display: ${error.message}`);
+        }
+    }
+
+
     // --- Exercises for Sale Logic ---
     async function loadExercises() {
         fileGrid.innerHTML = '<p class="loading-indicator">Loading exercises...</p>';
-        const exercisesRef = collection(db, `artifacts/${appId}/public/exercises`);
+        // Corrected public path: collection/document/collection/document/collection
+        const exercisesRef = collection(db, `artifacts/${appId}/public/data/exercises`);
         try {
             const qSnap = await getDocs(query(exercisesRef, orderBy('createdAt', 'desc')));
             allExercises = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1067,13 +1228,18 @@
                         cardContent += `<button class="buy-button btn-primary" data-id="${exercise.id}">Buy Now</button>`;
                     }
                 } else if (currentUserRole === 'teacher') {
+                    const purchasedStudentNames = (exercise.purchasedBy || [])
+                        .map(studentId => {
+                            const student = allStudents.find(s => s.id === studentId);
+                            return student ? `<li>${student.name} (${studentId})</li>` : `<li>Unknown Student (${studentId})</li>`;
+                        })
+                        .join('');
+
                     cardContent += `
                         <div class="teacher-exercise-details">
                             <h5>Purchased by:</h5>
                             <ul id="purchasedByList-${exercise.id}">
-                                ${exercise.purchasedBy && exercise.purchasedBy.length > 0
-                                    ? exercise.purchasedBy.map(userId => `<li>${userId}</li>`).join('')
-                                    : '<li>No students have purchased this yet.</li>'}
+                                ${purchasedStudentNames || '<li>No students have purchased this yet.</li>'}
                             </ul>
                             <button class="buy-button logout-btn" data-id="${exercise.id}">Delete Exercise</button>
                         </div>
@@ -1097,7 +1263,8 @@
         if (!description) { showModal('Error', 'Exercise description cannot be empty.'); return; }
 
         try {
-            const exercisesRef = collection(db, `artifacts/${appId}/public/exercises`);
+            // Corrected public path: collection/document/collection/document/collection
+            const exercisesRef = collection(db, `artifacts/${appId}/public/data/exercises`);
             await addDoc(exercisesRef, {
                 name: name,
                 description: description,
@@ -1122,7 +1289,8 @@
                 showModal('Confirm Purchase', 'Are you sure you want to "purchase" this exercise?', [
                     { text: 'Confirm', className: 'btn-primary', onClick: async () => {
                         try {
-                            const exerciseRef = doc(db, `artifacts/${appId}/public/exercises`, exerciseId);
+                            // Corrected public path: collection/document/collection/document/collection
+                            const exerciseRef = doc(db, `artifacts/${appId}/public/data/exercises`, exerciseId);
                             await updateDoc(exerciseRef, {
                                 purchasedBy: arrayUnion(currentUserId) // Add student's ID to purchasedBy array
                             });
@@ -1139,7 +1307,8 @@
                 showModal('Confirm Delete', 'Are you sure you want to delete this exercise?', [
                     { text: 'Delete', className: 'logout-btn', onClick: async () => {
                         try {
-                            await deleteDoc(doc(db, `artifacts/${appId}/public/exercises`, exerciseId));
+                            // Corrected public path: collection/document/collection/document/collection
+                            await deleteDoc(doc(db, `artifacts/${appId}/public/data/exercises`, exerciseId));
                             showModal('Success', 'Exercise deleted successfully!');
                             await loadExercises(); // Reload to update UI
                         } catch (error) {
