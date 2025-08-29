@@ -412,13 +412,19 @@
         color: var(--bg-primary);
     }
 
-    .materials-grid {
+    /* --- OLD MATERIAL PAGE SPECIFIC CSS (from reference.txt) --- */
+    .filters-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .grid-container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1.5rem;
         width: 100%;
-        max-width: 1200px;
-        margin-top: 1.5rem;
     }
 
     .material-card {
@@ -429,7 +435,6 @@
         display: flex;
         flex-direction: column;
         transition: transform 0.2s, box-shadow 0.2s;
-        text-decoration: none; /* For links */
         color: var(--text-primary);
     }
 
@@ -438,251 +443,692 @@
         box-shadow: 0 8px 16px rgba(0,0,0,0.3);
     }
 
-    .material-thumbnail {
+    .material-card-thumbnail {
+        position: relative;
         width: 100%;
-        height: 180px; /* Fixed height for thumbnails */
-        object-fit: cover;
-        display: block;
+        height: 180px; /* Consistent thumbnail height */
+        background-color: var(--bg-primary);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
         border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
     }
-    
-    .material-content {
+    .material-card-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .play-button-overlay {
+        position: absolute;
+        font-size: 3rem;
+        color: rgba(255,255,255,0.8);
+        text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        pointer-events: none; /* Allows click to pass through to the parent */
+    }
+
+    .material-card-content {
         padding: 1rem;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
     }
-    
-    .material-content h3 {
+
+    .material-card-content h3 {
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
         color: var(--text-primary);
     }
-
-    .material-content p {
+    .material-card-content p {
         font-size: 0.9rem;
         color: var(--text-secondary);
         line-height: 1.4;
-        flex-grow: 1; /* Allow description to take available space */
+        flex-grow: 1;
     }
 
-    .material-actions {
+    .download-btn, .add-to-cart-btn {
         margin-top: 1rem;
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap; /* Allow buttons to wrap */
-        justify-content: flex-end; /* Align buttons to the right */
+        align-self: flex-start; /* Align button to start of flex container */
+        width: auto;
     }
 
-    /* Teacher view specific */
-    .teacher-materials-section {
+    /* Store layout specific */
+    .store-layout {
+        display: flex;
+        gap: 2rem;
         width: 100%;
         max-width: 1200px;
+        margin-top: 1.5rem;
+        align-items: flex-start; /* Align items to the top */
     }
-
-    .teacher-materials-section .form-container {
+    .product-grid {
+        flex: 3;
+    }
+    .shopping-cart {
+        flex: 1;
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        position: sticky; /* Keep cart visible */
+        top: 80px; /* Adjust based on header height */
     }
-    .teacher-materials-section .form-container label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+    .shopping-cart h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
         color: var(--text-primary);
     }
-    .teacher-materials-section .form-container input[type="text"],
-    .teacher-materials-section .form-container input[type="url"],
-    .teacher-materials-section .form-container input[type="number"],
-    .teacher-materials-section .form-container select,
-    .teacher-materials-section .form-container textarea {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
-        font-size: 1rem;
+    #cart-items {
+        min-height: 100px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
         margin-bottom: 1rem;
     }
-
-    .teacher-materials-section .form-container button.btn-primary {
-        width: auto; /* Override default 100% width for forms */
-        margin-top: 1rem;
-    }
-    
-    .teacher-materials-section .list-container {
-        margin-top: 1.5rem;
-    }
-    .teacher-materials-section .list-item {
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
+    .cart-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 1rem;
-        color: var(--text-primary);
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed var(--border-color);
     }
-    .teacher-materials-section .list-item .actions button {
-        margin-left: 0.5rem;
-        padding: 6px 10px;
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    .remove-from-cart-btn {
+        background: none;
+        border: none;
+        color: var(--accent-red);
+        cursor: pointer;
         font-size: 0.8rem;
+        margin-left: 0.5rem;
     }
-    
-    /* Modals */
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-    .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
-    #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-    .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
-    .close-button:hover { color: var(--text-primary); }
-    #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-
-    #modalInput {
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 10px;
+    .summary-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+    #promo-discount-line {
+        color: var(--accent-red);
+    }
+    #cart-total-price {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--accent-primary);
+    }
+    .promo-code-section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    .promo-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    #promoCodeInput {
+        flex-grow: 1;
+        padding: 0.6rem;
         border-radius: 6px;
-        width: 100%;
-        margin-top: 10px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
     }
-    #modalInput:focus {
+    #promoCodeInput:focus {
         outline: none;
         border-color: var(--accent-primary);
         box-shadow: 0 0 0 2px var(--focus-ring-color);
     }
-
-    /* PDF Preview Specific Styles */
-    #pdfPreviewModal .modal-content { 
-        max-width: 90vw; 
-        max-height: 90vh; 
-        width: auto; 
-        height: auto; 
-        padding: 15px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-    }
-    #pdfCanvasContainer { 
-        width: 100%; 
-        flex-grow: 1; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        overflow: auto; 
-        margin-bottom: 10px; 
-    }
-    #pdfCanvas { 
-        border: 1px solid var(--border-color); 
-        display: block; 
-        max-width: 100%; 
-        height: auto; 
-    }
-    #pdfControls button { 
-        background-color: var(--bg-tertiary); 
-        color: var(--text-primary); 
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-    }
-    #pdfControls button:hover:not(:disabled) { 
-        background-color: #444; 
-    }
-    #pdfControls {
+    .promo-display {
         display: flex;
-        gap: 1rem;
         align-items: center;
+        justify-content: space-between;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
         margin-top: 1rem;
     }
-    #pdfPageNum, #pdfTotalPages {
+    .remove-promo-btn {
+        background: none;
+        border: none;
+        color: var(--accent-red);
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    .promo-error {
+        color: var(--accent-red);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+    #cart-validation-message {
+        font-size: 0.9rem;
+        color: var(--accent-red);
+        margin-top: 1rem;
+        text-align: center;
+    }
+    #checkout-btn {
+        width: 100%;
+        margin-top: 1.5rem;
+    }
+
+    /* Teacher View - Folder Structure */
+    .folder-view {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .content-item {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        overflow: hidden; /* For nested containers */
+    }
+    .content-item:last-child {
+        margin-bottom: 0;
+    }
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        cursor: pointer;
+        background-color: var(--bg-primary);
+        position: relative;
+    }
+    .content-header:hover {
+        background-color: var(--bg-tertiary);
+    }
+    .content-header h3, .content-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+    .collapse-arrow {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid var(--text-secondary);
+        margin-left: 0.5rem;
+        transition: transform 0.2s ease-in-out;
+    }
+    .content-header[aria-expanded="true"] .collapse-arrow {
+        transform: rotate(-180deg);
+    }
+
+    .item-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .item-actions .btn-primary, .item-actions .logout-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    .item-actions .download-item-btn {
+        text-decoration: none; /* Ensure link buttons look good */
+    }
+
+    .nested-container {
+        display: none;
+        padding: 0 1rem 1rem 2rem;
+        border-top: 1px solid var(--border-color);
+        background-color: var(--bg-secondary);
+    }
+    .nested-container.expanded {
+        display: block;
+    }
+    .sub-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed var(--border-color);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+    .sub-item:last-child {
+        border-bottom: none;
+    }
+    .sub-item.dragging {
+        opacity: 0.5;
+        border: 2px dashed var(--accent-primary);
+    }
+    .content-item.drag-over > .content-header {
+        background-color: var(--bg-tertiary);
+        box-shadow: 0 0 0 2px var(--accent-primary);
+    }
+
+    /* Teacher Promo Code List */
+    .promo-code-list {
+        margin-top: 1.5rem;
+    }
+    .promo-code-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .promo-code-item span {
+        flex: 1;
+        text-align: center;
+    }
+    .promo-code-item .actions {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    .promo-code-item .actions button {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+
+    /* Modals for adding/editing materials */
+    .modal-form-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+    .modal-form-buttons .loading-indicator {
+        margin: 0;
+        padding: 0;
+        text-align: right;
+    }
+
+    /* Video Preview Modal */
+    #videoPreviewModal .modal-content {
+        max-width: 90vw;
+        max-height: 90vh;
+        width: auto;
+        height: auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #videoPreviewContent {
+        width: 100%;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        position: relative;
+        height: 0;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    #videoPreviewContent iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    /* Finder Window */
+    #finderMaterialsSection {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 80%;
+        max-width: 1000px;
+        max-height: 700px;
+        background-color: var(--finder-bg-primary);
+        border: 1px solid var(--finder-border-color);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        z-index: 50;
+        resize: both; /* Allow resizing */
+        overflow: auto; /* For resize handle visibility */
+        display: none; /* Hidden by default */
+    }
+
+    .finder-title-bar {
+        padding: 8px 15px;
+        background-color: var(--finder-titlebar-bg);
+        border-bottom: 1px solid var(--finder-border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 500;
+        color: var(--finder-text-primary);
+        cursor: grab;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .finder-title-bar:active { cursor: grabbing; }
+
+    .finder-title-bar-buttons button {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: var(--finder-text-secondary);
+        cursor: pointer;
+        margin-left: 8px;
+        padding: 0 5px;
+    }
+    .finder-title-bar-buttons button:hover {
+        color: var(--finder-text-primary);
+    }
+    .finder-title-bar-buttons .close-btn { color: var(--accent-red); }
+
+    .finder-content {
+        display: flex;
+        flex-grow: 1;
+        overflow: hidden;
+    }
+
+    .finder-sidebar {
+        width: 200px;
+        background-color: var(--finder-bg-secondary);
+        border-right: 1px solid var(--finder-border-color);
+        padding: 1rem;
+        flex-shrink: 0;
+        overflow-y: auto;
+    }
+
+    .finder-sidebar h4 {
+        font-size: 1rem;
+        color: var(--finder-text-secondary);
+        margin-bottom: 0.8rem;
+    }
+
+    .finder-sidebar-nav button {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+        margin-bottom: 5px;
+        background: none;
+        border: none;
+        text-align: left;
+        color: var(--finder-text-primary);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .finder-sidebar-nav button:hover {
+        background-color: var(--finder-hover-bg);
+    }
+    .finder-sidebar-nav button.active {
+        background-color: var(--finder-active-bg);
+        color: var(--finder-active-text);
         font-weight: 600;
     }
 
-    /* File Drop Zones */
-    .drop-zone { 
-        border: 2px dashed var(--border-color); 
-        border-radius: 8px; 
-        min-height: 100px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: center; 
-        color: var(--text-secondary); 
-        font-size: 1rem; 
-        margin-bottom: 1.5rem; 
-        cursor: pointer; 
-        word-wrap: break-word; 
-        padding: 1rem; 
-        text-align: center; 
-    }
-    .drop-zone.highlight { 
-        border-color: var(--accent-primary); 
-        background: rgba(245, 245, 245, .05); 
-    }
-    body.light-theme .drop-zone.highlight {
-        background: rgba(10, 10, 10, .05);
-    }
-    .text-gray-500 { color: var(--text-secondary); }
-    .text-sm { font-size: 0.875rem; }
-    .block { display: block; }
-    .text-center { text-align: center; }
-    .mt-2 { margin-top: 0.5rem; }
-    .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
-    .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
-
-    /* --- FOOTER --- */
-    footer { 
-        text-align: right; 
-        padding: 10px 20px; 
-        color: var(--text-secondary); 
-        font-size: 0.875rem; 
-        z-index: 100; 
-        width: 100%; 
-        margin-top: auto;
-    }
-    footer a { 
-        color: var(--text-secondary); 
-        text-decoration: none; 
-    }
-    footer a:hover { 
-        text-decoration: underline; 
-        color: var(--text-primary); 
+    .finder-main-panel {
+        flex-grow: 1;
+        padding: 1rem;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* Responsive adjustments */
+    .finder-breadcrumbs {
+        color: var(--finder-text-secondary);
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+    .finder-breadcrumbs span {
+        cursor: pointer;
+    }
+    .finder-breadcrumbs span:hover {
+        color: var(--finder-text-primary);
+        text-decoration: underline;
+    }
+    .finder-breadcrumbs .current {
+        font-weight: 600;
+        color: var(--finder-text-primary);
+        cursor: default;
+        text-decoration: none;
+    }
+
+    .finder-folder-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    .finder-folder-item {
+        background-color: var(--finder-bg-secondary);
+        border: 1px solid var(--finder-border-color);
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s;
+        font-size: 0.85rem;
+        color: var(--finder-text-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100px;
+    }
+    .finder-folder-item:hover {
+        background-color: var(--finder-hover-bg);
+        border-color: var(--accent-primary);
+    }
+    .finder-folder-item.active {
+        background-color: var(--finder-active-bg);
+        color: var(--finder-active-text);
+    }
+    .finder-folder-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--finder-text-secondary); /* Default icon color */
+    }
+    .finder-folder-item.active .finder-folder-icon {
+        color: var(--finder-active-text); /* Active icon color */
+    }
+
+    .finder-file-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .finder-file-item {
+        display: flex;
+        align-items: center;
+        background-color: var(--finder-bg-secondary);
+        border: 1px solid var(--finder-border-color);
+        border-radius: 6px;
+        padding: 8px 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: var(--finder-text-primary);
+    }
+    .finder-file-item:hover {
+        background-color: var(--finder-hover-bg);
+    }
+    .finder-file-item-icon {
+        margin-right: 8px;
+        font-size: 1.2rem;
+        color: var(--finder-text-secondary);
+    }
+    .finder-file-item-name {
+        flex-grow: 1;
+    }
+    .finder-file-item-actions button {
+        background: none;
+        border: none;
+        color: var(--finder-text-secondary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-left: 8px;
+    }
+    .finder-file-item-actions button:hover {
+        color: var(--finder-text-primary);
+    }
+    .finder-empty-message {
+        color: var(--finder-text-secondary);
+        text-align: center;
+        padding: 2rem;
+    }
+    .finder-search-input {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--finder-border-color);
+        background-color: var(--finder-bg-secondary);
+        color: var(--finder-text-primary);
+    }
+    .finder-search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px var(--focus-ring-color);
+    }
+    .material-view-toggle {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        font-weight: 600;
+        margin-left: 1rem;
+    }
+    .material-view-toggle:hover {
+        background-color: var(--bg-tertiary);
+        border-color: var(--text-secondary);
+    }
+    .hidden-on-desktop {
+        display: none !important;
+    }
+
+    /* Homework Submission Section */
+    #submissionSection {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 1200px;
+    }
+    .submission-main-container {
+        display: flex;
+        gap: 2rem;
+        width: 100%;
+        flex-grow: 1;
+        align-items: flex-start;
+    }
+    .submission-sidebar {
+        flex: 1;
+        min-width: 250px;
+        max-width: 300px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 80px;
+    }
+    .submission-content {
+        flex: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .assignment-card, .student-submission-card {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .assignment-card h3, .student-submission-card h4 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    .assignment-card p, .student-submission-card p {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+    .assignment-actions, .submission-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .assignment-actions button, .submission-actions button {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    #submissionsListContainer {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    .student-submission-card {
+        background-color: var(--bg-primary); /* Lighter background for nested cards */
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    .student-submission-card h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    .student-submission-card .file-preview {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+    }
+    .my-submissions-container {
+        margin-top: 2rem;
+    }
+
+    /* Media Queries for responsiveness */
     @media (max-width: 768px) {
-        header {
+        .store-layout {
             flex-direction: column;
-            height: auto;
-            padding: 1rem;
-            align-items: flex-start;
         }
-        .header-actions {
-            margin-left: 0;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .dropdown-menu {
-            width: 100%; /* Full width for dropdown on mobile */
-        }
-        .dropdown-menu-content {
-            min-width: unset;
+        .shopping-cart {
+            position: static; /* Remove sticky positioning on mobile */
             width: 100%;
         }
-        main {
-            padding: 16px;
+        .finder-content {
+            flex-direction: column;
         }
-        .materials-grid {
-            grid-template-columns: 1fr; /* Single column on mobile */
+        .finder-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--finder-border-color);
         }
-        .teacher-materials-section .form-container button.btn-primary {
+        #finderMaterialsSection {
+            width: 95%;
+            height: 95%;
+            resize: none; /* Disable resizing on mobile */
+        }
+        .submission-main-container {
+            flex-direction: column;
+        }
+        .submission-sidebar, .submission-content {
+            max-width: 100%;
+            position: static;
+        }
+        .material-view-toggle {
+            margin-left: 0;
+            margin-top: 1rem;
             width: 100%;
         }
     }
@@ -742,46 +1188,36 @@
 
     <!-- MAIN -->
     <main>
-        <h2 class="section-title" id="folderTitle">Materials</h2>
+        <!-- Dynamic content will be rendered here by JS -->
+        <section id="tutorialSection" style="display: none;"></section>
+        <section id="pastPapersSection" style="display: none;"></section>
+        <section id="exerciseSection" style="display: none;"></section>
 
-        <!-- Teacher View Section (initially hidden) -->
-        <div id="teacherView" class="teacher-materials-section" style="display:none;">
-            <div class="form-container">
-                <h3>Add New Item</h3>
-                <div class="form-group">
-                    <label for="itemName">Name/Title</label>
-                    <input type="text" id="itemName" placeholder="e.g., Algebra Basics, 2024 Paper 1">
+        <!-- Finder Window (for desktop student view) -->
+        <div id="finderMaterialsSection" style="display: none;">
+            <div class="finder-title-bar">
+                <span id="finderTitle">Finder</span>
+                <div class="finder-title-bar-buttons">
+                    <button class="close-btn" id="closeFinderButton">&times;</button>
                 </div>
-                <div class="form-group" id="itemPriceGroup" style="display:none;">
-                    <label for="itemPrice">Price (USD)</label>
-                    <input type="number" id="itemPrice" step="0.01" min="0" value="0.00">
+            </div>
+            <div class="finder-content">
+                <div class="finder-sidebar">
+                    <h4>Folders</h4>
+                    <nav class="finder-sidebar-nav" id="finderSidebarNav">
+                        <!-- Nav buttons will be injected here -->
+                    </nav>
                 </div>
-                <div class="form-group">
-                    <label for="itemLink">YouTube/File Link (or upload)</label>
-                    <input type="url" id="itemLink" placeholder="e.g., https://youtu.be/abcxyz or https://example.com/doc.pdf">
-                </div>
-                <div class="form-group">
-                    <label>Upload File (PDF/Image/Video - for small files)</label>
-                    <div id="itemDropZone" class="drop-zone">
-                        <span>Drag & Drop File Here or click to select</span>
-                        <input type="file" id="itemFile" accept="image/*,application/pdf,video/*" hidden>
+                <div class="finder-main-panel">
+                    <div class="finder-breadcrumbs" id="finderBreadcrumbs">
+                        <!-- Breadcrumbs will be injected here -->
                     </div>
-                    <span id="itemFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <button id="addItemButton" class="btn-primary">Add Item</button>
-            </div>
-
-            <div class="list-container">
-                <h3>Existing Items</h3>
-                <div id="materialsList">
-                    <p class="loading-indicator">Loading items...</p>
+                    <input type="text" id="finderSearchInput" class="finder-search-input" placeholder="Search...">
+                    <div id="finderContentGrid" class="finder-folder-grid">
+                        <!-- Folders/Files will be injected here -->
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Student View Section (default) -->
-        <div id="studentView" class="materials-grid">
-            <p class="loading-indicator">Loading materials...</p>
         </div>
     </main>
     <!-- FOOTER -->
@@ -842,17 +1278,152 @@
         </div>
     </div>
 
+    <!-- Video Preview Modal -->
+    <div id="videoPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="videoPreviewTitle"></h3>
+            <div id="videoPreviewContent">
+                <!-- Video will be embedded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for Teacher's Add/Edit Forms -->
+
+    <!-- Add Video Modal -->
+    <div id="addVideoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Add New Video</h3>
+            <form id="addVideoForm">
+                <input type="hidden" id="videoParentId1" name="parentId1">
+                <input type="hidden" id="videoParentId2" name="parentId2">
+                <div class="form-group">
+                    <label for="tutorialTitle">Video Title</label>
+                    <input type="text" id="tutorialTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="tutorialLink">YouTube Link or Embed Code</label>
+                    <input type="text" id="tutorialLink" placeholder="e.g., https://youtu.be/videoid OR <iframe...>">
+                </div>
+                <div class="form-group">
+                    <img id="tutorialThumbnailPreview" style="max-width: 100%; height: auto; display: none; border-radius: 8px;">
+                </div>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Add Video</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('addVideoModal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Past Paper Modal -->
+    <div id="addPastPaperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Add New Past Paper</h3>
+            <form id="addPastPaperForm">
+                <input type="hidden" id="paperParentId1" name="parentId1">
+                <input type="hidden" id="paperParentId2" name="parentId2">
+                <div class="form-group">
+                    <label for="pastPaperName">Paper Name</label>
+                    <input type="text" id="pastPaperName" required>
+                </div>
+                <div class="form-group">
+                    <label for="pastPaperLink">Direct Link (PDF or image) or Upload File</label>
+                    <input type="url" id="pastPaperLink" placeholder="e.g., https://example.com/paper.pdf">
+                </div>
+                <div class="form-group">
+                    <label>Upload PDF/Image</label>
+                    <div id="pastPaperDropZone" class="drop-zone">
+                        <span>Drag & Drop File Here or click to select</span>
+                        <input type="file" id="pastPaperFile" accept=".pdf,image/*" hidden>
+                    </div>
+                    <span id="pastPaperFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Add Paper</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('addPastPaperModal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Past Paper Modal (NEW) -->
+    <div id="editPastPaperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Past Paper</h3>
+            <form id="editPastPaperForm">
+                <input type="hidden" id="editPaperId" name="itemId">
+                <input type="hidden" id="editPaperParentId1" name="parentId1">
+                <input type="hidden" id="editPaperParentId2" name="parentId2">
+                <div class="form-group">
+                    <label for="editPastPaperName">Paper Name</label>
+                    <input type="text" id="editPastPaperName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPastPaperLink">Direct Link (PDF or image)</label>
+                    <input type="url" id="editPastPaperLink" required placeholder="e.g., https://example.com/paper.pdf">
+                </div>
+                <p class="text-gray-500 text-sm block text-center mt-2">Note: File upload is not supported for editing. Please update the link directly if needed.</p>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Add Exercise Modal -->
+    <div id="addExerciseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Add New Exercise</h3>
+            <form id="addExerciseForm">
+                <input type="hidden" id="exerciseParentId1" name="parentId1">
+                <input type="hidden" id="exerciseParentId2" name="parentId2">
+                <div class="form-group">
+                    <label for="exerciseName">Exercise Name</label>
+                    <input type="text" id="exerciseName" required>
+                </div>
+                <div class="form-group">
+                    <label for="exercisePrice">Price (USD)</label>
+                    <input type="number" id="exercisePrice" step="0.01" min="0" value="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="exerciseLink">Direct Link (PDF or image) or Upload File</label>
+                    <input type="url" id="exerciseLink" placeholder="e.g., https://example.com/exercise.pdf">
+                </div>
+                <div class="form-group">
+                    <label>Upload PDF/Image</label>
+                    <div id="exerciseDropZone" class="drop-zone">
+                        <span>Drag & Drop File Here or click to select</span>
+                        <input type="file" id="exerciseFile" accept=".pdf,image/*" hidden>
+                    </div>
+                    <span id="exerciseFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Add Exercise</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('addExerciseModal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
   <!-- Firebase & App Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // --- IMPORTANT CONFIGURATION ---
     const TEACHER_CODE = "Derren0625"; // Example teacher code
     const STUDENT_CODE = "STUDENT456"; // Example student code
+    const STRIPE_PAYMENT_LINK = "https://example.com/stripe-checkout"; // Replace with your actual Stripe checkout link
 
     // Firebase Configuration (Replace with your actual Firebase config)
     const firebaseConfig = {
@@ -872,6 +1443,11 @@
 
     let app, db, auth, storage;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
+    let shoppingCart = [];
+    let appliedPromoCode = null;
+    let geminiChatHistory = []; // For chat page only
+    let currentAiSource = 'gemini-api'; // For chat page only
+
 
     // --- AUTH & INITIALIZATION ---
     const authWrapper = document.getElementById('authWrapper');
@@ -968,7 +1544,13 @@
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-        initializeMaterialsPage(); // Call the main function to initialize this page
+        initializeAllMaterialSections(); // Use the existing function to setup material sections
+        // Determine which section to show based on URL params or default
+        const urlParams = new URLSearchParams(window.location.search);
+        const folder = urlParams.get('folder') || 'tutorials';
+        const sectionId = materialsConfig[folder]?.sectionId || 'tutorialSection';
+        showSection(sectionId); // Show the initial material section
+        checkForSuccessfulPurchase(); // Check for Stripe redirect
     }
 
     async function handleGoogleSignIn() {
@@ -1068,85 +1650,1514 @@
         document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
     });
 
+    // --- NAVIGATION & UI (from reference.txt) ---
+    let currentMaterialViewMode = 'card'; // 'card' or 'finder'
 
-    // --- MATERIALS PAGE SPECIFIC LOGIC ---
-    const folderTitle = document.getElementById('folderTitle');
-    const teacherView = document.getElementById('teacherView');
-    const studentView = document.getElementById('studentView');
-    const materialsList = document.getElementById('materialsList'); // For teacher view
-    
-    // Form elements for teacher view
-    const itemNameInput = document.getElementById('itemName');
-    const itemPriceGroup = document.getElementById('itemPriceGroup');
-    const itemPriceInput = document.getElementById('itemPrice');
-    const itemLinkInput = document.getElementById('itemLink');
-    const itemDropZone = document.getElementById('itemDropZone');
-    const itemFileInput = document.getElementById('itemFile');
-    const itemFileNameDisplay = document.getElementById('itemFileName');
-    const addItemButton = document.getElementById('addItemButton');
+    // This function needs to be adapted for materials.html as it dynamically builds sections.
+    // Instead of showSection, we'll use renderMaterialSection.
+    function renderMaterialSection(type) {
+        const config = materialsConfig[type];
+        const sectionIdToShow = config.sectionId;
 
-    let currentFolder = ''; // Stores the current folder being viewed (e.g., 'tutorials', 'pastpapers', 'exercises')
+        // Hide all material sections first
+        document.querySelectorAll('main section[id$="Section"]').forEach(section => {
+            section.style.display = 'none';
+            section.style.opacity = '0';
+        });
 
-    // Helper to get collection path based on folder
-    function getMaterialCollectionRef(folder) {
-        return collection(db, `artifacts/${appId}/public/data/${folder}`);
-    }
+        const targetSection = document.getElementById(sectionIdToShow);
+        if (targetSection) {
+            targetSection.style.display = 'block';
+            setTimeout(() => targetSection.style.opacity = '1', 10);
+        }
 
-    async function initializeMaterialsPage() {
-        const urlParams = new URLSearchParams(window.location.search);
-        currentFolder = urlParams.get('folder') || 'tutorials'; // Default to tutorials
-
-        folderTitle.textContent = formatFolderName(currentFolder);
-        updateActiveHeaderLink(currentFolder);
-
-        if (currentFolder === 'exercises') {
-            itemPriceGroup.style.display = 'block'; // Show price input for exercises
-        } else {
-            itemPriceGroup.style.display = 'none';
+        // Handle visibility of finder window based on section and screen size
+        const finderSection = document.getElementById('finderMaterialsSection');
+        const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(sectionIdToShow);
+        
+        if (isMaterialSection && window.innerWidth >= 769) { // Desktop
+            if (currentMaterialViewMode === 'finder') {
+                finderSection.style.display = 'flex';
+                // Hide card view if finder is active
+                targetSection.classList.add('hidden-on-desktop');
+                showFinderView(type); // Render finder view content
+            } else {
+                finderSection.style.display = 'none';
+                targetSection.classList.remove('hidden-on-desktop');
+                // Ensure card view is rendered for the current folder
+                if (currentUserRole !== 'teacher') {
+                     renderStudentItems(type);
+                }
+            }
+        } else { // Mobile or non-material section
+            finderSection.style.display = 'none';
+            targetSection.classList.remove('hidden-on-desktop');
+            // Always render card view on mobile if it's a student view
+            if (currentUserRole !== 'teacher') {
+                renderStudentItems(type);
+            }
         }
 
         if (currentUserRole === 'teacher') {
-            teacherView.style.display = 'block';
-            studentView.style.display = 'none';
-            setupTeacherMaterialForm();
-            await loadAllItems(currentFolder);
-        } else {
-            teacherView.style.display = 'none';
-            studentView.style.display = 'grid'; // Ensure grid display for student view
-            await loadAllItems(currentFolder);
+            document.getElementById(`teacher-${type}-view`).style.display = 'block';
+            document.getElementById(`student-${type}-view`).style.display = 'none';
+            // Reload teacher view content
+            renderContent(type, `level1-${type}-container`, 1);
+            if (type === 'exercises') {
+                loadPromoCodesForTeacher();
+            }
+        } else { // Student
+            document.getElementById(`teacher-${type}-view`).style.display = 'none';
+            document.getElementById(`student-${type}-view`).style.display = 'block';
+            renderStudentItems(type);
         }
     }
 
-    function formatFolderName(folder) {
-        switch(folder) {
-            case 'tutorials': return 'Tutorial Videos';
-            case 'pastpapers': return 'Past Papers';
-            case 'exercises': return 'Exercises for Sale';
-            default: return 'Materials';
+
+    function setupSectionToggle() {
+        // Materials dropdown buttons
+        document.getElementById('headerTutorialsLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderMaterialSection('tutorials');
+            updateActiveHeaderLink('tutorials');
+        });
+        document.getElementById('headerPastPapersLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderMaterialSection('pastPapers');
+            updateActiveHeaderLink('pastPapers');
+        });
+        document.getElementById('headerExercisesLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderMaterialSection('exercises');
+            updateActiveHeaderLink('exercises');
+        });
+        
+        document.getElementById('userDisplayName')?.addEventListener('click', () => {
+             // For profile editing, we don't need to use the old showSection,
+             // as the modal is self-contained.
+             // Original: showSection('profileSection');
+        });
+    }
+    setupSectionToggle(); // Setup header links
+    
+    // --- REFACTORED MATERIALS MANAGEMENT (from reference.txt, adapted) ---
+    const materialsConfig = {
+        tutorials: {
+            sectionId: 'tutorialSection',
+            collectionName: 'tutorials',
+            title: 'Tutorial Videos',
+            level1: 'Subject',
+            level2: 'Topic',
+            level3: 'Video',
+            modalId: 'addVideoModal',
+            isPaid: false
+        },
+        pastPapers: {
+            sectionId: 'pastPapersSection',
+            collectionName: 'pastPapers',
+            title: 'Past Papers',
+            level1: 'Subject',
+            level2: 'Year',
+            level3: 'Paper',
+            modalId: 'addPastPaperModal',
+            editModalId: 'editPastPaperModal', // New: Add edit modal ID
+            isPaid: false
+        },
+        exercises: {
+            sectionId: 'exerciseSection',
+            collectionName: 'exercises',
+            title: 'Exercises for Sale',
+            level1: 'Subject',
+            level2: 'Topic',
+            level3: 'Exercise',
+            modalId: 'addExerciseModal',
+            isPaid: true
+        }
+    };
+
+    function getPath(type, ids = []) {
+        const config = materialsConfig[type];
+        const collection = config.collectionName;
+        let pathParts = [`artifacts/${appId}/public/data/${collection}`];
+
+        if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
+        if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+        
+        return pathParts.join('/');
+    }
+
+    function initializeAllMaterialSections() {
+        for (const type in materialsConfig) {
+            setupMaterialSection(type);
+        }
+        // Add delegated event listener for YouTube thumbnails (now in renderStudentItems)
+        
+        setupFinderWindow(); // Setup the Finder window's drag/resize/fullscreen
+        setupGoogleDriveLinkConversion(); // Setup Google Drive link conversion for relevant inputs
+    }
+
+    // This function dynamically injects the structure into the main content area
+    function setupMaterialSection(type) {
+        const config = materialsConfig[type];
+        const section = document.getElementById(config.sectionId);
+
+        let studentViewHtml = `
+            <div class="filters-container">
+                <select id="level1-${type}-filter" style="width:250px;"><option value="">-- Select ${config.level1} --</option></select>
+                <select id="level2-${type}-filter" style="width:250px;" disabled><option value="">-- Select ${config.level2} --</option></select>
+            </div>
+            <div id="level3-${type}-grid" class="grid-container"></div>`;
+
+        if (config.isPaid) {
+            studentViewHtml = `
+                <div class="store-layout">
+                    <div class="product-grid">
+                        ${studentViewHtml}
+                    </div>
+                    <div class="shopping-cart">
+                        <h3>Shopping Cart</h3>
+                        <div id="cart-items"></div>
+                        <div id="cart-summary">
+                            <div class="summary-line">
+                                <span>Subtotal:</span>
+                                <span id="cart-subtotal-price">$0.00</span>
+                            </div>
+                            <div class="summary-line" id="promo-discount-line" style="display:none;">
+                                <span>Promo Discount:</span>
+                                <span id="cart-promo-discount">-$0.00</span>
+                            </div>
+                            <div class="summary-line">
+                                <span>Total Price:</span>
+                                <span id="cart-total-price">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="promo-code-section">
+                            <label for="promoCodeInput">Promo Code:</label>
+                            <div class="promo-input-group">
+                                <input type="text" id="promoCodeInput" placeholder="Enter promo code">
+                                <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
+                            </div>
+                            <div id="appliedPromoCodeDisplay" class="promo-display" style="display:none;">
+                                <span>Applied: <span id="appliedPromoCodeText"></span></span>
+                                <button id="removePromoCodeBtn" class="remove-promo-btn">Remove</button>
+                            </div>
+                            <p id="promoCodeError" class="promo-error"></p>
+                        </div>
+                        <div id="cart-validation-message"></div>
+                        <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
+                    </div>
+                </div>`;
+        }
+
+        section.innerHTML = `
+            <h2 class="section-title">${config.title}</h2>
+            <div id="teacher-${type}-view" style="display:none;">
+                <div class="form-container" style="max-width: initial;">
+                    <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                    <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
+                    <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
+                </div>
+                <div id="level1-${type}-container" class="folder-view"></div>
+                <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; color:var(--text-secondary);">
+                    Board View (Future Feature)
+                    <p>This will be an interactive tree diagram or board where you can freely move files.</p>
+                </div>
+                ${type === 'exercises' ? `
+                    <div class="form-container" style="max-width: initial; margin-top: 2rem;">
+                        <h3>Promo Code Management</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="promoDiscountAmount">Discount Amount ($)</label>
+                            <input type="number" id="promoDiscountAmount" placeholder="e.g., 10.00" step="0.01" min="0">
+                        </div>
+                        <button id="generatePromoCodeBtn" class="btn-primary">Generate New Promo Code</button>
+                        <p id="promoCodeGenerationStatus" class="loading-indicator"></p>
+                        <div class="promo-code-list" id="teacherPromoCodeList">
+                            <p>No promo codes generated yet.</p>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+            <div id="student-${type}-view" style="display:none;">
+                ${studentViewHtml}
+            </div>`;
+
+        const isTeacher = currentUserRole === 'teacher';
+        document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
+        document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+
+        if (isTeacher) {
+            renderContent(type, `level1-${type}-container`, 1);
+            document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
+            document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+            
+            // Add drag-and-drop event listeners to the main container for the teacher view
+            const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
+            teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
+            teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
+            teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
+
+
+            const toggleViewBtn = document.getElementById(`toggle-view-mode-${type}`);
+            const folderView = document.getElementById(`level1-${type}-container`);
+            const boardView = document.getElementById(`board-view-${type}`);
+            const viewStatus = document.getElementById(`view-mode-status-${type}`);
+            
+            let currentTeacherMaterialViewMode = 'folder'; // 'folder' or 'board'
+
+            const updateViewDisplay = () => {
+                if (currentTeacherMaterialViewMode === 'folder') {
+                    folderView.style.display = 'block';
+                    boardView.style.display = 'none';
+                    viewStatus.textContent = '(Current: Folder View)';
+                } else {
+                    folderView.style.display = 'none';
+                    boardView.style.display = 'block';
+                    viewStatus.textContent = '(Current: Board View)';
+                }
+            };
+
+            toggleViewBtn.onclick = () => {
+                currentTeacherMaterialViewMode = currentTeacherMaterialViewMode === 'folder' ? 'board' : 'folder';
+                updateViewDisplay();
+            };
+            updateViewDisplay(); // Set initial display
+
+            if (type === 'exercises') {
+                document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
+                // Initial load of promo codes for teacher
+                loadPromoCodesForTeacher();
+            }
+        } else { // Student view
+            setupStudentFilters(type);
+            if(config.isPaid) {
+                document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+                document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
+                document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
+            }
+
+            // Add toggle for student view (desktop only)
+            if (window.innerWidth >= 769) {
+                const studentViewContainer = document.getElementById(`student-${type}-view`);
+                const materialsSectionTitle = section.querySelector('.section-title');
+                let toggleButton = section.querySelector('.material-view-toggle');
+
+                if (!toggleButton) { // Create button only if it doesn't exist
+                    toggleButton = document.createElement('button');
+                    toggleButton.className = 'material-view-toggle btn-primary';
+                    toggleButton.textContent = 'Switch to Finder View';
+                    materialsSectionTitle.after(toggleButton); // Append next to title
+                } else {
+                    // Update text if it already exists
+                    toggleButton.textContent = currentMaterialViewMode === 'card' ? 'Switch to Finder View' : 'Switch to Card View';
+                }
+
+                toggleButton.addEventListener('click', () => {
+                    if (currentMaterialViewMode === 'card') {
+                        currentMaterialViewMode = 'finder';
+                        studentViewContainer.classList.add('hidden-on-desktop');
+                        showFinderView(type);
+                        toggleButton.textContent = 'Switch to Card View';
+                    } else {
+                        currentMaterialViewMode = 'card';
+                        studentViewContainer.classList.remove('hidden-on-desktop');
+                        document.getElementById('finderMaterialsSection').style.display = 'none';
+                        toggleButton.textContent = 'Switch to Finder View';
+                        renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
+                    }
+                });
+            }
+        }
+    }
+    
+    async function renderContent(type, containerId, level, parentIds = []) {
+        const container = document.getElementById(containerId);
+        const config = materialsConfig[type];
+        const levelName = config[`level${level}`];
+        container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
+
+        const collectionRef = collection(db, getPath(type, parentIds));
+        const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
+        
+        try {
+            const snapshot = await getDocs(q).catch(e=>{
+                console.error("Firestore Query Error:", e);
+                // More specific error message for missing index
+                if (e.code === 'failed-precondition' && e.message.includes('The query requires an index')) {
+                    showModal('Firestore Index Required', `Failed to load ${levelName}s for ${type}. It seems a **Firestore index is missing**. Please check the browser console for a link to create it. This is typically required when using 'orderBy' on the 'name' field in subcollections. You'll likely need to create a **Collection Group Index** for collection ID: '${config.collectionName}' and field: 'name' (ascending/descending as per query).`);
+                } else {
+                    showModal('Error loading content', `Could not load ${levelName}s. Error: ${e.message}`);
+                }
+                return {docs:[]};
+            });
+            if (snapshot.empty) {
+                container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const item = doc.data();
+                item.id = doc.id; // Ensure item ID is available for preview/delete
+                const el = document.createElement('div');
+                el.className = level < 3 ? 'content-item' : 'sub-item';
+
+                let headerHtml;
+                if (level < 3) {
+                    const nextLevel = level + 1;
+                    const newParentIds = [...parentIds, doc.id];
+                    headerHtml = `
+                        <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                            <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
+                            <div class="item-actions">
+                                <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                            </div>
+                        </div>
+                        <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
+                    `;
+                } else { // Level 3 - Final item
+                    let itemName = item.name || item.title;
+                    let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
+                    headerHtml = `<span>${itemName}${itemPrice}</span>
+                                 <div class="item-actions">
+                                    ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
+                                    <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
+                                    <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem;" target="_blank">Download</a>
+                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                 </div>`;
+                    // Add draggable attributes and event listeners for level 3 items
+                    el.setAttribute('draggable', 'true');
+                    el.dataset.itemId = doc.id;
+                    el.dataset.itemType = type;
+                    el.dataset.itemParentIds = JSON.stringify(parentIds);
+                    el.addEventListener('dragstart', handleDragStart);
+                }
+                el.innerHTML = headerHtml;
+                container.appendChild(el);
+            });
+        } catch (error) {
+            console.error(`Error rendering level ${level} for ${type}:`, error);
+            container.innerHTML = `<p class="error-message">Error loading content. A database index might be required. Check console for details.</p>`;
+        }
+    }
+    
+    async function handleTeacherClick(e, type) {
+        const header = e.target.closest('.content-header');
+        const button = e.target.closest('button');
+
+        if (button) {
+            e.stopPropagation();
+            const { level, parentIds } = button.dataset;
+            const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
+
+            if (button.matches('.add-item-btn')) {
+                const nextLevel = parseInt(level);
+                if (nextLevel < 3) {
+                    showAddItemModal(type, nextLevel, parentIdsArray);
+                } else { 
+                    showAddFinalItemModal(type, parentIdsArray);
+                }
+            } else if (button.matches('.delete-item-btn')) {
+                const idToDelete = button.dataset.id;
+                handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
+            } else if (button.matches('.preview-item-btn')) {
+                const itemData = JSON.parse(button.dataset.item);
+                handlePreview(type, itemData); // Use the unified preview function
+            } else if (button.matches('.edit-item-btn')) { // New: Handle edit button click
+                const itemData = JSON.parse(button.dataset.item);
+                const itemParentIds = JSON.parse(button.dataset.parentIds);
+                showEditPastPaperModal(itemData, itemParentIds);
+            }
+        } else if (header) {
+            const { level, id, parentIds } = header.dataset;
+            const currentLevel = parseInt(level);
+            if (currentLevel >= 3) return; 
+            
+            const nextLevel = currentLevel + 1;
+            const container = document.getElementById(`container-level${nextLevel}-${type}-${id}`);
+            if (!container) return;
+
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            header.setAttribute('aria-expanded', !isExpanded);
+            container.classList.toggle('expanded', !isExpanded);
+
+            if (!isExpanded && !container.dataset.loaded) {
+                const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
+                await renderContent(type, container.id, nextLevel, [...parentIdsArray, id]);
+                container.dataset.loaded = 'true';
+            }
         }
     }
 
-    function updateActiveHeaderLink(folder) {
-        document.querySelectorAll('.dropdown-menu-content a.tab').forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href').includes(`folder=${folder}`)) {
-                link.classList.add('active');
+    // Unified preview function for both teacher and student
+    function handlePreview(type, item) {
+        if (type === 'tutorials') {
+            const videoPreviewModal = document.getElementById('videoPreviewModal');
+            const videoPreviewTitle = document.getElementById('videoPreviewTitle');
+            const videoPreviewContent = document.getElementById('videoPreviewContent');
+            
+            videoPreviewTitle.textContent = item.title;
+            if (item.type === 'youtube') {
+                videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
+            } else if (item.type === 'embed') {
+                videoPreviewContent.innerHTML = item.embedCode;
+            }
+            videoPreviewModal.style.display = 'flex';
+        } else if (type === 'pastPapers' || type === 'exercises' || type === 'submissionFile') {
+            if (item.link) {
+                // Check if the link is a PDF
+                if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
+                    showPdfPreviewModal(item.name, item.link);
+                } else if (item.link.startsWith('data:image')) {
+                     // Directly display base64 image if it's a submission file preview
+                    showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Submission Preview">`);
+                } else if (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { // Check for common image extensions
+                    showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Submission Preview">`);
+                } else {
+                    // For other links, open in a new tab
+                    window.open(item.link, '_blank');
+                }
+            } else {
+                showModal('Preview Error', 'No link available for this item.');
+            }
+        } else if (type === 'submissionText') {
+            showModal(item.name, `<div style="white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px;">${item.text}</div>`);
+        }
+    }
+
+
+    function showAddItemModal(type, level, parentIds = []) {
+        const config = materialsConfig[type];
+        const levelName = config[`level${level}`];
+        const prompt = levelName === 'Year' ? 'Year (e.g., 2024)' : levelName;
+        
+        showInputModal(`Add New ${levelName}`, `Enter ${prompt} Name:`, async (name) => {
+            const collectionRef = collection(db, getPath(type, parentIds));
+            try {
+                await addDoc(collectionRef, { name: name.trim() });
+                showModal('Success', `${levelName} added.`);
+                const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                renderContent(type, containerId, level, parentIds);
+            } catch(e) {
+                console.error("Error adding item:", e);
+                showModal('Error', `Could not add ${levelName}. Error: ${e.message}`);
             }
         });
     }
 
-    // --- Teacher Material Form Setup ---
-    function setupTeacherMaterialForm() {
-        setupDropZone('itemDropZone', 'itemFile', 'itemFileName');
-        addItemButton.addEventListener('click', handleAddItem);
-        materialsList.addEventListener('click', handleTeacherListClick); // Delegated events for delete/preview
-        itemLinkInput.addEventListener('input', (e) => {
-            // Automatically convert Google Drive view links to direct download links
-            e.target.value = convertGoogleDriveLink(e.target.value);
+    function showAddFinalItemModal(type, parentIds) {
+        const config = materialsConfig[type];
+        const modal = document.getElementById(config.modalId);
+        modal.style.display = 'flex';
+        
+        const form = modal.querySelector('form');
+        form.querySelector('input[name="parentId1"]').value = parentIds[0];
+        form.querySelector('input[name="parentId2"]').value = parentIds[1];
+        form.reset();
+
+        // Also reset file input displays and previews
+        if (type === 'pastPapers') {
+            document.getElementById('pastPaperFileName').textContent = 'No file chosen';
+            document.getElementById('pastPaperLink').value = '';
+            document.getElementById('pastPaperFile').value = ''; // Clear actual file input
+        }
+        if (type === 'exercises') {
+            document.getElementById('exerciseFileName').textContent = 'No file chosen';
+            document.getElementById('exerciseLink').value = '';
+            document.getElementById('exerciseFile').value = ''; // Clear actual file input
+        }
+        if (type === 'tutorials') {
+            document.getElementById('tutorialThumbnailPreview').style.display = 'none';
+            document.getElementById('tutorialThumbnailPreview').src = '';
+            document.getElementById('tutorialLink').value = '';
+        }
+    }
+
+    async function handleDeleteItem(type, level, id, parentIds) {
+        const config = materialsConfig[type];
+        const levelName = config[`level${level}`];
+
+        showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
+            { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                const docRef = doc(db, getPath(type, parentIds), id);
+                try {
+                    // For Level 3 items, check if a file needs to be deleted from storage
+                    if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
+                        const itemSnap = await getDoc(docRef);
+                        const itemData = itemSnap.data();
+                        if (itemData && itemData.filePath) { // Use filePath to delete from storage
+                            const fileRef = ref(storage, itemData.filePath);
+                            try {
+                                await deleteObject(fileRef);
+                                console.log('File deleted from storage:', itemData.filePath);
+                            } catch (storageError) {
+                                console.warn('Could not delete file from storage (may not exist or external link):', storageError);
+                            }
+                        }
+                    }
+
+                    await deleteDoc(docRef); // Note: This doesn't delete subcollections. A proper solution requires a cloud function for recursive deletes.
+                    showModal('Success', `${levelName} deleted.`);
+                    const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                    renderContent(type, containerId, level, parentIds);
+                } catch(e) {
+                     console.error("Error deleting item:", e);
+                     showModal('Error', `Could not delete ${levelName}. Error: ${e.message}`);
+                }
+            }},
+            { text: 'Cancel', className: 'logout-btn' }
+        ]);
+    }
+    
+    // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
+    let draggedItem = null; // Stores data about the item being dragged
+
+    function handleDragStart(e) {
+        const subItem = e.target.closest('.sub-item');
+        if (!subItem) return;
+
+        draggedItem = {
+            id: subItem.dataset.itemId,
+            type: subItem.dataset.itemType,
+            parentIds: JSON.parse(subItem.dataset.itemParentIds)
+        };
+        e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
+        e.dataTransfer.effectAllowed = 'move';
+        subItem.classList.add('dragging'); // Optional: Add visual feedback for the dragged item
+    }
+
+    function handleDragOver(e, type) {
+        e.preventDefault(); // Crucial to allow dropping
+        const targetElement = e.target.closest('.content-item'); // Target is a folder (level 1 or 2)
+        if (targetElement && draggedItem && draggedItem.type === type) { // Only allow dropping items of the same type
+            targetElement.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        } else {
+            e.dataTransfer.dropEffect = 'none';
+        }
+    }
+
+    function handleDragLeave(e, type) {
+        const targetElement = e.target.closest('.content-item');
+        if (targetElement) {
+            targetElement.classList.remove('drag-over');
+        }
+    }
+
+    async function handleDrop(e, type) {
+        e.preventDefault();
+        const targetElement = e.target.closest('.content-item');
+        if (targetElement) {
+            targetElement.classList.remove('drag-over');
+        }
+
+        if (!draggedItem) return; // No item being dragged
+
+        const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
+        
+        // Ensure the dropped item is of the same type as the section
+        if (droppedItemData.type !== type) {
+            showModal('Move Error', 'Cannot move items between different material types (e.g., tutorials to past papers).');
+            draggedItem = null; // Reset dragged item
+            return;
+        }
+
+        const newParentLevel = parseInt(targetElement.dataset.level);
+        const newParentId = targetElement.dataset.id;
+        const newParentIds = JSON.parse(targetElement.dataset.parentIds);
+
+        // Determine the new full path for the item
+        let newFullParentIds = [];
+        if (newParentLevel === 1) { // Dropped into a Level 1 folder (Subject)
+            newFullParentIds = [newParentId];
+        } else if (newParentLevel === 2) { // Dropped into a Level 2 folder (Topic/Year)
+            newFullParentIds = [...newParentIds, newParentId];
+        } else {
+            showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
+            draggedItem = null;
+            return;
+        }
+
+        // Prevent dropping into an invalid folder structure (e.g., dropping a level 3 item into a level 1 subject if it requires a level 2 topic/year)
+        // Files (level 3) should always have 2 parent IDs in their path after the type.
+        if (newFullParentIds.length !== 2) { 
+             showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
+             draggedItem = null;
+             return;
+        }
+
+        const oldParentIds = draggedItem.parentIds;
+        const itemId = draggedItem.id;
+        const itemType = draggedItem.type;
+
+        // Check if the item is being dropped into its current parent folder
+        if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
+            showModal('Move Info', 'Item is already in this folder.');
+            draggedItem = null;
+            return;
+        }
+
+        // Get a reference to the original document
+        const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
+        const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
+
+        try {
+            // Fetch the item's data
+            const docSnap = await getDoc(oldDocRef);
+            if (!docSnap.exists()) {
+                throw new Error("Item not found for moving.");
+            }
+            const itemData = docSnap.data();
+
+            // Use a batch write for atomicity: delete from old location, add to new
+            const batch = writeBatch(db);
+            batch.set(newDocRef, itemData); // Create a new document with the same data in the new location
+            batch.delete(oldDocRef); // Delete the original document
+
+            await batch.commit();
+
+            showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+            
+            // Re-render both the old and new parent containers to reflect changes
+            const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
+            const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
+            
+            // Only re-render if the containers are currently expanded/loaded
+            // It's crucial to check if the elements exist before trying to access classList
+            if (document.getElementById(oldContainerId) && document.getElementById(oldContainerId).classList.contains('expanded')) {
+                renderContent(itemType, oldContainerId, 3, oldParentIds);
+            }
+            if (document.getElementById(newContainerId) && document.getElementById(newContainerId).classList.contains('expanded')) {
+                 renderContent(itemType, newContainerId, 3, newFullParentIds);
+            }
+            // If a parent folder was not expanded, it will load correctly when expanded next time.
+
+        } catch (error) {
+            console.error("Error moving item:", error);
+            showModal('Move Error', `Could not move item. Error: ${error.message}`);
+        } finally {
+            draggedItem = null; // Reset dragged item
+            // Remove dragging class from original item if it still exists
+            document.querySelectorAll('.sub-item.dragging').forEach(el => el.classList.remove('dragging'));
+        }
+    }
+
+
+    // --- STUDENT FILTER LOGIC ---
+    function setupStudentFilters(type) {
+        const config = materialsConfig[type];
+        const level1Filter = document.getElementById(`level1-${type}-filter`);
+        const level2Filter = document.getElementById(`level2-${type}-filter`);
+        const grid = document.getElementById(`level3-${type}-grid`);
+
+        if (!level1Filter || !level2Filter || !grid) {
+            console.error(`Missing elements for student filters of type: ${type}`);
+            return;
+        }
+
+        populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+
+        level1Filter.onchange = () => {
+            const level1Id = level1Filter.value;
+            level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+            level2Filter.disabled = true;
+            grid.innerHTML = `<p>Please select a ${config.level2.toLowerCase()}.</p>`;
+            if (level1Id) {
+                populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
+                level2Filter.disabled = false;
+            }
+        };
+        level2Filter.onchange = () => renderStudentItems(type);
+    }
+
+    async function renderStudentItems(type) {
+         const config = materialsConfig[type];
+         const grid = document.getElementById(`level3-${type}-grid`);
+         const level1Filter = document.getElementById(`level1-${type}-filter`);
+         const level2Filter = document.getElementById(`level2-${type}-filter`);
+
+         if (!level1Filter || !level2Filter || !grid) {
+            console.error(`Missing elements for rendering student items of type: ${type}`);
+            return;
+         }
+
+         const level1Id = level1Filter.value;
+         const level2Id = level2Filter.value;
+
+         grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+         if (!level1Id || !level2Id) {
+             grid.innerHTML = `<p>Please select a ${config.level1.toLowerCase()} and ${config.level2.toLowerCase()}.</p>`;
+             return;
+         }
+
+         const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
+         const q = query(itemsRef, orderBy('name', 'asc'));
+         
+         let purchasedItems = {};
+         if(config.isPaid) {
+             const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
+             const snapshot = await getDocs(purchaseCollectionRef);
+             snapshot.forEach(doc => purchasedItems[doc.id] = true);
+         }
+
+         try {
+            const snapshot = await getDocs(q).catch(e=>{
+                console.error("Firestore Query Error (Student Items):", e);
+                // More specific error message for missing index
+                if (e.code === 'failed-precondition' && e.message.includes('The query requires an index')) {
+                    showModal('Firestore Index Required', `Failed to load student items for ${type}. It seems a **Firestore index is missing**. Please check the browser console for a link to create it. You'll likely need to create a **Collection Group Index** for collection ID: '${config.level3.toLowerCase()}s' and field: 'name' (ascending).`);
+                } else {
+                    showModal('Error loading items', `Could not load student items. Error: ${e.message}`);
+                }
+                return {docs:[]};
+            });
+            grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
+            snapshot.forEach(doc => {
+                const item = doc.data();
+                item.id = doc.id; // Add id to item object
+                const card = document.createElement('div');
+                card.className = 'material-card';
+                
+                let cardContent = '';
+                if (type === 'tutorials') {
+                    if (item.type === 'youtube') {
+                        cardContent = `
+                            <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
+                                <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
+                                <div class="play-button-overlay">▶</div>
+                            </div>
+                            <div class="material-card-content"><h3>${item.title}</h3></div>
+                        `;
+                    } else if (item.type === 'embed') {
+                        cardContent = `
+                            <div class="video-embed-container">${item.embedCode}</div>
+                            <div class="material-card-content"><h3>${item.title}</h3></div>
+                        `;
+                    }
+                     // Add delegated event listener for YouTube thumbnails here, as cards are rendered
+                    card.querySelector('.material-card-thumbnail')?.addEventListener('click', (e) => {
+                        const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
+                        if (thumbnail) {
+                            e.preventDefault();
+                            const videoId = thumbnail.dataset.youtubeId;
+                            // Re-use the existing handlePreview for consistency
+                            handlePreview('tutorials', { title: item.title, type: 'youtube', youtubeId: videoId });
+                        }
+                    });
+
+                } else if (config.isPaid) {
+                    const isPurchased = purchasedItems[item.id];
+                    const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
+                    card.className = 'product-card material-card'; // Added material-card for general styling
+                    cardContent = `
+                        <div class="material-card-content">
+                            <h4>${item.name}</h4>
+                            <p class="product-price">$${item.price.toFixed(2)}</p>
+                            ${isPurchased 
+                                ? `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>`
+                                : `<button class="add-to-cart-btn btn-primary" data-id="${item.id}" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
+                            }
+                        </div>`;
+                    
+                    card.innerHTML = cardContent; // Assign content before adding event listeners
+                    
+                    if(!isPurchased) {
+                       const addToCartBtn = card.querySelector('.add-to-cart-btn');
+                       if (addToCartBtn) {
+                           addToCartBtn.addEventListener('click', () => addToCart(item));
+                       }
+                    } else {
+                        const downloadBtn = card.querySelector('.download-btn');
+                        if (downloadBtn) {
+                            downloadBtn.addEventListener('click', (e) => {
+                                const itemData = JSON.parse(e.target.dataset.item);
+                                handlePreview(type, itemData); // Use the unified preview function
+                            });
+                        }
+                    }
+                } else { // Free materials like past papers
+                    cardContent = `
+                        <div class="material-card-content">
+                            <h3>${item.name}</h3>
+                        </div>
+                        <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
+                    `;
+                    card.innerHTML = cardContent; // Assign content before adding event listeners
+                    
+                    const downloadBtn = card.querySelector('.download-btn');
+                    if (downloadBtn) {
+                        downloadBtn.addEventListener('click', (e) => {
+                            const itemData = JSON.parse(e.target.dataset.item);
+                            handlePreview(type, itemData); // Use the unified preview function
+                        });
+                    }
+                }
+                
+                grid.appendChild(card);
+            });
+         } catch(e) {
+            console.error("Error loading student items:", e);
+            grid.innerHTML = "<p class='error-message'>Error loading items. A database index might be required. Check console for details.</p>"
+         }
+    }
+    
+    async function populateFilter(selectElement, collectionRef, levelName) {
+        selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+        try {
+            const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
+            const snapshot = await getDocs(q).catch(e=>{
+                console.error("Firestore Query Error (Populate Filter):", e);
+                // More specific error message for missing index
+                if (e.code === 'failed-precondition' && e.message.includes('The query requires an index')) {
+                    showModal('Firestore Index Required', `Failed to load filter options for ${levelName}. It seems a **Firestore index is missing**. Please check the browser console for a link to create it. You'll likely need to create a **Collection Group Index** for collection ID: '${collectionRef.id}' and field: 'name' (ascending/descending as per query).`);
+                } else {
+                    showModal('Error loading materials', `Could not load ${levelName}s. Error: ${e.message}`);
+                }
+                return {docs:[]};
+            });
+            selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
+            if(snapshot.empty) {
+                selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
+                return;
+            }
+            snapshot.forEach(doc => {
+                selectElement.add(new Option(doc.data().name, doc.id));
+            });
+        }
+        catch (e) {
+            console.error(`Error loading ${levelName}s:`, e);
+            selectElement.innerHTML = `<option value="">-- Error --</option>`;
+        }
+    }
+
+    // --- E-COMMERCE LOGIC ---
+    function addToCart(item) {
+        shoppingCart.push(item);
+        updateCartUI();
+        renderStudentItems('exercises'); 
+    }
+
+    function removeFromCart(itemId) {
+        shoppingCart = shoppingCart.filter(item => item.id !== itemId);
+        updateCartUI();
+        renderStudentItems('exercises');
+    }
+
+    function updateCartUI() {
+        const cartItemsContainer = document.getElementById('cart-items');
+        const subtotalPriceEl = document.getElementById('cart-subtotal-price');
+        const promoDiscountLine = document.getElementById('promo-discount-line');
+        const promoDiscountEl = document.getElementById('cart-promo-discount');
+        const totalPriceEl = document.getElementById('cart-total-price');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const validationMsg = document.getElementById('cart-validation-message');
+        const promoCodeInput = document.getElementById('promoCodeInput');
+        const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
+        const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
+        const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
+        const promoCodeError = document.getElementById('promoCodeError');
+
+
+        cartItemsContainer.innerHTML = '';
+        let subtotal = 0;
+
+        if (shoppingCart.length === 0) {
+            cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+        }
+
+        shoppingCart.forEach(item => {
+            subtotal += item.price;
+            const itemEl = document.createElement('div');
+            itemEl.className = 'cart-item';
+            itemEl.innerHTML = `
+                <span class="cart-item-name">${item.name}</span>
+                <span class="cart-item-price">$${item.price.toFixed(2)}</span>
+                <button class="remove-from-cart-btn" data-id="${item.id}">✖</button>
+            `;
+            cartItemsContainer.appendChild(itemEl);
+        });
+        
+        document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+            btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+        });
+
+        subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+        let finalPrice = subtotal;
+
+        if (appliedPromoCode) {
+            finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
+            promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
+            promoDiscountLine.style.display = 'flex';
+            appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
+            appliedPromoCodeDisplay.style.display = 'flex';
+            promoCodeInput.disabled = true;
+            applyPromoCodeBtn.disabled = true;
+            promoCodeInput.value = appliedPromoCode.code; // Pre-fill with applied code
+            promoCodeError.textContent = ''; // Clear any previous error
+        } else {
+            promoDiscountLine.style.display = 'none';
+            appliedPromoCodeDisplay.style.display = 'none';
+            promoCodeInput.disabled = false;
+            applyPromoCodeBtn.disabled = false;
+            promoCodeInput.value = ''; // Clear input if no code applied
+        }
+
+        totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
+
+        // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
+        // Also, if the final price is > 0, enforce a minimum total of $100.
+        const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
+
+        if (canCheckout) {
+            checkoutBtn.disabled = false;
+            if (finalPrice === 0) {
+                validationMsg.textContent = 'Proceed to checkout for free!';
+            } else {
+                validationMsg.textContent = '';
+            }
+        } else {
+            checkoutBtn.disabled = true;
+            if (shoppingCart.length === 0) {
+                validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
+            } else if (finalPrice > 0 && finalPrice < 100) {
+                validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+            } else {
+                validationMsg.textContent = ''; // Should not happen if previous conditions are met
+            }
+        }
+    }
+
+    async function applyPromoCode() {
+        const promoCodeInput = document.getElementById('promoCodeInput');
+        const promoCodeError = document.getElementById('promoCodeError');
+        const code = promoCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
+
+        promoCodeError.textContent = ''; // Clear previous errors
+
+        if (!code) {
+            promoCodeError.textContent = 'Please enter a promo code.';
+            return;
+        }
+
+        const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+        try {
+            const docSnap = await getDoc(promoCodeRef);
+            if (docSnap.exists()) {
+                const promoData = docSnap.data();
+                if (promoData.isActive) {
+                    appliedPromoCode = {
+                        code: code,
+                        discountAmount: promoData.discountAmount
+                    };
+                    updateCartUI();
+                    showModal('Promo Code Applied', `Successfully applied promo code "${code}" for a $${promoData.discountAmount.toFixed(2)} discount!`);
+                } else {
+                    promoCodeError.textContent = 'This promo code is not active.';
+                }
+            } else {
+                promoCodeError.textContent = 'Invalid promo code.';
+            }
+        } catch (error) {
+            console.error("Error applying promo code:", error);
+            promoCodeError.textContent = `Error applying code: ${error.message}`;
+        }
+    }
+
+    function removeAppliedPromoCode() {
+        appliedPromoCode = null;
+        updateCartUI();
+        document.getElementById('promoCodeInput').value = ''; // Clear input field
+        document.getElementById('promoCodeError').textContent = ''; // Clear error message
+        showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
+    }
+
+
+    async function handleCheckout() {
+        if (!currentUserId) {
+            return showModal('Error', 'You must be logged in to check out.');
+        }
+
+        // Recalculate final price with applied discount
+        let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
+        let finalPrice = subtotal;
+        if (appliedPromoCode) {
+            finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
+        }
+
+        if (shoppingCart.length === 0) {
+            return showModal('Checkout Error', 'Your cart is empty. Please add items before checking out.');
+        }
+
+        if (finalPrice === 0) {
+            // Direct "free" checkout - bypass Stripe
+            try {
+                const batch = writeBatch(db);
+                shoppingCart.forEach(item => {
+                    const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                    batch.set(purchaseRef, { 
+                        name: item.name, 
+                        price: item.price, 
+                        purchasedAt: Date.now(),
+                        purchaseMethod: 'promo', // Track purchase method
+                        promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A' // Track promo code used
+                    });
+                });
+                await batch.commit();
+
+                showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
+                shoppingCart = []; // Clear the local cart
+                appliedPromoCode = null; // Clear applied promo code
+                updateCartUI(); // Update UI to reflect empty cart and no promo
+                // showSection('exerciseSection'); // Removed as per previous instructions
+                renderMaterialSection('exercises'); // Re-render the exercises page
+                // renderStudentItems('exercises'); // This is called by renderMaterialSection
+
+            } catch (error) {
+                console.error("Error processing free checkout:", error);
+                showModal('Checkout Error', `Could not complete free checkout. Please try again. Error: ${error.message}`);
+            }
+
+        } else if (finalPrice >= 100) {
+            // Proceed with Stripe checkout for paid items
+            if (STRIPE_PAYMENT_LINK.includes("...")) {
+                return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
+            }
+
+            const checkoutSessionId = crypto.randomUUID();
+            const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
+
+            try {
+                // Save the cart and applied promo code to Firestore
+                await setDoc(checkoutSessionRef, {
+                    cart: shoppingCart,
+                    appliedPromoCode: appliedPromoCode, // Save applied promo code
+                    created: Date.now(),
+                    totalAmount: finalPrice, // Save the final amount for record
+                    purchaseMethod: 'paid' // Mark as paid purchase
+                });
+
+                // Redirect to Stripe
+                const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`; // Corrected variable name
+                window.location.href = stripeUrl;
+
+            } catch (error) {
+                console.error("Error creating checkout session:", error);
+                showModal('Checkout Error', `Could not initiate checkout. Please try again. Error: ${error.message}`);
+            }
+        } else {
+            showModal('Checkout Error', 'Minimum total of $100 required to checkout for paid items.');
+        }
+    }
+    
+    async function checkForSuccessfulPurchase() {
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session_id'); // This is a placeholder, Stripe might use a different param
+
+        // A more robust check might be needed depending on Stripe's redirect behavior
+        if (params.get('payment_status') === 'success' && sessionId) {
+            const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
+            try {
+                const sessionDoc = await getDoc(checkoutSessionRef);
+                if (sessionDoc.exists()) {
+                    const sessionData = sessionDoc.data();
+                    const purchasedItems = sessionData.cart;
+
+                    // Use a batch write to add all purchased items and delete the session doc atomically
+                    const batch = writeBatch(db);
+                    purchasedItems.forEach(item => {
+                        const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                        batch.set(purchaseRef, { 
+                            name: item.name, 
+                            price: item.price, 
+                            purchasedAt: Date.now(),
+                            purchaseMethod: sessionData.purchaseMethod || 'paid', // Default to paid if not specified
+                            promoCodeUsed: sessionData.appliedPromoCode ? sessionData.appliedPromoCode.code : 'N/A'
+                        });
+                    });
+                    batch.delete(checkoutSessionRef); // Clean up the session doc
+                    await batch.commit();
+                    
+                    showModal('Purchase Successful!', 'Your new exercises are now available for download.');
+                    shoppingCart = []; // Clear the local cart
+                    appliedPromoCode = null; // Clear applied promo code
+                    
+                    // Clean the URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Re-render the exercises page
+                    // showSection('exerciseSection'); // Removed as per previous instructions
+                    renderMaterialSection('exercises'); // Re-render the exercises page
+                    // renderStudentItems('exercises'); // This is called by renderMaterialSection
+                }
+            } catch (error) {
+                console.error("Error processing purchase:", error);
+                showModal('Purchase Error', 'There was an issue verifying your purchase. Please contact support.');
+            }
+        }
+    }
+
+    // --- PROMO CODE MANAGEMENT (TEACHER SIDE) ---
+    function generateRandomCode(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    async function generateAndSavePromoCode() {
+        const promoDiscountAmountInput = document.getElementById('promoDiscountAmount');
+        const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
+        const discountAmount = parseFloat(promoDiscountAmountInput.value);
+
+        promoCodeGenerationStatus.textContent = ''; // Clear previous messages
+
+        if (isNaN(discountAmount) || discountAmount <= 0) {
+            promoCodeGenerationStatus.textContent = 'Please enter a valid discount amount (must be positive).';
+            return;
+        }
+
+        const newCode = generateRandomCode(8);
+        const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
+
+        try {
+            promoCodeGenerationStatus.textContent = 'Generating and saving promo code...';
+            await setDoc(promoCodeRef, {
+                code: newCode,
+                discountAmount: discountAmount,
+                isActive: true, // New codes are active by default
+                createdAt: Date.now(),
+                createdBy: currentUserId
+            });
+            promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated with $${discountAmount.toFixed(2)} discount!`;
+            promoDiscountAmountInput.value = ''; // Clear discount input
+            loadPromoCodesForTeacher(); // Refresh the list
+        } catch (error) {
+            console.error("Error generating promo code:", error);
+            promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
+        }
+    }
+
+    async function loadPromoCodesForTeacher() {
+        const teacherPromoCodeList = document.getElementById('teacherPromoCodeList');
+        teacherPromoCodeList.innerHTML = '<p class="loading-indicator">Loading promo codes...</p>';
+
+        const promoCodesCollectionRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
+        const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
+
+        try {
+            const snapshot = await getDocs(q).catch(e=>{
+                console.error("Firestore Query Error (Promo Codes):", e);
+                // More specific error message for missing index
+                if (e.code === 'failed-precondition' && e.message.includes('The query requires an index')) {
+                    showModal('Firestore Index Required', `Failed to load promo codes. It seems a **Firestore index is missing**. Please check the browser console for a link to create it. You'll likely need to create a **Collection Group Index** for collection ID: 'promoCodes' and field: 'createdAt' (descending).`);
+                } else {
+                    showModal('Error loading promo codes', `Could not load promo codes. Error: ${e.message}`);
+                }
+                return {docs:[]};
+            });
+            if (snapshot.empty) {
+                teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
+                return;
+            }
+
+            teacherPromoCodeList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const promo = doc.data();
+                const promoItem = document.createElement('div');
+                promoItem.className = 'promo-code-item';
+                promoItem.innerHTML = `
+                    <span>${promo.code}</span>
+                    <span>$${promo.discountAmount.toFixed(2)}</span>
+                    <span>${promo.isActive ? 'Active' : 'Inactive'}</span>
+                    <div class="actions">
+                        <button class="btn-primary toggle-promo-status-btn" data-code="${promo.code}" data-is-active="${promo.isActive ? 'true' : 'false'}">
+                            ${promo.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="logout-btn delete-promo-btn" data-code="${promo.code}">Delete</button>
+                    </div>
+                `;
+                teacherPromoCodeList.appendChild(promoItem);
+            });
+
+            // Add event listeners for toggle and delete buttons
+            teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => {
+                button.addEventListener('click', (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
+            });
+            teacherPromoCodeList.querySelectorAll('.delete-promo-btn').forEach(button => {
+                button.addEventListener('click', (e) => deletePromoCode(e.target.dataset.code));
+            });
+
+        } catch (error) {
+            console.error("Error loading promo codes:", error);
+            teacherPromoCodeList.innerHTML = '<p class="error-message">Error loading promo codes.</p>';
+        }
+    }
+
+    async function togglePromoCodeStatus(code, currentStatus) {
+        const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+        try {
+            await updateDoc(promoCodeRef, { isActive: !currentStatus });
+            showModal('Status Updated', `Promo code "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
+            loadPromoCodesForTeacher(); // Refresh the list
+        } catch (error) {
+            console.error("Error toggling promo code status:", error);
+            showModal('Error', `Could not update status for "${code}": ${error.message}`);
+        }
+    }
+
+    async function deletePromoCode(code) {
+        showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"? This action cannot be undone.`, [
+            { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+                try {
+                    await deleteDoc(promoCodeRef);
+                    showModal('Success', `Promo code "${code}" deleted.`);
+                    loadPromoCodesForTeacher(); // Refresh the list
+                } catch (error) {
+                    console.error("Error deleting promo code:", error);
+                    showModal('Error', `Could not delete "${code}": ${error.message}`);
+                }
+            }},
+            { text: 'Cancel', className: 'logout-btn' }
+        ]);
+    }
+
+    // --- VIDEO PARSING ---
+    function parseVideoInput(input) {
+        const text = input.trim();
+        // Check for YouTube URL
+        const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const youtubeMatch = text.match(youtubeRegex);
+        if (youtubeMatch && youtubeMatch[1]) {
+            return { type: 'youtube', id: youtubeMatch[1] };
+        }
+        // Check for iframe embed code
+        if (text.startsWith('<iframe') && text.endsWith('>')) {
+            return { type: 'embed', code: text };
+        }
+        return null; // Invalid input
+    }
+
+    // --- GOOGLE DRIVE LINK CONVERSION ---
+    function convertGoogleDriveLink(url) {
+        const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
+        const match = url.match(driveViewRegex);
+        if (match && match[1]) {
+            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        }
+        return url; // Return original URL if no match
+    }
+
+    function setupGoogleDriveLinkConversion() {
+        const linkInputs = [
+            document.getElementById('pastPaperLink'),
+            document.getElementById('exerciseLink'),
+            document.getElementById('editPastPaperLink')
+        ];
+
+        linkInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    e.target.value = convertGoogleDriveLink(e.target.value);
+                });
+            }
         });
     }
 
-    // Dropzone setup function (reused from index.html)
+    // --- MODAL SUBMISSION LOGIC ---
+    document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const parentId1 = e.target.querySelector('#videoParentId1').value;
+        const parentId2 = e.target.querySelector('#videoParentId2').value;
+        const input = document.getElementById('tutorialLink').value;
+        const title = document.getElementById('tutorialTitle').value;
+        
+        const videoDetails = parseVideoInput(input);
+
+        if (!videoDetails || !title.trim()) { 
+            return showModal('Input Error', 'Please provide a title and a valid YouTube link or embed code.');
+        }
+        
+        const dataToSave = {
+            title: title.trim(),
+            name: title.trim(),
+            timestamp: Date.now()
+        };
+
+        if (videoDetails.type === 'youtube') {
+            dataToSave.type = 'youtube';
+            dataToSave.youtubeId = videoDetails.id;
+        } else { // 'embed'
+            dataToSave.type = 'embed';
+            dataToSave.embedCode = videoDetails.code;
+        }
+
+        const collectionRef = collection(db, getPath('tutorials', [parentId1, parentId2]));
+        try {
+            await addDoc(collectionRef, dataToSave);
+            showModal('Success', 'Video added.');
+            document.getElementById('addVideoModal').style.display = 'none';
+            renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
+        } catch (error) { 
+            showModal('Error', `Could not add video: ${error.message}`); 
+        }
+    });
+
+    document.getElementById('addPastPaperForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const parentId1 = form.querySelector('#paperParentId1').value;
+        const parentId2 = form.querySelector('#paperParentId2').value;
+        const name = document.getElementById('pastPaperName').value;
+        const fileInput = document.getElementById('pastPaperFile');
+        const file = fileInput.files[0];
+        const link = document.getElementById('pastPaperLink').value.trim();
+
+        if (!name.trim() || (!file && !link)) {
+            return showModal('Input Error', 'Please provide a paper name and either upload a PDF or paste a link.');
+        }
+
+        const buttonsContainer = form.querySelector('.modal-form-buttons');
+        const originalButtonsHTML = buttonsContainer.innerHTML;
+        buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
+        
+        let downloadURL = link; // Default to the pasted link
+        let filePath = ''; // Store the path if file is uploaded
+
+        try {
+            // If a file is provided, it takes priority
+            if (file) {
+                buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
+                filePath = `materials/pastpapers/${Date.now()}_${file.name}`; // Corrected folder name
+                const storageRef = ref(storage, filePath);
+                const uploadResult = await uploadBytes(storageRef, file);
+                downloadURL = await getDownloadURL(uploadResult.ref);
+            }
+
+            if (!downloadURL) { // Final check in case link was empty and file failed
+                throw new Error("No valid file or link provided.");
+            }
+
+            const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
+            await addDoc(collectionRef, { name: name.trim(), link: downloadURL, timestamp: Date.now(), filePath: filePath }); // Save filePath
+            
+            showModal('Success', 'Past paper added.');
+            document.getElementById('addPastPaperModal').style.display = 'none';
+            renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+        } catch (error) { 
+            console.error("Past paper upload error:", error);
+            showModal('Error', `Could not add paper: ${error.message}`); 
+        } finally {
+            buttonsContainer.innerHTML = originalButtonsHTML;
+        }
+    });
+
+    // New: Edit Past Paper Modal Submission
+    document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const itemId = form.querySelector('#editPaperId').value;
+        const parentId1 = form.querySelector('#editPaperParentId1').value;
+        const parentId2 = form.querySelector('#editPaperParentId2').value;
+        const name = document.getElementById('editPastPaperName').value.trim();
+        const link = document.getElementById('editPastPaperLink').value.trim();
+
+        if (!name || !link) {
+            return showModal('Input Error', 'Please provide a paper name and a download link.');
+        }
+
+        const docRef = doc(db, getPath('pastPapers', [parentId1, parentId2]), itemId);
+        try {
+            await updateDoc(docRef, { name: name, link: link });
+            showModal('Success', 'Past paper updated successfully!');
+            document.getElementById('editPastPaperModal').style.display = 'none';
+            // Re-render the relevant section to show updated data
+            renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+        } catch (error) {
+            console.error("Error updating past paper:", error);
+            showModal('Error', `Could not update past paper: ${error.message}`);
+        }
+    });
+
+    // New: Function to show Edit Past Paper Modal
+    function showEditPastPaperModal(itemData, parentIds) {
+        const modal = document.getElementById('editPastPaperModal');
+        document.getElementById('editPaperId').value = itemData.id;
+        document.getElementById('editPaperParentId1').value = parentIds[0];
+        document.getElementById('editPaperParentId2').value = parentIds[1];
+        document.getElementById('editPastPaperName').value = itemData.name;
+        document.getElementById('editPastPaperLink').value = itemData.link;
+        modal.style.display = 'flex';
+    }
+
+
+    document.getElementById('addExerciseForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const parentId1 = form.querySelector('#exerciseParentId1').value;
+        const parentId2 = form.querySelector('#exerciseParentId2').value;
+        const name = document.getElementById('exerciseName').value;
+        const price = parseFloat(document.getElementById('exercisePrice').value);
+        const fileInput = document.getElementById('exerciseFile');
+        const file = fileInput.files[0];
+        const link = document.getElementById('exerciseLink').value.trim();
+        
+        if (!name.trim() || (!file && !link) || isNaN(price) || price < 0) { 
+            return showModal('Input Error', 'Please provide a name, price, and either upload a file or paste a link.'); 
+        }
+
+        const buttonsContainer = form.querySelector('.modal-form-buttons');
+        const originalButtonsHTML = buttonsContainer.innerHTML;
+        buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
+        
+        let downloadURL = link;
+        let filePath = ''; // Store the path if file is uploaded
+
+        try {
+            if (file) {
+                buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...`;
+                filePath = `materials/exercises/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, filePath);
+                const uploadResult = await uploadBytes(storageRef, file);
+                downloadURL = await getDownloadURL(uploadResult.ref);
+            }
+
+            if (!downloadURL) {
+                throw new Error("No valid file or link provided.");
+            }
+
+            const collectionRef = collection(db, getPath('exercises', [parentId1, parentId2]));
+            await addDoc(collectionRef, { name: name.trim(), link: downloadURL, price: price, timestamp: Date.now(), filePath: filePath }); // Save filePath
+            
+            showModal('Success', 'Exercise added.');
+            document.getElementById('addExerciseModal').style.display = 'none';
+            renderContent('exercises', `container-level3-exercises-${parentId2}`, 3, [parentId1, parentId2]);
+        } catch (error) { 
+            console.error("Exercise upload error:", error);
+            showModal('Error', `Could not add exercise: ${error.message}`); 
+        } finally {
+            buttonsContainer.innerHTML = originalButtonsHTML;
+        }
+    });
+
+    document.getElementById('tutorialLink').addEventListener('input', (e) => {
+        const videoDetails = parseVideoInput(e.target.value);
+        const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
+        if (videoDetails && videoDetails.type === 'youtube') {
+            thumbnailPreview.src = `https://img.youtube.com/vi/${videoDetails.id}/mqdefault.jpg`;
+            thumbnailPreview.style.display = 'block';
+        } else {
+            thumbnailPreview.style.display = 'none';
+            thumbnailPreview.src = '';
+        }
+    });
+    
+    // --- GRADING & CHAT & OTHER (STUBS for materials page) ---
+    // These functions are included for completeness but are primarily used on other pages.
+    // They are left here as they were referenced in the provided old material structure.
+
     function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
         const dropZone = document.getElementById(dropZoneId);
         const fileInput = document.getElementById(fileInputId);
@@ -1169,360 +3180,270 @@
             const file = event.target.files[0];
             if (file) {
                 fileNameDisplay.textContent = file.name;
+                if (filePreview && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => { filePreview.src = e.target.result; filePreview.style.display = 'block'; };
+                    reader.readAsDataURL(file);
+                } else if (filePreview && file.type === 'application/pdf') {
+                    // Render PDF thumbnail if PDF.js is available
+                    if (typeof pdfjsLib !== 'undefined' && pdfjsLib.getDocument) {
+                        pdfjsLib.getDocument({ url: URL.createObjectURL(file) }).promise.then(pdf => pdf.getPage(1)).then(page => {
+                            const viewport = page.getViewport({ scale: 1.0 });
+                            const canvas = document.createElement('canvas');
+                            canvas.height = viewport.height; canvas.width = viewport.width;
+                            page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(() => {
+                                filePreview.src = canvas.toDataURL('image/png');
+                                filePreview.style.display = 'block';
+                                canvas.remove();
+                            });
+                        }).catch(err => { console.error("PDF Preview Error:", err); if(filePreview) filePreview.style.display = 'none';});
+                    } else {
+                         console.warn("PDF.js not loaded for PDF preview.");
+                         if(filePreview) filePreview.style.display = 'none';
+                    }
+                } else {
+                    if(filePreview) filePreview.style.display = 'none';
+                }
             } else {
                 fileNameDisplay.textContent = 'No file chosen';
+                if(filePreview) {
+                    filePreview.style.display = 'none';
+                    filePreview.src = '';
+                }
             }
         });
     }
+    // Setup dropzones that are part of the modals or teacher forms
+    setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
+    setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
 
-    // Converts Google Drive view link to direct download link
-    function convertGoogleDriveLink(url) {
-        const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
-        const match = url.match(driveViewRegex);
-        if (match && match[1]) {
-            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-        }
-        return url; // Return original URL if no match
+    // Chat functionality stubs (for code context, not actively used here)
+    // const chatInput = document.getElementById('chatInput');
+    // const sendChatButton = document.getElementById('sendChatButton');
+    // const chatDisplay = document.getElementById('chatDisplay');
+    // const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+    // const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
+    // function handleSendMessage() { /* ... */ }
+    // function appendChatMessage(text, sender) { /* ... */ }
+    // async function loadChatHistory() { /* ... */ }
+    // async function saveChatHistory() { /* ... */ }
+    // function initializeDefaultChatHistory() { /* ... */ }
+    // async function clearChatHistory() { /* ... */ }
+
+    // Student Management stubs
+    // async function loadAuthorizedStudents() { /* ... */ }
+    // async function deleteStudent(studentId) { /* ... */ }
+
+    // Homework Submission stubs
+    // async function renderSubmissionSection() { /* ... */ }
+    // async function renderTeacherSubmissionView(contentContainer, sidebarContainer) { /* ... */ }
+    // async function createAssignment(e) { /* ... */ }
+    // async function getUniqueAssignmentSubjects() { /* ... */ }
+    // async function populateSubjectDropdowns(dropdownElement) { /* ... */ }
+    // async function loadTeacherAssignments() { /* ... */ }
+    // async function toggleSubmissionList(assignmentId, subjectId, assignmentTitle) { /* ... */ }
+    // async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, submissionsDiv) { /* ... */ }
+
+
+    // --- FINDER WINDOW LOGIC (from reference.txt, adapted) ---
+    const finderMaterialsSection = document.getElementById('finderMaterialsSection');
+    const finderTitle = document.getElementById('finderTitle');
+    const closeFinderButton = document.getElementById('closeFinderButton');
+    const finderSidebarNav = document.getElementById('finderSidebarNav');
+    const finderBreadcrumbs = document.getElementById('finderBreadcrumbs');
+    const finderSearchInput = document.getElementById('finderSearchInput');
+    const finderContentGrid = document.getElementById('finderContentGrid');
+
+    let finderPath = []; // Stores the current path in the finder, e.g., [{id: 'math', name: 'Mathematics'}, {id: '2024', name: '2024'}]
+    let finderRootType = ''; // 'tutorials', 'pastPapers', 'exercises'
+
+    function setupFinderWindow() {
+        // Draggable functionality
+        let isDragging = false;
+        let offsetX, offsetY;
+        const titleBar = finderMaterialsSection.querySelector('.finder-title-bar');
+
+        titleBar.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - finderMaterialsSection.getBoundingClientRect().left;
+            offsetY = e.clientY - finderMaterialsSection.getBoundingClientRect().top;
+            finderMaterialsSection.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            finderMaterialsSection.style.left = `${e.clientX - offsetX}px`;
+            finderMaterialsSection.style.top = `${e.clientY - offsetY}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            finderMaterialsSection.style.cursor = 'grab';
+        });
+
+        closeFinderButton.addEventListener('click', () => {
+            finderMaterialsSection.style.display = 'none';
+            // Also revert the card view visibility
+            const currentConfig = materialsConfig[finderRootType];
+            if (currentConfig) {
+                document.getElementById(`student-${finderRootType}-view`).classList.remove('hidden-on-desktop');
+                // Update the toggle button text if it exists
+                const toggleButton = document.getElementById(currentConfig.sectionId)?.querySelector('.material-view-toggle');
+                if (toggleButton) toggleButton.textContent = 'Switch to Finder View';
+            }
+            currentMaterialViewMode = 'card'; // Reset view mode
+            finderPath = []; // Clear path on close
+            finderRootType = '';
+        });
+
+        finderBreadcrumbs.addEventListener('click', (e) => {
+            if (e.target.dataset.index) {
+                const targetIndex = parseInt(e.target.dataset.index);
+                finderPath = finderPath.slice(0, targetIndex + 1);
+                renderFinderContent();
+            }
+        });
+
+        finderSearchInput.addEventListener('input', () => renderFinderContent());
     }
 
+    async function showFinderView(type) {
+        finderRootType = type;
+        finderPath = []; // Start fresh when opening finder for a new type
+        finderMaterialsSection.style.display = 'flex';
+        renderFinderSidebar();
+        await renderFinderContent(); // Initial render for the root level
+    }
 
-    async function handleAddItem() {
-        const name = itemNameInput.value.trim();
-        const price = parseFloat(itemPriceInput.value);
-        const link = itemLinkInput.value.trim();
-        const file = itemFileInput.files[0];
-
-        if (!name) { showModal('Error', 'Item name/title cannot be empty.'); return; }
-        if (currentFolder === 'exercises' && (isNaN(price) || price < 0)) { showModal('Error', 'Please enter a valid price for exercises.'); return; }
-        if (!link && !file) { showModal('Error', 'Please provide either a link or upload a file.'); return; }
-
-        addItemButton.disabled = true;
-        addItemButton.textContent = 'Adding...';
-
-        let itemData = { name: name, createdAt: serverTimestamp() };
-        if (currentFolder === 'exercises') {
-            itemData.price = price;
-        }
-
-        let downloadURL = link;
-        let filePath = ''; // To store Firebase Storage path
-
-        try {
-            if (file) {
-                // Upload file to Firebase Storage
-                filePath = `materials/${currentFolder}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, filePath);
-                const uploadResult = await uploadBytes(storageRef, file);
-                downloadURL = await getDownloadURL(uploadResult.ref);
-                itemData.filePath = filePath; // Save storage path
-            }
-
-            if (!downloadURL) {
-                throw new Error("No valid link or uploaded file URL.");
-            }
-            itemData.link = downloadURL;
-
-            // Add item to Firestore
-            await addDoc(getMaterialCollectionRef(currentFolder), itemData);
-            showModal('Success', `${formatFolderName(currentFolder).slice(0, -1)} added successfully!`);
-            
-            // Clear form
-            itemNameInput.value = '';
-            itemPriceInput.value = '0.00';
-            itemLinkInput.value = '';
-            itemFileInput.value = '';
-            itemFileNameDisplay.textContent = 'No file chosen';
-
-            await loadAllItems(currentFolder); // Reload list
-        } catch (error) {
-            console.error("Error adding item:", error);
-            showModal('Error', `Failed to add item: ${error.message}`);
-        } finally {
-            addItemButton.disabled = false;
-            addItemButton.textContent = 'Add Item';
+    function renderFinderSidebar() {
+        finderSidebarNav.innerHTML = '';
+        for (const typeKey in materialsConfig) {
+            const config = materialsConfig[typeKey];
+            const button = document.createElement('button');
+            button.textContent = config.title;
+            button.dataset.type = typeKey;
+            button.classList.toggle('active', typeKey === finderRootType);
+            button.addEventListener('click', async () => {
+                if (finderRootType !== typeKey) {
+                    finderRootType = typeKey;
+                    finderPath = []; // Reset path when switching types
+                    renderFinderSidebar(); // Re-render sidebar to update active state
+                    await renderFinderContent();
+                }
+            });
+            finderSidebarNav.appendChild(button);
         }
     }
 
-    async function loadAllItems(folder) {
-        const isTeacher = currentUserRole === 'teacher';
-        const container = isTeacher ? materialsList : studentView;
-        container.innerHTML = '<p class="loading-indicator">Loading items...</p>';
+    async function renderFinderContent() {
+        const config = materialsConfig[finderRootType];
+        finderContentGrid.innerHTML = '<p class="loading-indicator">Loading...</p>';
 
-        const collectionRef = getMaterialCollectionRef(folder);
-        // Ordering by 'createdAt' requires an index. If you don't have one, order by 'name' or remove orderBy.
-        const q = query(collectionRef, orderBy('createdAt', 'desc')); 
+        // Update breadcrumbs
+        finderBreadcrumbs.innerHTML = '';
+        let breadcrumbPath = `<span data-index="-1">${config.title}</span>`; // Root item
+        finderPath.forEach((item, index) => {
+            breadcrumbPath += ` / <span data-index="${index}">${item.name}</span>`;
+        });
+        finderBreadcrumbs.innerHTML = breadcrumbPath;
+        // Make the last breadcrumb (current folder) non-clickable and bold
+        const lastBreadcrumbSpan = finderBreadcrumbs.lastChild;
+        if (lastBreadcrumbSpan) {
+            lastBreadcrumbSpan.classList.add('current');
+            lastBreadcrumbSpan.removeAttribute('data-index');
+        }
+
+        const currentLevel = finderPath.length + 1; // 1 for Subject, 2 for Topic/Year, 3 for Item
+        const parentIds = finderPath.map(p => p.id);
+        const searchText = finderSearchInput.value.toLowerCase();
+
+        let collectionRef;
+        if (currentLevel <= 2) { // Displaying folders (Subject or Topic/Year)
+            collectionRef = collection(db, getPath(finderRootType, parentIds));
+        } else { // Displaying files (Level 3 items)
+            collectionRef = collection(db, getPath(finderRootType, parentIds));
+        }
 
         try {
-            const snapshot = await getDocs(q);
-            container.innerHTML = ''; // Clear loading indicator
+            const q = query(collectionRef, orderBy('name', config.level2 === 'Year' ? 'desc' : 'asc')); // Order by name or year for consistency
+            const snapshot = await getDocs(q).catch(e => {
+                console.error("Firestore Query Error (Finder):", e);
+                if (e.code === 'failed-precondition' && e.message.includes('The query requires an index')) {
+                    showModal('Firestore Index Required', `Failed to load items in Finder. It seems a **Firestore index is missing**. Please check the browser console for a link to create it. You'll likely need to create a **Collection Group Index** for collection ID: '${currentLevel === 1 ? config.collectionName : config[`level${currentLevel}`].toLowerCase() + 's'}' and field: 'name' (ascending/descending as per query).`);
+                } else {
+                    showModal('Error loading Finder content', `Could not load Finder content. Error: ${e.message}`);
+                }
+                return {docs:[]};
+            });
 
-            if (snapshot.empty) {
-                container.innerHTML = `<p class="loading-indicator">No items in ${formatFolderName(folder)} yet.</p>`;
-                return;
-            }
+            finderContentGrid.innerHTML = '';
+            let itemsToDisplay = [];
 
             snapshot.forEach(docSnap => {
                 const item = { id: docSnap.id, ...docSnap.data() };
-                if (isTeacher) {
-                    renderTeacherItem(item, container);
-                } else {
-                    renderStudentItem(item, container);
+                const name = item.name || item.title || '';
+                if (name.toLowerCase().includes(searchText)) {
+                    itemsToDisplay.push(item);
+                }
+            });
+
+            if (itemsToDisplay.length === 0) {
+                finderContentGrid.innerHTML = '<p class="finder-empty-message">No items found.</p>';
+                return;
+            }
+
+            itemsToDisplay.forEach(item => {
+                if (currentLevel <= 2) { // Render as folder
+                    const folderItem = document.createElement('div');
+                    folderItem.className = 'finder-folder-item';
+                    folderItem.innerHTML = `<span class="finder-folder-icon">📁</span><span>${item.name}</span>`;
+                    folderItem.addEventListener('click', async () => {
+                        finderPath.push({ id: item.id, name: item.name });
+                        await renderFinderContent();
+                    });
+                    finderContentGrid.appendChild(folderItem);
+                } else { // Render as file
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'finder-file-item';
+                    fileItem.innerHTML = `
+                        <span class="finder-file-item-icon">📄</span>
+                        <span class="finder-file-item-name">${item.name || item.title} ${config.isPaid ? `($${item.price.toFixed(2)})` : ''}</span>
+                        <div class="finder-file-item-actions">
+                            <button class="preview-item-btn" data-type="${finderRootType}" data-item='${JSON.stringify(item)}'>Preview</button>
+                            <a href="${item.link}" download="${item.name || item.title}.pdf" style="text-decoration:none;"><button>Download</button></a>
+                            ${config.isPaid && !isPurchasedInFinder(item.id, finderRootType) ? `<button class="add-to-cart-finder-btn" data-item='${JSON.stringify(item)}'>Add to Cart</button>` : ''}
+                        </div>
+                    `;
+                    // Attach event listeners
+                    fileItem.querySelector('.preview-item-btn').addEventListener('click', (e) => {
+                        handlePreview(finderRootType, JSON.parse(e.target.dataset.item));
+                    });
+                     fileItem.querySelector('.add-to-cart-finder-btn')?.addEventListener('click', (e) => {
+                        addToCart(JSON.parse(e.target.dataset.item));
+                        // Re-render to update UI if "Add to Cart" changes to "In Cart" (optional for finder)
+                        renderFinderContent(); 
+                    });
+                    finderContentGrid.appendChild(fileItem);
                 }
             });
         } catch (error) {
-            console.error("Error loading items from Firestore:", error); // More specific logging
-            // Check for specific error message for missing index
-            if (error.code === 'failed-precondition' && error.message.includes('The query requires an index')) {
-                showModal('Firestore Index Required', `Failed to load items. It seems a **Firestore index is missing** for the '${folder}' collection. Please check the console for a link to create it. This is typically required when using 'orderBy' on a field like 'createdAt'.`);
-            } else {
-                showModal('Error', `Failed to load items: ${error.message}. Please check Firebase security rules and browser console.`);
-            }
-            container.innerHTML = `<p class="error-message">Error loading items.</p>`;
+            console.error("Error rendering Finder content:", error);
+            finderContentGrid.innerHTML = `<p class="finder-empty-message error-message">Error loading content: ${error.message}</p>`;
         }
     }
 
-    function renderTeacherItem(item, container) {
-        const itemElement = document.createElement('div');
-        itemElement.className = 'list-item';
-        let itemDetails = item.name;
-        if (currentFolder === 'exercises') {
-            itemDetails += ` ($${item.price.toFixed(2)})`;
-        }
-
-        itemElement.innerHTML = `
-            <span>${itemDetails}</span>
-            <div class="actions">
-                <button class="btn-primary preview-item-btn" data-id="${item.id}" data-name="${item.name}" data-link="${item.link}" data-folder="${currentFolder}">Preview</button>
-                <button class="logout-btn delete-item-btn" data-id="${item.id}" data-file-path="${item.filePath || ''}">Delete</button>
-            </div>
-        `;
-        container.appendChild(itemElement);
-    }
-
-    function renderStudentItem(item, container) {
-        const card = document.createElement('div');
-        card.className = 'material-card';
-
-        let thumbnailHtml = '';
-        if (currentFolder === 'tutorials' && item.link && item.link.includes('youtube.com/watch?v=')) {
-            const videoId = item.link.split('v=')[1].split('&')[0];
-            thumbnailHtml = `<img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="${item.name}" class="material-thumbnail">`;
-        } else if (item.link && (item.link.endsWith('.jpg') || item.link.endsWith('.png') || item.link.endsWith('.jpeg') || item.link.endsWith('.webp'))) {
-            thumbnailHtml = `<img src="${item.link}" alt="${item.name}" class="material-thumbnail">`;
-        } else {
-            thumbnailHtml = `<img src="https://placehold.co/400x180/333333/FFFFFF?text=No%20Preview" alt="No Preview" class="material-thumbnail">`;
-        }
-
-        let priceHtml = '';
-        if (currentFolder === 'exercises') {
-            priceHtml = `<p>Price: <strong>$${item.price.toFixed(2)}</strong></p>`;
-        }
-
-        card.innerHTML = `
-            ${thumbnailHtml}
-            <div class="material-content">
-                <h3>${item.name}</h3>
-                ${priceHtml}
-                <p>${item.description || 'No description available.'}</p>
-                <div class="material-actions">
-                    <button class="btn-primary view-item-btn" data-id="${item.id}" data-name="${item.name}" data-link="${item.link}" data-file-path="${item.filePath || ''}" data-folder="${currentFolder}">View/Download</button>
-                    ${currentFolder === 'exercises' ? `<button class="btn-primary add-to-cart-btn" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">Add to Cart</button>` : ''}
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    }
-
-    // Handles clicks on delete and preview buttons in teacher's list
-    async function handleTeacherListClick(e) {
-        if (e.target.classList.contains('delete-item-btn')) {
-            const itemId = e.target.dataset.id;
-            const filePath = e.target.dataset.filePath; // Get file path for storage deletion
-            showModal('Confirm Deletion', 'Are you sure you want to delete this item? This action cannot be undone.', [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    try {
-                        // Delete from Storage first if a filePath exists
-                        if (filePath) {
-                            const fileRef = ref(storage, filePath);
-                            await deleteObject(fileRef);
-                            console.log('File deleted from storage:', filePath);
-                        }
-                        // Delete from Firestore
-                        await deleteDoc(doc(getMaterialCollectionRef(currentFolder), itemId));
-                        showModal('Success', 'Item deleted successfully!');
-                        await loadAllItems(currentFolder);
-                    } catch (error) {
-                        console.error("Error deleting item:", error);
-                        showModal('Error', `Failed to delete item: ${error.message}`);
-                    }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        } else if (e.target.classList.contains('preview-item-btn')) {
-            const item = {
-                id: e.target.dataset.id,
-                name: e.target.dataset.name,
-                link: e.target.dataset.link,
-                folder: e.target.dataset.folder
-            };
-            handlePreview(item);
-        }
-    }
-
-    // Handles clicks on view/download buttons in student's grid
-    studentView.addEventListener('click', (e) => {
-        if (e.target.classList.contains('view-item-btn')) {
-            const item = {
-                id: e.target.dataset.id,
-                name: e.target.dataset.name,
-                link: e.target.dataset.link,
-                filePath: e.target.dataset.filePath, // Include filePath for potential storage access
-                folder: e.target.dataset.folder
-            };
-            handlePreview(item);
-        } else if (e.target.classList.contains('add-to-cart-btn')) {
-            const item = {
-                id: e.target.dataset.id,
-                name: e.target.dataset.name,
-                price: parseFloat(e.target.dataset.price)
-            };
-            // addToCart(item); // Implement shopping cart logic if needed
-            showModal('Feature Coming Soon', `Add to Cart for "${item.name}" is a feature coming soon!`);
-        }
-    });
-
-    // Consolidated Preview Function
-    function handlePreview(item) {
-        if (item.folder === 'tutorials') {
-            // Assume YouTube links for now. More complex parsing needed for generic video embeds.
-            if (item.link && item.link.includes('youtube.com/watch?v=')) {
-                const videoId = item.link.split('v=')[1].split('&')[0];
-                showModal(item.name, `
-                    <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
-                        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-                    </div>
-                `);
-            } else if (item.link) {
-                 showModal(item.name, `<p>Video Link: <a href="${item.link}" target="_blank">${item.link}</a></p>`);
-            } else {
-                 showModal(item.name, '<p>No video link available.</p>');
-            }
-        } else if (item.folder === 'pastpapers' || item.folder === 'exercises') {
-            if (item.link && (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download'))) {
-                showPdfPreviewModal(item.name, item.link);
-            } else if (item.link && (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i))) {
-                showModal(item.name, `<img src="${item.link}" style="max-width: 100%; height: auto; border-radius: 8px;">`);
-            } else if (item.link) {
-                showModal(item.name, `
-                    <p>File Link: <a href="${item.link}" target="_blank">${item.link}</a></p>
-                    <div style="margin-top: 1rem; text-align: center;">
-                        <a href="${item.link}" download="${item.name}.pdf" class="btn-primary" target="_blank">Download File</a>
-                    </div>
-                `);
-            } else {
-                showModal(item.name, '<p>No file link available.</p>');
-            }
-        }
-    }
-
-
-    // --- PDF PREVIEW LOGIC ---
-    let pdfDoc = null; // Stores PDF document
-    let pageNum = 1; // Current page number
-
-    const pdfPreviewModal = document.getElementById('pdfPreviewModal');
-    const pdfCanvas = document.getElementById('pdfCanvas');
-    const pdfContext = pdfCanvas.getContext('2d');
-    const pdfPageNumSpan = document.getElementById('pdfPageNum');
-    const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
-    const prevPdfPageBtn = document.getElementById('prevPdfPage');
-    const nextPdfPageBtn = document.getElementById('nextPdfPage');
-
-    prevPdfPageBtn.addEventListener('click', () => {
-        if (pageNum <= 1) return;
-        pageNum--;
-        queueRenderPage(pageNum);
-    });
-
-    nextPdfPageBtn.addEventListener('click', () => {
-        if (pageNum >= pdfDoc.numPages) return;
-        pageNum++;
-        queueRenderPage(pageNum);
-    });
-
-    function showPdfPreviewModal(title, pdfUrl) {
-        document.getElementById('pdfPreviewTitle').textContent = title;
-        pdfPreviewModal.style.display = 'flex';
-        loadPdf(pdfUrl);
-    }
-
-    async function loadPdf(pdfUrl) {
-        pdfDoc = null;
-        pageNum = 1;
-        pdfPageNumSpan.textContent = '';
-        pdfTotalPagesSpan.textContent = '';
-        pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height); // Clear canvas
-
+    // Helper for Finder: Check if an item is purchased
+    async function isPurchasedInFinder(itemId, type) {
+        if (!materialsConfig[type].isPaid || !currentUserId) return false;
+        const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_${materialsConfig[type].collectionName}`, itemId);
         try {
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            pdfDoc = await loadingTask.promise;
-            pdfTotalPagesSpan.textContent = pdfDoc.numPages;
-            queueRenderPage(pageNum);
+            const docSnap = await getDoc(purchaseRef);
+            return docSnap.exists();
         } catch (error) {
-            console.error('Error loading PDF:', error);
-            showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
-            pdfPreviewModal.style.display = 'none'; // Close modal on error
+            console.error("Error checking purchase status in Finder:", error);
+            return false;
         }
     }
-
-    let pageRendering = false;
-    let pageNumPending = null;
-
-    function renderPage(num) {
-        pageRendering = true;
-        pdfPageNumSpan.textContent = num;
-
-        pdfDoc.getPage(num).then(function(page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-
-            const renderContext = {
-                canvasContext: pdfContext,
-                viewport: viewport
-            };
-            const renderTask = page.render(renderContext);
-
-            renderTask.promise.then(function() {
-                pageRendering = false;
-                if (pageNumPending !== null) {
-                    renderPage(pageNumPending);
-                    pageNumPending = null;
-                }
-                updatePdfNavButtons();
-            });
-        }).catch(error => {
-            console.error('Error rendering PDF page:', error);
-            showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
-            pageRendering = false;
-            pageNumPending = null;
-            updatePdfNavButtons();
-        });
-    }
-
-    function queueRenderPage(num) {
-        if (pageRendering) {
-            pageNumPending = num;
-        } else {
-            renderPage(num);
-        }
-    }
-
-    function updatePdfNavButtons() {
-        prevPdfPageBtn.disabled = pageNum <= 1;
-        nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
-    }
-
 
     // --- UNIVERSAL MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
@@ -1597,10 +3518,15 @@
             document.getElementById('pdfPageNum').textContent = '';
             document.getElementById('pdfTotalPages').textContent = '';
         }
+        // If it's the Video preview modal, stop video playback
+        if (modal.id === 'videoPreviewModal') {
+            document.getElementById('videoPreviewContent').innerHTML = ''; // Clear embedded video
+        }
     });
 
     // --- THEME TOGGLE (reused from index.html) ---
-    const themeToggleButton = document.getElementById('themeToggleButton'); // This button is not present in materials.html header
+    // The themeToggleButton element is not present in this HTML, so the listener is commented out.
+    // If you wish to have a theme toggle on this page, you would need to add a button for it in the header.
     function applyTheme(theme) { 
         document.body.classList.toggle('light-theme', theme === 'light'); 
     }
@@ -1608,7 +3534,6 @@
         const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
         applyTheme(savedTheme); 
     }
-    // No themeToggleButton in this page's header, so no listener needed for it here.
     loadTheme(); // Apply theme on load
 
     // Show the login wrapper when the page has fully loaded
