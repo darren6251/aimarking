@@ -2,121 +2,1201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Marker - Materials</title>
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Materials</title>
+
+  <!-- Base theme (same look & feel as "materials theme demo") -->
+  <link rel="stylesheet" href="style.css"/>
+
+  <!-- Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- PDF.js for previews -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+  <style>
+    /* Extra helpers if not in style.css */
+    .nav { position: sticky; top:0; z-index: 10; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+    .nav-inner { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding: .75rem 1rem; }
+    .brand { font-weight: 700; letter-spacing: .2px; }
+    .nav-links { display:flex; gap:.5rem; align-items:center; }
+    .nav-links a { padding:.5rem .75rem; border-radius: 999px; border:1px solid var(--border-color); background: var(--bg-secondary); }
+    .nav-right { display:flex; gap:.5rem; align-items:center; }
+
+    .content { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+
+    .section-tabs { display:flex; gap:.5rem; margin: 1rem 0 1.5rem; flex-wrap:wrap; }
+    .tab-btn { border:1px solid var(--border-color); background: var(--bg-secondary); border-radius:999px; padding:.5rem .9rem; font-weight:600; cursor:pointer; }
+    .tab-btn.active { background: var(--brand-quiet); border-color: var(--brand); }
+
+    .section-title { margin: .25rem 0 1rem; }
+
+    .form-container { border:1px solid var(--border-color); background: var(--bg-secondary); padding:1rem; border-radius: 16px; max-width: 900px; }
+    .grid-container { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }
+
+    .material-card { border:1px solid var(--border-color); border-radius: 16px; overflow:hidden; background:var(--bg-primary); display:flex; flex-direction:column; }
+    .material-card-thumbnail { aspect-ratio: 16/9; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .material-card-body { padding:.75rem; display:flex; flex-direction:column; gap:.25rem; }
+    .material-card-title { font-weight:600; }
+    .material-card-actions { display:flex; gap:.25rem; margin-top: .25rem; flex-wrap:wrap; }
+
+    .filters-container { display:flex; gap:.5rem; margin: .5rem 0 1rem; flex-wrap:wrap; }
+    .filters-container select, .filters-container input, .filters-container textarea { width: auto; }
+
+    .folder-view .folder { border:1px dashed var(--border-color); border-radius:14px; padding:.75rem; }
+    .folder-header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; }
+    .folder-title { font-weight:700; }
+    .file-list { display:grid; gap:.4rem; }
+    .file-row { display:flex; align-items:center; justify-content:space-between; padding:.5rem .6rem; border:1px solid var(--border-color); border-radius: 12px; background: var(--bg-primary); }
+    .file-row .meta { display:flex; flex-direction:column; gap: .15rem; }
+    .badge { padding:.15rem .5rem; border:1px solid var(--border-color); border-radius:999px; font-size:.75rem; background: var(--bg-secondary); }
+
+    .store-layout { display:grid; grid-template-columns: 1fr 320px; gap: 16px; align-items:start; }
+    .shopping-cart { border:1px solid var(--border-color); border-radius: 16px; padding: .75rem; background: var(--bg-secondary); position: sticky; top: 74px; }
+    .shopping-cart h3 { margin-top:.25rem; }
+    .cart-item { display:flex; align-items:center; justify-content:space-between; padding: .35rem 0; border-bottom: 1px dashed var(--border-color); }
+    .cart-item:last-child { border-bottom:none; }
+    .cart-item-name { font-weight:600; }
+    .cart-item-price { opacity:.85; }
+    .remove-from-cart-btn { border:1px solid var(--border-color); border-radius: 999px; padding:.15rem .5rem; background:var(--bg-primary); cursor:pointer; }
+
+    .summary-line { display:flex; align-items:center; justify-content:space-between; padding:.25rem 0; }
+    .promo-code-section { margin-top: .5rem; }
+    .promo-input-group { display:flex; gap:.4rem; align-items:center; }
+    .promo-error { color: var(--danger); font-size: .9rem; margin-top: .25rem; }
+    .promo-display { display:flex; align-items:center; justify-content:space-between; margin-top:.25rem; }
+    .remove-promo-btn { border:1px solid var(--border-color); border-radius:999px; padding:.25rem .6rem; background:var(--bg-primary); cursor:pointer; }
+
+    .material-view-toggle { border:1px solid var(--border-color); background: var(--bg-primary); padding:.4rem .7rem; border-radius:999px; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding: 1rem; z-index: 30; }
+    .modal { width: min(780px, 100%); background: var(--bg-primary); border:1px solid var(--border-color); border-radius: 18px; overflow:hidden; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding: .7rem .9rem; border-bottom:1px solid var(--border-color); }
+    .modal-body { padding: .9rem; max-height: 70vh; overflow:auto; }
+    .modal-footer { padding:.7rem .9rem; display:flex; gap:.5rem; justify-content:flex-end; border-top:1px solid var(--border-color); }
+    .close-x { cursor:pointer; }
+
+    /* Finder window */
+    .finder { position: fixed; inset:auto 12px 12px auto; width: 820px; max-width: calc(100% - 24px); height: 540px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 18px; display:none; flex-direction:column; z-index: 40; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .finder-header { padding:.6rem .8rem; display:flex; gap:.5rem; align-items:center; justify-content:space-between; border-bottom: 1px solid var(--border-color); }
+    .finder-title { font-weight:700; }
+    .finder-body { display:flex; flex:1; min-height:0; }
+    .finder-sidebar { width: 240px; min-width: 200px; border-right:1px solid var(--border-color); padding:.6rem; overflow:auto; }
+    .finder-main { flex:1; padding:.6rem; overflow:auto; }
+    .finder-resizer { position:absolute; inset:auto 0 0 auto; width: 10px; height: 10px; cursor: nwse-resize; }
+
+    .video-embed-container { aspect-ratio:16/9; width:100%; }
+    .video-embed-container iframe { width:100%; height:100%; border:0; }
+
+    .btn-primary { background: var(--brand); color: white; border:none; border-radius: 10px; padding:.5rem .8rem; cursor:pointer; }
+    .btn-secondary { background: var(--bg-secondary); border:1px solid var(--border-color); border-radius: 10px; padding:.5rem .8rem; cursor:pointer; }
+    .logout-btn { border:1px solid var(--border-color); background: var(--bg-primary); border-radius: 10px; padding:.4rem .7rem; cursor:pointer; }
+    .hidden { display:none; }
+  </style>
 </head>
 <body>
-  <div id="appSection" style="display:block;">
-    <!-- HEADER -->
-    <header>
-      <div class="logo-container">
-        <h1>AI Marker</h1>
-        <p>Operated by Darren Ng</p>
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="brand">📚 Materials</div>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="#" id="openFinderBtn">Finder</a>
       </div>
-
-      <div class="header-actions">
-        <a href="index.html" class="tab">Home</a>
-
-        <div class="dropdown-menu">
-          <button class="tab">Work with AI</button>
-          <div class="dropdown-menu-content">
-            <a href="grading.html" class="tab">Exam Grader</a>
-            <a href="chat.html" class="tab">Chat with Gemini</a>
-          </div>
-        </div>
-
-        <div class="dropdown-menu">
-          <button class="tab active">Materials</button>
-          <div class="dropdown-menu-content">
-            <a href="materials.html#tutorials" class="tab">Tutorial Videos</a>
-            <a href="materials.html#pastpapers" class="tab">Past Papers</a>
-            <a href="materials.html#exercises" class="tab">Exercises for Sale</a>
-          </div>
-        </div>
-
-        <div class="user-info">
-          <span id="userDisplayName"></span>
-          <button id="logoutBtn" class="logout-btn">Logout</button>
-        </div>
+      <div class="nav-right">
+        <span id="whoami" class="badge">—</span>
+        <button id="signOutBtn" class="logout-btn">Sign Out</button>
       </div>
-    </header>
+    </div>
+  </nav>
 
-    <!-- MAIN -->
-    <main style="max-width:1000px;margin:0 auto;padding:1rem;">
-      <h2 class="section-title">Learning Materials</h2>
+  <main class="content">
+    <div class="section-tabs">
+      <button class="tab-btn active" data-section="tutorials">Tutorial Videos</button>
+      <button class="tab-btn" data-section="pastPapers">Past Papers</button>
+      <button class="tab-btn" data-section="exercises">Exercises for Sale</button>
+    </div>
 
-      <!-- TUTORIAL VIDEOS -->
-      <section id="tutorials" style="margin-bottom:2rem;">
-        <h3 class="section-title">Tutorial Videos</h3>
-        <div class="video-grid">
-          <iframe width="100%" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Tutorial 1" frameborder="0" allowfullscreen></iframe>
-          <iframe width="100%" height="315" src="https://www.youtube.com/embed/3JZ_D3ELwOQ" title="Tutorial 2" frameborder="0" allowfullscreen></iframe>
-        </div>
+    <!-- Sections will be created dynamically -->
+    <section id="tutorialSection"></section>
+    <section id="pastPaperSection" class="hidden"></section>
+    <section id="exerciseSection" class="hidden"></section>
+  </main>
+
+  <!-- Generic modal -->
+  <div id="modalOverlay" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title">Message</div>
+      <div class="close-x" id="modalCloseX">✖</div>
+    </div>
+    <div class="modal-body" id="modalBody">...</div>
+    <div class="modal-footer" id="modalFooter"><button class="btn-secondary" id="modalCloseBtn">Close</button></div>
+  </div></div>
+
+  <!-- Video Preview -->
+  <div id="videoModal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title">Video Preview</div>
+      <div class="close-x" data-close="videoModal">✖</div>
+    </div>
+    <div class="modal-body">
+      <div class="video-embed-container" id="videoContainer"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="videoModal">Close</button>
+    </div>
+  </div></div>
+
+  <!-- PDF Preview -->
+  <div id="pdfModal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true" style="width:min(980px, 100%);">
+    <div class="modal-header">
+      <div class="modal-title">PDF Preview</div>
+      <div class="close-x" data-close="pdfModal">✖</div>
+    </div>
+    <div class="modal-body" id="pdfBody">
+      <canvas id="pdfCanvas" style="width:100%; height:auto;"></canvas>
+    </div>
+    <div class="modal-footer">
+      <a id="pdfOpenNew" class="btn-secondary" target="_blank">Open in new tab</a>
+      <a id="pdfDownload" class="btn-primary" download>Download</a>
+      <button class="btn-secondary" data-close="pdfModal">Close</button>
+    </div>
+  </div></div>
+
+  <!-- Finder Window -->
+  <div id="finder" class="finder">
+    <div class="finder-header">
+      <div class="finder-title">Materials Finder</div>
+      <div style="display:flex; gap:.4rem; align-items:center;">
+        <select id="finderSectionPick">
+          <option value="tutorials">Tutorials</option>
+          <option value="pastPapers">Past Papers</option>
+          <option value="exercises">Exercises</option>
+        </select>
+        <button id="finderAddBtn" class="btn-primary">Add</button>
+        <button id="finderRefreshBtn" class="btn-secondary">Refresh</button>
+        <button id="finderCloseBtn" class="logout-btn">Close</button>
+      </div>
+    </div>
+    <div class="finder-body">
+      <aside class="finder-sidebar">
+        <div id="finderTree"></div>
+      </aside>
+      <section class="finder-main">
+        <div id="finderList"></div>
       </section>
-
-      <!-- PAST PAPERS -->
-      <section id="pastpapers" style="margin-bottom:2rem;">
-        <h3 class="section-title">Past Papers</h3>
-        <ul class="materials-list">
-          <li><a href="assets/papers/english2022.pdf" target="_blank">DSE English Paper 1 (2022)</a></li>
-          <li><a href="assets/papers/math2021.pdf" target="_blank">DSE Mathematics Paper 2 (2021)</a></li>
-        </ul>
-      </section>
-
-      <!-- EXERCISES FOR SALE -->
-      <section id="exercises">
-        <h3 class="section-title">Exercises for Sale</h3>
-        <div class="materials-list">
-          <div class="exercise-item">
-            <strong>English Writing Drills</strong>
-            <p>Practice pack with 20 essays and model answers.</p>
-            <a href="https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n" target="_blank" class="btn-primary">Buy Now</a>
-          </div>
-          <div class="exercise-item">
-            <strong>Math Mock Papers</strong>
-            <p>5 full-length mock papers with solutions.</p>
-            <a href="https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n" target="_blank" class="btn-primary">Buy Now</a>
-          </div>
-        </div>
-      </section>
-    </main>
+    </div>
+    <div class="finder-resizer"></div>
   </div>
 
-  <!-- Firebase Login Gate -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    // ---------- Firebase (modular CDN) ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-storage.js";
 
+    // ---------- PDF worker ----------
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    // ---------- CONFIG (fill these in) ----------
     const firebaseConfig = {
-      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
-      authDomain: "ai-grading-9bb30.firebaseapp.com",
-      projectId: "ai-grading-9bb30",
-      storageBucket: "ai-grading-9bb30.appspot.com",
-      messagingSenderId: "298162112230",
-      appId: "1:298162112230:web:529d3f95536991be685d27",
-      measurementId: "G-CHKLKSM17S"
+      apiKey: "YOUR_KEY",
+      authDomain: "YOUR_DOMAIN.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
+    const appId = "YOUR_APP_NAMESPACE"; // used in Firestore paths
+    const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/..."; // set real link
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    const userDisplayName = document.getElementById('userDisplayName');
-    const logoutBtn = document.getElementById('logoutBtn');
+    // ---------- State ----------
+    let currentUserId = null;
+    let currentUserEmail = null;
+    let currentUserRole = null; // 'teacher' | 'student'
+    let shoppingCart = [];
+    let appliedPromoCode = null;
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-      } else {
-        userDisplayName.textContent = user.displayName || user.email || 'User';
+    // ---------- Materials config (matches index(8) hierarchy) ----------
+    // Every type exposes: title, sectionId, level1/2/3 labels, isPaid, and helper builders
+    const materialsConfig = {
+      tutorials: {
+        title: "Tutorial Videos",
+        sectionId: "tutorialSection",
+        level1: "Subject",
+        level2: "Chapter",
+        level3: "Video",
+        isPaid: false,
+        // collection paths under artifacts/${appId}/materials/tutorials
+        colLevel1: () => collection(db, `artifacts/${appId}/materials/tutorials/subjects`),
+        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/tutorials/subjects/${l1Id}/chapters`),
+        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/tutorials/subjects/${l1Id}/chapters/${l2Id}/videos`),
+      },
+      pastPapers: {
+        title: "Past Papers",
+        sectionId: "pastPaperSection",
+        level1: "Year",
+        level2: "Subject",
+        level3: "Paper",
+        isPaid: false,
+        colLevel1: () => collection(db, `artifacts/${appId}/materials/pastPapers/years`),
+        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/pastPapers/years/${l1Id}/subjects`),
+        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/pastPapers/years/${l1Id}/subjects/${l2Id}/papers`),
+      },
+      exercises: {
+        title: "Exercises for Sale",
+        sectionId: "exerciseSection",
+        level1: "Subject",
+        level2: "Set",
+        level3: "Exercise",
+        isPaid: true,
+        colLevel1: () => collection(db, `artifacts/${appId}/materials/exercises/subjects`),
+        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/exercises/subjects/${l1Id}/sets`),
+        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/exercises/subjects/${l1Id}/sets/${l2Id}/items`),
       }
+    };
+
+    // ---------- Auth gate (redirect if not signed-in) ----------
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html'; // no auth UI here
+        return;
+      }
+      currentUserId = user.uid;
+      currentUserEmail = user.email || '';
+      document.getElementById('whoami').textContent = user.email || user.uid;
+
+      // role from profile (teacher/student)
+      currentUserRole = await readUserRole(user.uid);
+      if (!currentUserRole) currentUserRole = 'student';
+      // Build sections
+      buildAllSections();
+      // check if Stripe returned with success
+      await checkForSuccessfulPurchase();
     });
 
-    logoutBtn?.addEventListener('click', async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
+    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+
+    async function readUserRole(uid) {
+      // index(8) uses artifacts/${appId}/users/${uid}/profile/data
+      try {
+        const ref = doc(db, `artifacts/${appId}/users/${uid}/profile/data`);
+        const snap = await getDoc(ref);
+        return snap.exists() ? (snap.data()?.role || null) : null;
+      } catch (e) {
+        console.warn('role read failed', e);
+        return null;
+      }
+    }
+
+    // ---------- Section tabs ----------
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showSection(btn.dataset.section);
+      });
     });
+    function showSection(key) {
+      document.getElementById('tutorialSection').classList.toggle('hidden', key!=='tutorials');
+      document.getElementById('pastPaperSection').classList.toggle('hidden', key!=='pastPapers');
+      document.getElementById('exerciseSection').classList.toggle('hidden', key!=='exercises');
+    }
+
+    // ---------- Build all sections (teacher + student views), Finder, and listeners ----------
+    function buildAllSections() {
+      ['tutorials','pastPapers','exercises'].forEach(type => setupMaterialSection(type));
+
+      // delegated YouTube click to swap thumbnail for embed
+      document.getElementById('tutorialSection').addEventListener('click', (e) => {
+        const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
+        if (!thumbnail) return;
+        const vid = thumbnail.dataset.youtubeId;
+        const host = document.createElement('div');
+        host.className = 'video-embed-container';
+        host.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        thumbnail.replaceWith(host);
+      });
+
+      // Finder wires
+      setupFinderWindow();
+      document.getElementById('openFinderBtn').addEventListener('click', () => {
+        document.getElementById('finder').style.display = 'flex';
+        refreshFinder();
+      });
+      document.getElementById('finderCloseBtn').addEventListener('click', () => {
+        document.getElementById('finder').style.display = 'none';
+      });
+      document.getElementById('finderRefreshBtn').addEventListener('click', refreshFinder);
+      document.getElementById('finderSectionPick').addEventListener('change', refreshFinder);
+      document.getElementById('finderAddBtn').addEventListener('click', () => openAddEditModal('add', getFinderType(), null, null));
+
+      // Google Drive helpers for inputs inside add/edit modal
+      setupGoogleDriveLinkConversion();
+    }
+
+    // ---------- Section builder (UI + events) ----------
+    function setupMaterialSection(type) {
+      const config = materialsConfig[type];
+      const root = document.getElementById(config.sectionId);
+
+      let studentViewHtml = `
+        <div class="filters-container">
+          <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
+          <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
+        </div>
+        <div id="level3-${type}-grid" class="grid-container"></div>`;
+
+      if (config.isPaid) {
+        studentViewHtml = `
+          <div class="store-layout">
+            <div>
+              ${studentViewHtml}
+            </div>
+            <div class="shopping-cart">
+              <h3>Shopping Cart</h3>
+              <div id="cart-items"></div>
+              <div id="cart-summary">
+                <div class="summary-line"><span>Subtotal:</span><span id="cart-subtotal-price">$0.00</span></div>
+                <div class="summary-line" id="promo-discount-line" style="display:none;"><span>Promo Discount:</span><span id="cart-promo-discount">-$0.00</span></div>
+                <div class="summary-line"><span>Total Price:</span><span id="cart-total-price">$0.00</span></div>
+              </div>
+              <div class="promo-code-section">
+                <label for="promoCodeInput">Promo Code:</label>
+                <div class="promo-input-group">
+                  <input type="text" id="promoCodeInput" placeholder="Enter promo code">
+                  <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
+                </div>
+                <div id="appliedPromoCodeDisplay" class="promo-display" style="display:none;">
+                  <span>Applied: <span id="appliedPromoCodeText"></span></span>
+                  <button id="removePromoCodeBtn" class="remove-promo-btn">Remove</button>
+                </div>
+                <p id="promoCodeError" class="promo-error"></p>
+              </div>
+              <div id="cart-validation-message"></div>
+              <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
+            </div>
+          </div>`;
+      }
+
+      root.innerHTML = `
+        <h2 class="section-title">${config.title}</h2>
+        <div id="teacher-${type}-view" style="display:none;">
+          <div class="form-container" style="max-width: initial;">
+            <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+            <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
+            <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; opacity:.75;"></p>
+          </div>
+          <div id="level1-${type}-container" class="folder-view"></div>
+          <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; opacity:.75;">
+            Board View (Future)
+          </div>
+        </div>
+        <div id="student-${type}-view" style="display:none;">${studentViewHtml}</div>
+      `;
+
+      const isTeacher = currentUserRole === 'teacher';
+      document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
+      document.getElementById(`student-${type}-view`).style.display = 'block';
+
+      // Teacher: add Level1
+      document.getElementById(`add-level1-${type}-btn`).addEventListener('click', () => openAddEditModal('add', type, 1, null));
+
+      // Teacher: view toggler
+      const toggleBtn = document.getElementById(`toggle-view-mode-${type}`);
+      const statusEl = document.getElementById(`view-mode-status-${type}`);
+      let board = false;
+      statusEl.textContent = 'Folder view';
+      toggleBtn.addEventListener('click', () => {
+        board = !board;
+        document.getElementById(`level1-${type}-container`).style.display = board ? 'none' : 'block';
+        document.getElementById(`board-view-${type}`).style.display = board ? 'block' : 'none';
+        statusEl.textContent = board ? 'Board view' : 'Folder view';
+      });
+
+      // Load teacher folders + student filters
+      loadLevel1(type);
+      setupStudentFilters(type);
+
+      // Cart actions (only once since ids are unique in DOM)
+      if (config.isPaid) {
+        document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
+        document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
+        document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+        updateCartUI();
+      }
+    }
+
+    // ---------- Teacher folders render ----------
+    async function loadLevel1(type) {
+      const cfg = materialsConfig[type];
+      const parent = document.getElementById(`level1-${type}-container`);
+      parent.innerHTML = '<div class="loading-indicator">Loading…</div>';
+      const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
+      if (snap.empty) {
+        parent.innerHTML = '<div class="folder">No items yet.</div>';
+        return;
+      }
+      parent.innerHTML = '';
+      for (const doc1 of snap.docs) {
+        const data1 = doc1.data();
+        const one = document.createElement('div');
+        one.className = 'folder';
+        one.innerHTML = `
+          <div class="folder-header">
+            <div class="folder-title">${data1.name || data1.title || '(untitled)'}</div>
+            <div>
+              <button class="btn-secondary" data-act="add-l2" data-id="${doc1.id}">Add ${cfg.level2}</button>
+              <button class="btn-secondary" data-act="rename-l1" data-id="${doc1.id}">Rename</button>
+              <button class="logout-btn" data-act="del-l1" data-id="${doc1.id}">Delete</button>
+            </div>
+          </div>
+          <div class="file-list" id="l2-${type}-${doc1.id}"></div>`;
+        parent.appendChild(one);
+
+        // load L2
+        await loadLevel2(type, doc1.id);
+      }
+
+      parent.querySelectorAll('button[data-act="add-l2"]').forEach(b => b.addEventListener('click', () => {
+        openAddEditModal('add', type, 2, b.dataset.id);
+      }));
+      parent.querySelectorAll('button[data-act="rename-l1"]').forEach(b => b.addEventListener('click', () => {
+        openAddEditModal('edit', type, 1, b.dataset.id);
+      }));
+      parent.querySelectorAll('button[data-act="del-l1"]').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this folder and ALL its contents?')) return;
+        await deleteDoc(doc(cfg.colLevel1(), b.dataset.id));
+        await loadLevel1(type);
+      }));
+    }
+
+    async function loadLevel2(type, l1Id) {
+      const cfg = materialsConfig[type];
+      const parent = document.getElementById(`l2-${type}-${l1Id}`);
+      parent.innerHTML = '';
+      const snap = await getDocs(query(cfg.colLevel2(l1Id), orderBy('createdAt','asc')));
+      for (const doc2 of snap.docs) {
+        const data2 = doc2.data();
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `
+          <div class="meta">
+            <div><b>${data2.name || data2.title || '(untitled)'}</b></div>
+            <div class="badge">${cfg.level2}</div>
+          </div>
+          <div>
+            <button class="btn-secondary" data-act="add-l3" data-l1="${l1Id}" data-id="${doc2.id}">Add ${cfg.level3}</button>
+            <button class="btn-secondary" data-act="rename-l2" data-l1="${l1Id}" data-id="${doc2.id}">Rename</button>
+            <button class="logout-btn" data-act="del-l2" data-l1="${l1Id}" data-id="${doc2.id}">Delete</button>
+          </div>`;
+        parent.appendChild(row);
+
+        // L3 list
+        const list3 = document.createElement('div');
+        list3.className = 'file-list';
+        list3.id = `l3-${type}-${l1Id}-${doc2.id}`;
+        parent.appendChild(list3);
+        await loadLevel3(type, l1Id, doc2.id);
+      }
+
+      parent.querySelectorAll('button[data-act="add-l3"]').forEach(b => b.addEventListener('click', () => {
+        openAddEditModal('add', type, 3, { l1: b.dataset.l1, l2: b.dataset.id });
+      }));
+      parent.querySelectorAll('button[data-act="rename-l2"]').forEach(b => b.addEventListener('click', () => {
+        openAddEditModal('edit', type, 2, { l1: b.dataset.l1, l2: b.dataset.id });
+      }));
+      parent.querySelectorAll('button[data-act="del-l2"]').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this and ALL nested items?')) return;
+        await deleteDoc(doc(cfg.colLevel2(b.dataset.l1), b.dataset.id));
+        await loadLevel2(type, b.dataset.l1);
+      }));
+    }
+
+    async function loadLevel3(type, l1Id, l2Id) {
+      const cfg = materialsConfig[type];
+      const parent = document.getElementById(`l3-${type}-${l1Id}-${l2Id}`);
+      parent.innerHTML = '';
+      const snap = await getDocs(query(cfg.colLevel3(l1Id, l2Id), orderBy('createdAt','asc')));
+      for (const doc3 of snap.docs) {
+        const d = doc3.data();
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        const price = typeof d.price === 'number' ? ` • $${d.price.toFixed(2)}` : '';
+        row.innerHTML = `
+          <div class="meta">
+            <div><b>${d.name || d.title || '(untitled)'}</b></div>
+            <div class="badge">${cfg.level3}${price}</div>
+          </div>
+          <div>
+            <button class="btn-secondary" data-act="preview-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Preview</button>
+            <button class="btn-secondary" data-act="move-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Move</button>
+            <button class="btn-secondary" data-act="edit-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Edit</button>
+            <button class="logout-btn" data-act="del-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Delete</button>
+          </div>`;
+        parent.appendChild(row);
+      }
+      parent.querySelectorAll('button[data-act="preview-l3"]').forEach(b => b.addEventListener('click', async () => {
+        const docSnap = await getDoc(doc(cfg.colLevel3(b.dataset.l1, b.dataset.l2), b.dataset.id));
+        if (!docSnap.exists()) return;
+        handlePreview(docSnap.data());
+      }));
+      parent.querySelectorAll('button[data-act="move-l3"]').forEach(b => b.addEventListener('click', async () => {
+        await moveItemPrompt(type, b.dataset.l1, b.dataset.l2, b.dataset.id);
+      }));
+      parent.querySelectorAll('button[data-act="edit-l3"]').forEach(b => b.addEventListener('click', () => openAddEditModal('edit', type, 3, { l1: b.dataset.l1, l2: b.dataset.l2, id: b.dataset.id })));
+      parent.querySelectorAll('button[data-act="del-l3"]').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this item?')) return;
+        await deleteDoc(doc(cfg.colLevel3(b.dataset.l1, b.dataset.l2), b.dataset.id));
+        await loadLevel3(type, b.dataset.l1, b.dataset.l2);
+      }));
+    }
+
+    // ---------- Student view filters & grid ----------
+    function setupStudentFilters(type) {
+      const cfg = materialsConfig[type];
+      const l1Select = document.getElementById(`level1-${type}-filter`);
+      const l2Select = document.getElementById(`level2-${type}-filter`);
+      const grid = document.getElementById(`level3-${type}-grid`);
+
+      // Level1
+      (async () => {
+        const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
+        l1Select.innerHTML = `<option value="">-- Select ${cfg.level1} --</option>` + snap.docs.map(d => `<option value="${d.id}">${d.data().name || d.data().title || '(untitled)'}</option>`).join('');
+      })();
+
+      l1Select.addEventListener('change', async () => {
+        const l1 = l1Select.value;
+        l2Select.disabled = !l1;
+        l2Select.innerHTML = `<option value="">-- Select ${cfg.level2} --</option>`;
+        grid.innerHTML = '';
+        if (!l1) return;
+        const snap = await getDocs(query(cfg.colLevel2(l1), orderBy('createdAt','asc')));
+        l2Select.innerHTML += snap.docs.map(d => `<option value="${d.id}">${d.data().name || d.data().title || '(untitled)'}</option>`).join('');
+      });
+
+      l2Select.addEventListener('change', async () => {
+        const l1 = l1Select.value;
+        const l2 = l2Select.value;
+        grid.innerHTML = '';
+        if (!l1 || !l2) return;
+        const snap = await getDocs(query(cfg.colLevel3(l1,l2), orderBy('createdAt','asc')));
+        for (const d of snap.docs) {
+          grid.appendChild(renderStudentCard(type, l1, l2, d.id, d.data()));
+        }
+      });
+    }
+
+    function renderStudentCard(type, l1Id, l2Id, id, data) {
+      const cfg = materialsConfig[type];
+      const card = document.createElement('div');
+      card.className = 'material-card';
+      let thumbHtml = '<div class="material-card-thumbnail">No thumbnail</div>';
+      let isVideo = false;
+
+      if (type === 'tutorials') {
+        const yt = parseYouTubeId(data.url || data.videoUrl || '');
+        if (yt) {
+          isVideo = true;
+          thumbHtml = `<div class="material-card-thumbnail" data-youtube-id="${yt}">
+            <img src="https://img.youtube.com/vi/${yt}/hqdefault.jpg" alt="" style="width:100%; height:100%; object-fit:cover;">
+          </div>`;
+        }
+      }
+
+      const name = data.name || data.title || '(untitled)';
+      let actions = `<button class="btn-secondary" data-act="preview">Preview</button>`;
+
+      if (type === 'exercises') {
+        const price = typeof data.price === 'number' ? data.price : (typeof data.price === 'string' ? Number(data.price) : 0);
+        actions += ` <button class="btn-primary" data-act="addcart">Add ($${(price||0).toFixed(2)})</button>`;
+      }
+
+      card.innerHTML = `
+        ${thumbHtml}
+        <div class="material-card-body">
+          <div class="material-card-title">${name}</div>
+          <div class="material-card-actions">${actions}</div>
+        </div>`;
+
+      card.querySelector('[data-act="preview"]').addEventListener('click', () => handlePreview(data));
+      if (type === 'exercises') {
+        card.querySelector('[data-act="addcart"]').addEventListener('click', () => {
+          addToCart({ id: `${l1Id}_${l2Id}_${id}`, name, price: Number(data.price||0) });
+        });
+      }
+      return card;
+    }
+
+    // ---------- Finder ----------
+    function getFinderType(){ return document.getElementById('finderSectionPick').value; }
+
+    async function refreshFinder() {
+      const type = getFinderType();
+      const cfg = materialsConfig[type];
+      // sidebar tree = Level1
+      const s = document.getElementById('finderTree');
+      s.innerHTML = '<div class="loading-indicator">Loading…</div>';
+      const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
+      s.innerHTML = '';
+      snap.forEach(d => {
+        const li = document.createElement('div');
+        li.className = 'file-row';
+        li.innerHTML = `<div class="meta"><b>${d.data().name || d.data().title || '(untitled)'}</b><div class="badge">${cfg.level1}</div></div>
+                        <div><button class="btn-secondary" data-act="open" data-id="${d.id}">Open</button></div>`;
+        s.appendChild(li);
+      });
+      s.querySelectorAll('button[data-act="open"]').forEach(b => {
+        b.addEventListener('click', () => openFinderList(type, b.dataset.id));
+      });
+      // default open first
+      const first = snap.docs[0]?.id;
+      if (first) openFinderList(type, first);
+      document.getElementById('finder').style.display = 'flex';
+    }
+
+    async function openFinderList(type, l1Id) {
+      const cfg = materialsConfig[type];
+      const main = document.getElementById('finderList');
+      main.innerHTML = `<div class="folder-header">
+          <div class="folder-title">${cfg.title}: ${cfg.level1}</div>
+          <div>
+            <button class="btn-secondary" id="finderAddL2">Add ${cfg.level2}</button>
+          </div>
+        </div>
+        <div id="finderL2"></div>`;
+
+      document.getElementById('finderAddL2').addEventListener('click', () => openAddEditModal('add', type, 2, l1Id));
+
+      const host = document.getElementById('finderL2');
+      const snap = await getDocs(query(cfg.colLevel2(l1Id), orderBy('createdAt','asc')));
+      host.innerHTML = '';
+      for (const d2 of snap.docs) {
+        const data2 = d2.data();
+        const sec = document.createElement('div');
+        sec.className = 'folder';
+        sec.innerHTML = `
+          <div class="folder-header">
+            <div class="folder-title">${data2.name || data2.title || '(untitled)'}</div>
+            <div>
+              <button class="btn-secondary" data-act="add-l3" data-l1="${l1Id}" data-id="${d2.id}">Add ${cfg.level3}</button>
+              <button class="btn-secondary" data-act="rename-l2" data-l1="${l1Id}" data-id="${d2.id}">Rename</button>
+              <button class="logout-btn" data-act="del-l2" data-l1="${l1Id}" data-id="${d2.id}">Delete</button>
+            </div>
+          </div>
+          <div class="file-list" id="finderL3-${d2.id}"></div>`;
+        host.appendChild(sec);
+
+        // list L3
+        await listFinderL3(type, l1Id, d2.id);
+      }
+
+      host.querySelectorAll('button[data-act="add-l3"]').forEach(b => b.addEventListener('click', () => openAddEditModal('add', type, 3, { l1: b.dataset.l1, l2: b.dataset.id })));
+      host.querySelectorAll('button[data-act="rename-l2"]').forEach(b => b.addEventListener('click', () => openAddEditModal('edit', type, 2, { l1: b.dataset.l1, l2: b.dataset.id })));
+      host.querySelectorAll('button[data-act="del-l2"]').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this and all items?')) return;
+        await deleteDoc(doc(cfg.colLevel2(b.dataset.l1), b.dataset.id));
+        await openFinderList(type, l1Id);
+      }));
+    }
+
+    async function listFinderL3(type, l1Id, l2Id) {
+      const cfg = materialsConfig[type];
+      const host = document.getElementById(`finderL3-${l2Id}`);
+      host.innerHTML = '<div class="loading-indicator">Loading…</div>';
+      const snap = await getDocs(query(cfg.colLevel3(l1Id, l2Id), orderBy('createdAt','asc')));
+      host.innerHTML = '';
+      for (const d3 of snap.docs) {
+        const it = d3.data();
+        const file = document.createElement('div');
+        file.className = 'file-row';
+        const price = cfg.isPaid && typeof it.price === 'number' ? ` • $${it.price.toFixed(2)}` : '';
+        file.innerHTML = `
+          <div class="meta">
+            <div><b>${it.name || it.title || '(untitled)'}</b></div>
+            <div class="badge">${cfg.level3}${price}</div>
+          </div>
+          <div>
+            <button class="btn-secondary" data-act="preview">Preview</button>
+            <button class="btn-secondary" data-act="move">Move</button>
+            <button class="btn-secondary" data-act="edit">Edit</button>
+            <button class="logout-btn" data-act="del">Delete</button>
+          </div>`;
+        host.appendChild(file);
+
+        file.querySelector('[data-act="preview"]').addEventListener('click', () => handlePreview(it));
+        file.querySelector('[data-act="move"]').addEventListener('click', () => moveItemPrompt(type, l1Id, l2Id, d3.id));
+        file.querySelector('[data-act="edit"]').addEventListener('click', () => openAddEditModal('edit', type, 3, { l1: l1Id, l2: l2Id, id: d3.id }));
+        file.querySelector('[data-act="del"]').addEventListener('click', async () => {
+          if (!confirm('Delete this item?')) return;
+          await deleteDoc(doc(cfg.colLevel3(l1Id, l2Id), d3.id));
+          await listFinderL3(type, l1Id, l2Id);
+        });
+      }
+    }
+
+    // ---------- Add/Edit modal logic ----------
+    function openAddEditModal(mode, type, level, ctx) {
+      const cfg = materialsConfig[type];
+      const body = document.getElementById('modalBody');
+      const footer = document.getElementById('modalFooter');
+      const titleEl = document.getElementById('modalTitle');
+      titleEl.textContent = (mode === 'add' ? 'Add ' : 'Edit ') + `${cfg['level'+level]}`;
+
+      let html = '';
+      if (level < 3) {
+        html = `
+          <div class="form-container">
+            <label>Name/Title</label>
+            <input id="fieldName" placeholder="${cfg['level'+level]} name" />
+          </div>`;
+      } else {
+        html = `
+          <div class="form-container">
+            <div style="display:grid; gap:.6rem;">
+              <div>
+                <label>Title</label>
+                <input id="fieldName" placeholder="${cfg.level3} title"/>
+              </div>
+              <div>
+                <label>PDF URL (or Google Drive link)</label>
+                <input id="fieldPdf" placeholder="https://...pdf or Google Drive share link"/>
+              </div>
+              <div>
+                <label>Video URL (YouTube or file)</label>
+                <input id="fieldVideo" placeholder="https://youtu.be/... or https://...mp4 (optional)"/>
+              </div>
+              ${cfg.isPaid ? `
+              <div>
+                <label>Price (USD)</label>
+                <input id="fieldPrice" type="number" min="0" step="0.01" placeholder="e.g. 15.00"/>
+              </div>
+              ` : ''}
+              <div>
+                <label>Thumbnail URL (optional)</label>
+                <input id="fieldThumb" placeholder="https://... (optional)"/>
+              </div>
+              <div>
+                <label>Description (optional)</label>
+                <textarea id="fieldDesc" rows="3" placeholder="Short description"></textarea>
+              </div>
+            </div>
+          </div>`;
+      }
+      body.innerHTML = html;
+
+      footer.innerHTML = '<button class="btn-secondary" id="modalCloseBtn2">Cancel</button><button class="btn-primary" id="modalSaveBtn">Save</button>';
+      document.getElementById('modalOverlay').style.display = 'flex';
+      document.getElementById('modalCloseBtn2').addEventListener('click', closeModal);
+      document.getElementById('modalCloseX').addEventListener('click', closeModal);
+
+      // prefill for edit mode
+      if (mode === 'edit') {
+        (async () => {
+          if (level === 1) {
+            const snap = await getDoc(doc(cfg.colLevel1(), ctx));
+            if (snap.exists()) document.getElementById('fieldName').value = snap.data().name || snap.data().title || '';
+          } else if (level === 2) {
+            const snap = await getDoc(doc(cfg.colLevel2(ctx.l1), ctx.l2));
+            if (snap.exists()) document.getElementById('fieldName').value = snap.data().name || snap.data().title || '';
+          } else {
+            const snap = await getDoc(doc(cfg.colLevel3(ctx.l1, ctx.l2), ctx.id));
+            const d = snap.data() || {};
+            document.getElementById('fieldName').value = d.name || d.title || '';
+            document.getElementById('fieldPdf').value = d.pdfUrl || d.fileUrl || '';
+            document.getElementById('fieldVideo').value = d.url || d.videoUrl || '';
+            const p = (typeof d.price === 'number' ? d.price : Number(d.price||0));
+            const fp = document.getElementById('fieldPrice'); if (fp) fp.value = isNaN(p) ? '' : p.toFixed(2);
+            document.getElementById('fieldThumb').value = d.thumbnail || d.thumb || '';
+            document.getElementById('fieldDesc').value = d.description || d.desc || '';
+          }
+        })();
+      }
+
+      document.getElementById('modalSaveBtn').addEventListener('click', async () => {
+        try {
+          if (level === 1) {
+            const name = (document.getElementById('fieldName').value || '').trim();
+            if (!name) return showModal('Missing', 'Enter a name.');
+            if (mode === 'add') {
+              await addDoc(cfg.colLevel1(), { name, createdAt: serverTimestamp(), createdBy: currentUserId });
+            } else {
+              await updateDoc(doc(cfg.colLevel1(), ctx), { name });
+            }
+            await loadLevel1(type);
+          } else if (level === 2) {
+            const name = (document.getElementById('fieldName').value || '').trim();
+            if (!name) return showModal('Missing', 'Enter a name.');
+            if (mode === 'add') {
+              await addDoc(cfg.colLevel2(ctx), { name, createdAt: serverTimestamp(), createdBy: currentUserId });
+            } else {
+              await updateDoc(doc(cfg.colLevel2(ctx.l1), ctx.l2), { name });
+            }
+            await loadLevel2(type, level===2? (mode==='add'? ctx : ctx.l1) : ctx);
+          } else {
+            // level 3 item
+            const name = (document.getElementById('fieldName').value || '').trim();
+            const pdfRaw = (document.getElementById('fieldPdf').value || '').trim();
+            const video = (document.getElementById('fieldVideo').value || '').trim();
+            const thumb = (document.getElementById('fieldThumb').value || '').trim();
+            const desc = (document.getElementById('fieldDesc').value || '').trim();
+            const fp = document.getElementById('fieldPrice');
+            const price = fp ? Number(fp.value || 0) : null;
+            const pdfUrl = convertGoogleDriveLink(pdfRaw);
+
+            const payload = { name, description: desc || null, thumbnail: thumb || null, createdAt: serverTimestamp(), createdBy: currentUserId };
+            if (pdfUrl) payload.pdfUrl = pdfUrl;
+            if (video) payload.videoUrl = video;
+            if (cfg.isPaid) payload.price = isNaN(price) ? 0 : Number(price);
+            if (mode === 'add') {
+              const ids = ctx; // {l1, l2}
+              await addDoc(cfg.colLevel3(ids.l1, ids.l2), payload);
+            } else {
+              await updateDoc(doc(cfg.colLevel3(ctx.l1, ctx.l2), ctx.id), payload);
+            }
+            await loadLevel3(type, mode==='add'? ctx.l1 : ctx.l1, mode==='add'? ctx.l2 : ctx.l2);
+          }
+          closeModal();
+        } catch (e) {
+          console.error(e);
+          showModal('Error', e.message || String(e));
+        }
+      });
+    }
+
+    async function moveItemPrompt(type, l1Id, l2Id, id) {
+      const cfg = materialsConfig[type];
+      // gather all level2 destinations
+      const l1Snap = await getDocs(cfg.colLevel1());
+      let options = [];
+      for (const l1 of l1Snap.docs) {
+        const l2Snap = await getDocs(cfg.colLevel2(l1.id));
+        for (const l2 of l2Snap.docs) options.push({ l1:l1.id, l2:l2.id, label: `${l1.data().name||l1.data().title||l1.id} / ${l2.data().name||l2.data().title||l2.id}` });
+      }
+      const pick = prompt('Move to (type exact label):\n' + options.map(o=>o.label).join('\n'));
+      const dest = options.find(o => o.label === pick);
+      if (!dest) { showModal('Cancelled', 'No destination selected.'); return; }
+      const fromRef = doc(cfg.colLevel3(l1Id, l2Id), id);
+      const toCol = cfg.colLevel3(dest.l1, dest.l2);
+      // copy + delete
+      const snap = await getDoc(fromRef);
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const batch = writeBatch(db);
+      const toRef = doc(toCol);
+      batch.set(toRef, data);
+      batch.delete(fromRef);
+      await batch.commit();
+      showModal('Moved', 'Item moved successfully.');
+      // refresh
+      await loadLevel3(type, l1Id, l2Id);
+      if (document.getElementById('finder').style.display !== 'none') {
+        await refreshFinder();
+      }
+    }
+
+    // ---------- Previews ----------
+    function handlePreview(data) {
+      const videoUrl = data.videoUrl || data.url || '';
+      const pdfUrl   = data.pdfUrl || data.fileUrl || '';
+      if (videoUrl && parseYouTubeId(videoUrl)) {
+        openVideoModal(videoUrl);
+        return;
+      }
+      if (pdfUrl) {
+        openPdfModal(pdfUrl);
+        return;
+      }
+      if (videoUrl) {
+        openVideoModal(videoUrl); // non-YouTube
+        return;
+      }
+      showModal('Nothing to preview', 'This item does not have a video or PDF.');
+    }
+
+    function openVideoModal(url) {
+      const yt = parseYouTubeId(url);
+      const host = document.getElementById('videoContainer');
+      host.innerHTML = '';
+      if (yt) {
+        host.innerHTML = `<iframe src="https://www.youtube.com/embed/${yt}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else {
+        host.innerHTML = \`<video controls style="width:100%; height:auto;"><source src="\${url}"/></video>\`;
+      }
+      const m = document.getElementById('videoModal'); m.style.display = 'flex';
+    }
+    document.querySelectorAll('[data-close="videoModal"]').forEach(b => b.addEventListener('click', ()=>{
+      document.getElementById('videoContainer').innerHTML = '';
+      document.getElementById('videoModal').style.display = 'none';
+    }));
+
+    async function openPdfModal(url) {
+      const fixed = convertGoogleDriveLink(url);
+      const loading = document.createElement('div');
+      loading.className = 'loading-indicator';
+      loading.textContent = 'Loading PDF preview…';
+      const body = document.getElementById('pdfBody');
+      body.prepend(loading);
+      try {
+        const doc = await pdfjsLib.getDocument(fixed).promise;
+        const page = await doc.getPage(1);
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1.2 });
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        document.getElementById('pdfOpenNew').href = fixed;
+        document.getElementById('pdfDownload').href = fixed;
+        document.getElementById('pdfModal').style.display = 'flex';
+      } catch (e) {
+        console.error(e);
+        showModal('PDF Error', 'Could not preview this PDF.');
+      } finally {
+        loading.remove();
+      }
+    }
+    document.querySelectorAll('[data-close="pdfModal"]').forEach(b => b.addEventListener('click', ()=>{
+      document.getElementById('pdfModal').style.display = 'none';
+      const c = document.getElementById('pdfCanvas'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+    }));
+
+    // ---------- Cart / promo / checkout (identical logic to index(8)) ----------
+    function addToCart(item) {
+      if (shoppingCart.find(x => x.id === item.id)) return;
+      shoppingCart.push(item);
+      updateCartUI();
+    }
+    function removeFromCart(id) {
+      shoppingCart = shoppingCart.filter(x => x.id !== id);
+      updateCartUI();
+    }
+    function updateCartUI() {
+      const cartItemsContainer = document.getElementById('cart-items');
+      const subtotalPriceEl = document.getElementById('cart-subtotal-price');
+      const promoDiscountLine = document.getElementById('promo-discount-line');
+      const promoDiscountEl = document.getElementById('cart-promo-discount');
+      const totalPriceEl = document.getElementById('cart-total-price');
+      const checkoutBtn = document.getElementById('checkout-btn');
+      const validationMsg = document.getElementById('cart-validation-message');
+      const promoCodeInput = document.getElementById('promoCodeInput');
+      const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
+      const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
+      const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
+      const promoCodeError = document.getElementById('promoCodeError');
+
+      if (!cartItemsContainer) return; // not in this section
+      cartItemsContainer.innerHTML = '';
+      let subtotal = 0;
+
+      if (shoppingCart.length === 0) {
+        cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+      }
+      shoppingCart.forEach(item => {
+        subtotal += item.price;
+        const itemEl = document.createElement('div');
+        itemEl.className = 'cart-item';
+        itemEl.innerHTML = \`
+          <span class="cart-item-name">\${item.name}</span>
+          <span class="cart-item-price">$ \${item.price.toFixed(2)}</span>
+          <button class="remove-from-cart-btn" data-id="\${item.id}">✖</button>\`;
+        cartItemsContainer.appendChild(itemEl);
+      });
+      cartItemsContainer.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+      });
+
+      subtotalPriceEl.textContent = '$' + subtotal.toFixed(2);
+      let finalPrice = subtotal;
+
+      if (appliedPromoCode) {
+        finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
+        if (promoDiscountEl) promoDiscountEl.textContent = '-$' + appliedPromoCode.discountAmount.toFixed(2);
+        if (promoDiscountLine) promoDiscountLine.style.display = 'flex';
+        if (appliedPromoCodeText) appliedPromoCodeText.textContent = \`\${appliedPromoCode.code} (-$\${appliedPromoCode.discountAmount.toFixed(2)})\`;
+        if (appliedPromoCodeDisplay) appliedPromoCodeDisplay.style.display = 'flex';
+        if (promoCodeInput) promoCodeInput.disabled = true;
+        if (applyPromoCodeBtn) applyPromoCodeBtn.disabled = true;
+        if (promoCodeInput) promoCodeInput.value = appliedPromoCode.code;
+        if (promoCodeError) promoCodeError.textContent = '';
+      } else {
+        if (promoDiscountLine) promoDiscountLine.style.display = 'none';
+        if (appliedPromoCodeDisplay) appliedPromoCodeDisplay.style.display = 'none';
+        if (promoCodeInput) promoCodeInput.disabled = false;
+        if (applyPromoCodeBtn) applyPromoCodeBtn.disabled = false;
+        if (promoCodeInput) promoCodeInput.value = '';
+      }
+
+      totalPriceEl.textContent = '$' + finalPrice.toFixed(2);
+
+      // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
+      // Also, if the final price is > 0, enforce a minimum total of $100.
+      const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
+      if (checkoutBtn) checkoutBtn.disabled = !canCheckout;
+      if (validationMsg) {
+        if (shoppingCart.length === 0) {
+          validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
+        } else if (finalPrice > 0 && finalPrice < 100) {
+          validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+        } else if (finalPrice === 0) {
+          validationMsg.textContent = 'Proceed to checkout for free!';
+        } else {
+          validationMsg.textContent = '';
+        }
+      }
+    }
+
+    async function applyPromoCode() {
+      const promoCodeInput = document.getElementById('promoCodeInput');
+      const promoCodeError = document.getElementById('promoCodeError');
+      const code = (promoCodeInput?.value || '').trim().toUpperCase();
+
+      if (!code) { if (promoCodeError) promoCodeError.textContent = 'Please enter a promo code.'; return; }
+      try {
+        const ref = doc(db, \`artifacts/${appId}/public/data/promoCodes\`, code);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) { if (promoCodeError) promoCodeError.textContent = 'Invalid promo code.'; return; }
+        const data = snap.data();
+        if (!data.isActive) { if (promoCodeError) promoCodeError.textContent = 'This promo code is not active.'; return; }
+        appliedPromoCode = { code, discountAmount: data.discountAmount };
+        updateCartUI();
+        showModal('Promo Code Applied', \`Successfully applied promo code "\${code}" for a $\${data.discountAmount.toFixed(2)} discount!\`);
+      } catch (e) {
+        console.error(e);
+        if (promoCodeError) promoCodeError.textContent = 'Error applying code: ' + (e.message || String(e));
+      }
+    }
+
+    function removeAppliedPromoCode() {
+      appliedPromoCode = null;
+      updateCartUI();
+      const inp = document.getElementById('promoCodeInput'); if (inp) inp.value='';
+      const err = document.getElementById('promoCodeError'); if (err) err.textContent='';
+      showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
+    }
+
+    async function handleCheckout() {
+      if (!currentUserId) return showModal('Error','You must be logged in to check out.');
+      let subtotal = shoppingCart.reduce((s,i)=> s+i.price, 0);
+      let finalPrice = appliedPromoCode ? Math.max(0, subtotal - appliedPromoCode.discountAmount) : subtotal;
+      if (!shoppingCart.length) return showModal('Checkout Error','Your cart is empty. Please add items before checking out.');
+
+      if (finalPrice === 0) {
+        try {
+          const batch = writeBatch(db);
+          shoppingCart.forEach(item => {
+            const purchaseRef = doc(db, \`artifacts/${appId}/users/\${currentUserId}/purchased_exercises/\${item.id}\`);
+            batch.set(purchaseRef, { name:item.name, price:item.price, purchasedAt: Date.now(), purchaseMethod:'promo', promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A' });
+          });
+          await batch.commit();
+          showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
+          shoppingCart = []; appliedPromoCode = null; updateCartUI();
+          showSection('exercises');
+        } catch (e) {
+          console.error(e); showModal('Checkout Error', 'Could not complete free checkout. ' + (e.message||e));
+        }
+      } else if (finalPrice >= 100) {
+        if (STRIPE_PAYMENT_LINK.includes('...')) return showModal('Configuration Error','The Stripe Payment Link has not been configured by the site administrator.');
+        const sessionId = crypto.randomUUID();
+        const ref = doc(db, \`artifacts/${appId}/users/\${currentUserId}/checkout_sessions/\${sessionId}\`);
+        try {
+          await setDoc(ref, { cart: shoppingCart, appliedPromoCode, created: Date.now(), totalAmount: finalPrice, purchaseMethod:'paid' });
+          const stripeUrl = \`\${STRIPE_PAYMENT_LINK}?client_reference_id=\${sessionId}&prefilled_email=\${encodeURIComponent(currentUserEmail||'')}\`;
+          window.location.href = stripeUrl;
+        } catch (e) {
+          console.error(e); showModal('Checkout Error','Could not initiate checkout. ' + (e.message||e));
+        }
+      } else {
+        showModal('Checkout Error','Minimum total of $100 required to checkout for paid items.');
+      }
+    }
+
+    async function checkForSuccessfulPurchase() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      if (params.get('payment_status') === 'success' && sessionId) {
+        const ref = doc(db, \`artifacts/${appId}/users/\${currentUserId}/checkout_sessions/\${sessionId}\`);
+        try {
+          const snap = await getDoc(ref);
+          if (!snap.exists()) return;
+          const session = snap.data();
+          const batch = writeBatch(db);
+          session.cart.forEach(item => {
+            const pRef = doc(db, \`artifacts/${appId}/users/\${currentUserId}/purchased_exercises/\${item.id}\`);
+            batch.set(pRef, { name:item.name, price:item.price, purchasedAt: Date.now(), purchaseMethod: session.purchaseMethod || 'paid', promoCodeUsed: session.appliedPromoCode ? session.appliedPromoCode.code : 'N/A' });
+          });
+          batch.delete(ref);
+          await batch.commit();
+          showModal('Purchase Successful!', 'Your new exercises are now available for download.');
+          // clear local
+          shoppingCart = []; appliedPromoCode = null; updateCartUI();
+          // clean URL
+          history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+          console.error(e); showModal('Error','Could not finalize purchase. ' + (e.message||e));
+        }
+      }
+    }
+
+    // ---------- Utility ----------
+    function showModal(title, message, footerHTML) {
+      const overlay = document.getElementById('modalOverlay');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = '<div style="white-space:pre-wrap">'+ message +'</div>';
+      const f = document.getElementById('modalFooter');
+      f.innerHTML = '<button class="btn-secondary" id="modalCloseBtn">Close</button>' + (footerHTML || '');
+      overlay.style.display = 'flex';
+      document.getElementById('modalCloseBtn').onclick = closeModal;
+      document.getElementById('modalCloseX').onclick = closeModal;
+    }
+    function closeModal(){ document.getElementById('modalOverlay').style.display = 'none'; }
+
+    function parseYouTubeId(url) {
+      if (!url) return null;
+      const m = url.match(/(?:youtu\.be\/|v=)([A-Za-z0-9_-]{6,})/);
+      return m ? m[1] : null;
+    }
+
+    function convertGoogleDriveLink(link) {
+      if (!link) return '';
+      // formats: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+      const m = link.match(/\/d\/([A-Za-z0-9_-]{10,})/);
+      if (m) return \`https://drive.google.com/uc?export=download&id=\${m[1]}\`;
+      return link;
+    }
+
+    function setupGoogleDriveLinkConversion() {
+      document.addEventListener('blur', (e) => {
+        if (!(e.target instanceof HTMLInputElement)) return;
+        if (!/fieldPdf/i.test(e.target.id)) return;
+        e.target.value = convertGoogleDriveLink(e.target.value);
+      }, true);
+    }
+
+    // ---------- Finder window UX (drag/resize) ----------
+    function setupFinderWindow() {
+      const el = document.getElementById('finder');
+      const res = el.querySelector('.finder-resizer');
+      let startX, startY, startW, startH;
+      res.addEventListener('mousedown', (e)=>{
+        e.preventDefault();
+        startX = e.clientX; startY = e.clientY;
+        startW = parseInt(document.defaultView.getComputedStyle(el).width,10);
+        startH = parseInt(document.defaultView.getComputedStyle(el).height,10);
+        function doDrag(ev){
+          el.style.width = (startW + ev.clientX - startX) + 'px';
+          el.style.height = (startH + ev.clientY - startY) + 'px';
+        }
+        function stopDrag(){ window.removeEventListener('mousemove', doDrag); window.removeEventListener('mouseup', stopDrag); }
+        window.addEventListener('mousemove', doDrag);
+        window.addEventListener('mouseup', stopDrag);
+      });
+    }
   </script>
 </body>
 </html>
