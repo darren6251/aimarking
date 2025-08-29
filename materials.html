@@ -1270,8 +1270,13 @@
                 }
             });
         } catch (error) {
-            console.error("Error loading items:", error);
-            showModal('Error', `Failed to load items: ${error.message}. Please check Firebase security rules and indexes.`);
+            console.error("Error loading items from Firestore:", error); // More specific logging
+            // Check for specific error message for missing index
+            if (error.code === 'failed-precondition' && error.message.includes('The query requires an index')) {
+                showModal('Firestore Index Required', `Failed to load items. It seems a **Firestore index is missing** for the '${folder}' collection. Please check the console for a link to create it. This is typically required when using 'orderBy' on a field like 'createdAt'.`);
+            } else {
+                showModal('Error', `Failed to load items: ${error.message}. Please check Firebase security rules and browser console.`);
+            }
             container.innerHTML = `<p class="error-message">Error loading items.</p>`;
         }
     }
@@ -1390,28 +1395,32 @@
     function handlePreview(item) {
         if (item.folder === 'tutorials') {
             // Assume YouTube links for now. More complex parsing needed for generic video embeds.
-            if (item.link.includes('youtube.com/watch?v=')) {
+            if (item.link && item.link.includes('youtube.com/watch?v=')) {
                 const videoId = item.link.split('v=')[1].split('&')[0];
                 showModal(item.name, `
                     <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
                         <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
                     </div>
                 `);
-            } else {
+            } else if (item.link) {
                  showModal(item.name, `<p>Video Link: <a href="${item.link}" target="_blank">${item.link}</a></p>`);
+            } else {
+                 showModal(item.name, '<p>No video link available.</p>');
             }
         } else if (item.folder === 'pastpapers' || item.folder === 'exercises') {
             if (item.link && (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download'))) {
                 showPdfPreviewModal(item.name, item.link);
             } else if (item.link && (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i))) {
                 showModal(item.name, `<img src="${item.link}" style="max-width: 100%; height: auto; border-radius: 8px;">`);
-            } else {
+            } else if (item.link) {
                 showModal(item.name, `
                     <p>File Link: <a href="${item.link}" target="_blank">${item.link}</a></p>
                     <div style="margin-top: 1rem; text-align: center;">
                         <a href="${item.link}" download="${item.name}.pdf" class="btn-primary" target="_blank">Download File</a>
                     </div>
                 `);
+            } else {
+                showModal(item.name, '<p>No file link available.</p>');
             }
         }
     }
