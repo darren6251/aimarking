@@ -125,8 +125,9 @@
                         if (typeof __initial_auth_token === 'undefined' && !auth.currentUser) {
                             showLogin();
                         }
-                        // Optionally sign in anonymously here for Firestore access if not showing login
-                        // await signInAnonymously(auth); 
+                        // This else block implicitly falls through to showLogin if signInAnonymously isn't called
+                        // or if it fails. Let's make it more explicit.
+                        showLogin(); // Always show login if not authenticated
                     }
                 } catch (anonError) {
                     console.error("Anonymous sign-in failed:", anonError);
@@ -134,10 +135,10 @@
                     showLogin(); // Fallback to full login if anonymous fails
                 }
                 
-                // If not authenticated (even anonymously), ensure login is shown.
-                if (!auth.currentUser && !document.getElementById('authWrapper').style.display.includes('flex')) {
-                    showLogin();
-                }
+                // This check below is redundant if showLogin is reliably called above.
+                // if (!auth.currentUser && !document.getElementById('authWrapper').style.display.includes('flex')) {
+                //     showLogin();
+                // }
             }
         });
 
@@ -207,7 +208,7 @@
                 showModal('Success', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
+                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
@@ -222,23 +223,43 @@
 
         function highlightCurrentNavTab() {
             const currentPath = window.location.pathname;
-            const navTabs = document.querySelectorAll('.header-actions .tab');
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderParam = urlParams.get('folder');
+
+            document.querySelectorAll('.header-actions .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Highlight main tabs
             navTabs.forEach(tab => {
                 tab.classList.remove('active');
                 if (tab.getAttribute('href') === currentPath) {
                     tab.classList.add('active');
-                    // For dropdowns, also activate the parent button
-                    const parentDropdown = tab.closest('.dropdown-menu');
-                    if (parentDropdown) {
-                        parentDropdown.querySelector('button.tab').classList.add('active');
-                    }
                 }
             });
-            // Specifically for materials.html, activate the parent dropdown button
-            const materialsDropdownButton = document.querySelector('.dropdown-menu button.tab[data-target-materials]');
-            if (materialsDropdownButton) {
-                materialsDropdownButton.classList.add('active');
-            }
+
+            // Highlight dropdown buttons and their active link
+            document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+                const dropdownButton = dropdown.querySelector('button.tab');
+                const dropdownLinks = dropdown.querySelectorAll('.dropdown-menu-content a.tab');
+                
+                let dropdownHasActiveLink = false;
+                dropdownLinks.forEach(link => {
+                    // Check if the link's href matches the current path OR (for materials) if its folder param matches
+                    const linkUrl = new URL(link.href);
+                    const linkFolderParam = linkUrl.searchParams.get('folder');
+
+                    if (link.getAttribute('href') === currentPath || 
+                        (currentPath.includes('materials.html') && folderParam === linkFolderParam)) {
+                        link.classList.add('active');
+                        dropdownHasActiveLink = true;
+                    }
+                });
+
+                if (dropdownHasActiveLink) {
+                    dropdownButton.classList.add('active');
+                }
+            });
         }
         
         // --- REFACTORED MATERIALS MANAGEMENT ---
@@ -310,12 +331,21 @@
                     if (type === typeToShow) {
                         section.style.display = 'block';
                         section.style.opacity = '1';
+                        // Re-trigger rendering for the newly visible section based on current user role
+                        const isTeacher = currentUserRole === 'teacher';
+                        if (isTeacher) {
+                            renderContent(type, `level1-${type}-container`, 1);
+                            if (type === 'exercises') loadPromoCodesForTeacher();
+                        } else { // Student view
+                            setupStudentFilters(type); // Re-initialize filters and load items
+                        }
                     } else {
                         section.style.display = 'none';
                         section.style.opacity = '0';
                     }
                 }
             }
+            highlightCurrentNavTab(); // Update header tabs
         }
 
         function updateMaterialSectionVisibility() {
@@ -330,21 +360,13 @@
                     if (teacherView) teacherView.style.display = isTeacher ? 'block' : 'none';
                     if (studentView) studentView.style.display = isTeacher ? 'none' : 'block';
 
-                    if (isTeacher && teacherView && section.style.display === 'block') { // Only render if section is visible
-                        renderContent(type, `level1-${type}-container`, 1);
-                        if (type === 'exercises') loadPromoCodesForTeacher();
-                    } else if (!isTeacher && studentView && section.style.display === 'block') { // Student view
-                        // Re-render student view based on new auth state
-                        const level1Filter = document.getElementById(`level1-${type}-filter`);
-                        const level2Filter = document.getElementById(`level2-${type}-filter`);
-                        if(level1Filter && level2Filter) { // Only if filters are initialized
-                            populateFilter(level1Filter, collection(db, getPath(type)), config.level1)
-                                .then(() => {
-                                    level1Filter.value = ''; // Reset filter
-                                    level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
-                                    level2Filter.disabled = true;
-                                    document.getElementById(`level3-${type}-grid`).innerHTML = `<p>Please select a ${config.level1.toLowerCase()} and ${config.level2.toLowerCase()}.</p>`;
-                                });
+                    // Only re-render content if the section is currently visible AND the role matches
+                    if (section.style.display === 'block') {
+                        if (isTeacher) { 
+                            renderContent(type, `level1-${type}-container`, 1);
+                            if (type === 'exercises') loadPromoCodesForTeacher();
+                        } else { // Student view
+                            setupStudentFilters(type);
                         }
                     }
                 }
@@ -1362,7 +1384,7 @@
                         loadPromoCodesForTeacher();
                     } catch (error) {
                         console.error("Error deleting promo code:", error);
-                        showModal('Error', `Could not delete "${code}": ${error.message}`);
+                        showModal('Error', `Could not delete "${code}": ${e.message}`);
                     }
                 }},
                 { text: 'Cancel', className: 'btn-primary' }
@@ -1444,7 +1466,7 @@
                 document.getElementById('addVideoModal').style.display = 'none';
                 renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
-                showModal('Error', `Could not add video: ${error.message}`); 
+                showModal('Error', `Could not add video: ${e.message}`); 
             }
         });
 
@@ -1490,7 +1512,7 @@
                 renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
                 console.error("Past paper upload error:", error);
-                showModal('Error', `Could not add paper: ${error.message}`); 
+                showModal('Error', `Could not add paper: ${e.message}`); 
             } finally {
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
@@ -1517,7 +1539,7 @@
                 renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) {
                 console.error("Error updating past paper:", error);
-                showModal('Error', `Could not update past paper: ${error.message}`);
+                showModal('Error', `Could not update past paper: ${e.message}`);
             }
         });
 
@@ -1564,7 +1586,7 @@
                 renderContent('exercises', `container-level3-exercises-${parentId2}`, 3, [parentId1, parentId2]);
             } catch (error) { 
                 console.error("Exercise upload error:", error);
-                showModal('Error', `Could not add exercise: ${error.message}`); 
+                showModal('Error', `Could not add exercise: ${e.message}`); 
             } finally {
                 buttonsContainer.innerHTML = originalButtonsHTML;
             }
@@ -2033,7 +2055,7 @@
                 });
             }).catch(error => {
                 console.error('Error rendering PDF page:', error);
-                showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+                showModal('PDF Render Error', `Failed to render page ${num}: ${e.message}`);
                 pageRendering = false;
                 pageNumPending = null;
                 updatePdfNavButtons();
@@ -2119,6 +2141,7 @@
                 <div class="dropdown-menu-content">
                     <a href="grading.html" class="tab">Exam Grader</a>
                     <a href="chat.html" class="tab">Chat with Gemini</a>
+                    <a href="submission.html" class="tab">Submission</a> <!-- Added this link -->
                 </div>
             </div>
 
