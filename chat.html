@@ -336,6 +336,7 @@
         font-weight: 600;
     }
 
+
     /* Show menu on hover */
     .dropdown-menu:hover .dropdown-menu-content {
         display: block;
@@ -655,6 +656,7 @@
           <div class="dropdown-menu-content">
             <a href="grading.html" class="tab">Exam Grader</a>
             <a href="chat.html" class="tab active">Chat with Gemini</a>
+            <a href="submissions.html" class="tab">Submissions</a>
           </div>
         </div>
 
@@ -721,6 +723,33 @@
           <div id="modalButtons"></div>
       </div>
   </div>
+  
+  <!-- Profile Edit Modal -->
+  <div id="profileEditModal" class="modal">
+      <div class="modal-content">
+          <span class="close-button profile-close-button">&times;</span>
+          <h3 id="profileModalTitle">Edit Profile</h3>
+          <div id="profileModalMessage">
+            <div class="form-group">
+                <label for="editUserName">Display Name:</label>
+                <input type="text" id="editUserName" class="modal-input">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="text" id="editUserEmail" class="modal-input" disabled>
+            </div>
+            <div class="form-group">
+                <label>Role:</label>
+                <input type="text" id="editUserRole" class="modal-input" disabled>
+            </div>
+          </div>
+          <div id="profileModalButtons" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+             <button id="saveProfileButton" class="btn-primary">Save Changes</button>
+             <button id="cancelProfileButton" class="logout-btn">Cancel</button>
+          </div>
+      </div>
+  </div>
+
 
   <!-- Firebase & App Script -->
   <script type="module">
@@ -748,7 +777,8 @@
       appId: "1:298162112230:web:529d3f95536991be685d27",
       measurementId: "G-CHKLKSM17S"
     };
-    const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/"; // Gemini proxy
+    // Fallback for CLOUDFLARE_WORKER_URL if not provided by the environment
+    const CLOUDFLARE_WORKER_URL = typeof __CLOUDFLARE_WORKER_URL !== 'undefined' ? __CLOUDFLARE_WORKER_URL : "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/"; 
     
     // Canvas provided global variables
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -760,6 +790,8 @@
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
+    const userDisplayNameSpan = document.getElementById('userDisplayName');
+
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -792,6 +824,7 @@
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
+            // Corrected path for user profile: collection/document/collection/document/collection (artifacts/{appId}/users/{userId}/profile/data)
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 const userProfileDoc = await getDoc(userProfileRef);
@@ -848,7 +881,7 @@
     async function showApp() {
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
-        document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+        userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         // Initialize chat page specific content after showing the app.
         initializeChatPageContent();
     }
@@ -877,6 +910,7 @@
         }
         
         try {
+            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
             currentUserRole = roleToSet;
@@ -896,6 +930,60 @@
         });
     });
 
+    // --- PROFILE EDITING ---
+    userDisplayNameSpan.addEventListener('click', async () => {
+        if (!currentUserId) {
+            showModal('Error', 'Please log in to edit your profile.');
+            return;
+        }
+
+        const profileEditModal = document.getElementById('profileEditModal');
+        const editUserNameInput = document.getElementById('editUserName');
+        const editUserEmailInput = document.getElementById('editUserEmail');
+        const editUserRoleInput = document.getElementById('editUserRole');
+        const saveProfileButton = document.getElementById('saveProfileButton');
+        const cancelProfileButton = document.getElementById('cancelProfileButton');
+
+        editUserNameInput.value = currentUserName || '';
+        editUserEmailInput.value = currentUserEmail || '';
+        editUserRoleInput.value = currentUserRole || '';
+
+        profileEditModal.style.display = 'flex';
+
+        const saveHandler = async () => {
+            const newName = editUserNameInput.value.trim();
+            if (!newName) {
+                editUserNameInput.style.border = '1px solid var(--accent-red)';
+                editUserNameInput.focus();
+                return;
+            }
+
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await updateDoc(userProfileRef, { name: newName });
+                currentUserName = newName;
+                userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
+                profileEditModal.style.display = 'none';
+                showModal('Success', 'Profile updated successfully!');
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                showModal('Error', `Failed to update profile: ${error.message}`);
+            }
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        const cancelHandler = () => {
+            profileEditModal.style.display = 'none';
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        saveProfileButton.addEventListener('click', saveHandler);
+        cancelProfileButton.addEventListener('click', cancelHandler);
+        document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
+    });
+
     // --- CHAT PAGE SPECIFIC LOGIC ---
     // UI refs
     const chatList = document.getElementById('chatList');
@@ -910,12 +998,12 @@
     const deleteChatBtn = document.getElementById('deleteChatBtn');
 
     // State
-    let currentUser = null; // Re-declare locally for chat functions, will be set by global onAuthStateChanged
+    let currentUserFirebase = null; // Renamed to avoid conflict with global currentUser (auth.currentUser)
     let currentChatId = null;
     let currentHistory = []; // {role: 'user'|'model', text: '...'}
 
     async function initializeChatPageContent() {
-        currentUser = auth.currentUser; // Get current user from global auth instance
+        currentUserFirebase = auth.currentUser; // Get current user from global auth instance
         await ensureAtLeastOneChat();
         await loadChatList();
         // If a chat is in URL (?chatId=...), open it; otherwise open the latest.
@@ -930,7 +1018,7 @@
     }
 
     // --- Firestore paths ---
-    const chatsCol = () => collection(db, `artifacts/${appId}/users/${currentUser.uid}/chats`);
+    const chatsCol = () => collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`);
 
     // --- Chat CRUD ---
     async function ensureAtLeastOneChat() {
@@ -985,7 +1073,7 @@
       activeBtn?.classList.add('active');
 
       // load messages
-      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, chatId, 'messages');
+      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId, 'messages');
       const qSnap = await getDocs(query(msgsCol, orderBy('createdAt', 'asc')));
 
       currentHistory = [];
@@ -1001,7 +1089,7 @@
       }
 
       // load chat title
-      const chatDoc = await getDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, chatId));
+      const chatDoc = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId));
       const cd = chatDoc.data();
       chatTitleInput.value = cd?.title || 'Untitled';
 
@@ -1017,7 +1105,7 @@
     saveTitleBtn.addEventListener('click', async () => {
       if (!currentChatId) return;
       const title = chatTitleInput.value.trim() || 'Untitled';
-      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, currentChatId), {
+      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId), {
         title,
         updatedAt: serverTimestamp()
       });
@@ -1030,11 +1118,11 @@
       showModal('Confirm Delete', 'Are you sure you want to delete this chat?', [
           { text: 'Delete', className: 'logout-btn', onClick: async () => {
               // delete messages then chat doc
-              const msgsCol = collection(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, currentChatId, 'messages');
+              const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId, 'messages');
               const qSnap = await getDocs(msgsCol);
               const deletions = qSnap.docs.map(d => deleteDoc(d.ref));
               await Promise.all(deletions);
-              await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, currentChatId));
+              await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId));
               currentChatId = null;
               await ensureAtLeastOneChat();
               await loadChatList();
@@ -1054,13 +1142,13 @@
 
     // --- Messages collection helpers ---
     async function addMessage(chatId, { role, text }) {
-      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, chatId, 'messages');
+      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId, 'messages');
       await addDoc(msgsCol, {
         role, text,
         createdAt: serverTimestamp()
       });
       // also update parent chat meta
-      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/chats`, chatId), {
+      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId), {
         lastMessage: text.slice(0, 200),
         updatedAt: serverTimestamp()
       });
@@ -1088,7 +1176,7 @@
     });
 
     async function onSend() {
-      if (!currentUser) { showModal('Login Required', 'Please sign in first.'); return; }
+      if (!currentUserFirebase) { showModal('Login Required', 'Please sign in first.'); return; }
       if (!currentChatId) { showModal('No Chat', 'Create or open a chat first.'); return; }
 
       const userText = chatInput.value.trim();
@@ -1146,7 +1234,7 @@
       }
     }
 
-    // --- MODAL FUNCTIONS (Copied from index(8).html) ---
+    // --- MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
         const messageModal = document.getElementById('messageModal');
         document.getElementById('modalTitle').textContent = title;
