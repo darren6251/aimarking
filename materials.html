@@ -171,7 +171,7 @@
             authWrapper.style.display = 'none';
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            initializeMaterialsView(); // Call materials initializer here
+            initializeAllMaterialSections(); // Call materials initializer here
             updateMaterialSectionVisibility();
             // Highlight the correct tab in the header based on the URL or current view
             highlightCurrentNavTab();
@@ -221,19 +221,21 @@
             });
         });
 
+        const navTabs = document.querySelectorAll('.header-actions > .tab, .dropdown-menu > button.tab');
+
         function highlightCurrentNavTab() {
-            const currentPath = window.location.pathname;
+            const currentPath = window.location.pathname.split('/').pop(); // Get filename
             const urlParams = new URLSearchParams(window.location.search);
             const folderParam = urlParams.get('folder');
 
-            document.querySelectorAll('.header-actions .tab').forEach(tab => {
+            document.querySelectorAll('.header-actions .tab, .dropdown-menu-content a.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
 
             // Highlight main tabs
             navTabs.forEach(tab => {
                 tab.classList.remove('active');
-                if (tab.getAttribute('href') === currentPath) {
+                if (tab.getAttribute('href') && tab.getAttribute('href').endsWith(currentPath) && !folderParam) {
                     tab.classList.add('active');
                 }
             });
@@ -245,12 +247,11 @@
                 
                 let dropdownHasActiveLink = false;
                 dropdownLinks.forEach(link => {
-                    // Check if the link's href matches the current path OR (for materials) if its folder param matches
                     const linkUrl = new URL(link.href);
+                    const linkPath = linkUrl.pathname.split('/').pop();
                     const linkFolderParam = linkUrl.searchParams.get('folder');
 
-                    if (link.getAttribute('href') === currentPath || 
-                        (currentPath.includes('materials.html') && folderParam === linkFolderParam)) {
+                    if (linkPath === currentPath && linkFolderParam === folderParam) {
                         link.classList.add('active');
                         dropdownHasActiveLink = true;
                     }
@@ -306,21 +307,12 @@
             return pathParts.join('/');
         }
 
-        function initializeMaterialsView() {
+        function initializeAllMaterialSections() {
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
             setupFinderWindow(); // Initialize finder window drag/resize
             setupGoogleDriveLinkConversion(); // Convert Google Drive links
-
-            // Show the initial materials section based on URL or default to tutorials
-            const urlParams = new URLSearchParams(window.location.search);
-            const folderParam = urlParams.get('folder');
-            if (folderParam && materialsConfig[folderParam]) {
-                showMaterialSection(folderParam);
-            } else {
-                showMaterialSection('tutorials'); // Default to tutorials
-            }
         }
 
         function showMaterialSection(typeToShow) {
@@ -332,13 +324,7 @@
                         section.style.display = 'block';
                         section.style.opacity = '1';
                         // Re-trigger rendering for the newly visible section based on current user role
-                        const isTeacher = currentUserRole === 'teacher';
-                        if (isTeacher) {
-                            renderContent(type, `level1-${type}-container`, 1);
-                            if (type === 'exercises') loadPromoCodesForTeacher();
-                        } else { // Student view
-                            setupStudentFilters(type); // Re-initialize filters and load items
-                        }
+                        updateMaterialSectionVisibility(type); // Call with specific type
                     } else {
                         section.style.display = 'none';
                         section.style.opacity = '0';
@@ -348,27 +334,25 @@
             highlightCurrentNavTab(); // Update header tabs
         }
 
-        function updateMaterialSectionVisibility() {
-            for (const type in materialsConfig) {
-                const config = materialsConfig[type];
-                const section = document.getElementById(config.sectionId);
-                if (section) {
-                    const isTeacher = currentUserRole === 'teacher';
-                    const teacherView = document.getElementById(`teacher-${type}-view`);
-                    const studentView = document.getElementById(`student-${type}-view`);
-                    
-                    if (teacherView) teacherView.style.display = isTeacher ? 'block' : 'none';
-                    if (studentView) studentView.style.display = isTeacher ? 'none' : 'block';
+        function updateMaterialSectionVisibility(type) {
+            const config = materialsConfig[type];
+            const section = document.getElementById(config.sectionId);
+            if (!section) return;
 
-                    // Only re-render content if the section is currently visible AND the role matches
-                    if (section.style.display === 'block') {
-                        if (isTeacher) { 
-                            renderContent(type, `level1-${type}-container`, 1);
-                            if (type === 'exercises') loadPromoCodesForTeacher();
-                        } else { // Student view
-                            setupStudentFilters(type);
-                        }
-                    }
+            const isTeacher = currentUserRole === 'teacher';
+            const teacherView = document.getElementById(`teacher-${type}-view`);
+            const studentView = document.getElementById(`student-${type}-view`);
+            
+            if (teacherView) teacherView.style.display = isTeacher ? 'block' : 'none';
+            if (studentView) studentView.style.display = isTeacher ? 'none' : 'block';
+
+            // Only re-render content if the section is currently visible AND the role matches
+            if (section.style.display === 'block') {
+                if (isTeacher) { 
+                    renderContent(type, `level1-${type}-container`, 1);
+                    if (type === 'exercises') loadPromoCodesForTeacher();
+                } else { // Student view
+                    setupStudentFilters(type);
                 }
             }
         }
@@ -476,7 +460,6 @@
 
             const isTeacher = currentUserRole === 'teacher';
             if (isTeacher) {
-                // Initial render for teacher is now handled by updateMaterialSectionVisibility when the section is shown
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 
@@ -522,6 +505,38 @@
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
                     document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
                     document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
+                }
+
+                 // Add toggle for student view (desktop only)
+                 if (window.innerWidth >= 769) {
+                    const studentViewContainer = document.getElementById(`student-${type}-view`);
+                    const titleContainer = section.querySelector('.section-title'); // Find the title for placement
+                    const toggleButton = document.createElement('button');
+                    toggleButton.className = 'material-view-toggle btn-primary';
+                    toggleButton.textContent = 'Switch to Finder View';
+                    
+                    // Append after the title or at the start of the view section
+                    const formContainer = section.querySelector('.form-container');
+                    if (formContainer) {
+                        formContainer.prepend(toggleButton); // Add before the filters
+                    } else {
+                        titleContainer.after(toggleButton); // As a fallback
+                    }
+
+                    toggleButton.addEventListener('click', () => {
+                        if (currentMaterialViewMode === 'card') {
+                            currentMaterialViewMode = 'finder';
+                            studentViewContainer.style.display = 'none'; // Hide the card view
+                            showFinderView(type); // Show finder window for the current type
+                            toggleButton.textContent = 'Switch to Card View';
+                        } else {
+                            currentMaterialViewMode = 'card';
+                            document.getElementById('finderMaterialsSection').style.display = 'none'; // Hide finder
+                            studentViewContainer.style.display = 'block'; // Show card view
+                            toggleButton.textContent = 'Switch to Finder View';
+                            renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
+                        }
+                    });
                 }
             }
         }
@@ -1959,7 +1974,7 @@
                 if (activeMaterialSectionId) {
                     document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
                     const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
-                    if (type) updateMaterialSectionVisibility(); // Re-trigger visibility and render
+                    if (type) updateMaterialSectionVisibility(type); // Re-trigger visibility and render
                 }
                 finderWindow.style.top = '50%';
                 finderWindow.style.left = '50%';
@@ -1974,105 +1989,6 @@
             minimizeButton.addEventListener('click', () => {
                 showModal('Minimize Feature', 'Minimize functionality is not fully implemented in this standalone file.');
             });
-        }
-
-        // --- PDF PREVIEW LOGIC ---
-        let pdfDoc = null;
-        let pageNum = 1;
-
-        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
-        const pdfCanvas = document.getElementById('pdfCanvas');
-        const pdfContext = pdfCanvas.getContext('2d');
-        const pdfPageNumSpan = document.getElementById('pdfPageNum');
-        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
-        const prevPdfPageBtn = document.getElementById('prevPdfPageBtn');
-        const nextPdfPageBtn = document.getElementById('nextPdfPageBtn');
-        const pdfModalTitle = document.getElementById('pdfModalTitle'); // Get the title element
-
-        prevPdfPageBtn.addEventListener('click', () => {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        });
-
-        nextPdfPageBtn.addEventListener('click', () => {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        });
-
-        function showPdfPreviewModal(title, pdfUrl) {
-            pdfModalTitle.textContent = title;
-            pdfPreviewModal.style.display = 'flex';
-            loadPdf(pdfUrl);
-        }
-
-        async function loadPdf(pdfUrl) {
-            pdfDoc = null;
-            pageNum = 1;
-            pdfPageNumSpan.textContent = '';
-            pdfTotalPagesSpan.textContent = '';
-            pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-
-            try {
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                pdfDoc = await loadingTask.promise;
-                pdfTotalPagesSpan.textContent = pdfDoc.numPages;
-                queueRenderPage(pageNum);
-            } catch (error) {
-                console.error('Error loading PDF:', error);
-                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
-                pdfPreviewModal.style.display = 'none';
-            }
-        }
-
-        let pageRendering = false;
-        let pageNumPending = null;
-
-        function renderPage(num) {
-            pageRendering = true;
-            pdfPageNumSpan.textContent = num;
-
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({ scale: 1.5 });
-                
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
-
-                const renderContext = {
-                    canvasContext: pdfContext,
-                    viewport: viewport
-                };
-                const renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                    updatePdfNavButtons();
-                });
-            }).catch(error => {
-                console.error('Error rendering PDF page:', error);
-                showModal('PDF Render Error', `Failed to render page ${num}: ${e.message}`);
-                pageRendering = false;
-                pageNumPending = null;
-                updatePdfNavButtons();
-            });
-        }
-
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        function updatePdfNavButtons() {
-            prevPdfPageBtn.disabled = pageNum <= 1;
-            nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
         }
 
         // Responsive adjustments for finder window
