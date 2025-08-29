@@ -734,7 +734,12 @@
             margin-top: 2rem;
         }
 
-    </style>
+    
+    /* Materials scroll fix */
+    #materialsFinder{display:flex;gap:12px;overflow-x:auto;max-width:100%;padding-bottom:8px}
+    #materialsFinder .pane{flex:0 0 260px;max-height:400px;overflow-y:auto}
+    
+</style>
 </head>
 <body>
 
@@ -1774,7 +1779,7 @@
             const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
             try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 if (snapshot.empty) {
                     container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
                     return;
@@ -2171,7 +2176,7 @@
              }
 
              try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
@@ -2242,7 +2247,7 @@
             selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
             try {
                 const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
                 if(snapshot.empty) {
                     selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
@@ -2573,7 +2578,7 @@
             const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
 
             try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 if (snapshot.empty) {
                     teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
                     return;
@@ -3503,7 +3508,7 @@
                     const subjectId = subjectDoc.id;
                     const assignmentsRef = collection(db, getPath('assignments', [subjectId]));
                     const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                    const assignmentsSnapshot = await getDocs(q);
+                    const assignmentsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
 
                     assignmentsSnapshot.forEach(assignmentDoc => {
                         allAssignments.push({ id: assignmentDoc.id, subjectId: subjectId, ...assignmentDoc.data() });
@@ -3605,7 +3610,7 @@
 
                     const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
                     const q = query(submissionsRef, where('assignmentId', '==', assignmentId), orderBy('submittedAt', 'desc'));
-                    const submissionsSnapshot = await getDocs(q);
+                    const submissionsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
 
                     submissionsSnapshot.forEach(submissionDoc => {
                         allSubmissions.push({ 
@@ -3697,7 +3702,7 @@
                             const studentId = userDoc.id;
                             const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
                             const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
-                            const submissionsSnapshot = await getDocs(q);
+                            const submissionsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                             for (const submissionDoc of submissionsSnapshot.docs) {
                                 const submissionData = submissionDoc.data();
                                 if (submissionData.filePath) { // Delete file from storage if it exists
@@ -3856,7 +3861,7 @@
             try {
                 const assignmentsRef = collection(db, getPath('assignments', [selectedSubjectId]));
                 const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                const assignmentsSnapshot = await getDocs(q);
+                const assignmentsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 
                 assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
                 if (assignmentsSnapshot.empty) {
@@ -3955,7 +3960,7 @@
             try {
                 const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
                 const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
 
                 if (snapshot.empty) {
                     mySubmissionsList.innerHTML = '<p>You have not submitted any homework yet.</p>';
@@ -4187,7 +4192,7 @@
             const q = query(collectionRef, orderBy('name', 'asc'));
 
             try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 finderSidebar.innerHTML = '';
                 if (snapshot.empty) {
                     finderSidebar.innerHTML = `<p style="padding:10px;">No ${config.level1.toLowerCase()}s found.</p>`;
@@ -4237,7 +4242,7 @@
             const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc')); // Order years descending
 
             try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
                 finderFileListContent.innerHTML = '';
                 if (snapshot.empty) {
                     finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No items found here.</p>`;
@@ -4641,20 +4646,5 @@
         }
 
     </script>
-
-  <!-- Minimal Design Mode Toolbar -->
-  <div style="position:fixed;bottom:10px;right:10px;background:#222;padding:6px;border-radius:8px;">
-    <button id="toggleDesignBtn" style="padding:6px 10px;">Design Mode</button>
-  </div>
-  <script>
-    let designOn=false;
-    document.getElementById('toggleDesignBtn').onclick=()=>{
-      designOn=!designOn;
-      document.querySelectorAll('.card').forEach(c=>{
-        c.contentEditable=designOn;
-        c.style.outline=designOn?'1px dashed #6aa7ff':'none';
-      });
-    };
-  </script>
 </body>
 </html>
