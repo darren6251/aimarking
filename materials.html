@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Marker - Materials</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <style>
     /* --- MODERN BLACK & WHITE THEME --- */
     :root {
@@ -28,7 +29,7 @@
         --finder-active-bg: var(--accent-primary);
         --finder-active-text: #0a0a0a;
     }
-
+    
     /* --- LIGHT THEME OVERRIDES --- */
     body.light-theme {
         --bg-primary: #ffffff;
@@ -51,6 +52,7 @@
         --finder-active-bg: var(--accent-primary);
         --finder-active-text: #ffffff;
     }
+
 
     * {
         box-sizing: border-box;
@@ -108,7 +110,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        opacity: 0; /* Starts hidden, fades in with JS */
+        opacity: 0;
         transition: opacity 0.5s ease-in-out;
         z-index: 1001;
     }
@@ -225,7 +227,7 @@
     }
     
     #appSection {
-        display: none; /* Hidden until authenticated */
+        display: none;
         flex-direction: column;
         height: 100vh;
         background-color: var(--bg-primary);
@@ -358,235 +360,144 @@
         border-color: var(--text-secondary);
     }
     
-    /* --- MAIN CONTENT --- */
+    /* --- MAIN CONTENT (MATERIALS SPECIFIC) --- */
     main {
         flex: 1;
         display: flex;
-        overflow-y: auto;
+        flex-direction: column;
+        align-items: center;
         padding: 32px;
-        gap: 32px;
-        justify-content: center; /* Center content horizontally */
-    }
-
-    /* Specific styles for the materials layout */
-    .materials-main {
-        display: flex;
-        height: calc(100vh - 64px - 40px); /* Full height minus header and footer */
+        overflow-y: auto;
         width: 100%;
-        max-width: 1200px; /* Optional: limit max width for content */
-        margin: 0 auto; /* Center main content */
-        background: var(--bg-primary); /* Ensure main background matches primary */
-        border-radius: 8px;
-        overflow: hidden; /* Hide overflow from sidebar/content */
     }
 
-    .materials-sidebar {
-        width: 220px;
-        min-width: 180px; /* Minimum width for the sidebar */
-        background: var(--bg-secondary);
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-        border-right: 1px solid var(--border-color); /* Separator */
-    }
-
-    .btn-primary {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        padding: .75rem 1.5rem;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 1rem;
-    }
-
-    .btn-primary:hover {
-        opacity: 0.85;
-        transform: translateY(-1px);
-    }
-
-    .materials-nav button {
-        display: block;
-        width: 100%;
-        text-align: left;
-        padding: .5rem;
-        border: none;
-        background: none;
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
         color: var(--text-primary);
-        cursor: pointer;
-        border-radius: 6px;
-        transition: background 0.2s, color 0.2s;
-    }
-
-    .materials-nav button:hover {
-        background: var(--bg-tertiary);
-    }
-
-    .materials-nav button.active {
-        background: var(--bg-tertiary);
-        font-weight: bold;
-        color: var(--accent-primary);
-    }
-
-    .materials-content-section {
-        flex: 1;
-        padding: 1rem;
-        overflow-y: auto; /* Allow scrolling for content */
-        background: var(--bg-primary); /* Content background */
-    }
-
-    .content-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .content-header-row h2 {
-        font-size: 1.5rem;
-        color: var(--text-primary);
-    }
-
-    .search-input {
-        padding: .5rem;
-        border-radius: 6px;
-        width: 200px;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-    }
-
-    .file-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 1rem;
-    }
-
-    .file-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1rem;
+        margin-bottom: 2rem;
         text-align: center;
-        cursor: pointer;
-        transition: background 0.2s, transform 0.2s;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
     }
 
-    .file-card:hover {
-        background: var(--bg-tertiary);
-        transform: translateY(-3px);
-    }
-
-    .file-thumb {
-        font-size: 2.5rem; /* Larger icon */
-        margin-bottom: .75rem;
-        color: var(--accent-primary); /* Highlight icon */
-    }
-
-    .file-name {
-        font-size: .95rem;
-        word-break: break-word;
-        color: var(--text-primary);
-        font-weight: 500;
-    }
-
-    .exercise-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1rem;
+    .materials-nav {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        position: relative;
     }
 
-    .exercise-card h4 {
+    .materials-nav .tab {
+        background-color: var(--bg-secondary);
+        color: var(--text-secondary);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .materials-nav .tab:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .materials-nav .tab.active {
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+    }
+    body.light-theme .materials-nav .tab.active {
+        color: var(--bg-primary);
+    }
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 1200px;
+        margin-top: 1.5rem;
+    }
+
+    .material-card {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none; /* For links */
+        color: var(--text-primary);
+    }
+
+    .material-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    .material-thumbnail {
+        width: 100%;
+        height: 180px; /* Fixed height for thumbnails */
+        object-fit: cover;
+        display: block;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .material-content {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .material-content h3 {
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
         color: var(--text-primary);
     }
 
-    .exercise-card p {
+    .material-content p {
         font-size: 0.9rem;
         color: var(--text-secondary);
+        line-height: 1.4;
+        flex-grow: 1; /* Allow description to take available space */
     }
 
-    .exercise-card .buy-button {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        margin-top: 0.5rem;
-        align-self: flex-start; /* Align button to start */
-    }
-
-    .exercise-card .buy-button:hover {
-        opacity: 0.85;
-    }
-
-    .exercise-card .purchased-tag {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background-color: #22c55e; /* Green for purchased */
-        color: #fff;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .teacher-exercise-details {
+    .material-actions {
         margin-top: 1rem;
-        border-top: 1px solid var(--border-color);
-        padding-top: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap; /* Allow buttons to wrap */
+        justify-content: flex-end; /* Align buttons to the right */
     }
 
-    .teacher-exercise-details ul {
-        list-style: none;
-        padding-left: 0;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
+    /* Teacher view specific */
+    .teacher-materials-section {
+        width: 100%;
+        max-width: 1200px;
     }
 
-    .teacher-exercise-details ul li {
-        margin-bottom: 0.25rem;
-    }
-
-    /* Form and list containers for teacher sections */
-    .form-container, .list-container {
+    .teacher-materials-section .form-container {
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        padding: 2rem;
+        padding: 1.5rem;
         margin-bottom: 1.5rem;
-        width: 100%;
-        max-width: 900px; /* Adjust as needed for material page */
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .form-group {
-        margin-bottom: 1rem;
-    }
-    .form-group label {
+    .teacher-materials-section .form-container label {
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 500;
         color: var(--text-primary);
     }
-    .form-group input[type="text"],
-    .form-group textarea {
+    .teacher-materials-section .form-container input[type="text"],
+    .teacher-materials-section .form-container input[type="url"],
+    .teacher-materials-section .form-container input[type="number"],
+    .teacher-materials-section .form-container select,
+    .teacher-materials-section .form-container textarea {
         width: 100%;
         padding: 0.75rem;
         border: 1px solid var(--border-color);
@@ -594,26 +505,35 @@
         background-color: var(--bg-primary);
         color: var(--text-primary);
         font-size: 1rem;
-    }
-    .form-group input[type="text"]:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px var(--focus-ring-color);
-    }
-    .error-message {
-        color: var(--accent-red);
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-        text-align: center;
-    }
-    .loading-indicator {
-        text-align: center;
-        color: var(--text-secondary);
-        font-style: italic;
-        margin-top: 1rem;
+        margin-bottom: 1rem;
     }
 
+    .teacher-materials-section .form-container button.btn-primary {
+        width: auto; /* Override default 100% width for forms */
+        margin-top: 1rem;
+    }
+    
+    .teacher-materials-section .list-container {
+        margin-top: 1.5rem;
+    }
+    .teacher-materials-section .list-item {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    .teacher-materials-section .list-item .actions button {
+        margin-left: 0.5rem;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
     /* Modals */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
     .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -621,7 +541,7 @@
     .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
     .close-button:hover { color: var(--text-primary); }
     #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-    
+
     #modalInput {
         background-color: var(--bg-primary);
         border: 1px solid var(--border-color);
@@ -637,42 +557,84 @@
         box-shadow: 0 0 0 2px var(--focus-ring-color);
     }
 
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        #authWrapper { flex-direction: column; position: static; height: auto; }
-        .login-left-panel, .login-right-panel { width: 100%; }
-        header {
-            flex-direction: column;
-            height: auto;
-            padding: 1rem;
-            align-items: flex-start;
-        }
-        .header-actions {
-            margin-left: 0;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        .materials-main {
-            flex-direction: column;
-            height: auto; /* Allow height to expand */
-            padding: 16px;
-        }
-        .materials-sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-        }
-        .materials-content-section {
-            width: 100%;
-            padding-left: 0;
-            padding-top: 1.5rem;
-        }
-        .file-grid {
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Smaller cards on mobile */
-        }
+    /* PDF Preview Specific Styles */
+    #pdfPreviewModal .modal-content { 
+        max-width: 90vw; 
+        max-height: 90vh; 
+        width: auto; 
+        height: auto; 
+        padding: 15px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
     }
+    #pdfCanvasContainer { 
+        width: 100%; 
+        flex-grow: 1; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        overflow: auto; 
+        margin-bottom: 10px; 
+    }
+    #pdfCanvas { 
+        border: 1px solid var(--border-color); 
+        display: block; 
+        max-width: 100%; 
+        height: auto; 
+    }
+    #pdfControls button { 
+        background-color: var(--bg-tertiary); 
+        color: var(--text-primary); 
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+    }
+    #pdfControls button:hover:not(:disabled) { 
+        background-color: #444; 
+    }
+    #pdfControls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    #pdfPageNum, #pdfTotalPages {
+        font-weight: 600;
+    }
+
+    /* File Drop Zones */
+    .drop-zone { 
+        border: 2px dashed var(--border-color); 
+        border-radius: 8px; 
+        min-height: 100px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        color: var(--text-secondary); 
+        font-size: 1rem; 
+        margin-bottom: 1.5rem; 
+        cursor: pointer; 
+        word-wrap: break-word; 
+        padding: 1rem; 
+        text-align: center; 
+    }
+    .drop-zone.highlight { 
+        border-color: var(--accent-primary); 
+        background: rgba(245, 245, 245, .05); 
+    }
+    body.light-theme .drop-zone.highlight {
+        background: rgba(10, 10, 10, .05);
+    }
+    .text-gray-500 { color: var(--text-secondary); }
+    .text-sm { font-size: 0.875rem; }
+    .block { display: block; }
+    .text-center { text-align: center; }
+    .mt-2 { margin-top: 0.5rem; }
+    .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
+    .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
 
     /* --- FOOTER --- */
     footer { 
@@ -693,6 +655,37 @@
         color: var(--text-primary); 
     }
 
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column;
+            height: auto;
+            padding: 1rem;
+            align-items: flex-start;
+        }
+        .header-actions {
+            margin-left: 0;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .dropdown-menu {
+            width: 100%; /* Full width for dropdown on mobile */
+        }
+        .dropdown-menu-content {
+            min-width: unset;
+            width: 100%;
+        }
+        main {
+            padding: 16px;
+        }
+        .materials-grid {
+            grid-template-columns: 1fr; /* Single column on mobile */
+        }
+        .teacher-materials-section .form-container button.btn-primary {
+            width: 100%;
+        }
+    }
   </style>
 </head>
 <body>
@@ -732,9 +725,9 @@
         <div class="dropdown-menu">
           <button class="tab active">Materials ▾</button>
           <div class="dropdown-menu-content">
-            <a href="materials.html?folder=tutorials" class="tab">Tutorial Videos</a>
-            <a href="materials.html?folder=pastpapers" class="tab">Past Papers</a>
-            <a href="materials.html?folder=exercises" class="tab active">Exercises for Sale</a>
+            <a href="materials.html?folder=tutorials" class="tab" id="headerTutorialsLink">Tutorial Videos</a>
+            <a href="materials.html?folder=pastpapers" class="tab" id="headerPastPapersLink">Past Papers</a>
+            <a href="materials.html?folder=exercises" class="tab" id="headerExercisesLink">Exercises for Sale</a>
           </div>
         </div>
 
@@ -748,44 +741,48 @@
     </header>
 
     <!-- MAIN -->
-    <main class="materials-main">
-      <!-- Sidebar -->
-      <aside class="materials-sidebar">
-        <button class="btn-primary" id="uploadBtn">+ Upload</button>
-        <nav class="materials-nav">
-          <button class="tab" data-folder="tutorials">🎬 Tutorials</button>
-          <button class="tab" data-folder="pastpapers">📄 Past Papers</button>
-          <button class="tab active" data-folder="exercises">📝 Exercises for Sale</button>
-          <button class="tab" data-folder="myuploads">📁 My Uploads</button>
-        </nav>
-      </aside>
+    <main>
+        <h2 class="section-title" id="folderTitle">Materials</h2>
 
-      <!-- Main content section -->
-      <section class="materials-content-section">
-        <div class="content-header-row">
-          <h2 id="folderTitle">Exercises for Sale</h2>
-          <input type="text" id="searchInput" placeholder="Search..." class="search-input">
-        </div>
-
-        <!-- Teacher's "Create Exercise" Form -->
-        <div id="createExerciseSection" style="display: none;" class="form-container">
-            <h3>Create New Exercise for Sale</h3>
-            <div class="form-group">
-                <label for="newExerciseName">Exercise Title:</label>
-                <input type="text" id="newExerciseName" placeholder="e.g., Advanced Calculus Problems">
+        <!-- Teacher View Section (initially hidden) -->
+        <div id="teacherView" class="teacher-materials-section" style="display:none;">
+            <div class="form-container">
+                <h3>Add New Item</h3>
+                <div class="form-group">
+                    <label for="itemName">Name/Title</label>
+                    <input type="text" id="itemName" placeholder="e.g., Algebra Basics, 2024 Paper 1">
+                </div>
+                <div class="form-group" id="itemPriceGroup" style="display:none;">
+                    <label for="itemPrice">Price (USD)</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" value="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="itemLink">YouTube/File Link (or upload)</label>
+                    <input type="url" id="itemLink" placeholder="e.g., https://youtu.be/abcxyz or https://example.com/doc.pdf">
+                </div>
+                <div class="form-group">
+                    <label>Upload File (PDF/Image/Video - for small files)</label>
+                    <div id="itemDropZone" class="drop-zone">
+                        <span>Drag & Drop File Here or click to select</span>
+                        <input type="file" id="itemFile" accept="image/*,application/pdf,video/*" hidden>
+                    </div>
+                    <span id="itemFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                <button id="addItemButton" class="btn-primary">Add Item</button>
             </div>
-            <div class="form-group">
-                <label for="newExerciseDescription">Description:</label>
-                <textarea id="newExerciseDescription" placeholder="Brief description of the exercise..."></textarea>
+
+            <div class="list-container">
+                <h3>Existing Items</h3>
+                <div id="materialsList">
+                    <p class="loading-indicator">Loading items...</p>
+                </div>
             </div>
-            <button id="addExerciseBtn" class="btn-primary" style="width:100%;">Add Exercise</button>
         </div>
 
-
-        <div id="fileGrid" class="file-grid">
-          <!-- Files dynamically listed here (will be replaced by JS) -->
+        <!-- Student View Section (default) -->
+        <div id="studentView" class="materials-grid">
+            <p class="loading-indicator">Loading materials...</p>
         </div>
-      </section>
     </main>
     <!-- FOOTER -->
     <footer>
@@ -829,12 +826,28 @@
       </div>
   </div>
 
+    <!-- PDF Preview Modal -->
+    <div id="pdfPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="pdfPreviewTitle"></h3>
+            <div id="pdfCanvasContainer">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+            <div id="pdfControls">
+                <button id="prevPdfPage">Previous</button>
+                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                <button id="nextPdfPage">Next</button>
+            </div>
+        </div>
+    </div>
+
 
   <!-- Firebase & App Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // --- IMPORTANT CONFIGURATION ---
@@ -855,6 +868,8 @@
     // Canvas provided global variables
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+    pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
     let app, db, auth, storage;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
 
@@ -863,6 +878,7 @@
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
     const userDisplayNameSpan = document.getElementById('userDisplayName');
+
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -896,7 +912,6 @@
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
-            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 const userProfileDoc = await getDoc(userProfileRef);
@@ -904,7 +919,6 @@
                     const profileData = userProfileDoc.data();
                     currentUserRole = profileData.role;
                     currentUserName = profileData.name || user.displayName;
-                    // Update last login time
                     await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                     showApp();
                 } else {
@@ -954,8 +968,7 @@
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-        
-        initializeMaterialsPage();
+        initializeMaterialsPage(); // Call the main function to initialize this page
     }
 
     async function handleGoogleSignIn() {
@@ -982,7 +995,6 @@
         }
         
         try {
-            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
             currentUserRole = roleToSet;
@@ -1056,273 +1068,454 @@
         document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
     });
 
-    // --- MATERIALS PAGE SPECIFIC LOGIC ---
-    const materialsNavButtons = document.querySelectorAll('.materials-nav .tab');
-    const folderTitle = document.getElementById('folderTitle');
-    const searchInput = document.getElementById('searchInput');
-    const fileGrid = document.getElementById('fileGrid');
-    const createExerciseSection = document.getElementById('createExerciseSection');
-    const newExerciseNameInput = document.getElementById('newExerciseName');
-    const newExerciseDescriptionInput = document.getElementById('newExerciseDescription');
-    const addExerciseBtn = document.getElementById('addExerciseBtn');
-    const uploadBtn = document.getElementById('uploadBtn'); // Placeholder for upload, will not implement actual upload in this file
 
-    let allExercises = []; // Global array to store all exercises
-    let allStudents = []; // Needed to display student names in teacher view
+    // --- MATERIALS PAGE SPECIFIC LOGIC ---
+    const folderTitle = document.getElementById('folderTitle');
+    const teacherView = document.getElementById('teacherView');
+    const studentView = document.getElementById('studentView');
+    const materialsList = document.getElementById('materialsList'); // For teacher view
+    
+    // Form elements for teacher view
+    const itemNameInput = document.getElementById('itemName');
+    const itemPriceGroup = document.getElementById('itemPriceGroup');
+    const itemPriceInput = document.getElementById('itemPrice');
+    const itemLinkInput = document.getElementById('itemLink');
+    const itemDropZone = document.getElementById('itemDropZone');
+    const itemFileInput = document.getElementById('itemFile');
+    const itemFileNameDisplay = document.getElementById('itemFileName');
+    const addItemButton = document.getElementById('addItemButton');
+
+    let currentFolder = ''; // Stores the current folder being viewed (e.g., 'tutorials', 'pastpapers', 'exercises')
+
+    // Helper to get collection path based on folder
+    function getMaterialCollectionRef(folder) {
+        return collection(db, `artifacts/${appId}/public/data/${folder}`);
+    }
 
     async function initializeMaterialsPage() {
-        // Fetch all students for teacher view display names
-        await loadAllStudentsForTeacherView();
-
-        // Set initial active folder based on URL parameter or default to 'exercises'
         const urlParams = new URLSearchParams(window.location.search);
-        const initialFolder = urlParams.get('folder') || 'exercises'; // Default to exercises
+        currentFolder = urlParams.get('folder') || 'tutorials'; // Default to tutorials
 
-        // Update active class for sidebar buttons
-        materialsNavButtons.forEach(btn => {
-            if (btn.dataset.folder === initialFolder) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        
-        // Load initial content
-        updateMaterialsContent(initialFolder);
+        folderTitle.textContent = formatFolderName(currentFolder);
+        updateActiveHeaderLink(currentFolder);
 
-        // Hide upload button if student or unassigned (teacher can still upload materials to 'myuploads' if implemented)
-        if (currentUserRole !== 'teacher') {
-            uploadBtn.style.display = 'none'; 
+        if (currentFolder === 'exercises') {
+            itemPriceGroup.style.display = 'block'; // Show price input for exercises
         } else {
-            uploadBtn.style.display = 'block'; // Or hide if no upload functionality is built for teachers here
+            itemPriceGroup.style.display = 'none';
+        }
+
+        if (currentUserRole === 'teacher') {
+            teacherView.style.display = 'block';
+            studentView.style.display = 'none';
+            setupTeacherMaterialForm();
+            await loadAllItems(currentFolder);
+        } else {
+            teacherView.style.display = 'none';
+            studentView.style.display = 'grid'; // Ensure grid display for student view
+            await loadAllItems(currentFolder);
         }
     }
 
-    // Function to update content based on selected folder
-    const updateMaterialsContent = async (folder) => {
-        let titleText = '';
-        let contentHtml = '';
-        fileGrid.innerHTML = '<p class="loading-indicator">Loading content...</p>';
-        createExerciseSection.style.display = 'none'; // Hide create exercise form by default
-
-        // Clear search input
-        searchInput.value = '';
-
-        // Update folder title
+    function formatFolderName(folder) {
         switch(folder) {
-            case 'tutorials':
-                titleText = 'Tutorial Videos';
-                // Dummy content for tutorials
-                contentHtml = `
-                    <div class="file-card"><div class="file-thumb">🎬</div><div class="file-name">Math Tips Video</div></div>
-                    <div class="file-card"><div class="file-thumb">🎬</div><div class="file-name">Physics Theory</div></div>
-                    <div class="file-card"><div class="file-thumb">🎬</div><div class="file-name">Chemistry Concepts</div></div>
-                    <div class="file-card"><div class="file-thumb">🎬</div><div class="file-name">History Deep Dive</div></div>
-                `;
-                fileGrid.innerHTML = contentHtml;
-                break;
-            case 'pastpapers':
-                titleText = 'Past Papers';
-                // Dummy content for past papers
-                contentHtml = `
-                    <div class="file-card"><div class="file-thumb">📄</div><div class="file-name">English Paper 2022</div></div>
-                    <div class="file-card"><div class="file-thumb">📄</div><div class="file-name">Physics Exam 2023</div></div>
-                    <div class="file-card"><div class="file-thumb">📄</div><div class="file-name">Math Paper 2021</div></div>
-                    <div class="file-card"><div class="file-thumb">📄</div><div class="file-name">Biology Test</div></div>
-                `;
-                fileGrid.innerHTML = contentHtml;
-                break;
-            case 'exercises':
-                titleText = 'Exercises for Sale';
-                if (currentUserRole === 'teacher') {
-                    createExerciseSection.style.display = 'block'; // Show create form for teachers
-                }
-                await loadExercises(); // Load exercises from Firestore
-                break;
-            case 'myuploads':
-                titleText = 'My Uploads';
-                fileGrid.innerHTML = `<p style="width:100%; text-align:center; color:var(--text-secondary);">No uploads yet.</p>`;
-                // In a real app, you would load user-specific uploads here
-                break;
-            default:
-                titleText = 'Materials';
-                fileGrid.innerHTML = `<p style="width:100%; text-align:center; color:var(--text-secondary);">Select a folder.</p>`;
-        }
-        folderTitle.textContent = titleText;
-    };
-
-    // Event listeners for sidebar tab switching
-    materialsNavButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // Remove 'active' class from all buttons
-            materialsNavButtons.forEach(btn => btn.classList.remove('active'));
-            // Add 'active' class to the clicked button
-            button.classList.add('active');
-
-            const folder = button.dataset.folder;
-            updateMaterialsContent(folder);
-
-            // Update URL parameter for direct linking
-            const url = new URL(window.location.href);
-            url.searchParams.set('folder', folder);
-            window.history.replaceState({}, '', url.toString());
-        });
-    });
-
-    // Helper to load all student names for teacher view
-    async function loadAllStudentsForTeacherView() {
-        const usersRef = collection(db, `artifacts/${appId}/users`);
-        const studentProfiles = [];
-        try {
-            const qSnapUsers = await getDocs(usersRef);
-            for (const userDoc of qSnapUsers.docs) {
-                const userId = userDoc.id;
-                // Corrected path for user profile: collection/document/collection/document/collection
-                const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
-                const profileDoc = await getDoc(profileRef);
-                if (profileDoc.exists() && profileDoc.data().role === 'student') {
-                    studentProfiles.push({ id: userId, name: profileDoc.data().name || profileDoc.data().email });
-                }
-            }
-            allStudents = studentProfiles;
-        } catch (error) {
-            console.error("Error loading all students for teacher view:", error);
-            showModal('Error', `Failed to load student names for display: ${error.message}`);
+            case 'tutorials': return 'Tutorial Videos';
+            case 'pastpapers': return 'Past Papers';
+            case 'exercises': return 'Exercises for Sale';
+            default: return 'Materials';
         }
     }
 
+    function updateActiveHeaderLink(folder) {
+        document.querySelectorAll('.dropdown-menu-content a.tab').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes(`folder=${folder}`)) {
+                link.classList.add('active');
+            }
+        });
+    }
 
-    // --- Exercises for Sale Logic ---
-    async function loadExercises() {
-        fileGrid.innerHTML = '<p class="loading-indicator">Loading exercises...</p>';
-        // Corrected public path: collection/document/collection/document/collection
-        const exercisesRef = collection(db, `artifacts/${appId}/public/data/exercises`);
+    // --- Teacher Material Form Setup ---
+    function setupTeacherMaterialForm() {
+        setupDropZone('itemDropZone', 'itemFile', 'itemFileName');
+        addItemButton.addEventListener('click', handleAddItem);
+        materialsList.addEventListener('click', handleTeacherListClick); // Delegated events for delete/preview
+        itemLinkInput.addEventListener('input', (e) => {
+            // Automatically convert Google Drive view links to direct download links
+            e.target.value = convertGoogleDriveLink(e.target.value);
+        });
+    }
+
+    // Dropzone setup function (reused from index.html)
+    function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
+        const dropZone = document.getElementById(dropZoneId);
+        const fileInput = document.getElementById(fileInputId);
+        const fileNameDisplay = document.getElementById(fileNameDisplayId);
+        const filePreview = filePreviewId ? document.getElementById(filePreviewId) : null;
+
+        if (!dropZone || !fileInput || !fileNameDisplay) return;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, e => {e.preventDefault(); e.stopPropagation();}));
+        ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.add('highlight')));
+        ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.remove('highlight')));
+
+        dropZone.addEventListener('drop', e => {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+            } else {
+                fileNameDisplay.textContent = 'No file chosen';
+            }
+        });
+    }
+
+    // Converts Google Drive view link to direct download link
+    function convertGoogleDriveLink(url) {
+        const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
+        const match = url.match(driveViewRegex);
+        if (match && match[1]) {
+            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        }
+        return url; // Return original URL if no match
+    }
+
+
+    async function handleAddItem() {
+        const name = itemNameInput.value.trim();
+        const price = parseFloat(itemPriceInput.value);
+        const link = itemLinkInput.value.trim();
+        const file = itemFileInput.files[0];
+
+        if (!name) { showModal('Error', 'Item name/title cannot be empty.'); return; }
+        if (currentFolder === 'exercises' && (isNaN(price) || price < 0)) { showModal('Error', 'Please enter a valid price for exercises.'); return; }
+        if (!link && !file) { showModal('Error', 'Please provide either a link or upload a file.'); return; }
+
+        addItemButton.disabled = true;
+        addItemButton.textContent = 'Adding...';
+
+        let itemData = { name: name, createdAt: serverTimestamp() };
+        if (currentFolder === 'exercises') {
+            itemData.price = price;
+        }
+
+        let downloadURL = link;
+        let filePath = ''; // To store Firebase Storage path
+
         try {
-            const qSnap = await getDocs(query(exercisesRef, orderBy('createdAt', 'desc')));
-            allExercises = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (file) {
+                // Upload file to Firebase Storage
+                filePath = `materials/${currentFolder}/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, filePath);
+                const uploadResult = await uploadBytes(storageRef, file);
+                downloadURL = await getDownloadURL(uploadResult.ref);
+                itemData.filePath = filePath; // Save storage path
+            }
 
-            if (allExercises.length === 0) {
-                fileGrid.innerHTML = '<p class="loading-indicator">No exercises available for sale yet.</p>';
+            if (!downloadURL) {
+                throw new Error("No valid link or uploaded file URL.");
+            }
+            itemData.link = downloadURL;
+
+            // Add item to Firestore
+            await addDoc(getMaterialCollectionRef(currentFolder), itemData);
+            showModal('Success', `${formatFolderName(currentFolder).slice(0, -1)} added successfully!`);
+            
+            // Clear form
+            itemNameInput.value = '';
+            itemPriceInput.value = '0.00';
+            itemLinkInput.value = '';
+            itemFileInput.value = '';
+            itemFileNameDisplay.textContent = 'No file chosen';
+
+            await loadAllItems(currentFolder); // Reload list
+        } catch (error) {
+            console.error("Error adding item:", error);
+            showModal('Error', `Failed to add item: ${error.message}`);
+        } finally {
+            addItemButton.disabled = false;
+            addItemButton.textContent = 'Add Item';
+        }
+    }
+
+    async function loadAllItems(folder) {
+        const isTeacher = currentUserRole === 'teacher';
+        const container = isTeacher ? materialsList : studentView;
+        container.innerHTML = '<p class="loading-indicator">Loading items...</p>';
+
+        const collectionRef = getMaterialCollectionRef(folder);
+        // Ordering by 'createdAt' requires an index. If you don't have one, order by 'name' or remove orderBy.
+        const q = query(collectionRef, orderBy('createdAt', 'desc')); 
+
+        try {
+            const snapshot = await getDocs(q);
+            container.innerHTML = ''; // Clear loading indicator
+
+            if (snapshot.empty) {
+                container.innerHTML = `<p class="loading-indicator">No items in ${formatFolderName(folder)} yet.</p>`;
                 return;
             }
 
-            fileGrid.innerHTML = ''; // Clear loading indicator
-            for (const exercise of allExercises) {
-                const exerciseCard = document.createElement('div');
-                exerciseCard.className = 'exercise-card';
-                
-                let purchased = false;
-                if (currentUserRole === 'student' && exercise.purchasedBy && exercise.purchasedBy.includes(currentUserId)) {
-                    purchased = true;
+            snapshot.forEach(docSnap => {
+                const item = { id: docSnap.id, ...docSnap.data() };
+                if (isTeacher) {
+                    renderTeacherItem(item, container);
+                } else {
+                    renderStudentItem(item, container);
                 }
-
-                let cardContent = `
-                    <h4>${exercise.name}</h4>
-                    <p>${exercise.description}</p>
-                `;
-
-                if (currentUserRole === 'student') {
-                    if (purchased) {
-                        cardContent += `<span class="purchased-tag">Purchased!</span>`;
-                    } else {
-                        cardContent += `<button class="buy-button btn-primary" data-id="${exercise.id}">Buy Now</button>`;
-                    }
-                } else if (currentUserRole === 'teacher') {
-                    const purchasedStudentNames = (exercise.purchasedBy || [])
-                        .map(studentId => {
-                            const student = allStudents.find(s => s.id === studentId);
-                            return student ? `<li>${student.name} (${studentId})</li>` : `<li>Unknown Student (${studentId})</li>`;
-                        })
-                        .join('');
-
-                    cardContent += `
-                        <div class="teacher-exercise-details">
-                            <h5>Purchased by:</h5>
-                            <ul id="purchasedByList-${exercise.id}">
-                                ${purchasedStudentNames || '<li>No students have purchased this yet.</li>'}
-                            </ul>
-                            <button class="buy-button logout-btn" data-id="${exercise.id}">Delete Exercise</button>
-                        </div>
-                    `;
-                }
-                exerciseCard.innerHTML = cardContent;
-                fileGrid.appendChild(exerciseCard);
-            }
+            });
         } catch (error) {
-            console.error("Error loading exercises:", error);
-            showModal('Error', 'Failed to load exercises.');
-            fileGrid.innerHTML = '<p class="error-message">Error loading exercises.</p>';
+            console.error("Error loading items:", error);
+            showModal('Error', `Failed to load items: ${error.message}. Please check Firebase security rules and indexes.`);
+            container.innerHTML = `<p class="error-message">Error loading items.</p>`;
         }
     }
 
-    addExerciseBtn.addEventListener('click', async () => {
-        const name = newExerciseNameInput.value.trim();
-        const description = newExerciseDescriptionInput.value.trim();
+    function renderTeacherItem(item, container) {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'list-item';
+        let itemDetails = item.name;
+        if (currentFolder === 'exercises') {
+            itemDetails += ` ($${item.price.toFixed(2)})`;
+        }
 
-        if (!name) { showModal('Error', 'Exercise title cannot be empty.'); return; }
-        if (!description) { showModal('Error', 'Exercise description cannot be empty.'); return; }
+        itemElement.innerHTML = `
+            <span>${itemDetails}</span>
+            <div class="actions">
+                <button class="btn-primary preview-item-btn" data-id="${item.id}" data-name="${item.name}" data-link="${item.link}" data-folder="${currentFolder}">Preview</button>
+                <button class="logout-btn delete-item-btn" data-id="${item.id}" data-file-path="${item.filePath || ''}">Delete</button>
+            </div>
+        `;
+        container.appendChild(itemElement);
+    }
 
-        try {
-            // Corrected public path: collection/document/collection/document/collection
-            const exercisesRef = collection(db, `artifacts/${appId}/public/data/exercises`);
-            await addDoc(exercisesRef, {
-                name: name,
-                description: description,
-                createdAt: serverTimestamp(),
-                purchasedBy: [] // Initialize with an empty array of user IDs
-            });
-            showModal('Success', `Exercise "${name}" added successfully.`);
-            newExerciseNameInput.value = '';
-            newExerciseDescriptionInput.value = '';
-            await loadExercises(); // Reload exercises list
-        } catch (error) {
-            console.error("Error adding exercise:", error);
-            showModal('Error', `Failed to add exercise: ${error.message}`);
+    function renderStudentItem(item, container) {
+        const card = document.createElement('div');
+        card.className = 'material-card';
+
+        let thumbnailHtml = '';
+        if (currentFolder === 'tutorials' && item.link && item.link.includes('youtube.com/watch?v=')) {
+            const videoId = item.link.split('v=')[1].split('&')[0];
+            thumbnailHtml = `<img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="${item.name}" class="material-thumbnail">`;
+        } else if (item.link && (item.link.endsWith('.jpg') || item.link.endsWith('.png') || item.link.endsWith('.jpeg') || item.link.endsWith('.webp'))) {
+            thumbnailHtml = `<img src="${item.link}" alt="${item.name}" class="material-thumbnail">`;
+        } else {
+            thumbnailHtml = `<img src="https://placehold.co/400x180/333333/FFFFFF?text=No%20Preview" alt="No Preview" class="material-thumbnail">`;
+        }
+
+        let priceHtml = '';
+        if (currentFolder === 'exercises') {
+            priceHtml = `<p>Price: <strong>$${item.price.toFixed(2)}</strong></p>`;
+        }
+
+        card.innerHTML = `
+            ${thumbnailHtml}
+            <div class="material-content">
+                <h3>${item.name}</h3>
+                ${priceHtml}
+                <p>${item.description || 'No description available.'}</p>
+                <div class="material-actions">
+                    <button class="btn-primary view-item-btn" data-id="${item.id}" data-name="${item.name}" data-link="${item.link}" data-file-path="${item.filePath || ''}" data-folder="${currentFolder}">View/Download</button>
+                    ${currentFolder === 'exercises' ? `<button class="btn-primary add-to-cart-btn" data-id="${item.id}" data-name="${item.name}" data-price="${item.price}">Add to Cart</button>` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    }
+
+    // Handles clicks on delete and preview buttons in teacher's list
+    async function handleTeacherListClick(e) {
+        if (e.target.classList.contains('delete-item-btn')) {
+            const itemId = e.target.dataset.id;
+            const filePath = e.target.dataset.filePath; // Get file path for storage deletion
+            showModal('Confirm Deletion', 'Are you sure you want to delete this item? This action cannot be undone.', [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    try {
+                        // Delete from Storage first if a filePath exists
+                        if (filePath) {
+                            const fileRef = ref(storage, filePath);
+                            await deleteObject(fileRef);
+                            console.log('File deleted from storage:', filePath);
+                        }
+                        // Delete from Firestore
+                        await deleteDoc(doc(getMaterialCollectionRef(currentFolder), itemId));
+                        showModal('Success', 'Item deleted successfully!');
+                        await loadAllItems(currentFolder);
+                    } catch (error) {
+                        console.error("Error deleting item:", error);
+                        showModal('Error', `Failed to delete item: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        } else if (e.target.classList.contains('preview-item-btn')) {
+            const item = {
+                id: e.target.dataset.id,
+                name: e.target.dataset.name,
+                link: e.target.dataset.link,
+                folder: e.target.dataset.folder
+            };
+            handlePreview(item);
+        }
+    }
+
+    // Handles clicks on view/download buttons in student's grid
+    studentView.addEventListener('click', (e) => {
+        if (e.target.classList.contains('view-item-btn')) {
+            const item = {
+                id: e.target.dataset.id,
+                name: e.target.dataset.name,
+                link: e.target.dataset.link,
+                filePath: e.target.dataset.filePath, // Include filePath for potential storage access
+                folder: e.target.dataset.folder
+            };
+            handlePreview(item);
+        } else if (e.target.classList.contains('add-to-cart-btn')) {
+            const item = {
+                id: e.target.dataset.id,
+                name: e.target.dataset.name,
+                price: parseFloat(e.target.dataset.price)
+            };
+            // addToCart(item); // Implement shopping cart logic if needed
+            showModal('Feature Coming Soon', `Add to Cart for "${item.name}" is a feature coming soon!`);
         }
     });
 
-    fileGrid.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('buy-button')) {
-            const exerciseId = e.target.dataset.id;
-            
-            if (currentUserRole === 'student') {
-                showModal('Confirm Purchase', 'Are you sure you want to "purchase" this exercise?', [
-                    { text: 'Confirm', className: 'btn-primary', onClick: async () => {
-                        try {
-                            // Corrected public path: collection/document/collection/document/collection
-                            const exerciseRef = doc(db, `artifacts/${appId}/public/data/exercises`, exerciseId);
-                            await updateDoc(exerciseRef, {
-                                purchasedBy: arrayUnion(currentUserId) // Add student's ID to purchasedBy array
-                            });
-                            showModal('Success', 'Exercise "purchased" successfully!');
-                            await loadExercises(); // Reload to update UI
-                        } catch (error) {
-                            console.error("Error purchasing exercise:", error);
-                            showModal('Error', `Failed to "purchase" exercise: ${error.message}`);
-                        }
-                    }},
-                    { text: 'Cancel', className: 'logout-btn' }
-                ]);
-            } else if (currentUserRole === 'teacher') {
-                showModal('Confirm Delete', 'Are you sure you want to delete this exercise?', [
-                    { text: 'Delete', className: 'logout-btn', onClick: async () => {
-                        try {
-                            // Corrected public path: collection/document/collection/document/collection
-                            await deleteDoc(doc(db, `artifacts/${appId}/public/data/exercises`, exerciseId));
-                            showModal('Success', 'Exercise deleted successfully!');
-                            await loadExercises(); // Reload to update UI
-                        } catch (error) {
-                            console.error("Error deleting exercise:", error);
-                            showModal('Error', `Failed to delete exercise: ${error.message}`);
-                        }
-                    }},
-                    { text: 'Cancel', className: 'btn-primary' }
-                ]);
+    // Consolidated Preview Function
+    function handlePreview(item) {
+        if (item.folder === 'tutorials') {
+            // Assume YouTube links for now. More complex parsing needed for generic video embeds.
+            if (item.link.includes('youtube.com/watch?v=')) {
+                const videoId = item.link.split('v=')[1].split('&')[0];
+                showModal(item.name, `
+                    <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+                        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                    </div>
+                `);
+            } else {
+                 showModal(item.name, `<p>Video Link: <a href="${item.link}" target="_blank">${item.link}</a></p>`);
+            }
+        } else if (item.folder === 'pastpapers' || item.folder === 'exercises') {
+            if (item.link && (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download'))) {
+                showPdfPreviewModal(item.name, item.link);
+            } else if (item.link && (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i))) {
+                showModal(item.name, `<img src="${item.link}" style="max-width: 100%; height: auto; border-radius: 8px;">`);
+            } else {
+                showModal(item.name, `
+                    <p>File Link: <a href="${item.link}" target="_blank">${item.link}</a></p>
+                    <div style="margin-top: 1rem; text-align: center;">
+                        <a href="${item.link}" download="${item.name}.pdf" class="btn-primary" target="_blank">Download File</a>
+                    </div>
+                `);
             }
         }
+    }
+
+
+    // --- PDF PREVIEW LOGIC ---
+    let pdfDoc = null; // Stores PDF document
+    let pageNum = 1; // Current page number
+
+    const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+    const pdfCanvas = document.getElementById('pdfCanvas');
+    const pdfContext = pdfCanvas.getContext('2d');
+    const pdfPageNumSpan = document.getElementById('pdfPageNum');
+    const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
+    const prevPdfPageBtn = document.getElementById('prevPdfPage');
+    const nextPdfPageBtn = document.getElementById('nextPdfPage');
+
+    prevPdfPageBtn.addEventListener('click', () => {
+        if (pageNum <= 1) return;
+        pageNum--;
+        queueRenderPage(pageNum);
     });
 
-    // --- MODAL FUNCTIONS ---
+    nextPdfPageBtn.addEventListener('click', () => {
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        queueRenderPage(pageNum);
+    });
+
+    function showPdfPreviewModal(title, pdfUrl) {
+        document.getElementById('pdfPreviewTitle').textContent = title;
+        pdfPreviewModal.style.display = 'flex';
+        loadPdf(pdfUrl);
+    }
+
+    async function loadPdf(pdfUrl) {
+        pdfDoc = null;
+        pageNum = 1;
+        pdfPageNumSpan.textContent = '';
+        pdfTotalPagesSpan.textContent = '';
+        pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height); // Clear canvas
+
+        try {
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            pdfDoc = await loadingTask.promise;
+            pdfTotalPagesSpan.textContent = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        } catch (error) {
+            console.error('Error loading PDF:', error);
+            showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
+            pdfPreviewModal.style.display = 'none'; // Close modal on error
+        }
+    }
+
+    let pageRendering = false;
+    let pageNumPending = null;
+
+    function renderPage(num) {
+        pageRendering = true;
+        pdfPageNumSpan.textContent = num;
+
+        pdfDoc.getPage(num).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: pdfContext,
+                viewport: viewport
+            };
+            const renderTask = page.render(renderContext);
+
+            renderTask.promise.then(function() {
+                pageRendering = false;
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+                updatePdfNavButtons();
+            });
+        }).catch(error => {
+            console.error('Error rendering PDF page:', error);
+            showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+            pageRendering = false;
+            pageNumPending = null;
+            updatePdfNavButtons();
+        });
+    }
+
+    function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    }
+
+    function updatePdfNavButtons() {
+        prevPdfPageBtn.disabled = pageNum <= 1;
+        nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+    }
+
+
+    // --- UNIVERSAL MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
         const messageModal = document.getElementById('messageModal');
         document.getElementById('modalTitle').textContent = title;
@@ -1388,10 +1581,17 @@
     document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
         const modal = btn.closest('.modal');
         modal.style.display = 'none'; 
+        // If it's the PDF preview modal, stop PDF rendering
+        if (modal.id === 'pdfPreviewModal') {
+            pdfDoc = null; // Clear PDF document reference
+            document.getElementById('pdfCanvas').getContext('2d').clearRect(0, 0, document.getElementById('pdfCanvas').width, document.getElementById('pdfCanvas').height);
+            document.getElementById('pdfPageNum').textContent = '';
+            document.getElementById('pdfTotalPages').textContent = '';
+        }
     });
 
-    // --- THEME TOGGLE ---
-    const themeToggleButton = document.getElementById('themeToggleButton');
+    // --- THEME TOGGLE (reused from index.html) ---
+    const themeToggleButton = document.getElementById('themeToggleButton'); // This button is not present in materials.html header
     function applyTheme(theme) { 
         document.body.classList.toggle('light-theme', theme === 'light'); 
     }
@@ -1399,15 +1599,16 @@
         const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
         applyTheme(savedTheme); 
     }
-    if (themeToggleButton) { // Check if the button exists before adding listener
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-    }
-
+    // No themeToggleButton in this page's header, so no listener needed for it here.
     loadTheme(); // Apply theme on load
+
+    // Show the login wrapper when the page has fully loaded
+    window.addEventListener('load', function() {
+        const authWrapper = document.getElementById('authWrapper');
+        if (authWrapper) {
+            authWrapper.style.opacity = '1';
+        }
+    });
   </script>
 </body>
 </html>
