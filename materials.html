@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materials</title>
+    <title>AI Marker - Materials</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <!-- Google Fonts for Inter -->
@@ -16,8 +16,8 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- Firebase Configuration ---
@@ -42,16 +42,17 @@
         const DEEPSEEK_WORKER_URL = "https://your-deepseek-proxy-worker.yourdomain.workers.dev/"; 
 
         // Placeholder for access codes (not used for auth in this standalone file, but for role setting)
-        const TEACHER_CODE = "TEACHER123";
+        const TEACHER_CODE = "Derren0625"; // Updated to match chat.html
         const STUDENT_CODE = "STUDENT456";
 
         // Set PDF.js worker source
         pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
         let app, db, auth, storage;
-        let currentUserId = null, currentUserEmail = null, currentUserRole = 'student', currentUserName = 'Guest'; // Default to student for standalone
+        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null; // Default to null for standalone until auth
         let shoppingCart = [];
         let appliedPromoCode = null;
+        let currentMaterialViewMode = 'card'; // Default view mode for materials sections
 
 
         // --- Firebase Initialization ---
@@ -66,7 +67,28 @@
             showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}. Please check your firebaseConfig.`);
         }
 
-        // Simplified Auth State (for standalone functionality, will default user)
+        // --- AUTHENTICATION & APP FLOW (Copied from chat.html for consistency) ---
+        const authWrapper = document.getElementById('authWrapper');
+        const appSection = document.getElementById('appSection');
+        const authContainer = document.getElementById('authContainer');
+
+        const googleSignInTemplate = `
+            <h2>Sign In</h2>
+            <button id="googleSignInButton" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
+                <span>Sign in with Google</span>
+            </button>
+            <p id="authError" class="error-message"></p>
+        `;
+
+        const codeEntryTemplate = `
+            <h2>Enter Access Code</h2>
+            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
+            <input type="text" id="accessCodeInput" placeholder="Enter code here">
+            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
+            <p id="codeError" class="error-message"></p>
+        `;
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid;
@@ -77,41 +99,148 @@
                     if (userProfileDoc.exists() && userProfileDoc.data().role) {
                         const profileData = userProfileDoc.data();
                         currentUserRole = profileData.role;
-                        currentUserName = profileData.name || user.displayName || 'User';
+                        currentUserName = profileData.name || user.displayName;
+                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                        showApp();
                     } else {
-                        // Assign a default role if not set (e.g., student)
-                        currentUserRole = 'student'; // Default to student if no role found
-                        currentUserName = user.displayName || 'User';
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: currentUserRole, lastLogin: Date.now() }, { merge: true });
+                        currentUserName = user.displayName;
+                        currentUserRole = 'unassigned';
+                        showCodeEntry();
                     }
                 } catch (e) {
                      console.error("Error checking user profile:", e);
                      showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     currentUserRole = 'student'; // Fallback
-                     currentUserName = user.displayName || 'User';
+                     showLogin();
                 }
-                initializeMaterialsView();
-                await checkForSuccessfulPurchase(); // Check for Stripe redirect
             } else {
-                currentUserId = 'anonymous'; // Assign an anonymous ID for unauthenticated users
-                currentUserRole = 'student'; // Default to student role for anonymous access
-                currentUserName = 'Guest';
-                // Sign in anonymously to get a UID for Firestore access
+                currentUserId = null;
+                currentUserRole = null;
+                currentUserName = null;
+                // Sign in anonymously if no user and no initial auth token
                 try {
                     if (typeof __initial_auth_token !== 'undefined') {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
-                        await signInAnonymously(auth);
+                        // Only show login if not in Canvas environment or no token provided
+                        if (typeof __initial_auth_token === 'undefined' && !auth.currentUser) {
+                            showLogin();
+                        }
+                        // Optionally sign in anonymously here for Firestore access if not showing login
+                        // await signInAnonymously(auth); 
                     }
                 } catch (anonError) {
                     console.error("Anonymous sign-in failed:", anonError);
                     showModal('Authentication Error', `Failed to sign in anonymously: ${anonError.message}. Materials may not load.`);
+                    showLogin(); // Fallback to full login if anonymous fails
+                }
+                
+                // If not authenticated (even anonymously), ensure login is shown.
+                if (!auth.currentUser && !document.getElementById('authWrapper').style.display.includes('flex')) {
+                    showLogin();
                 }
             }
-            updateMaterialSectionVisibility();
         });
 
+        function showLogin() {
+            appSection.style.display = 'none';
+            authWrapper.style.display = 'flex';
+            authWrapper.style.opacity = '1';
+            authContainer.innerHTML = googleSignInTemplate;
+            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
+        }
 
+        function showCodeEntry() {
+            appSection.style.display = 'none';
+            authWrapper.style.display = 'flex';
+            authWrapper.style.opacity = '1';
+            authContainer.innerHTML = codeEntryTemplate;
+            const submitCodeBtn = document.getElementById('submitCodeButton');
+            const accessCodeInput = document.getElementById('accessCodeInput');
+            submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
+            accessCodeInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSubmitCode();
+                }
+            });
+            accessCodeInput?.focus();
+        }
+
+        async function showApp() {
+            authWrapper.style.display = 'none';
+            appSection.style.display = 'flex';
+            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+            initializeMaterialsView(); // Call materials initializer here
+            updateMaterialSectionVisibility();
+            // Highlight the correct tab in the header based on the URL or current view
+            highlightCurrentNavTab();
+            await checkForSuccessfulPurchase(); // Check for Stripe redirect
+        }
+
+        async function handleGoogleSignIn() {
+            const provider = new GoogleAuthProvider();
+            try { 
+                await signInWithPopup(auth, provider); 
+            } catch (error) { 
+                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
+                console.error("Google Sign-In Error:", error);
+            }
+        }
+
+        async function handleSubmitCode(codeValue) {
+            const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
+            const codeError = document.getElementById('codeError');
+            if(codeError) codeError.textContent = '';
+            
+            let roleToSet = null;
+            if (code === TEACHER_CODE) roleToSet = 'teacher';
+            else if (code === STUDENT_CODE) roleToSet = 'student';
+            else { 
+                if(codeError) codeError.textContent = 'Invalid access code.';
+                return; 
+            }
+            
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                currentUserRole = roleToSet;
+                showModal('Success', `Your role has been set to ${roleToSet}.`);
+                showApp();
+            } catch (error) {
+                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
+                console.error("Submit Code Error:", error);
+            }
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+
+        document.getElementById('switchRoleButton').addEventListener('click', () => {
+            showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
+                await handleSubmitCode(code);
+            });
+        });
+
+        function highlightCurrentNavTab() {
+            const currentPath = window.location.pathname;
+            const navTabs = document.querySelectorAll('.header-actions .tab');
+            navTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('href') === currentPath) {
+                    tab.classList.add('active');
+                    // For dropdowns, also activate the parent button
+                    const parentDropdown = tab.closest('.dropdown-menu');
+                    if (parentDropdown) {
+                        parentDropdown.querySelector('button.tab').classList.add('active');
+                    }
+                }
+            });
+            // Specifically for materials.html, activate the parent dropdown button
+            const materialsDropdownButton = document.querySelector('.dropdown-menu button.tab[data-target-materials]');
+            if (materialsDropdownButton) {
+                materialsDropdownButton.classList.add('active');
+            }
+        }
+        
         // --- REFACTORED MATERIALS MANAGEMENT ---
         const materialsConfig = {
             tutorials: {
@@ -162,6 +291,31 @@
             }
             setupFinderWindow(); // Initialize finder window drag/resize
             setupGoogleDriveLinkConversion(); // Convert Google Drive links
+
+            // Show the initial materials section based on URL or default to tutorials
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderParam = urlParams.get('folder');
+            if (folderParam && materialsConfig[folderParam]) {
+                showMaterialSection(folderParam);
+            } else {
+                showMaterialSection('tutorials'); // Default to tutorials
+            }
+        }
+
+        function showMaterialSection(typeToShow) {
+            for (const type in materialsConfig) {
+                const config = materialsConfig[type];
+                const section = document.getElementById(config.sectionId);
+                if (section) {
+                    if (type === typeToShow) {
+                        section.style.display = 'block';
+                        section.style.opacity = '1';
+                    } else {
+                        section.style.display = 'none';
+                        section.style.opacity = '0';
+                    }
+                }
+            }
         }
 
         function updateMaterialSectionVisibility() {
@@ -170,13 +324,16 @@
                 const section = document.getElementById(config.sectionId);
                 if (section) {
                     const isTeacher = currentUserRole === 'teacher';
-                    document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
-                    document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+                    const teacherView = document.getElementById(`teacher-${type}-view`);
+                    const studentView = document.getElementById(`student-${type}-view`);
+                    
+                    if (teacherView) teacherView.style.display = isTeacher ? 'block' : 'none';
+                    if (studentView) studentView.style.display = isTeacher ? 'none' : 'block';
 
-                    if (isTeacher) {
+                    if (isTeacher && teacherView && section.style.display === 'block') { // Only render if section is visible
                         renderContent(type, `level1-${type}-container`, 1);
                         if (type === 'exercises') loadPromoCodesForTeacher();
-                    } else { // Student view
+                    } else if (!isTeacher && studentView && section.style.display === 'block') { // Student view
                         // Re-render student view based on new auth state
                         const level1Filter = document.getElementById(`level1-${type}-filter`);
                         const level2Filter = document.getElementById(`level2-${type}-filter`);
@@ -297,7 +454,7 @@
 
             const isTeacher = currentUserRole === 'teacher';
             if (isTeacher) {
-                renderContent(type, `level1-${type}-container`, 1); // Initial render for teacher
+                // Initial render for teacher is now handled by updateMaterialSectionVisibility when the section is shown
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 
@@ -539,7 +696,7 @@
             const levelName = config[`level${level}`];
 
             showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
                         if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
@@ -565,7 +722,7 @@
                          showModal('Error', `Could not delete ${levelName}. Error: ${e.message}`);
                     }
                 }},
-                { text: 'Cancel', className: 'logout-btn' }
+                { text: 'Cancel', className: 'btn-primary' }
             ]);
         }
         
@@ -1197,7 +1354,7 @@
 
         async function deletePromoCode(code) {
             showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"? This action cannot be undone.`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
                     try {
                         await deleteDoc(promoCodeRef);
@@ -1208,7 +1365,7 @@
                         showModal('Error', `Could not delete "${code}": ${error.message}`);
                     }
                 }},
-                { text: 'Cancel', className: 'logout-btn' }
+                { text: 'Cancel', className: 'btn-primary' }
             ]);
         }
 
@@ -1563,7 +1720,7 @@
             document.body.classList.toggle('light-theme', theme === 'light'); 
         }
         function loadTheme() { 
-            const savedTheme = localStorage.getItem('ai-marker-theme') || 'light'; // Default to light
+            const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark'; // Default to dark for consistency with chat.html
             applyTheme(savedTheme); 
         }
         themeToggleButton.addEventListener('click', () => {
@@ -1780,7 +1937,7 @@
                 if (activeMaterialSectionId) {
                     document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
                     const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
-                    if (type) renderStudentItems(type);
+                    if (type) updateMaterialSectionVisibility(); // Re-trigger visibility and render
                 }
                 finderWindow.style.top = '50%';
                 finderWindow.style.left = '50%';
@@ -1900,7 +2057,16 @@
         window.addEventListener('resize', () => {
             const isDesktop = window.innerWidth >= 769;
             const finderSection = document.getElementById('finderMaterialsSection');
-            const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
+            
+            // Determine active material section for visibility toggling
+            let activeMaterialSectionId = null;
+            for (const type in materialsConfig) {
+                const section = document.getElementById(materialsConfig[type].sectionId);
+                if (section && section.style.display === 'block') {
+                    activeMaterialSectionId = materialsConfig[type].sectionId;
+                    break;
+                }
+            }
             
             if (isDesktop && currentMaterialViewMode === 'finder') {
                 finderSection.style.display = 'flex';
@@ -1922,44 +2088,98 @@
 
     </script>
 </head>
-<body class="light-theme">
+<body class="dark-theme"> <!-- Default to dark theme for consistency -->
 
-<main>
-    <!-- Materials Section - Tutorial Videos -->
-    <div id="tutorialSection" style="display: block; opacity: 1; width: 100%; max-width: 900px; margin: 0 auto;"></div>
-
-    <!-- Materials Section - Past Papers -->
-    <div id="pastPapersSection" style="display: none; opacity: 0; width: 100%; max-width: 900px; margin: 0 auto;"></div>
-
-    <!-- Materials Section - Exercises for Sale -->
-    <div id="exerciseSection" style="display: none; opacity: 0; width: 100%; max-width: 900px; margin: 0 auto;"></div>
-    
-    <!-- Finder Style Materials Section (Desktop Only, hidden on mobile by CSS) -->
-    <div id="finderMaterialsSection" class="finder-window-wrapper">
-        <div class="finder-titlebar" id="finderDragBar">
-            <div class="buttons">
-                <div class="finder-circle close"></div>
-                <div class="finder-circle min"></div>
-                <div class="finder-circle max" id="finderFullscreenToggle"></div>
-            </div>
-            <span style="margin-left: 10px; font-weight: bold;">Materials</span>
-        </div>
-
-        <div class="finder-content">
-            <aside class="finder-sidebar" id="finderSidebar">
-                <!-- Level 1 items (Subjects) will be loaded here -->
-            </aside>
-            <section class="finder-file-list">
-                <div class="columns">
-                    <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
-                </div>
-                <div id="finderFileListContent">
-                    <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
-                </div>
-            </section>
+<!-- Auth Wrapper -->
+<div id="authWrapper" style="display: none;">
+    <div class="login-left-panel">
+        <h1>AI Marker</h1>
+        <p>Mark with AI, learn better.</p>
+    </div>
+    <div class="login-right-panel">
+        <div id="authContainer">
+            <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
         </div>
     </div>
-</main>
+</div>
+
+<div id="appSection" style="display: none;">
+    <!-- HEADER (Copied from chat.html) -->
+    <header>
+        <div class="logo-container">
+            <h1>AI Marker</h1>
+            <p>Operated by Darren Ng</p>
+        </div>
+
+        <div class="header-actions">
+            <a href="home.html" class="tab">Home</a>
+
+            <div class="dropdown-menu">
+                <button class="tab" data-target-ai>Work with AI ▾</button>
+                <div class="dropdown-menu-content">
+                    <a href="grading.html" class="tab">Exam Grader</a>
+                    <a href="chat.html" class="tab">Chat with Gemini</a>
+                </div>
+            </div>
+
+            <div class="dropdown-menu">
+                <button class="tab" data-target-materials>Materials ▾</button>
+                <div class="dropdown-menu-content">
+                    <a href="materials.html?folder=tutorials" class="tab" onclick="event.preventDefault(); showMaterialSection('tutorials');">Tutorial Videos</a>
+                    <a href="materials.html?folder=pastPapers" class="tab" onclick="event.preventDefault(); showMaterialSection('pastPapers');">Past Papers</a>
+                    <a href="materials.html?folder=exercises" class="tab" onclick="event.preventDefault(); showMaterialSection('exercises');">Exercises for Sale</a>
+                </div>
+            </div>
+
+            <div class="user-info">
+                <span id="userDisplayName">Guest</span>
+                <button id="switchRoleButton">Switch Role</button>
+                <button id="logoutButton" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Materials Section - Tutorial Videos -->
+        <div id="tutorialSection" class="materials-content-section"></div>
+
+        <!-- Materials Section - Past Papers -->
+        <div id="pastPapersSection" class="materials-content-section" style="display: none;"></div>
+
+        <!-- Materials Section - Exercises for Sale -->
+        <div id="exerciseSection" class="materials-content-section" style="display: none;"></div>
+        
+        <!-- Finder Style Materials Section (Desktop Only, hidden on mobile by CSS) -->
+        <div id="finderMaterialsSection" class="finder-window-wrapper" style="display: none;">
+            <div class="finder-titlebar" id="finderDragBar">
+                <div class="buttons">
+                    <div class="finder-circle close"></div>
+                    <div class="finder-circle min"></div>
+                    <div class="finder-circle max" id="finderFullscreenToggle"></div>
+                </div>
+                <span style="margin-left: 10px; font-weight: bold;">Materials</span>
+            </div>
+
+            <div class="finder-content">
+                <aside class="finder-sidebar" id="finderSidebar">
+                    <!-- Level 1 items (Subjects) will be loaded here -->
+                </aside>
+                <section class="finder-file-list">
+                    <div class="columns">
+                        <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
+                    </div>
+                    <div id="finderFileListContent">
+                        <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <!-- FOOTER -->
+    <footer>
+        <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
+    </footer>
+</div>
 
 <!-- Universal Modal -->
 <div id="messageModal" class="modal">
