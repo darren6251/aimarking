@@ -401,7 +401,8 @@
 
     .form-group input[type="text"],
     .form-group input[type="date"],
-    .form-group select {
+    .form-group select,
+    .modal-input { /* Added modal-input for profile modal */
         width: 100%;
         padding: 0.75rem;
         border: 1px solid var(--border-color);
@@ -413,7 +414,8 @@
 
     .form-group input[type="text"]:focus,
     .form-group input[type="date"]:focus,
-    .form-group select:focus {
+    .form-group select:focus,
+    .modal-input:focus { /* Added modal-input for profile modal */
         outline: none;
         border-color: var(--accent-primary);
         box-shadow: 0 0 0 3px var(--focus-ring-color);
@@ -848,6 +850,33 @@
           <div id="modalButtons"></div>
       </div>
   </div>
+  
+  <!-- Profile Edit Modal -->
+  <div id="profileEditModal" class="modal">
+      <div class="modal-content">
+          <span class="close-button profile-close-button">&times;</span>
+          <h3 id="profileModalTitle">Edit Profile</h3>
+          <div id="profileModalMessage">
+            <div class="form-group">
+                <label for="editUserName">Display Name:</label>
+                <input type="text" id="editUserName" class="modal-input">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="text" id="editUserEmail" class="modal-input" disabled>
+            </div>
+            <div class="form-group">
+                <label>Role:</label>
+                <input type="text" id="editUserRole" class="modal-input" disabled>
+            </div>
+          </div>
+          <div id="profileModalButtons" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+             <button id="saveProfileButton" class="btn-primary">Save Changes</button>
+             <button id="cancelProfileButton" class="logout-btn">Cancel</button>
+          </div>
+      </div>
+  </div>
+
 
   <!-- Firebase & App Script -->
   <script type="module">
@@ -881,6 +910,8 @@
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
+    const userDisplayNameSpan = document.getElementById('userDisplayName');
+
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -914,6 +945,7 @@
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
+            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 const userProfileDoc = await getDoc(userProfileRef);
@@ -970,7 +1002,7 @@
     async function showApp() {
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
-        document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+        userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         
         initializeSubmissionsPage();
     }
@@ -999,6 +1031,7 @@
         }
         
         try {
+            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
             currentUserRole = roleToSet;
@@ -1016,6 +1049,61 @@
         showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
             await handleSubmitCode(code);
         });
+    });
+
+    // --- PROFILE EDITING ---
+    userDisplayNameSpan.addEventListener('click', async () => {
+        if (!currentUserId) {
+            showModal('Error', 'Please log in to edit your profile.');
+            return;
+        }
+
+        const profileEditModal = document.getElementById('profileEditModal');
+        const editUserNameInput = document.getElementById('editUserName');
+        const editUserEmailInput = document.getElementById('editUserEmail');
+        const editUserRoleInput = document.getElementById('editUserRole');
+        const saveProfileButton = document.getElementById('saveProfileButton');
+        const cancelProfileButton = document.getElementById('cancelProfileButton');
+
+        editUserNameInput.value = currentUserName || '';
+        editUserEmailInput.value = currentUserEmail || '';
+        editUserRoleInput.value = currentUserRole || '';
+
+        profileEditModal.style.display = 'flex';
+
+        const saveHandler = async () => {
+            const newName = editUserNameInput.value.trim();
+            if (!newName) {
+                editUserNameInput.style.border = '1px solid var(--accent-red)';
+                editUserNameInput.focus();
+                return;
+            }
+
+            try {
+                // Corrected path for user profile: collection/document/collection/document/collection
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await updateDoc(userProfileRef, { name: newName });
+                currentUserName = newName;
+                userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
+                profileEditModal.style.display = 'none';
+                showModal('Success', 'Profile updated successfully!');
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                showModal('Error', `Failed to update profile: ${error.message}`);
+            }
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        const cancelHandler = () => {
+            profileEditModal.style.display = 'none';
+            saveProfileButton.removeEventListener('click', saveHandler);
+            cancelProfileButton.removeEventListener('click', cancelHandler);
+        };
+
+        saveProfileButton.addEventListener('click', saveHandler);
+        cancelProfileButton.addEventListener('click', cancelHandler);
+        document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
     });
 
     // --- SUBMISSIONS PAGE SPECIFIC LOGIC ---
@@ -1066,6 +1154,7 @@
             studentView.style.display = 'block';
             teacherView.style.display = 'none';
             await loadSubjectsForStudentSubmission();
+            await loadAllTasks(); // Load all tasks for student submission options
             await loadMySubmissions();
         } else if (currentUserRole === 'teacher') {
             studentView.style.display = 'none';
@@ -1083,7 +1172,8 @@
     // --- Student View Functions ---
     async function loadSubjectsForStudentSubmission() {
         submissionSubjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
-        const subjectsRef = collection(db, `artifacts/${appId}/public/subjects`);
+        // Corrected public path: collection/document/collection/document/collection
+        const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
             const qSnap = await getDocs(subjectsRef);
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1103,20 +1193,14 @@
         const subjectId = submissionSubjectSelect.value;
         submissionTaskSelect.innerHTML = '<option value="">-- Select a Task (Optional) --</option>';
         if (subjectId) {
-            const tasksRef = collection(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`);
-            try {
-                const qSnap = await getDocs(query(tasksRef, orderBy('dueDate')));
-                allTasks = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allTasks.forEach(task => {
-                    const option = document.createElement('option');
-                    option.value = task.id;
-                    option.textContent = `${task.name} (Due: ${new Date(task.dueDate).toLocaleDateString()})`;
-                    submissionTaskSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Error loading tasks for student submission:", error);
-                showModal('Error', 'Failed to load tasks for selected subject.');
-            }
+            // Filter global tasks for the selected subject
+            const filteredTasks = allTasks.filter(task => task.subjectId === subjectId);
+            filteredTasks.sort((a, b) => a.dueDate - b.dueDate).forEach(task => {
+                const option = document.createElement('option');
+                option.value = task.id;
+                option.textContent = `${task.name} (Due: ${new Date(task.dueDate).toLocaleDateString()})`;
+                submissionTaskSelect.appendChild(option);
+            });
         }
     });
 
@@ -1155,7 +1239,8 @@
         submissionFileError.textContent = "Uploading...";
 
         try {
-            const submissionRef = collection(db, `artifacts/${appId}/public/submissions`);
+            // Corrected public path: collection/document/collection/document/collection
+            const submissionRef = collection(db, `artifacts/${appId}/public/data/submissions`);
             const newSubmissionDoc = await addDoc(submissionRef, {
                 studentId: currentUserId,
                 studentName: currentUserName,
@@ -1193,7 +1278,8 @@
         mySubmissionsList.innerHTML = '<p class="loading-indicator">Loading your submissions...</p>';
         if (!currentUserId) { mySubmissionsList.innerHTML = '<p class="loading-indicator">Please log in to see your submissions.</p>'; return; }
 
-        const submissionsRef = collection(db, `artifacts/${appId}/public/submissions`);
+        // Corrected public path: collection/document/collection/document/collection
+        const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
         const q = query(submissionsRef, where('studentId', '==', currentUserId), orderBy('submissionDate', 'desc'));
 
         try {
@@ -1204,7 +1290,7 @@
             }
 
             mySubmissionsList.innerHTML = '';
-            qSnap.forEach(async docSnap => {
+            for (const docSnap of qSnap.docs) { // Use for...of for async operations inside loop
                 const submission = { id: docSnap.id, ...docSnap.data() };
                 const subject = allSubjects.find(s => s.id === submission.subjectId);
                 const task = submission.taskId ? allTasks.find(t => t.id === submission.taskId) : null;
@@ -1218,7 +1304,7 @@
                     <p>Status: Pending Review</p> <!-- Example status -->
                 `;
                 mySubmissionsList.appendChild(submissionElement);
-            });
+            }
         } catch (error) {
             console.error("Error loading my submissions:", error);
             showModal('Error', 'Failed to load your submissions.');
@@ -1229,7 +1315,7 @@
 
     // --- Teacher Dashboard Functions ---
     async function loadTeacherDashboardData() {
-        // Load all subjects
+        // Load all subjects first, as tasks and submissions depend on them
         await loadSubjects();
         // Load all students
         await loadAllStudents();
@@ -1280,7 +1366,8 @@
         taskSubjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
         filterSubjectSelect.innerHTML = '<option value="">All Subjects</option>'; // For submissions filter
 
-        const subjectsRef = collection(db, `artifacts/${appId}/public/subjects`);
+        // Corrected public path: collection/document/collection/document/collection
+        const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
             const qSnap = await getDocs(query(subjectsRef, orderBy('name')));
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1326,7 +1413,8 @@
         if (!subjectName) { showModal('Error', 'Subject name cannot be empty.'); return; }
 
         try {
-            const subjectsRef = collection(db, `artifacts/${appId}/public/subjects`);
+            // Corrected public path: collection/document/collection/document/collection
+            const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
             await addDoc(subjectsRef, { name: subjectName, createdAt: serverTimestamp() });
             showModal('Success', `Subject "${subjectName}" added.`);
             newSubjectNameInput.value = '';
@@ -1345,13 +1433,15 @@
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     try {
                         // Delete tasks first
-                        const tasksRef = collection(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`);
+                        // Corrected public path: collection/document/collection/document/collection/document/collection
+                        const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
                         const qSnapTasks = await getDocs(tasksRef);
                         const taskDeletions = qSnapTasks.docs.map(d => deleteDoc(d.ref));
                         await Promise.all(taskDeletions);
 
                         // Then delete the subject
-                        await deleteDoc(doc(db, `artifacts/${appId}/public/subjects`, subjectId));
+                        // Corrected public path: collection/document/collection/document/collection
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/subjects`, subjectId));
                         showModal('Success', `Subject "${subjectName}" and its tasks deleted.`);
                         await loadSubjects();
                         await loadAllTasks(); // Refresh all tasks view
@@ -1370,7 +1460,8 @@
     async function loadSubjectsForTaskCreation() {
         // This is essentially the same as loadSubjects(), but specifically for the task creation dropdown
         taskSubjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
-        const subjectsRef = collection(db, `artifacts/${appId}/public/subjects`);
+        // Corrected public path: collection/document/collection/document/collection
+        const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
             const qSnap = await getDocs(query(subjectsRef, orderBy('name')));
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Update global allSubjects
@@ -1396,7 +1487,8 @@
             return;
         }
 
-        const tasksRef = collection(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`);
+        // Corrected public path: collection/document/collection/document/collection/document/collection
+        const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
         try {
             const qSnap = await getDocs(query(tasksRef, orderBy('dueDate')));
             const subjectTasks = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1428,12 +1520,14 @@
     // Load all tasks from all subjects into a single array
     async function loadAllTasks() {
         allTasks = []; // Clear existing tasks
-        const subjectsRef = collection(db, `artifacts/${appId}/public/subjects`);
+        // Corrected public path: collection/document/collection/document/collection
+        const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
             const qSnapSubjects = await getDocs(subjectsRef);
             for (const subjectDoc of qSnapSubjects.docs) {
                 const subjectId = subjectDoc.id;
-                const tasksRef = collection(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`);
+                // Corrected public path: collection/document/collection/document/collection/document/collection
+                const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
                 const qSnapTasks = await getDocs(query(tasksRef, orderBy('dueDate')));
                 qSnapTasks.forEach(taskDoc => {
                     allTasks.push({ id: taskDoc.id, subjectId: subjectId, ...taskDoc.data() });
@@ -1464,7 +1558,8 @@
         if (!dueDate) { showModal('Error', 'Due date cannot be empty.'); return; }
 
         try {
-            const tasksRef = collection(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`);
+            // Corrected public path: collection/document/collection/document/collection/document/collection
+            const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
             await addDoc(tasksRef, {
                 name: taskName,
                 dueDate: new Date(dueDate).getTime(), // Store as timestamp
@@ -1489,7 +1584,8 @@
             showModal('Confirm Delete', `Are you sure you want to delete task "${taskName}"?`, [
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     try {
-                        await deleteDoc(doc(db, `artifacts/${appId}/public/subjects/${subjectId}/tasks`, taskId));
+                        // Corrected public path: collection/document/collection/document/collection/document/collection
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`, taskId));
                         showModal('Success', `Task "${taskName}" deleted.`);
                         await loadTasksListForSubject();
                         await loadAllTasks(); // Refresh global tasks
@@ -1508,13 +1604,15 @@
     // --- Student Information ---
     async function loadAllStudents() {
         studentsList.innerHTML = '<p class="loading-indicator">Loading student information...</p>';
-        const usersRef = collection(db, `artifacts/${appId}/users`);
+        // Corrected path for user profiles: collection/document/collection
+        const usersCol = collection(db, `artifacts/${appId}/users`);
         const studentProfiles = [];
 
         try {
-            const qSnapUsers = await getDocs(usersRef);
+            const qSnapUsers = await getDocs(usersCol);
             for (const userDoc of qSnapUsers.docs) {
                 const userId = userDoc.id;
+                // Corrected path for user profile: collection/document/collection/document/collection
                 const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
                 const profileDoc = await getDoc(profileRef);
                 if (profileDoc.exists() && profileDoc.data().role === 'student') {
@@ -1550,7 +1648,8 @@
     // --- All Submissions ---
     async function loadAllSubmissions() {
         allSubmissionsList.innerHTML = '<p class="loading-indicator">Loading all submissions...</p>';
-        const submissionsRef = collection(db, `artifacts/${appId}/public/submissions`);
+        // Corrected public path: collection/document/collection/document/collection
+        const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
         let q = query(submissionsRef, orderBy('submissionDate', 'desc'));
 
         const selectedSubjectId = filterSubjectSelect.value;
@@ -1611,16 +1710,17 @@
     allSubmissionsList.addEventListener('click', async (e) => {
         if (e.target.tagName === 'BUTTON' && e.target.classList.contains('action-btn')) {
             const submissionId = e.target.dataset.id;
-            const fileUrl = e.target.dataset.fileUrl;
+            const fileUrl = e.target.dataset.fileUrl; // This expects a full download URL for Firebase Storage
             showModal('Confirm Delete', 'Are you sure you want to delete this submission? This action cannot be undone.', [
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     try {
-                        // Delete file from Storage
-                        const fileRef = ref(storage, fileUrl); // Assuming fileUrl is directly the storage path
+                        // Delete file from Storage using the full URL
+                        const fileRef = ref(storage, fileUrl); 
                         await deleteObject(fileRef);
 
                         // Delete document from Firestore
-                        await deleteDoc(doc(db, `artifacts/${appId}/public/submissions`, submissionId));
+                        // Corrected public path: collection/document/collection/document/collection
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/submissions`, submissionId));
                         showModal('Success', 'Submission deleted successfully.');
                         await loadAllSubmissions(); // Refresh the list
                     } catch (error) {
