@@ -1,1202 +1,2441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Materials</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Marker - Materials</title>
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- PDF.js library for rendering PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Sortable.js for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
-  <!-- Base theme (same look & feel as "materials theme demo") -->
-  <link rel="stylesheet" href="style.css"/>
+    <!-- Custom styles merged from style.css and existing index(8).html -->
+    <style>
+        /* --- MODERN BLACK & WHITE THEME --- */
+        :root {
+            --bg-primary: #0a0a0a; /* Near black for main background */
+            --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
+            --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
+            --text-primary: #f5f5f5; /* Off-white for primary text */
+            --text-secondary: #a3a3a3; /* Muted gray for secondary text */
+            --accent-primary: #ffffff; /* White for key actions and highlights */
+            --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
+            --border-color: #333333; /* Subtle border color */
+            --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
 
-  <!-- Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+            /* Finder Window Specific Variables */
+            --finder-bg-primary: #1c1c1c;
+            --finder-bg-secondary: #0a0a0a;
+            --finder-text-primary: #f5f5f5;
+            --finder-text-secondary: #a3a3a3;
+            --finder-border-color: #333333;
+            --finder-titlebar-bg: #2a2a2a;
+            --finder-hover-bg: #333333;
+            --finder-active-bg: var(--accent-primary);
+            --finder-active-text: #1a1a1a;
+        }
 
-  <!-- PDF.js for previews -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+        body, html {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
 
-  <style>
-    /* Extra helpers if not in style.css */
-    .nav { position: sticky; top:0; z-index: 10; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
-    .nav-inner { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding: .75rem 1rem; }
-    .brand { font-weight: 700; letter-spacing: .2px; }
-    .nav-links { display:flex; gap:.5rem; align-items:center; }
-    .nav-links a { padding:.5rem .75rem; border-radius: 999px; border:1px solid var(--border-color); background: var(--bg-secondary); }
-    .nav-right { display:flex; gap:.5rem; align-items:center; }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
 
-    .content { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-    .section-tabs { display:flex; gap:.5rem; margin: 1rem 0 1.5rem; flex-wrap:wrap; }
-    .tab-btn { border:1px solid var(--border-color); background: var(--bg-secondary); border-radius:999px; padding:.5rem .9rem; font-weight:600; cursor:pointer; }
-    .tab-btn.active { background: var(--brand-quiet); border-color: var(--brand); }
+        .title-bar h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
 
-    .section-title { margin: .25rem 0 1rem; }
+        .user-auth-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-    .form-container { border:1px solid var(--border-color); background: var(--bg-secondary); padding:1rem; border-radius: 16px; max-width: 900px; }
-    .grid-container { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }
+        .user-auth-container span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
 
-    .material-card { border:1px solid var(--border-color); border-radius: 16px; overflow:hidden; background:var(--bg-primary); display:flex; flex-direction:column; }
-    .material-card-thumbnail { aspect-ratio: 16/9; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; }
-    .material-card-body { padding:.75rem; display:flex; flex-direction:column; gap:.25rem; }
-    .material-card-title { font-weight:600; }
-    .material-card-actions { display:flex; gap:.25rem; margin-top: .25rem; flex-wrap:wrap; }
+        .auth-button {
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .auth-button:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
 
-    .filters-container { display:flex; gap:.5rem; margin: .5rem 0 1rem; flex-wrap:wrap; }
-    .filters-container select, .filters-container input, .filters-container textarea { width: auto; }
+        /* Tabs and Cards */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-    .folder-view .folder { border:1px dashed var(--border-color); border-radius:14px; padding:.75rem; }
-    .folder-header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; }
-    .folder-title { font-weight:700; }
-    .file-list { display:grid; gap:.4rem; }
-    .file-row { display:flex; align-items:center; justify-content:space-between; padding:.5rem .6rem; border:1px solid var(--border-color); border-radius: 12px; background: var(--bg-primary); }
-    .file-row .meta { display:flex; flex-direction:column; gap: .15rem; }
-    .badge { padding:.15rem .5rem; border:1px solid var(--border-color); border-radius:999px; font-size:.75rem; background: var(--bg-secondary); }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+        .tab-button.active {
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: calc(0.75rem - 2px);
+        }
 
-    .store-layout { display:grid; grid-template-columns: 1fr 320px; gap: 16px; align-items:start; }
-    .shopping-cart { border:1px solid var(--border-color); border-radius: 16px; padding: .75rem; background: var(--bg-secondary); position: sticky; top: 74px; }
-    .shopping-cart h3 { margin-top:.25rem; }
-    .cart-item { display:flex; align-items:center; justify-content:space-between; padding: .35rem 0; border-bottom: 1px dashed var(--border-color); }
-    .cart-item:last-child { border-bottom:none; }
-    .cart-item-name { font-weight:600; }
-    .cart-item-price { opacity:.85; }
-    .remove-from-cart-btn { border:1px solid var(--border-color); border-radius: 999px; padding:.15rem .5rem; background:var(--bg-primary); cursor:pointer; }
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding-top: 1rem;
+        }
 
-    .summary-line { display:flex; align-items:center; justify-content:space-between; padding:.25rem 0; }
-    .promo-code-section { margin-top: .5rem; }
-    .promo-input-group { display:flex; gap:.4rem; align-items:center; }
-    .promo-error { color: var(--danger); font-size: .9rem; margin-top: .25rem; }
-    .promo-display { display:flex; align-items:center; justify-content:space-between; margin-top:.25rem; }
-    .remove-promo-btn { border:1px solid var(--border-color); border-radius:999px; padding:.25rem .6rem; background:var(--bg-primary); cursor:pointer; }
+        .material-card {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
 
-    .material-view-toggle { border:1px solid var(--border-color); background: var(--bg-primary); padding:.4rem .7rem; border-radius:999px; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-    /* Modals */
-    .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding: 1rem; z-index: 30; }
-    .modal { width: min(780px, 100%); background: var(--bg-primary); border:1px solid var(--border-color); border-radius: 18px; overflow:hidden; }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; padding: .7rem .9rem; border-bottom:1px solid var(--border-color); }
-    .modal-body { padding: .9rem; max-height: 70vh; overflow:auto; }
-    .modal-footer { padding:.7rem .9rem; display:flex; gap:.5rem; justify-content:flex-end; border-top:1px solid var(--border-color); }
-    .close-x { cursor:pointer; }
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
 
-    /* Finder window */
-    .finder { position: fixed; inset:auto 12px 12px auto; width: 820px; max-width: calc(100% - 24px); height: 540px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 18px; display:none; flex-direction:column; z-index: 40; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
-    .finder-header { padding:.6rem .8rem; display:flex; gap:.5rem; align-items:center; justify-content:space-between; border-bottom: 1px solid var(--border-color); }
-    .finder-title { font-weight:700; }
-    .finder-body { display:flex; flex:1; min-height:0; }
-    .finder-sidebar { width: 240px; min-width: 200px; border-right:1px solid var(--border-color); padding:.6rem; overflow:auto; }
-    .finder-main { flex:1; padding:.6rem; overflow:auto; }
-    .finder-resizer { position:absolute; inset:auto 0 0 auto; width: 10px; height: 10px; cursor: nwse-resize; }
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
 
-    .video-embed-container { aspect-ratio:16/9; width:100%; }
-    .video-embed-container iframe { width:100%; height:100%; border:0; }
+        .action-button {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .action-button:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .action-button.primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+        .action-button.primary:hover {
+            background-color: #e0e0e0;
+            color: var(--bg-primary);
+        }
 
-    .btn-primary { background: var(--brand); color: white; border:none; border-radius: 10px; padding:.5rem .8rem; cursor:pointer; }
-    .btn-secondary { background: var(--bg-secondary); border:1px solid var(--border-color); border-radius: 10px; padding:.5rem .8rem; cursor:pointer; }
-    .logout-btn { border:1px solid var(--border-color); background: var(--bg-primary); border-radius: 10px; padding:.4rem .7rem; cursor:pointer; }
-    .hidden { display:none; }
-  </style>
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-body iframe, .modal-body img, .modal-body video {
+            width: 100%;
+            border-radius: 8px;
+            max-height: 70vh; /* Limit height for previews */
+            object-fit: contain; /* Ensure content fits without cropping */
+        }
+
+        .pdf-viewer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        .pdf-viewer canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid var(--border-color);
+            background-color: #fff; /* White background for PDF canvas */
+        }
+        .pdf-viewer-controls {
+            display: flex;
+            gap: 1rem;
+        }
+        .pdf-viewer-controls button {
+            padding: 0.5rem 1rem;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .pdf-viewer-controls button:hover:not(:disabled) {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        .pdf-viewer-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Finder View Styles */
+        .finder-wrapper {
+            background-color: var(--finder-bg-primary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--finder-border-color);
+            min-height: 600px;
+            display: flex;
+        }
+
+        .finder-sidebar {
+            width: 250px;
+            background-color: var(--finder-bg-secondary);
+            padding: 1.5rem;
+            border-right: 1px solid var(--finder-border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .finder-sidebar h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--finder-text-primary);
+            font-weight: 600;
+        }
+
+        .finder-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .finder-sidebar li {
+            margin-bottom: 0.5rem;
+        }
+        .finder-sidebar li a {
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: var(--finder-text-secondary);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .finder-sidebar li a:hover {
+            background-color: var(--finder-hover-bg);
+            color: var(--finder-text-primary);
+        }
+        .finder-sidebar li a.active {
+            background-color: var(--finder-active-bg);
+            color: var(--finder-active-text);
+            font-weight: 600;
+        }
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--finder-text-primary);
+            font-weight: 500;
+        }
+        .filter-group select, .filter-group input[type="text"][list] {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--finder-border-color);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            appearance: none; /* Remove default arrow for select */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%20viewBox%3D%220%200%20292.4%20292.4%22%3E%3Cpath%20fill%3D%22%23a3a3a3%22%20d%3D%22M287%20197.3L159.2%2069.6c-4.7-4.7-12.2-4.7-16.9%200L5.3%20197.3c-4.7%204.7-4.7%2012.2%200%2016.9l10.6%2010.6c4.7%204.7%2012.2%204.7%2016.9%200l118.7-118.7c4.7-4.7%2012.2-4.7%2016.9%200l118.7%20118.7c4.7%204.7%2012.2%204.7%2016.9%200l10.6-10.6c4.7-4.7%204.7-12.1%200-16.9z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 0.7em top 50%;
+            background-size: 0.65em auto;
+        }
+
+        .finder-main-content {
+            flex-grow: 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .finder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--finder-border-color);
+            padding-bottom: 1rem;
+        }
+
+        .finder-path {
+            color: var(--finder-text-secondary);
+            font-size: 0.9rem;
+        }
+        .finder-path span {
+            color: var(--finder-text-primary);
+        }
+
+        .finder-view-toggle button {
+            background-color: transparent;
+            border: none;
+            color: var(--finder-text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+        .finder-view-toggle button:hover {
+            color: var(--finder-text-primary);
+        }
+        .finder-view-toggle button.active {
+            color: var(--accent-primary);
+        }
+
+        .finder-items-container {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .finder-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .finder-list-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .finder-list-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .finder-list-item .item-icon {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+        .finder-list-item .item-name {
+            flex-grow: 1;
+            color: var(--text-primary);
+        }
+        .finder-list-item .item-details {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        .finder-list-item.is-folder {
+            font-weight: 600;
+        }
+        .finder-list-item.is-assignment {
+            border-left: 4px solid #4CAF50; /* Green highlight for assignments */
+        }
+        .finder-list-item.is-locked {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+
+        .finder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .finder-grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            text-align: center;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .finder-grid-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .finder-grid-item .item-icon {
+            font-size: 3rem;
+            color: var(--text-secondary);
+        }
+        .finder-grid-item .item-name {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            color: var(--text-primary);
+        }
+        .finder-grid-item.is-assignment {
+            box-shadow: inset 0 0 0 4px #4CAF50; /* Green highlight for assignments */
+        }
+        .finder-grid-item.is-locked {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+
+        /* CRUD Tools */
+        .crud-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .crud-tools button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .crud-tools button:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Drag and Drop styles */
+        .sortable-drag {
+            background-color: var(--accent-primary) !important;
+            color: var(--bg-primary) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .sortable-ghost {
+            opacity: 0.5;
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        /* Forms in Modals */
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .modal-form label {
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .modal-form input[type="text"],
+        .modal-form input[type="number"],
+        .modal-form input[type="file"],
+        .modal-form select,
+        .modal-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            box-sizing: border-box;
+        }
+        .modal-form input[type="file"] {
+            padding: 0.5rem; /* Adjust padding for file input */
+        }
+        .modal-form button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-form button.submit {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+        }
+        .modal-form button.submit:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Promo Code section */
+        #promoCodeSection {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        #promoCodeInput {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        #applyPromoButton {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #applyPromoButton:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        #promoMessage {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #4CAF50; /* Green for success */
+        }
+        #promoMessage.error {
+            color: var(--accent-red);
+        }
+
+        /* Cart Section */
+        #cartSection {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        #cartItems {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item span {
+            color: var(--text-primary);
+        }
+        .cart-total {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        #checkoutButton {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        #checkoutButton:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Confirm Modal */
+        #confirmModal .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        #confirmModal .modal-buttons button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #confirmModal .modal-buttons #confirmYes {
+            background-color: var(--accent-red);
+            color: var(--text-primary);
+            border: none;
+        }
+        #confirmModal .modal-buttons #confirmNo {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+
+        /* Overlay for loading/disabled states */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+    </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="nav-inner">
-      <div class="brand">📚 Materials</div>
-      <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="#" id="openFinderBtn">Finder</a>
-      </div>
-      <div class="nav-right">
-        <span id="whoami" class="badge">—</span>
-        <button id="signOutBtn" class="logout-btn">Sign Out</button>
-      </div>
-    </div>
-  </nav>
 
-  <main class="content">
-    <div class="section-tabs">
-      <button class="tab-btn active" data-section="tutorials">Tutorial Videos</button>
-      <button class="tab-btn" data-section="pastPapers">Past Papers</button>
-      <button class="tab-btn" data-section="exercises">Exercises for Sale</button>
-    </div>
+    <!-- Main Container -->
+    <div class="container">
 
-    <!-- Sections will be created dynamically -->
-    <section id="tutorialSection"></section>
-    <section id="pastPaperSection" class="hidden"></section>
-    <section id="exerciseSection" class="hidden"></section>
-  </main>
-
-  <!-- Generic modal -->
-  <div id="modalOverlay" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-header">
-      <div id="modalTitle" class="modal-title">Message</div>
-      <div class="close-x" id="modalCloseX">✖</div>
-    </div>
-    <div class="modal-body" id="modalBody">...</div>
-    <div class="modal-footer" id="modalFooter"><button class="btn-secondary" id="modalCloseBtn">Close</button></div>
-  </div></div>
-
-  <!-- Video Preview -->
-  <div id="videoModal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-header">
-      <div class="modal-title">Video Preview</div>
-      <div class="close-x" data-close="videoModal">✖</div>
-    </div>
-    <div class="modal-body">
-      <div class="video-embed-container" id="videoContainer"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" data-close="videoModal">Close</button>
-    </div>
-  </div></div>
-
-  <!-- PDF Preview -->
-  <div id="pdfModal" class="modal-overlay"><div class="modal" role="dialog" aria-modal="true" style="width:min(980px, 100%);">
-    <div class="modal-header">
-      <div class="modal-title">PDF Preview</div>
-      <div class="close-x" data-close="pdfModal">✖</div>
-    </div>
-    <div class="modal-body" id="pdfBody">
-      <canvas id="pdfCanvas" style="width:100%; height:auto;"></canvas>
-    </div>
-    <div class="modal-footer">
-      <a id="pdfOpenNew" class="btn-secondary" target="_blank">Open in new tab</a>
-      <a id="pdfDownload" class="btn-primary" download>Download</a>
-      <button class="btn-secondary" data-close="pdfModal">Close</button>
-    </div>
-  </div></div>
-
-  <!-- Finder Window -->
-  <div id="finder" class="finder">
-    <div class="finder-header">
-      <div class="finder-title">Materials Finder</div>
-      <div style="display:flex; gap:.4rem; align-items:center;">
-        <select id="finderSectionPick">
-          <option value="tutorials">Tutorials</option>
-          <option value="pastPapers">Past Papers</option>
-          <option value="exercises">Exercises</option>
-        </select>
-        <button id="finderAddBtn" class="btn-primary">Add</button>
-        <button id="finderRefreshBtn" class="btn-secondary">Refresh</button>
-        <button id="finderCloseBtn" class="logout-btn">Close</button>
-      </div>
-    </div>
-    <div class="finder-body">
-      <aside class="finder-sidebar">
-        <div id="finderTree"></div>
-      </aside>
-      <section class="finder-main">
-        <div id="finderList"></div>
-      </section>
-    </div>
-    <div class="finder-resizer"></div>
-  </div>
-
-  <script type="module">
-    // ---------- Firebase (modular CDN) ----------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-storage.js";
-
-    // ---------- PDF worker ----------
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-    // ---------- CONFIG (fill these in) ----------
-    const firebaseConfig = {
-      apiKey: "YOUR_KEY",
-      authDomain: "YOUR_DOMAIN.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    const appId = "YOUR_APP_NAMESPACE"; // used in Firestore paths
-    const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/..."; // set real link
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // ---------- State ----------
-    let currentUserId = null;
-    let currentUserEmail = null;
-    let currentUserRole = null; // 'teacher' | 'student'
-    let shoppingCart = [];
-    let appliedPromoCode = null;
-
-    // ---------- Materials config (matches index(8) hierarchy) ----------
-    // Every type exposes: title, sectionId, level1/2/3 labels, isPaid, and helper builders
-    const materialsConfig = {
-      tutorials: {
-        title: "Tutorial Videos",
-        sectionId: "tutorialSection",
-        level1: "Subject",
-        level2: "Chapter",
-        level3: "Video",
-        isPaid: false,
-        // collection paths under artifacts/${appId}/materials/tutorials
-        colLevel1: () => collection(db, `artifacts/${appId}/materials/tutorials/subjects`),
-        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/tutorials/subjects/${l1Id}/chapters`),
-        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/tutorials/subjects/${l1Id}/chapters/${l2Id}/videos`),
-      },
-      pastPapers: {
-        title: "Past Papers",
-        sectionId: "pastPaperSection",
-        level1: "Year",
-        level2: "Subject",
-        level3: "Paper",
-        isPaid: false,
-        colLevel1: () => collection(db, `artifacts/${appId}/materials/pastPapers/years`),
-        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/pastPapers/years/${l1Id}/subjects`),
-        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/pastPapers/years/${l1Id}/subjects/${l2Id}/papers`),
-      },
-      exercises: {
-        title: "Exercises for Sale",
-        sectionId: "exerciseSection",
-        level1: "Subject",
-        level2: "Set",
-        level3: "Exercise",
-        isPaid: true,
-        colLevel1: () => collection(db, `artifacts/${appId}/materials/exercises/subjects`),
-        colLevel2: (l1Id) => collection(db, `artifacts/${appId}/materials/exercises/subjects/${l1Id}/sets`),
-        colLevel3: (l1Id, l2Id) => collection(db, `artifacts/${appId}/materials/exercises/subjects/${l1Id}/sets/${l2Id}/items`),
-      }
-    };
-
-    // ---------- Auth gate (redirect if not signed-in) ----------
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = 'index.html'; // no auth UI here
-        return;
-      }
-      currentUserId = user.uid;
-      currentUserEmail = user.email || '';
-      document.getElementById('whoami').textContent = user.email || user.uid;
-
-      // role from profile (teacher/student)
-      currentUserRole = await readUserRole(user.uid);
-      if (!currentUserRole) currentUserRole = 'student';
-      // Build sections
-      buildAllSections();
-      // check if Stripe returned with success
-      await checkForSuccessfulPurchase();
-    });
-
-    document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
-
-    async function readUserRole(uid) {
-      // index(8) uses artifacts/${appId}/users/${uid}/profile/data
-      try {
-        const ref = doc(db, `artifacts/${appId}/users/${uid}/profile/data`);
-        const snap = await getDoc(ref);
-        return snap.exists() ? (snap.data()?.role || null) : null;
-      } catch (e) {
-        console.warn('role read failed', e);
-        return null;
-      }
-    }
-
-    // ---------- Section tabs ----------
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        showSection(btn.dataset.section);
-      });
-    });
-    function showSection(key) {
-      document.getElementById('tutorialSection').classList.toggle('hidden', key!=='tutorials');
-      document.getElementById('pastPaperSection').classList.toggle('hidden', key!=='pastPapers');
-      document.getElementById('exerciseSection').classList.toggle('hidden', key!=='exercises');
-    }
-
-    // ---------- Build all sections (teacher + student views), Finder, and listeners ----------
-    function buildAllSections() {
-      ['tutorials','pastPapers','exercises'].forEach(type => setupMaterialSection(type));
-
-      // delegated YouTube click to swap thumbnail for embed
-      document.getElementById('tutorialSection').addEventListener('click', (e) => {
-        const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
-        if (!thumbnail) return;
-        const vid = thumbnail.dataset.youtubeId;
-        const host = document.createElement('div');
-        host.className = 'video-embed-container';
-        host.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-        thumbnail.replaceWith(host);
-      });
-
-      // Finder wires
-      setupFinderWindow();
-      document.getElementById('openFinderBtn').addEventListener('click', () => {
-        document.getElementById('finder').style.display = 'flex';
-        refreshFinder();
-      });
-      document.getElementById('finderCloseBtn').addEventListener('click', () => {
-        document.getElementById('finder').style.display = 'none';
-      });
-      document.getElementById('finderRefreshBtn').addEventListener('click', refreshFinder);
-      document.getElementById('finderSectionPick').addEventListener('change', refreshFinder);
-      document.getElementById('finderAddBtn').addEventListener('click', () => openAddEditModal('add', getFinderType(), null, null));
-
-      // Google Drive helpers for inputs inside add/edit modal
-      setupGoogleDriveLinkConversion();
-    }
-
-    // ---------- Section builder (UI + events) ----------
-    function setupMaterialSection(type) {
-      const config = materialsConfig[type];
-      const root = document.getElementById(config.sectionId);
-
-      let studentViewHtml = `
-        <div class="filters-container">
-          <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
-          <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
-        </div>
-        <div id="level3-${type}-grid" class="grid-container"></div>`;
-
-      if (config.isPaid) {
-        studentViewHtml = `
-          <div class="store-layout">
-            <div>
-              ${studentViewHtml}
+        <!-- Title and User Auth -->
+        <div class="title-bar">
+            <h1>Materials</h1>
+            <div class="user-auth-container">
+                <span id="userStatus">Loading...</span>
+                <button id="authButton" class="auth-button">Login</button>
             </div>
-            <div class="shopping-cart">
-              <h3>Shopping Cart</h3>
-              <div id="cart-items"></div>
-              <div id="cart-summary">
-                <div class="summary-line"><span>Subtotal:</span><span id="cart-subtotal-price">$0.00</span></div>
-                <div class="summary-line" id="promo-discount-line" style="display:none;"><span>Promo Discount:</span><span id="cart-promo-discount">-$0.00</span></div>
-                <div class="summary-line"><span>Total Price:</span><span id="cart-total-price">$0.00</span></div>
-              </div>
-              <div class="promo-code-section">
-                <label for="promoCodeInput">Promo Code:</label>
-                <div class="promo-input-group">
-                  <input type="text" id="promoCodeInput" placeholder="Enter promo code">
-                  <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="all">All Materials</button>
+            <button class="tab-button" data-tab="myMaterials">My Materials</button>
+        </div>
+
+        <!-- Content Area -->
+        <div id="contentArea">
+
+            <!-- All Materials Tab Content (Finder View) -->
+            <div id="allTab" class="tab-content active">
+                <div class="finder-wrapper">
+                    <div class="finder-sidebar">
+                        <h3>Filters</h3>
+                        <div class="filter-group">
+                            <label for="subjectFilter">Subject</label>
+                            <select id="subjectFilter">
+                                <option value="all">All Subjects</option>
+                                <!-- Subjects dynamically loaded here -->
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="topicFilter">Topic</label>
+                            <select id="topicFilter" disabled>
+                                <option value="all">All Topics</option>
+                                <!-- Topics dynamically loaded here -->
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="yearFilter">Year</label>
+                            <select id="yearFilter" disabled>
+                                <option value="all">All Years</option>
+                                <!-- Years dynamically loaded here -->
+                            </select>
+                        </div>
+                        <button id="resetFiltersButton" class="action-button">Reset Filters</button>
+                    </div>
+
+                    <div class="finder-main-content">
+                        <div class="finder-header">
+                            <div class="finder-path" id="currentPath">Path: <span>/</span></div>
+                            <div class="finder-view-toggle">
+                                <button id="listViewBtn" class="active">List</button>
+                                <button id="gridViewBtn">Grid</button>
+                            </div>
+                        </div>
+
+                        <!-- CRUD Tools for Teachers -->
+                        <div id="teacherCrudTools" class="crud-tools hidden">
+                            <button id="addFolderButton">Add Folder</button>
+                            <button id="addFileButton">Add File</button>
+                            <button id="deleteSelectedButton">Delete Selected</button>
+                            <button id="editSelectedButton">Edit Selected</button>
+                            <button id="moveSelectedButton">Move Selected</button>
+                        </div>
+
+                        <div class="finder-items-container">
+                            <ul id="finderItemsList" class="finder-list">
+                                <!-- Finder items (folders/files) dynamically loaded here -->
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div id="appliedPromoCodeDisplay" class="promo-display" style="display:none;">
-                  <span>Applied: <span id="appliedPromoCodeText"></span></span>
-                  <button id="removePromoCodeBtn" class="remove-promo-btn">Remove</button>
+            </div>
+
+            <!-- My Materials Tab Content -->
+            <div id="myMaterialsTab" class="tab-content hidden">
+                <h2>My Purchased Materials</h2>
+                <div id="myMaterialsList" class="card-container">
+                    <!-- Purchased materials dynamically loaded here -->
+                    <p id="noPurchasedMaterials">You haven't purchased any materials yet.</p>
                 </div>
-                <p id="promoCodeError" class="promo-error"></p>
-              </div>
-              <div id="cart-validation-message"></div>
-              <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
-            </div>
-          </div>`;
-      }
 
-      root.innerHTML = `
-        <h2 class="section-title">${config.title}</h2>
-        <div id="teacher-${type}-view" style="display:none;">
-          <div class="form-container" style="max-width: initial;">
-            <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
-            <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
-            <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; opacity:.75;"></p>
-          </div>
-          <div id="level1-${type}-container" class="folder-view"></div>
-          <div id="board-view-${type}" style="display:none; padding:1rem; border:1px dashed var(--border-color); min-height:300px; text-align:center; opacity:.75;">
-            Board View (Future)
-          </div>
+                <!-- Shopping Cart Section -->
+                <div id="cartSection">
+                    <h3>Shopping Cart (<span id="cartItemCount">0</span> items)</h3>
+                    <ul id="cartItems">
+                        <!-- Cart items will be listed here -->
+                        <li id="emptyCartMessage">Your cart is empty.</li>
+                    </ul>
+                    <div class="cart-total">
+                        <span>Subtotal:</span>
+                        <span id="cartSubtotal">$0.00</span>
+                    </div>
+                    <div class="cart-total">
+                        <span>Discount:</span>
+                        <span id="cartDiscount">-$0.00</span>
+                    </div>
+                    <div class="cart-total">
+                        <span>Total:</span>
+                        <span id="cartTotal">$0.00</span>
+                    </div>
+
+                    <div id="promoCodeSection">
+                        <input type="text" id="promoCodeInput" placeholder="Enter promo code">
+                        <button id="applyPromoButton">Apply Code</button>
+                    </div>
+                    <p id="promoMessage"></p>
+
+                    <button id="checkoutButton" disabled>Proceed to Checkout</button>
+                </div>
+            </div>
+
         </div>
-        <div id="student-${type}-view" style="display:none;">${studentViewHtml}</div>
-      `;
+    </div>
 
-      const isTeacher = currentUserRole === 'teacher';
-      document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
-      document.getElementById(`student-${type}-view`).style.display = 'block';
+    <!-- Modals -->
 
-      // Teacher: add Level1
-      document.getElementById(`add-level1-${type}-btn`).addEventListener('click', () => openAddEditModal('add', type, 1, null));
-
-      // Teacher: view toggler
-      const toggleBtn = document.getElementById(`toggle-view-mode-${type}`);
-      const statusEl = document.getElementById(`view-mode-status-${type}`);
-      let board = false;
-      statusEl.textContent = 'Folder view';
-      toggleBtn.addEventListener('click', () => {
-        board = !board;
-        document.getElementById(`level1-${type}-container`).style.display = board ? 'none' : 'block';
-        document.getElementById(`board-view-${type}`).style.display = board ? 'block' : 'none';
-        statusEl.textContent = board ? 'Board view' : 'Folder view';
-      });
-
-      // Load teacher folders + student filters
-      loadLevel1(type);
-      setupStudentFilters(type);
-
-      // Cart actions (only once since ids are unique in DOM)
-      if (config.isPaid) {
-        document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
-        document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
-        document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
-        updateCartUI();
-      }
-    }
-
-    // ---------- Teacher folders render ----------
-    async function loadLevel1(type) {
-      const cfg = materialsConfig[type];
-      const parent = document.getElementById(`level1-${type}-container`);
-      parent.innerHTML = '<div class="loading-indicator">Loading…</div>';
-      const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
-      if (snap.empty) {
-        parent.innerHTML = '<div class="folder">No items yet.</div>';
-        return;
-      }
-      parent.innerHTML = '';
-      for (const doc1 of snap.docs) {
-        const data1 = doc1.data();
-        const one = document.createElement('div');
-        one.className = 'folder';
-        one.innerHTML = `
-          <div class="folder-header">
-            <div class="folder-title">${data1.name || data1.title || '(untitled)'}</div>
-            <div>
-              <button class="btn-secondary" data-act="add-l2" data-id="${doc1.id}">Add ${cfg.level2}</button>
-              <button class="btn-secondary" data-act="rename-l1" data-id="${doc1.id}">Rename</button>
-              <button class="logout-btn" data-act="del-l1" data-id="${doc1.id}">Delete</button>
+    <!-- Generic Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmModalTitle">Confirm Action</h3>
+            <p id="confirmModalMessage"></p>
+            <div class="modal-buttons">
+                <button id="confirmNo">Cancel</button>
+                <button id="confirmYes">Confirm</button>
             </div>
-          </div>
-          <div class="file-list" id="l2-${type}-${doc1.id}"></div>`;
-        parent.appendChild(one);
-
-        // load L2
-        await loadLevel2(type, doc1.id);
-      }
-
-      parent.querySelectorAll('button[data-act="add-l2"]').forEach(b => b.addEventListener('click', () => {
-        openAddEditModal('add', type, 2, b.dataset.id);
-      }));
-      parent.querySelectorAll('button[data-act="rename-l1"]').forEach(b => b.addEventListener('click', () => {
-        openAddEditModal('edit', type, 1, b.dataset.id);
-      }));
-      parent.querySelectorAll('button[data-act="del-l1"]').forEach(b => b.addEventListener('click', async () => {
-        if (!confirm('Delete this folder and ALL its contents?')) return;
-        await deleteDoc(doc(cfg.colLevel1(), b.dataset.id));
-        await loadLevel1(type);
-      }));
-    }
-
-    async function loadLevel2(type, l1Id) {
-      const cfg = materialsConfig[type];
-      const parent = document.getElementById(`l2-${type}-${l1Id}`);
-      parent.innerHTML = '';
-      const snap = await getDocs(query(cfg.colLevel2(l1Id), orderBy('createdAt','asc')));
-      for (const doc2 of snap.docs) {
-        const data2 = doc2.data();
-        const row = document.createElement('div');
-        row.className = 'file-row';
-        row.innerHTML = `
-          <div class="meta">
-            <div><b>${data2.name || data2.title || '(untitled)'}</b></div>
-            <div class="badge">${cfg.level2}</div>
-          </div>
-          <div>
-            <button class="btn-secondary" data-act="add-l3" data-l1="${l1Id}" data-id="${doc2.id}">Add ${cfg.level3}</button>
-            <button class="btn-secondary" data-act="rename-l2" data-l1="${l1Id}" data-id="${doc2.id}">Rename</button>
-            <button class="logout-btn" data-act="del-l2" data-l1="${l1Id}" data-id="${doc2.id}">Delete</button>
-          </div>`;
-        parent.appendChild(row);
-
-        // L3 list
-        const list3 = document.createElement('div');
-        list3.className = 'file-list';
-        list3.id = `l3-${type}-${l1Id}-${doc2.id}`;
-        parent.appendChild(list3);
-        await loadLevel3(type, l1Id, doc2.id);
-      }
-
-      parent.querySelectorAll('button[data-act="add-l3"]').forEach(b => b.addEventListener('click', () => {
-        openAddEditModal('add', type, 3, { l1: b.dataset.l1, l2: b.dataset.id });
-      }));
-      parent.querySelectorAll('button[data-act="rename-l2"]').forEach(b => b.addEventListener('click', () => {
-        openAddEditModal('edit', type, 2, { l1: b.dataset.l1, l2: b.dataset.id });
-      }));
-      parent.querySelectorAll('button[data-act="del-l2"]').forEach(b => b.addEventListener('click', async () => {
-        if (!confirm('Delete this and ALL nested items?')) return;
-        await deleteDoc(doc(cfg.colLevel2(b.dataset.l1), b.dataset.id));
-        await loadLevel2(type, b.dataset.l1);
-      }));
-    }
-
-    async function loadLevel3(type, l1Id, l2Id) {
-      const cfg = materialsConfig[type];
-      const parent = document.getElementById(`l3-${type}-${l1Id}-${l2Id}`);
-      parent.innerHTML = '';
-      const snap = await getDocs(query(cfg.colLevel3(l1Id, l2Id), orderBy('createdAt','asc')));
-      for (const doc3 of snap.docs) {
-        const d = doc3.data();
-        const row = document.createElement('div');
-        row.className = 'file-row';
-        const price = typeof d.price === 'number' ? ` • $${d.price.toFixed(2)}` : '';
-        row.innerHTML = `
-          <div class="meta">
-            <div><b>${d.name || d.title || '(untitled)'}</b></div>
-            <div class="badge">${cfg.level3}${price}</div>
-          </div>
-          <div>
-            <button class="btn-secondary" data-act="preview-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Preview</button>
-            <button class="btn-secondary" data-act="move-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Move</button>
-            <button class="btn-secondary" data-act="edit-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Edit</button>
-            <button class="logout-btn" data-act="del-l3" data-l1="${l1Id}" data-l2="${l2Id}" data-id="${doc3.id}">Delete</button>
-          </div>`;
-        parent.appendChild(row);
-      }
-      parent.querySelectorAll('button[data-act="preview-l3"]').forEach(b => b.addEventListener('click', async () => {
-        const docSnap = await getDoc(doc(cfg.colLevel3(b.dataset.l1, b.dataset.l2), b.dataset.id));
-        if (!docSnap.exists()) return;
-        handlePreview(docSnap.data());
-      }));
-      parent.querySelectorAll('button[data-act="move-l3"]').forEach(b => b.addEventListener('click', async () => {
-        await moveItemPrompt(type, b.dataset.l1, b.dataset.l2, b.dataset.id);
-      }));
-      parent.querySelectorAll('button[data-act="edit-l3"]').forEach(b => b.addEventListener('click', () => openAddEditModal('edit', type, 3, { l1: b.dataset.l1, l2: b.dataset.l2, id: b.dataset.id })));
-      parent.querySelectorAll('button[data-act="del-l3"]').forEach(b => b.addEventListener('click', async () => {
-        if (!confirm('Delete this item?')) return;
-        await deleteDoc(doc(cfg.colLevel3(b.dataset.l1, b.dataset.l2), b.dataset.id));
-        await loadLevel3(type, b.dataset.l1, b.dataset.l2);
-      }));
-    }
-
-    // ---------- Student view filters & grid ----------
-    function setupStudentFilters(type) {
-      const cfg = materialsConfig[type];
-      const l1Select = document.getElementById(`level1-${type}-filter`);
-      const l2Select = document.getElementById(`level2-${type}-filter`);
-      const grid = document.getElementById(`level3-${type}-grid`);
-
-      // Level1
-      (async () => {
-        const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
-        l1Select.innerHTML = `<option value="">-- Select ${cfg.level1} --</option>` + snap.docs.map(d => `<option value="${d.id}">${d.data().name || d.data().title || '(untitled)'}</option>`).join('');
-      })();
-
-      l1Select.addEventListener('change', async () => {
-        const l1 = l1Select.value;
-        l2Select.disabled = !l1;
-        l2Select.innerHTML = `<option value="">-- Select ${cfg.level2} --</option>`;
-        grid.innerHTML = '';
-        if (!l1) return;
-        const snap = await getDocs(query(cfg.colLevel2(l1), orderBy('createdAt','asc')));
-        l2Select.innerHTML += snap.docs.map(d => `<option value="${d.id}">${d.data().name || d.data().title || '(untitled)'}</option>`).join('');
-      });
-
-      l2Select.addEventListener('change', async () => {
-        const l1 = l1Select.value;
-        const l2 = l2Select.value;
-        grid.innerHTML = '';
-        if (!l1 || !l2) return;
-        const snap = await getDocs(query(cfg.colLevel3(l1,l2), orderBy('createdAt','asc')));
-        for (const d of snap.docs) {
-          grid.appendChild(renderStudentCard(type, l1, l2, d.id, d.data()));
-        }
-      });
-    }
-
-    function renderStudentCard(type, l1Id, l2Id, id, data) {
-      const cfg = materialsConfig[type];
-      const card = document.createElement('div');
-      card.className = 'material-card';
-      let thumbHtml = '<div class="material-card-thumbnail">No thumbnail</div>';
-      let isVideo = false;
-
-      if (type === 'tutorials') {
-        const yt = parseYouTubeId(data.url || data.videoUrl || '');
-        if (yt) {
-          isVideo = true;
-          thumbHtml = `<div class="material-card-thumbnail" data-youtube-id="${yt}">
-            <img src="https://img.youtube.com/vi/${yt}/hqdefault.jpg" alt="" style="width:100%; height:100%; object-fit:cover;">
-          </div>`;
-        }
-      }
-
-      const name = data.name || data.title || '(untitled)';
-      let actions = `<button class="btn-secondary" data-act="preview">Preview</button>`;
-
-      if (type === 'exercises') {
-        const price = typeof data.price === 'number' ? data.price : (typeof data.price === 'string' ? Number(data.price) : 0);
-        actions += ` <button class="btn-primary" data-act="addcart">Add ($${(price||0).toFixed(2)})</button>`;
-      }
-
-      card.innerHTML = `
-        ${thumbHtml}
-        <div class="material-card-body">
-          <div class="material-card-title">${name}</div>
-          <div class="material-card-actions">${actions}</div>
-        </div>`;
-
-      card.querySelector('[data-act="preview"]').addEventListener('click', () => handlePreview(data));
-      if (type === 'exercises') {
-        card.querySelector('[data-act="addcart"]').addEventListener('click', () => {
-          addToCart({ id: `${l1Id}_${l2Id}_${id}`, name, price: Number(data.price||0) });
-        });
-      }
-      return card;
-    }
-
-    // ---------- Finder ----------
-    function getFinderType(){ return document.getElementById('finderSectionPick').value; }
-
-    async function refreshFinder() {
-      const type = getFinderType();
-      const cfg = materialsConfig[type];
-      // sidebar tree = Level1
-      const s = document.getElementById('finderTree');
-      s.innerHTML = '<div class="loading-indicator">Loading…</div>';
-      const snap = await getDocs(query(cfg.colLevel1(), orderBy('createdAt','asc')));
-      s.innerHTML = '';
-      snap.forEach(d => {
-        const li = document.createElement('div');
-        li.className = 'file-row';
-        li.innerHTML = `<div class="meta"><b>${d.data().name || d.data().title || '(untitled)'}</b><div class="badge">${cfg.level1}</div></div>
-                        <div><button class="btn-secondary" data-act="open" data-id="${d.id}">Open</button></div>`;
-        s.appendChild(li);
-      });
-      s.querySelectorAll('button[data-act="open"]').forEach(b => {
-        b.addEventListener('click', () => openFinderList(type, b.dataset.id));
-      });
-      // default open first
-      const first = snap.docs[0]?.id;
-      if (first) openFinderList(type, first);
-      document.getElementById('finder').style.display = 'flex';
-    }
-
-    async function openFinderList(type, l1Id) {
-      const cfg = materialsConfig[type];
-      const main = document.getElementById('finderList');
-      main.innerHTML = `<div class="folder-header">
-          <div class="folder-title">${cfg.title}: ${cfg.level1}</div>
-          <div>
-            <button class="btn-secondary" id="finderAddL2">Add ${cfg.level2}</button>
-          </div>
         </div>
-        <div id="finderL2"></div>`;
+    </div>
 
-      document.getElementById('finderAddL2').addEventListener('click', () => openAddEditModal('add', type, 2, l1Id));
-
-      const host = document.getElementById('finderL2');
-      const snap = await getDocs(query(cfg.colLevel2(l1Id), orderBy('createdAt','asc')));
-      host.innerHTML = '';
-      for (const d2 of snap.docs) {
-        const data2 = d2.data();
-        const sec = document.createElement('div');
-        sec.className = 'folder';
-        sec.innerHTML = `
-          <div class="folder-header">
-            <div class="folder-title">${data2.name || data2.title || '(untitled)'}</div>
-            <div>
-              <button class="btn-secondary" data-act="add-l3" data-l1="${l1Id}" data-id="${d2.id}">Add ${cfg.level3}</button>
-              <button class="btn-secondary" data-act="rename-l2" data-l1="${l1Id}" data-id="${d2.id}">Rename</button>
-              <button class="logout-btn" data-act="del-l2" data-l1="${l1Id}" data-id="${d2.id}">Delete</button>
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <h3 id="previewModalTitle">File Preview</h3>
             </div>
-          </div>
-          <div class="file-list" id="finderL3-${d2.id}"></div>`;
-        host.appendChild(sec);
-
-        // list L3
-        await listFinderL3(type, l1Id, d2.id);
-      }
-
-      host.querySelectorAll('button[data-act="add-l3"]').forEach(b => b.addEventListener('click', () => openAddEditModal('add', type, 3, { l1: b.dataset.l1, l2: b.dataset.id })));
-      host.querySelectorAll('button[data-act="rename-l2"]').forEach(b => b.addEventListener('click', () => openAddEditModal('edit', type, 2, { l1: b.dataset.l1, l2: b.dataset.id })));
-      host.querySelectorAll('button[data-act="del-l2"]').forEach(b => b.addEventListener('click', async () => {
-        if (!confirm('Delete this and all items?')) return;
-        await deleteDoc(doc(cfg.colLevel2(b.dataset.l1), b.dataset.id));
-        await openFinderList(type, l1Id);
-      }));
-    }
-
-    async function listFinderL3(type, l1Id, l2Id) {
-      const cfg = materialsConfig[type];
-      const host = document.getElementById(`finderL3-${l2Id}`);
-      host.innerHTML = '<div class="loading-indicator">Loading…</div>';
-      const snap = await getDocs(query(cfg.colLevel3(l1Id, l2Id), orderBy('createdAt','asc')));
-      host.innerHTML = '';
-      for (const d3 of snap.docs) {
-        const it = d3.data();
-        const file = document.createElement('div');
-        file.className = 'file-row';
-        const price = cfg.isPaid && typeof it.price === 'number' ? ` • $${it.price.toFixed(2)}` : '';
-        file.innerHTML = `
-          <div class="meta">
-            <div><b>${it.name || it.title || '(untitled)'}</b></div>
-            <div class="badge">${cfg.level3}${price}</div>
-          </div>
-          <div>
-            <button class="btn-secondary" data-act="preview">Preview</button>
-            <button class="btn-secondary" data-act="move">Move</button>
-            <button class="btn-secondary" data-act="edit">Edit</button>
-            <button class="logout-btn" data-act="del">Delete</button>
-          </div>`;
-        host.appendChild(file);
-
-        file.querySelector('[data-act="preview"]').addEventListener('click', () => handlePreview(it));
-        file.querySelector('[data-act="move"]').addEventListener('click', () => moveItemPrompt(type, l1Id, l2Id, d3.id));
-        file.querySelector('[data-act="edit"]').addEventListener('click', () => openAddEditModal('edit', type, 3, { l1: l1Id, l2: l2Id, id: d3.id }));
-        file.querySelector('[data-act="del"]').addEventListener('click', async () => {
-          if (!confirm('Delete this item?')) return;
-          await deleteDoc(doc(cfg.colLevel3(l1Id, l2Id), d3.id));
-          await listFinderL3(type, l1Id, l2Id);
-        });
-      }
-    }
-
-    // ---------- Add/Edit modal logic ----------
-    function openAddEditModal(mode, type, level, ctx) {
-      const cfg = materialsConfig[type];
-      const body = document.getElementById('modalBody');
-      const footer = document.getElementById('modalFooter');
-      const titleEl = document.getElementById('modalTitle');
-      titleEl.textContent = (mode === 'add' ? 'Add ' : 'Edit ') + `${cfg['level'+level]}`;
-
-      let html = '';
-      if (level < 3) {
-        html = `
-          <div class="form-container">
-            <label>Name/Title</label>
-            <input id="fieldName" placeholder="${cfg['level'+level]} name" />
-          </div>`;
-      } else {
-        html = `
-          <div class="form-container">
-            <div style="display:grid; gap:.6rem;">
-              <div>
-                <label>Title</label>
-                <input id="fieldName" placeholder="${cfg.level3} title"/>
-              </div>
-              <div>
-                <label>PDF URL (or Google Drive link)</label>
-                <input id="fieldPdf" placeholder="https://...pdf or Google Drive share link"/>
-              </div>
-              <div>
-                <label>Video URL (YouTube or file)</label>
-                <input id="fieldVideo" placeholder="https://youtu.be/... or https://...mp4 (optional)"/>
-              </div>
-              ${cfg.isPaid ? `
-              <div>
-                <label>Price (USD)</label>
-                <input id="fieldPrice" type="number" min="0" step="0.01" placeholder="e.g. 15.00"/>
-              </div>
-              ` : ''}
-              <div>
-                <label>Thumbnail URL (optional)</label>
-                <input id="fieldThumb" placeholder="https://... (optional)"/>
-              </div>
-              <div>
-                <label>Description (optional)</label>
-                <textarea id="fieldDesc" rows="3" placeholder="Short description"></textarea>
-              </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- Content will be dynamically loaded here (PDF, image, video) -->
+                </div>
+                <div class="pdf-viewer hidden">
+                    <canvas id="pdfCanvas"></canvas>
+                    <div class="pdf-viewer-controls">
+                        <button id="prevPdfPageBtn">Previous</button>
+                        <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                        <button id="nextPdfPageBtn">Next</button>
+                    </div>
+                </div>
+                <p id="previewError" class="error-message hidden">Could not load preview.</p>
             </div>
-          </div>`;
-      }
-      body.innerHTML = html;
+        </div>
+    </div>
 
-      footer.innerHTML = '<button class="btn-secondary" id="modalCloseBtn2">Cancel</button><button class="btn-primary" id="modalSaveBtn">Save</button>';
-      document.getElementById('modalOverlay').style.display = 'flex';
-      document.getElementById('modalCloseBtn2').addEventListener('click', closeModal);
-      document.getElementById('modalCloseX').addEventListener('click', closeModal);
+    <!-- Add/Edit Folder Modal -->
+    <div id="folderModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <h3 id="folderModalTitle">Add New Folder</h3>
+            </div>
+            <div class="modal-body">
+                <form id="folderForm" class="modal-form">
+                    <label for="folderName">Folder Name:</label>
+                    <input type="text" id="folderName" required>
+                    <button type="submit" class="submit">Save Folder</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
-      // prefill for edit mode
-      if (mode === 'edit') {
-        (async () => {
-          if (level === 1) {
-            const snap = await getDoc(doc(cfg.colLevel1(), ctx));
-            if (snap.exists()) document.getElementById('fieldName').value = snap.data().name || snap.data().title || '';
-          } else if (level === 2) {
-            const snap = await getDoc(doc(cfg.colLevel2(ctx.l1), ctx.l2));
-            if (snap.exists()) document.getElementById('fieldName').value = snap.data().name || snap.data().title || '';
-          } else {
-            const snap = await getDoc(doc(cfg.colLevel3(ctx.l1, ctx.l2), ctx.id));
-            const d = snap.data() || {};
-            document.getElementById('fieldName').value = d.name || d.title || '';
-            document.getElementById('fieldPdf').value = d.pdfUrl || d.fileUrl || '';
-            document.getElementById('fieldVideo').value = d.url || d.videoUrl || '';
-            const p = (typeof d.price === 'number' ? d.price : Number(d.price||0));
-            const fp = document.getElementById('fieldPrice'); if (fp) fp.value = isNaN(p) ? '' : p.toFixed(2);
-            document.getElementById('fieldThumb').value = d.thumbnail || d.thumb || '';
-            document.getElementById('fieldDesc').value = d.description || d.desc || '';
-          }
-        })();
-      }
+    <!-- Add/Edit File Modal -->
+    <div id="fileModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <h3 id="fileModalTitle">Add New File</h3>
+            </div>
+            <div class="modal-body">
+                <form id="fileForm" class="modal-form">
+                    <label for="fileDisplayName">Display Name:</label>
+                    <input type="text" id="fileDisplayName" required>
 
-      document.getElementById('modalSaveBtn').addEventListener('click', async () => {
-        try {
-          if (level === 1) {
-            const name = (document.getElementById('fieldName').value || '').trim();
-            if (!name) return showModal('Missing', 'Enter a name.');
-            if (mode === 'add') {
-              await addDoc(cfg.colLevel1(), { name, createdAt: serverTimestamp(), createdBy: currentUserId });
-            } else {
-              await updateDoc(doc(cfg.colLevel1(), ctx), { name });
-            }
-            await loadLevel1(type);
-          } else if (level === 2) {
-            const name = (document.getElementById('fieldName').value || '').trim();
-            if (!name) return showModal('Missing', 'Enter a name.');
-            if (mode === 'add') {
-              await addDoc(cfg.colLevel2(ctx), { name, createdAt: serverTimestamp(), createdBy: currentUserId });
-            } else {
-              await updateDoc(doc(cfg.colLevel2(ctx.l1), ctx.l2), { name });
-            }
-            await loadLevel2(type, level===2? (mode==='add'? ctx : ctx.l1) : ctx);
-          } else {
-            // level 3 item
-            const name = (document.getElementById('fieldName').value || '').trim();
-            const pdfRaw = (document.getElementById('fieldPdf').value || '').trim();
-            const video = (document.getElementById('fieldVideo').value || '').trim();
-            const thumb = (document.getElementById('fieldThumb').value || '').trim();
-            const desc = (document.getElementById('fieldDesc').value || '').trim();
-            const fp = document.getElementById('fieldPrice');
-            const price = fp ? Number(fp.value || 0) : null;
-            const pdfUrl = convertGoogleDriveLink(pdfRaw);
+                    <label for="fileUpload">File:</label>
+                    <input type="file" id="fileUpload" accept=".pdf,.jpg,.jpeg,.png,.mp4,.mov,.avi" multiple>
+                    <p id="currentFilePath"></p> <!-- To show current file for editing -->
 
-            const payload = { name, description: desc || null, thumbnail: thumb || null, createdAt: serverTimestamp(), createdBy: currentUserId };
-            if (pdfUrl) payload.pdfUrl = pdfUrl;
-            if (video) payload.videoUrl = video;
-            if (cfg.isPaid) payload.price = isNaN(price) ? 0 : Number(price);
-            if (mode === 'add') {
-              const ids = ctx; // {l1, l2}
-              await addDoc(cfg.colLevel3(ids.l1, ids.l2), payload);
-            } else {
-              await updateDoc(doc(cfg.colLevel3(ctx.l1, ctx.l2), ctx.id), payload);
-            }
-            await loadLevel3(type, mode==='add'? ctx.l1 : ctx.l1, mode==='add'? ctx.l2 : ctx.l2);
-          }
-          closeModal();
-        } catch (e) {
-          console.error(e);
-          showModal('Error', e.message || String(e));
-        }
-      });
-    }
+                    <label for="fileType">Type:</label>
+                    <select id="fileType" required>
+                        <option value="">Select Type</option>
+                        <option value="tutorial">Tutorial</option>
+                        <option value="pastPaper">Past Paper</option>
+                        <option value="exercise">Exercise</option>
+                    </select>
 
-    async function moveItemPrompt(type, l1Id, l2Id, id) {
-      const cfg = materialsConfig[type];
-      // gather all level2 destinations
-      const l1Snap = await getDocs(cfg.colLevel1());
-      let options = [];
-      for (const l1 of l1Snap.docs) {
-        const l2Snap = await getDocs(cfg.colLevel2(l1.id));
-        for (const l2 of l2Snap.docs) options.push({ l1:l1.id, l2:l2.id, label: `${l1.data().name||l1.data().title||l1.id} / ${l2.data().name||l2.data().title||l2.id}` });
-      }
-      const pick = prompt('Move to (type exact label):\n' + options.map(o=>o.label).join('\n'));
-      const dest = options.find(o => o.label === pick);
-      if (!dest) { showModal('Cancelled', 'No destination selected.'); return; }
-      const fromRef = doc(cfg.colLevel3(l1Id, l2Id), id);
-      const toCol = cfg.colLevel3(dest.l1, dest.l2);
-      // copy + delete
-      const snap = await getDoc(fromRef);
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const batch = writeBatch(db);
-      const toRef = doc(toCol);
-      batch.set(toRef, data);
-      batch.delete(fromRef);
-      await batch.commit();
-      showModal('Moved', 'Item moved successfully.');
-      // refresh
-      await loadLevel3(type, l1Id, l2Id);
-      if (document.getElementById('finder').style.display !== 'none') {
-        await refreshFinder();
-      }
-    }
+                    <label for="fileSubject">Subject:</label>
+                    <!-- Changed from select to input with datalist -->
+                    <input type="text" id="fileSubject" list="subjectOptions" required placeholder="Enter new or select existing subject">
+                    <datalist id="subjectOptions"></datalist>
 
-    // ---------- Previews ----------
-    function handlePreview(data) {
-      const videoUrl = data.videoUrl || data.url || '';
-      const pdfUrl   = data.pdfUrl || data.fileUrl || '';
-      if (videoUrl && parseYouTubeId(videoUrl)) {
-        openVideoModal(videoUrl);
-        return;
-      }
-      if (pdfUrl) {
-        openPdfModal(pdfUrl);
-        return;
-      }
-      if (videoUrl) {
-        openVideoModal(videoUrl); // non-YouTube
-        return;
-      }
-      showModal('Nothing to preview', 'This item does not have a video or PDF.');
-    }
+                    <label for="fileTopic">Topic:</label>
+                    <input type="text" id="fileTopic" placeholder="e.g., Algebra, Thermodynamics">
 
-    function openVideoModal(url) {
-      const yt = parseYouTubeId(url);
-      const host = document.getElementById('videoContainer');
-      host.innerHTML = '';
-      if (yt) {
-        host.innerHTML = `<iframe src="https://www.youtube.com/embed/${yt}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      } else {
-        host.innerHTML = \`<video controls style="width:100%; height:auto;"><source src="\${url}"/></video>\`;
-      }
-      const m = document.getElementById('videoModal'); m.style.display = 'flex';
-    }
-    document.querySelectorAll('[data-close="videoModal"]').forEach(b => b.addEventListener('click', ()=>{
-      document.getElementById('videoContainer').innerHTML = '';
-      document.getElementById('videoModal').style.display = 'none';
-    }));
+                    <label for="fileYear">Year (for Past Papers):</label>
+                    <input type="number" id="fileYear" placeholder="e.g., 2023">
 
-    async function openPdfModal(url) {
-      const fixed = convertGoogleDriveLink(url);
-      const loading = document.createElement('div');
-      loading.className = 'loading-indicator';
-      loading.textContent = 'Loading PDF preview…';
-      const body = document.getElementById('pdfBody');
-      body.prepend(loading);
-      try {
-        const doc = await pdfjsLib.getDocument(fixed).promise;
-        const page = await doc.getPage(1);
-        const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.2 });
-        canvas.width = viewport.width; canvas.height = viewport.height;
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        document.getElementById('pdfOpenNew').href = fixed;
-        document.getElementById('pdfDownload').href = fixed;
-        document.getElementById('pdfModal').style.display = 'flex';
-      } catch (e) {
-        console.error(e);
-        showModal('PDF Error', 'Could not preview this PDF.');
-      } finally {
-        loading.remove();
-      }
-    }
-    document.querySelectorAll('[data-close="pdfModal"]').forEach(b => b.addEventListener('click', ()=>{
-      document.getElementById('pdfModal').style.display = 'none';
-      const c = document.getElementById('pdfCanvas'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
-    }));
+                    <label for="filePrice">Price (for Exercises):</label>
+                    <input type="number" id="filePrice" min="0" step="0.01" value="0.00">
 
-    // ---------- Cart / promo / checkout (identical logic to index(8)) ----------
-    function addToCart(item) {
-      if (shoppingCart.find(x => x.id === item.id)) return;
-      shoppingCart.push(item);
-      updateCartUI();
-    }
-    function removeFromCart(id) {
-      shoppingCart = shoppingCart.filter(x => x.id !== id);
-      updateCartUI();
-    }
-    function updateCartUI() {
-      const cartItemsContainer = document.getElementById('cart-items');
-      const subtotalPriceEl = document.getElementById('cart-subtotal-price');
-      const promoDiscountLine = document.getElementById('promo-discount-line');
-      const promoDiscountEl = document.getElementById('cart-promo-discount');
-      const totalPriceEl = document.getElementById('cart-total-price');
-      const checkoutBtn = document.getElementById('checkout-btn');
-      const validationMsg = document.getElementById('cart-validation-message');
-      const promoCodeInput = document.getElementById('promoCodeInput');
-      const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
-      const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
-      const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
-      const promoCodeError = document.getElementById('promoCodeError');
+                    <label for="isAssignment">Is Assignment?</label>
+                    <input type="checkbox" id="isAssignment">
 
-      if (!cartItemsContainer) return; // not in this section
-      cartItemsContainer.innerHTML = '';
-      let subtotal = 0;
+                    <button type="submit" class="submit">Save File</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
-      if (shoppingCart.length === 0) {
-        cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
-      }
-      shoppingCart.forEach(item => {
-        subtotal += item.price;
-        const itemEl = document.createElement('div');
-        itemEl.className = 'cart-item';
-        itemEl.innerHTML = \`
-          <span class="cart-item-name">\${item.name}</span>
-          <span class="cart-item-price">$ \${item.price.toFixed(2)}</span>
-          <button class="remove-from-cart-btn" data-id="\${item.id}">✖</button>\`;
-        cartItemsContainer.appendChild(itemEl);
-      });
-      cartItemsContainer.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
-        btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
-      });
+    <!-- Move Item Modal -->
+    <div id="moveModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <h3>Move Item To:</h3>
+            </div>
+            <div class="modal-body">
+                <select id="moveTargetFolder" class="modal-form-select">
+                    <!-- Folder options dynamically loaded -->
+                </select>
+                <button id="confirmMoveButton" class="submit">Move Here</button>
+            </div>
+        </div>
+    </div>
 
-      subtotalPriceEl.textContent = '$' + subtotal.toFixed(2);
-      let finalPrice = subtotal;
+    <!-- Loading/Processing Overlay -->
+    <div id="loadingOverlay" class="overlay hidden">
+        Processing...
+    </div>
 
-      if (appliedPromoCode) {
-        finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount); // Ensure price doesn't go negative
-        if (promoDiscountEl) promoDiscountEl.textContent = '-$' + appliedPromoCode.discountAmount.toFixed(2);
-        if (promoDiscountLine) promoDiscountLine.style.display = 'flex';
-        if (appliedPromoCodeText) appliedPromoCodeText.textContent = \`\${appliedPromoCode.code} (-$\${appliedPromoCode.discountAmount.toFixed(2)})\`;
-        if (appliedPromoCodeDisplay) appliedPromoCodeDisplay.style.display = 'flex';
-        if (promoCodeInput) promoCodeInput.disabled = true;
-        if (applyPromoCodeBtn) applyPromoCodeBtn.disabled = true;
-        if (promoCodeInput) promoCodeInput.value = appliedPromoCode.code;
-        if (promoCodeError) promoCodeError.textContent = '';
-      } else {
-        if (promoDiscountLine) promoDiscountLine.style.display = 'none';
-        if (appliedPromoCodeDisplay) appliedPromoCodeDisplay.style.display = 'none';
-        if (promoCodeInput) promoCodeInput.disabled = false;
-        if (applyPromoCodeBtn) applyPromoCodeBtn.disabled = false;
-        if (promoCodeInput) promoCodeInput.value = '';
-      }
+    <script type="module">
+        // Import Firebase SDKs using modular syntax
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, FieldValue } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js';
 
-      totalPriceEl.textContent = '$' + finalPrice.toFixed(2);
 
-      // Validate cart: Checkout enabled if total price is $0 or more AND cart is not empty.
-      // Also, if the final price is > 0, enforce a minimum total of $100.
-      const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
-      if (checkoutBtn) checkoutBtn.disabled = !canCheckout;
-      if (validationMsg) {
-        if (shoppingCart.length === 0) {
-          validationMsg.textContent = 'Your cart is empty. Add items to proceed.';
-        } else if (finalPrice > 0 && finalPrice < 100) {
-          validationMsg.textContent = 'Minimum total of $100 required to checkout.';
-        } else if (finalPrice === 0) {
-          validationMsg.textContent = 'Proceed to checkout for free!';
+        // Firebase Configuration (Replace with your actual Firebase config)
+        // Accessing global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const stripe = Stripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your Stripe Public Key
+
+        // Global variables for PDF viewer
+        // Make sure PDFJS is correctly defined, as it was in index(8).html
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         } else {
-          validationMsg.textContent = '';
+            console.error("PDF.js library not loaded correctly. Ensure pdf.min.js is accessible.");
         }
-      }
-    }
 
-    async function applyPromoCode() {
-      const promoCodeInput = document.getElementById('promoCodeInput');
-      const promoCodeError = document.getElementById('promoCodeError');
-      const code = (promoCodeInput?.value || '').trim().toUpperCase();
 
-      if (!code) { if (promoCodeError) promoCodeError.textContent = 'Please enter a promo code.'; return; }
-      try {
-        const ref = doc(db, \`artifacts/${appId}/public/data/promoCodes\`, code);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) { if (promoCodeError) promoCodeError.textContent = 'Invalid promo code.'; return; }
-        const data = snap.data();
-        if (!data.isActive) { if (promoCodeError) promoCodeError.textContent = 'This promo code is not active.'; return; }
-        appliedPromoCode = { code, discountAmount: data.discountAmount };
-        updateCartUI();
-        showModal('Promo Code Applied', \`Successfully applied promo code "\${code}" for a $\${data.discountAmount.toFixed(2)} discount!\`);
-      } catch (e) {
-        console.error(e);
-        if (promoCodeError) promoCodeError.textContent = 'Error applying code: ' + (e.message || String(e));
-      }
-    }
+        let pdfDoc = null; // Holds current PDF document
+        let pageNum = 1; // Current page number
+        let pageRendering = false; // Is a page currently being rendered?
+        let pageNumPending = null; // Holds page number when another page is still rendering
+        let pdfScale = 1.0; // Initial PDF scale
 
-    function removeAppliedPromoCode() {
-      appliedPromoCode = null;
-      updateCartUI();
-      const inp = document.getElementById('promoCodeInput'); if (inp) inp.value='';
-      const err = document.getElementById('promoCodeError'); if (err) err.textContent='';
-      showModal('Promo Code Removed', 'The promo code has been removed from your cart.');
-    }
+        // DOM Elements
+        const userStatusSpan = document.getElementById('userStatus');
+        const authButton = document.getElementById('authButton');
+        const tabsContainer = document.querySelector('.tabs');
+        const allTabContent = document.getElementById('allTab');
+        const myMaterialsTabContent = document.getElementById('myMaterialsTab');
+        const finderItemsList = document.getElementById('finderItemsList');
+        const currentPathSpan = document.getElementById('currentPath').querySelector('span');
+        const listViewBtn = document.getElementById('listViewBtn');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const teacherCrudTools = document.getElementById('teacherCrudTools');
+        const addFolderButton = document.getElementById('addFolderButton');
+        const addFileButton = document.getElementById('addFileButton');
+        const deleteSelectedButton = document.getElementById('deleteSelectedButton');
+        const editSelectedButton = document.getElementById('editSelectedButton');
+        const moveSelectedButton = document.getElementById('moveSelectedButton');
+        const myMaterialsList = document.getElementById('myMaterialsList');
+        const noPurchasedMaterials = document.getElementById('noPurchasedMaterials');
 
-    async function handleCheckout() {
-      if (!currentUserId) return showModal('Error','You must be logged in to check out.');
-      let subtotal = shoppingCart.reduce((s,i)=> s+i.price, 0);
-      let finalPrice = appliedPromoCode ? Math.max(0, subtotal - appliedPromoCode.discountAmount) : subtotal;
-      if (!shoppingCart.length) return showModal('Checkout Error','Your cart is empty. Please add items before checking out.');
+        // Cart Elements
+        const cartItemCount = document.getElementById('cartItemCount');
+        const cartItemsList = document.getElementById('cartItems');
+        const emptyCartMessage = document.getElementById('emptyCartMessage');
+        const cartSubtotalSpan = document.getElementById('cartSubtotal');
+        const cartDiscountSpan = document.getElementById('cartDiscount');
+        const cartTotalSpan = document.getElementById('cartTotal');
+        const promoCodeInput = document.getElementById('promoCodeInput');
+        const applyPromoButton = document.getElementById('applyPromoButton');
+        const promoMessage = document.getElementById('promoMessage');
+        const checkoutButton = document.getElementById('checkoutButton');
 
-      if (finalPrice === 0) {
-        try {
-          const batch = writeBatch(db);
-          shoppingCart.forEach(item => {
-            const purchaseRef = doc(db, \`artifacts/${appId}/users/\${currentUserId}/purchased_exercises/\${item.id}\`);
-            batch.set(purchaseRef, { name:item.name, price:item.price, purchasedAt: Date.now(), purchaseMethod:'promo', promoCodeUsed: appliedPromoCode ? appliedPromoCode.code : 'N/A' });
-          });
-          await batch.commit();
-          showModal('Purchase Successful!', 'Your new exercises are now available for download. Enjoy your free items!');
-          shoppingCart = []; appliedPromoCode = null; updateCartUI();
-          showSection('exercises');
-        } catch (e) {
-          console.error(e); showModal('Checkout Error', 'Could not complete free checkout. ' + (e.message||e));
+        // Filter Elements
+        const subjectFilter = document.getElementById('subjectFilter');
+        const topicFilter = document.getElementById('topicFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const resetFiltersButton = document.getElementById('resetFiltersButton');
+
+        // Modals
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalMessage = document.getElementById('confirmModalMessage');
+        const confirmYesButton = document.getElementById('confirmYes');
+        const confirmNoButton = document.getElementById('confirmNo');
+
+        const previewModal = document.getElementById('previewModal');
+        const previewModalClose = previewModal.querySelector('.modal-close');
+        const previewModalTitle = document.getElementById('previewModalTitle');
+        const previewContent = document.getElementById('previewContent');
+        const previewError = document.getElementById('previewError');
+        const pdfViewer = document.querySelector('.pdf-viewer');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const prevPdfPageBtn = document.getElementById('prevPdfPageBtn');
+        const nextPdfPageBtn = document.getElementById('nextPdfPageBtn');
+        const pdfPageNumSpan = document.getElementById('pdfPageNum');
+        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
+
+        const folderModal = document.getElementById('folderModal');
+        const folderModalClose = folderModal.querySelector('.modal-close');
+        const folderModalTitle = document.getElementById('folderModalTitle');
+        const folderForm = document.getElementById('folderForm');
+        const folderNameInput = document.getElementById('folderName');
+
+        const fileModal = document.getElementById('fileModal');
+        const fileModalClose = fileModal.querySelector('.modal-close');
+        const fileModalTitle = document.getElementById('fileModalTitle');
+        const fileForm = document.getElementById('fileForm');
+        const fileDisplayNameInput = document.getElementById('fileDisplayName');
+        const fileUploadInput = document.getElementById('fileUpload');
+        const currentFilePathText = document.getElementById('currentFilePath');
+        const fileTypeSelect = document.getElementById('fileType');
+        // const fileSubjectSelect = document.getElementById('fileSubject'); // Old select element
+        const fileSubjectInput = document.getElementById('fileSubject'); // New input element
+        const subjectOptionsDatalist = document.getElementById('subjectOptions'); // New datalist element
+        const fileTopicInput = document.getElementById('fileTopic');
+        const fileYearInput = document.getElementById('fileYear');
+        const filePriceInput = document.getElementById('filePrice');
+        const isAssignmentCheckbox = document.getElementById('isAssignment');
+
+        const moveModal = document.getElementById('moveModal');
+        const moveModalClose = moveModal.querySelector('.modal-close');
+        const moveTargetFolderSelect = document.getElementById('moveTargetFolder');
+        const confirmMoveButton = document.getElementById('confirmMoveButton');
+
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // State variables
+        let currentUser = null;
+        let currentPath = []; // Array of folder IDs representing the current path
+        let currentViewMode = 'list'; // 'list' or 'grid'
+        let selectedItems = new Set(); // Stores IDs of selected items
+        let currentMaterialsData = []; // Stores all material items for the current folder
+        let allMaterialsFlat = []; // Flat list of all materials for filtering
+        let allSubjects = new Set();
+        let allTopics = new Set();
+        let allYears = new Set();
+        let currentEditItemId = null; // For editing files/folders
+        let cart = {}; // { materialId: { item: materialData, quantity: 1 } }
+        let promoCodeApplied = null; // { code: "PROMO10", discount: 0.10 }
+
+        // Firestore paths
+        const publicMaterialsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'materials');
+        const usersCollectionRef = (uid) => collection(db, 'artifacts', appId, 'users', uid);
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows a generic confirmation modal.
+         * @param {string} title
+         * @param {string} message
+         * @returns {Promise<boolean>} Resolves true if confirmed, false if cancelled.
+         */
+        function showConfirmModal(title, message) {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            confirmModal.style.display = 'flex';
+
+            return new Promise((resolve) => {
+                const handleYes = () => {
+                    confirmModal.style.display = 'none';
+                    confirmYesButton.removeEventListener('click', handleYes);
+                    confirmNoButton.removeEventListener('click', handleNo);
+                    resolve(true);
+                };
+                const handleNo = () => {
+                    confirmModal.style.display = 'none';
+                    confirmYesButton.removeEventListener('click', handleYes);
+                    confirmNoButton.removeEventListener('click', handleNo);
+                    resolve(false);
+                };
+                confirmYesButton.addEventListener('click', handleYes);
+                confirmNoButton.addEventListener('click', handleNo);
+            });
         }
-      } else if (finalPrice >= 100) {
-        if (STRIPE_PAYMENT_LINK.includes('...')) return showModal('Configuration Error','The Stripe Payment Link has not been configured by the site administrator.');
-        const sessionId = crypto.randomUUID();
-        const ref = doc(db, \`artifacts/${appId}/users/\${currentUserId}/checkout_sessions/\${sessionId}\`);
-        try {
-          await setDoc(ref, { cart: shoppingCart, appliedPromoCode, created: Date.now(), totalAmount: finalPrice, purchaseMethod:'paid' });
-          const stripeUrl = \`\${STRIPE_PAYMENT_LINK}?client_reference_id=\${sessionId}&prefilled_email=\${encodeURIComponent(currentUserEmail||'')}\`;
-          window.location.href = stripeUrl;
-        } catch (e) {
-          console.error(e); showModal('Checkout Error','Could not initiate checkout. ' + (e.message||e));
+
+
+        /**
+         * Displays a temporary message (e.g., success, error).
+         * @param {HTMLElement} element The element to display the message in.
+         * @param {string} message The message to display.
+         * @param {boolean} isError True for error style, false for success.
+         * @param {number} duration Duration in ms.
+         */
+        function showTemporaryMessage(element, message, isError, duration = 3000) {
+            element.textContent = message;
+            element.classList.toggle('error', isError);
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.classList.add('hidden');
+                element.textContent = '';
+            }, duration);
         }
-      } else {
-        showModal('Checkout Error','Minimum total of $100 required to checkout for paid items.');
-      }
-    }
 
-    async function checkForSuccessfulPurchase() {
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
-      if (params.get('payment_status') === 'success' && sessionId) {
-        const ref = doc(db, \`artifacts/${appId}/users/\${currentUserId}/checkout_sessions/\${sessionId}\`);
-        try {
-          const snap = await getDoc(ref);
-          if (!snap.exists()) return;
-          const session = snap.data();
-          const batch = writeBatch(db);
-          session.cart.forEach(item => {
-            const pRef = doc(db, \`artifacts/${appId}/users/\${currentUserId}/purchased_exercises/\${item.id}\`);
-            batch.set(pRef, { name:item.name, price:item.price, purchasedAt: Date.now(), purchaseMethod: session.purchaseMethod || 'paid', promoCodeUsed: session.appliedPromoCode ? session.appliedPromoCode.code : 'N/A' });
-          });
-          batch.delete(ref);
-          await batch.commit();
-          showModal('Purchase Successful!', 'Your new exercises are now available for download.');
-          // clear local
-          shoppingCart = []; appliedPromoCode = null; updateCartUI();
-          // clean URL
-          history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) {
-          console.error(e); showModal('Error','Could not finalize purchase. ' + (e.message||e));
+        /**
+         * Shows the loading overlay.
+         */
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
         }
-      }
-    }
 
-    // ---------- Utility ----------
-    function showModal(title, message, footerHTML) {
-      const overlay = document.getElementById('modalOverlay');
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalBody').innerHTML = '<div style="white-space:pre-wrap">'+ message +'</div>';
-      const f = document.getElementById('modalFooter');
-      f.innerHTML = '<button class="btn-secondary" id="modalCloseBtn">Close</button>' + (footerHTML || '');
-      overlay.style.display = 'flex';
-      document.getElementById('modalCloseBtn').onclick = closeModal;
-      document.getElementById('modalCloseX').onclick = closeModal;
-    }
-    function closeModal(){ document.getElementById('modalOverlay').style.display = 'none'; }
-
-    function parseYouTubeId(url) {
-      if (!url) return null;
-      const m = url.match(/(?:youtu\.be\/|v=)([A-Za-z0-9_-]{6,})/);
-      return m ? m[1] : null;
-    }
-
-    function convertGoogleDriveLink(link) {
-      if (!link) return '';
-      // formats: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
-      const m = link.match(/\/d\/([A-Za-z0-9_-]{10,})/);
-      if (m) return \`https://drive.google.com/uc?export=download&id=\${m[1]}\`;
-      return link;
-    }
-
-    function setupGoogleDriveLinkConversion() {
-      document.addEventListener('blur', (e) => {
-        if (!(e.target instanceof HTMLInputElement)) return;
-        if (!/fieldPdf/i.test(e.target.id)) return;
-        e.target.value = convertGoogleDriveLink(e.target.value);
-      }, true);
-    }
-
-    // ---------- Finder window UX (drag/resize) ----------
-    function setupFinderWindow() {
-      const el = document.getElementById('finder');
-      const res = el.querySelector('.finder-resizer');
-      let startX, startY, startW, startH;
-      res.addEventListener('mousedown', (e)=>{
-        e.preventDefault();
-        startX = e.clientX; startY = e.clientY;
-        startW = parseInt(document.defaultView.getComputedStyle(el).width,10);
-        startH = parseInt(document.defaultView.getComputedStyle(el).height,10);
-        function doDrag(ev){
-          el.style.width = (startW + ev.clientX - startX) + 'px';
-          el.style.height = (startH + ev.clientY - startY) + 'px';
+        /**
+         * Hides the loading overlay.
+         */
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
         }
-        function stopDrag(){ window.removeEventListener('mousemove', doDrag); window.removeEventListener('mouseup', stopDrag); }
-        window.addEventListener('mousemove', doDrag);
-        window.addEventListener('mouseup', stopDrag);
-      });
-    }
-  </script>
+
+        // --- Authentication ---
+
+        /**
+         * Handles user login (anonymous or custom token).
+         */
+        async function handleLogin() {
+            try {
+                showLoading();
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Signed in with custom token.");
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
+                }
+            } catch (error) {
+                console.error("Authentication error:", error);
+                userStatusSpan.textContent = `Error: ${error.message}`;
+                showConfirmModal('Login Error', `Failed to log in: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Handles user logout.
+         */
+        async function handleLogout() {
+            try {
+                showLoading();
+                await auth.signOut();
+            } catch (error) {
+                console.error("Logout error:", error);
+                showConfirmModal('Logout Error', `Failed to log out: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Sets up the Firebase authentication state listener.
+         */
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                userStatusSpan.textContent = `Welcome, ${user.uid.substring(0, 8)}...`;
+                authButton.textContent = 'Logout';
+                authButton.onclick = handleLogout;
+                // Enable teacher CRUD tools if user is a teacher (implement role-based access)
+                await checkUserRole(user.uid);
+                // Load purchased items and cart
+                loadPurchasedItems();
+                loadCart();
+            } else {
+                userStatusSpan.textContent = 'Not logged in';
+                authButton.textContent = 'Login';
+                authButton.onclick = handleLogin;
+                teacherCrudTools.classList.add('hidden');
+                myMaterialsList.innerHTML = '<p id="noPurchasedMaterials">Please log in to see your purchased materials.</p>';
+                cart = {};
+                updateCartUI();
+            }
+            // After auth state is known, load the finder
+            await loadFinderItems();
+        });
+
+        /**
+         * Checks user role and toggles teacher tools.
+         * This is a placeholder for actual role-based access control.
+         * For now, any logged-in user can be treated as a "teacher" for demo.
+         * In a real app, you'd check a `roles` field in a user document.
+         * @param {string} uid
+         */
+        async function checkUserRole(uid) {
+            // For demo, let's assume if logged in, can see teacher tools
+            teacherCrudTools.classList.remove('hidden');
+
+            // Example of real role check:
+            /*
+            try {
+                const userDoc = await getDoc(doc(db, 'users', uid));
+                if (userDoc.exists && userDoc.data().role === 'teacher') {
+                    teacherCrudTools.classList.remove('hidden');
+                } else {
+                    teacherCrudTools.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("Error checking user role:", error);
+                teacherCrudTools.classList.add('hidden');
+            }
+            */
+        }
+
+        // --- Tab Management ---
+
+        tabsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('tab-button')) {
+                // Deactivate current active tab
+                document.querySelector('.tab-button.active').classList.remove('active');
+                document.querySelector('.tab-content.active').classList.add('hidden');
+                document.querySelector('.tab-content.active').classList.remove('active');
+
+                // Activate new tab
+                event.target.classList.add('active');
+                const targetTabId = event.target.dataset.tab;
+                const targetTabContent = document.getElementById(`${targetTabId}Tab`);
+                targetTabContent.classList.remove('hidden');
+                targetTabContent.classList.add('active');
+
+                if (targetTabId === 'all') {
+                    loadFinderItems();
+                } else if (targetTabId === 'myMaterials' && currentUser) {
+                    loadPurchasedItems();
+                    loadCart();
+                }
+            }
+        });
+
+
+        // --- Finder View Logic ---
+
+        /**
+         * Navigates to a specific folder path in the finder.
+         * @param {string[]} newPath An array of folder IDs for the new path.
+         */
+        async function navigateToFolder(newPath) {
+            currentPath = newPath;
+            currentPathSpan.textContent = `/ ${currentPath.join(' / ')}${currentPath.length > 0 ? ' / ' : ''}`;
+            await loadFinderItems();
+        }
+
+        /**
+         * Renders finder items (folders and files).
+         * @param {Array<Object>} items Array of item data.
+         * @param {string} viewMode 'list' or 'grid'.
+         */
+        function renderFinderItems(items, viewMode) {
+            finderItemsList.innerHTML = ''; // Clear current items
+            finderItemsList.className = viewMode === 'list' ? 'finder-list' : 'finder-grid';
+
+            if (currentPath.length > 0) {
+                // Add 'Go Up' folder
+                const goUpItem = document.createElement('li');
+                goUpItem.classList.add(viewMode === 'list' ? 'finder-list-item' : 'finder-grid-item', 'is-folder', 'go-up');
+                goUpItem.dataset.id = '..';
+                goUpItem.innerHTML = `
+                    <span class="item-icon">⬆️</span>
+                    <span class="item-name">..</span>
+                    ${viewMode === 'list' ? '<span class="item-details">Go Up</span>' : ''}
+                `;
+                finderItemsList.appendChild(goUpItem);
+            }
+
+            items.forEach(item => {
+                const itemElement = document.createElement('li');
+                itemElement.dataset.id = item.id;
+                itemElement.dataset.type = item.type;
+                itemElement.classList.add(viewMode === 'list' ? 'finder-list-item' : 'finder-grid-item');
+                itemElement.classList.toggle('is-folder', item.type === 'folder');
+
+                if (item.type === 'file') {
+                    itemElement.classList.toggle('is-assignment', item.isAssignment);
+                    // Check if exercise is purchased to determine locked state
+                    if (item.type === 'exercise' && item.price > 0 && currentUser && !item.isTeacher && !purchasedItems.has(item.id)) { // Assuming isTeacher is a property of currentUser or determined elsewhere
+                        itemElement.classList.add('is-locked');
+                    }
+                }
+
+
+                let icon = '';
+                if (item.type === 'folder') {
+                    icon = '📁';
+                } else if (item.type === 'tutorial') {
+                    icon = '📚';
+                } else if (item.type === 'pastPaper') {
+                    icon = '📄';
+                } else if (item.type === 'exercise') {
+                    icon = '✍️';
+                } else {
+                    icon = '❓'; // Default unknown file type
+                }
+
+                if (viewMode === 'list') {
+                    itemElement.innerHTML = `
+                        <input type="checkbox" class="item-checkbox" data-id="${item.id}">
+                        <span class="item-icon">${icon}</span>
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-details">
+                            ${item.type === 'file' ? `Type: ${item.fileType || item.type}<br>` : ''}
+                            ${item.type === 'file' && item.subject ? `Subject: ${item.subject}<br>` : ''}
+                            ${item.type === 'file' && item.topic ? `Topic: ${item.topic}<br>` : ''}
+                            ${item.type === 'file' && item.year ? `Year: ${item.year}<br>` : ''}
+                            ${item.price && item.price > 0 ? `Price: $${item.price.toFixed(2)}` : ''}
+                            ${item.type === 'file' && item.isAssignment ? '(Assignment)' : ''}
+                        </span>
+                    `;
+                } else { // Grid view
+                    itemElement.innerHTML = `
+                        <input type="checkbox" class="item-checkbox" data-id="${item.id}">
+                        <span class="item-icon">${icon}</span>
+                        <span class="item-name">${item.name}</span>
+                    `;
+                }
+                finderItemsList.appendChild(itemElement);
+            });
+
+            // Reapply Sortable if in list view and currentUser is teacher
+            if (currentUser && teacherCrudTools.classList.contains('hidden')) { // This means currentUser is NOT a teacher
+                // If not a teacher, remove sortable functionality or disable it
+                if (finderItemsList._sortable) {
+                    finderItemsList._sortable.destroy();
+                }
+            } else if (viewMode === 'list' && currentUser) {
+                if (finderItemsList._sortable) {
+                    finderItems._sortable.destroy(); // Destroy existing instance before creating a new one
+                }
+                new Sortable(finderItemsList, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    filter: '.go-up', // Do not allow dragging 'Go Up'
+                    onEnd: async function (evt) {
+                        const { oldIndex, newIndex, item } = evt;
+                        const itemId = item.dataset.id;
+                        const itemType = item.dataset.type;
+
+                        // Adjust indices for 'Go Up' if it exists and we're not at root
+                        let adjustedOldIndex = oldIndex;
+                        let adjustedNewIndex = newIndex;
+                        if (currentPath.length > 0) {
+                            adjustedOldIndex -= 1; // Account for '..' folder
+                            adjustedNewIndex -= 1;
+                        }
+
+                        if (adjustedOldIndex < 0 || adjustedNewIndex < 0) return; // Should not happen if filter works
+
+                        // Update Firestore 'order' field for all affected items
+                        const updatedOrder = [...currentMaterialsData];
+                        const [movedItem] = updatedOrder.splice(adjustedOldIndex, 1);
+                        updatedOrder.splice(adjustedNewIndex, 0, movedItem);
+
+                        showLoading();
+                        const batch = db.batch();
+                        for (let i = 0; i < updatedOrder.length; i++) {
+                            const materialRef = doc(db, 'artifacts', appId, 'public', 'data', 'materials', updatedOrder[i].id);
+                            updateDoc(materialRef, { order: i }); // Use updateDoc
+                        }
+                        await batch.commit(); // No batch.commit() directly on db.batch() in modular SDK, use writeBatch
+                        await loadFinderItems(); // Reload to reflect new order
+                        hideLoading();
+                    }
+                });
+            }
+
+
+            selectedItems.clear(); // Clear selections after re-render
+            updateCrudButtonStates();
+        }
+
+        /**
+         * Filters the materials based on selected criteria.
+         * @param {Array<Object>} materials The raw list of materials to filter.
+         * @returns {Array<Object>} The filtered list of materials.
+         */
+        function filterMaterials(materials) {
+            const selectedSubject = subjectFilter.value;
+            const selectedTopic = topicFilter.value;
+            const selectedYear = yearFilter.value;
+
+            return materials.filter(item => {
+                if (item.type === 'folder') return true; // Folders are always visible
+
+                let match = true;
+                if (selectedSubject !== 'all' && item.subject !== selectedSubject) {
+                    match = false;
+                }
+                if (selectedTopic !== 'all' && item.topic !== selectedTopic) {
+                    match = false;
+                }
+                if (selectedYear !== 'all' && item.year !== parseInt(selectedYear)) {
+                    match = false;
+                }
+                return match;
+            });
+        }
+
+
+        /**
+         * Loads items for the current folder path from Firestore.
+         */
+        async function loadFinderItems() {
+            showLoading();
+            try {
+                const pathString = currentPath.length > 0 ? currentPath.join('/') : '';
+                currentPathSpan.textContent = `Path: /${pathString}`;
+
+                let q = query(
+                    publicMaterialsCollectionRef,
+                    where('parentPath', '==', pathString),
+                    orderBy('order', 'asc')
+                );
+
+                const snapshot = await getDocs(q);
+                currentMaterialsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Populate filters only for the 'all' tab initially
+                if (document.getElementById('allTab').classList.contains('active')) {
+                    await populateFilters();
+                }
+
+                // Apply filters to the current materials
+                const filteredItems = filterMaterials(currentMaterialsData);
+                renderFinderItems(filteredItems, currentViewMode);
+
+            } catch (error) {
+                console.error("Error loading finder items:", error);
+                showConfirmModal('Error', `Failed to load materials: ${error.message}`);
+                renderFinderItems([], currentViewMode); // Render empty if error
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Populates the subject, topic, and year filters based on all available materials.
+         * This should run once, or when new materials are added.
+         */
+        async function populateFilters() {
+            if (allMaterialsFlat.length === 0) {
+                try {
+                    const snapshot = await getDocs(publicMaterialsCollectionRef);
+                    allMaterialsFlat = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (error) {
+                    console.error("Error fetching all materials for filters:", error);
+                    return;
+                }
+            }
+
+            allSubjects.clear();
+            allTopics.clear();
+            allYears.clear();
+
+            allMaterialsFlat.forEach(item => {
+                if (item.subject) allSubjects.add(item.subject);
+                if (item.topic) allTopics.add(item.topic);
+                if (item.year) allYears.add(item.year);
+            });
+
+            // Populate Subject Filter
+            subjectFilter.innerHTML = '<option value="all">All Subjects</option>';
+            Array.from(allSubjects).sort().forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectFilter.appendChild(option);
+            });
+
+            // Populate Topic Filter (initially disabled, enabled when subject selected)
+            topicFilter.innerHTML = '<option value="all">All Topics</option>';
+            topicFilter.disabled = true;
+
+            // Populate Year Filter (initially disabled, enabled when subject/topic selected)
+            yearFilter.innerHTML = '<option value="all">All Years</option>';
+            yearFilter.disabled = true;
+        }
+
+        /**
+         * Updates topic and year filters based on the selected subject.
+         */
+        function updateDynamicFilters() {
+            const selectedSubject = subjectFilter.value;
+
+            // Update Topic Filter
+            topicFilter.innerHTML = '<option value="all">All Topics</option>';
+            const filteredTopics = new Set();
+            allMaterialsFlat.forEach(item => {
+                if (selectedSubject === 'all' || item.subject === selectedSubject) {
+                    if (item.topic) filteredTopics.add(item.topic);
+                }
+            });
+            Array.from(filteredTopics).sort().forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicFilter.appendChild(option);
+            });
+            topicFilter.disabled = selectedSubject === 'all';
+
+            // Update Year Filter
+            yearFilter.innerHTML = '<option value="all">All Years</option>';
+            const filteredYears = new Set();
+            const selectedTopic = topicFilter.value; // Get current selected topic after update
+            allMaterialsFlat.forEach(item => {
+                const subjectMatch = selectedSubject === 'all' || item.subject === selectedSubject;
+                const topicMatch = selectedTopic === 'all' || item.topic === selectedTopic;
+                if (subjectMatch && topicMatch) {
+                    if (item.year) filteredYears.add(item.year);
+                }
+            });
+            Array.from(filteredYears).sort().forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+            });
+            yearFilter.disabled = (selectedSubject === 'all' && selectedTopic === 'all');
+        }
+
+        subjectFilter.addEventListener('change', () => {
+            updateDynamicFilters();
+            const filteredItems = filterMaterials(currentMaterialsData);
+            renderFinderItems(filteredItems, currentViewMode);
+        });
+        topicFilter.addEventListener('change', () => {
+            updateDynamicFilters(); // Update years based on new topic
+            const filteredItems = filterMaterials(currentMaterialsData);
+            renderFinderItems(filteredItems, currentViewMode);
+        });
+        yearFilter.addEventListener('change', () => {
+            const filteredItems = filterMaterials(currentMaterialsData);
+            renderFinderItems(filteredItems, currentViewMode);
+        });
+        resetFiltersButton.addEventListener('click', () => {
+            subjectFilter.value = 'all';
+            topicFilter.value = 'all';
+            yearFilter.value = 'all';
+            updateDynamicFilters(); // Reset dynamic filters too
+            const filteredItems = filterMaterials(currentMaterialsData);
+            renderFinderItems(filteredItems, currentViewMode);
+        });
+
+
+        // Handle folder/file click
+        finderItemsList.addEventListener('click', async (event) => {
+            const listItem = event.target.closest('.finder-list-item, .finder-grid-item');
+            if (!listItem) return;
+
+            const itemId = listItem.dataset.id;
+            const itemType = listItem.dataset.type;
+
+            // Handle checkbox selection
+            const checkbox = event.target.closest('.item-checkbox');
+            if (checkbox) {
+                if (checkbox.checked) {
+                    selectedItems.add(itemId);
+                } else {
+                    selectedItems.delete(itemId);
+                }
+                updateCrudButtonStates();
+                return;
+            }
+
+            // Handle 'Go Up'
+            if (itemId === '..') {
+                const newPath = [...currentPath];
+                newPath.pop();
+                await navigateToFolder(newPath);
+                return;
+            }
+
+            // If a locked exercise is clicked and not a teacher
+            const itemData = currentMaterialsData.find(item => item.id === itemId);
+            if (itemData && itemData.type === 'exercise' && itemData.price > 0 && currentUser && !item.isTeacher && !purchasedItems.has(itemId)) { // Assuming isTeacher is a property of currentUser or determined elsewhere
+                await showConfirmModal('Locked Exercise', `This exercise is locked. Do you want to add "${itemData.name}" to your cart for $${itemData.price.toFixed(2)}?`);
+                // If confirmed, add to cart
+                if (await showConfirmModal('Add to Cart?', `Do you want to add "${itemData.name}" to your cart for $${itemData.price.toFixed(2)}?`)) {
+                    addToCart(itemData);
+                }
+                return;
+            }
+
+
+            if (itemType === 'folder') {
+                const newPath = [...currentPath, itemId];
+                await navigateToFolder(newPath);
+            } else if (itemType === 'tutorial' || itemType === 'pastPaper' || itemType === 'exercise') {
+                const fileToPreview = currentMaterialsData.find(item => item.id === itemId);
+                if (fileToPreview) {
+                    openPreviewModal(fileToPreview);
+                }
+            }
+        });
+
+        // Toggle list/grid view
+        listViewBtn.addEventListener('click', () => {
+            currentViewMode = 'list';
+            listViewBtn.classList.add('active');
+            gridViewBtn.classList.remove('active');
+            renderFinderItems(filterMaterials(currentMaterialsData), currentViewMode);
+        });
+
+        gridViewBtn.addEventListener('click', () => {
+            currentViewMode = 'grid';
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+            renderFinderItems(filterMaterials(currentMaterialsData), currentViewMode);
+        });
+
+        /**
+         * Updates the enabled/disabled state of CRUD buttons based on selections.
+         */
+        function updateCrudButtonStates() {
+            const hasSelection = selectedItems.size > 0;
+            const singleSelection = selectedItems.size === 1;
+
+            deleteSelectedButton.disabled = !hasSelection;
+            editSelectedButton.disabled = !singleSelection;
+            moveSelectedButton.disabled = !hasSelection;
+        }
+
+        // --- CRUD Operations (Teacher Tools) ---
+
+        /**
+         * Adds a new folder to the current path.
+         */
+        addFolderButton.addEventListener('click', () => {
+            currentEditItemId = null; // Clear edit state
+            folderModalTitle.textContent = 'Add New Folder';
+            folderNameInput.value = '';
+            folderModal.style.display = 'flex';
+        });
+
+        folderForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const folderName = folderNameInput.value.trim();
+            if (!folderName) return;
+
+            showLoading();
+            try {
+                const pathString = currentPath.length > 0 ? currentPath.join('/') : '';
+                const order = currentMaterialsData.length > 0 ? Math.max(...currentMaterialsData.map(item => item.order || 0)) + 1 : 0;
+
+                if (currentEditItemId) {
+                    // Update existing folder
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'materials', currentEditItemId), {
+                        name: folderName
+                    });
+                    showTemporaryMessage(promoMessage, 'Folder updated successfully!', false);
+                } else {
+                    // Add new folder
+                    await addDoc(publicMaterialsCollectionRef, {
+                        name: folderName,
+                        type: 'folder',
+                        parentPath: pathString,
+                        order: order, // For sorting
+                        createdAt: FieldValue.serverTimestamp()
+                    });
+                    showTemporaryMessage(promoMessage, 'Folder added successfully!', false);
+                }
+                folderModal.style.display = 'none';
+                await loadFinderItems();
+            } catch (error) {
+                console.error("Error saving folder:", error);
+                showConfirmModal('Error', `Failed to save folder: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        /**
+         * Adds a new file (tutorial, past paper, exercise) to the current path.
+         */
+        addFileButton.addEventListener('click', async () => {
+            currentEditItemId = null; // Clear edit state
+            fileModalTitle.textContent = 'Add New File';
+            fileForm.reset();
+            currentFilePathText.textContent = '';
+            // Dynamically populate subjects in the file modal
+            await populateFileModalSubjects();
+            fileModal.style.display = 'flex';
+        });
+
+        fileForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const displayName = fileDisplayNameInput.value.trim();
+            const type = fileTypeSelect.value;
+            // Get subject from the new input field
+            const subject = fileSubjectInput.value.trim();
+            const topic = fileTopicInput.value.trim();
+            const year = fileYearInput.value ? parseInt(fileYearInput.value) : null;
+            const price = filePriceInput.value ? parseFloat(filePriceInput.value) : 0;
+            const isAssignment = isAssignmentCheckbox.checked;
+            const files = fileUploadInput.files;
+
+            if (!displayName || !type || !subject) {
+                showConfirmModal('Validation Error', 'Please fill in all required fields (Display Name, Type, Subject).');
+                return;
+            }
+
+            showLoading();
+            try {
+                const pathString = currentPath.length > 0 ? currentPath.join('/') : '';
+                const order = currentMaterialsData.length > 0 ? Math.max(...currentMaterialsData.map(item => item.order || 0)) + 1 : 0;
+
+                if (currentEditItemId) {
+                    // Update existing file
+                    const updateData = {
+                        name: displayName,
+                        fileType: type,
+                        subject: subject,
+                        topic: topic,
+                        year: year,
+                        price: price,
+                        isAssignment: isAssignment
+                    };
+
+                    if (files.length > 0) {
+                        // Upload new file to storage
+                        const file = files[0];
+                        const storageRefPath = `materials/${pathString}/${file.name}`;
+                        const fileRef = ref(storage, storageRefPath);
+                        await uploadBytes(fileRef, file);
+                        const fileUrl = await getDownloadURL(fileRef);
+                        updateData.url = fileUrl;
+                        updateData.mimeType = file.type;
+                    }
+
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'materials', currentEditItemId), updateData);
+                    showTemporaryMessage(promoMessage, 'File updated successfully!', false);
+
+                } else {
+                    // Add new file
+                    if (files.length === 0) {
+                        showConfirmModal('Validation Error', 'Please select a file to upload.');
+                        hideLoading();
+                        return;
+                    }
+
+                    const uploadPromises = Array.from(files).map(async (file) => {
+                        const storageRefPath = `materials/${pathString}/${file.name}`;
+                        const fileRef = ref(storage, storageRefPath);
+                        await uploadBytes(fileRef, file);
+                        const fileUrl = await getDownloadURL(fileRef);
+
+                        return addDoc(publicMaterialsCollectionRef, {
+                            name: displayName, // Use display name for document name
+                            filename: file.name, // Original file name
+                            type: 'file', // Always 'file' for content, use fileType for category
+                            fileType: type, // tutorial, pastPaper, exercise
+                            url: fileUrl,
+                            mimeType: file.type,
+                            parentPath: pathString,
+                            subject: subject,
+                            topic: topic,
+                            year: year,
+                            price: price,
+                            isAssignment: isAssignment,
+                            order: order, // For sorting
+                            createdAt: FieldValue.serverTimestamp()
+                        });
+                    });
+                    await Promise.all(uploadPromises);
+                    showTemporaryMessage(promoMessage, 'File(s) added successfully!', false);
+                }
+
+                fileModal.style.display = 'none';
+                await loadFinderItems();
+            } catch (error) {
+                console.error("Error saving file:", error);
+                showConfirmModal('Error', `Failed to save file: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        /**
+         * Populates the subject filter in the file modal based on existing subjects.
+         */
+        async function populateFileModalSubjects() {
+            // Clear and populate the datalist for suggestions
+            subjectOptionsDatalist.innerHTML = '';
+            if (allSubjects.size === 0) {
+                await populateFilters(); // Ensure allSubjects is populated
+            }
+            Array.from(allSubjects).sort().forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                subjectOptionsDatalist.appendChild(option);
+            });
+        }
+
+
+        /**
+         * Deletes selected items.
+         */
+        deleteSelectedButton.addEventListener('click', async () => {
+            if (selectedItems.size === 0) return;
+
+            const confirmed = await showConfirmModal(
+                'Confirm Deletion',
+                `Are you sure you want to delete ${selectedItems.size} selected item(s)? This action cannot be undone.`
+            );
+
+            if (!confirmed) return;
+
+            showLoading();
+            try {
+                const deletePromises = [];
+                for (const itemId of selectedItems) {
+                    const itemToDelete = currentMaterialsData.find(item => item.id === itemId);
+                    if (itemToDelete) {
+                        // If it's a file, delete from storage as well
+                        if (itemToDelete.type === 'file' && itemToDelete.url) {
+                            // Firebase Storage ref expects path or full URL. If url is full, extract path.
+                            const storagePath = itemToDelete.url.includes(firebaseConfig.storageBucket)
+                                ? decodeURIComponent(itemToDelete.url.split('?')[0].split('%2F').slice(1).join('/'))
+                                : itemToDelete.url; // Fallback if URL is not a Firebase Storage URL format
+                            const fileRef = ref(storage, storagePath);
+                            deletePromises.push(deleteObject(fileRef).catch(error => console.warn("Could not delete storage file, it might not exist or permissions:", error)));
+                        }
+                        deletePromises.push(deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'materials', itemId)));
+                    }
+                }
+                await Promise.all(deletePromises);
+                selectedItems.clear();
+                showTemporaryMessage(promoMessage, 'Selected item(s) deleted successfully!', false);
+                await loadFinderItems();
+            } catch (error) {
+                console.error("Error deleting items:", error);
+                showConfirmModal('Error', `Failed to delete items: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        /**
+         * Edits the single selected item.
+         */
+        editSelectedButton.addEventListener('click', async () => {
+            if (selectedItems.size !== 1) return;
+
+            const itemId = Array.from(selectedItems)[0];
+            const itemToEdit = currentMaterialsData.find(item => item.id === itemId);
+
+            if (!itemToEdit) {
+                showConfirmModal('Error', 'Selected item not found.');
+                return;
+            }
+
+            currentEditItemId = itemId;
+
+            if (itemToEdit.type === 'folder') {
+                folderModalTitle.textContent = 'Edit Folder';
+                folderNameInput.value = itemToEdit.name;
+                folderModal.style.display = 'flex';
+            } else if (itemToEdit.type === 'file') {
+                fileModalTitle.textContent = 'Edit File';
+                fileDisplayNameInput.value = itemToEdit.name;
+                fileTypeSelect.value = itemToEdit.fileType || '';
+                await populateFileModalSubjects(); // Ensure subjects datalist is loaded
+                fileSubjectInput.value = itemToEdit.subject || ''; // Set value for the input field
+                fileTopicInput.value = itemToEdit.topic || '';
+                fileYearInput.value = itemToEdit.year || '';
+                filePriceInput.value = itemToEdit.price || 0;
+                isAssignmentCheckbox.checked = itemToEdit.isAssignment || false;
+                currentFilePathText.textContent = itemToEdit.filename ? `Current file: ${itemToEdit.filename}` : 'No file uploaded.';
+                fileUploadInput.value = ''; // Clear file input
+                fileModal.style.display = 'flex';
+            }
+        });
+
+        /**
+         * Moves selected items to another folder.
+         */
+        moveSelectedButton.addEventListener('click', async () => {
+            if (selectedItems.size === 0) return;
+
+            // Populate the dropdown with available folders (excluding current path and selected folders)
+            moveTargetFolderSelect.innerHTML = '<option value="">Select Target Folder</option>';
+            const folders = allMaterialsFlat.filter(item => item.type === 'folder' && !selectedItems.has(item.id)); // Exclude selected items from being move targets
+            folders.forEach(folder => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                // Display full path for clarity
+                const folderPath = getFolderPath(folder.id, allMaterialsFlat);
+                option.textContent = folderPath.length > 0 ? `/ ${folderPath.join(' / ')} / ${folder.name}` : `/ ${folder.name}`;
+                moveTargetFolderSelect.appendChild(option);
+            });
+
+            moveModal.style.display = 'flex';
+        });
+
+        /**
+         * Helper to reconstruct folder path for display in move modal.
+         * @param {string} folderId
+         * @param {Array<Object>} allItems
+         * @returns {string[]}
+         */
+        function getFolderPath(folderId, allItems) {
+            const path = [];
+            let currentFolder = allItems.find(item => item.id === folderId);
+            while (currentFolder && currentFolder.parentPath !== '') {
+                path.unshift(currentFolder.name);
+                const parentPathArray = currentFolder.parentPath.split('/');
+                const parentFolderId = parentPathArray[parentPathArray.length - 1];
+                currentFolder = allItems.find(item => item.id === parentFolderId);
+            }
+            return path;
+        }
+
+        confirmMoveButton.addEventListener('click', async () => {
+            const targetFolderId = moveTargetFolderSelect.value;
+            if (!targetFolderId) {
+                showConfirmModal('Error', 'Please select a target folder.');
+                return;
+            }
+
+            const confirmed = await showConfirmModal(
+                'Confirm Move',
+                `Are you sure you want to move ${selectedItems.size} item(s) to the selected folder?`
+            );
+
+            if (!confirmed) return;
+
+            showLoading();
+            try {
+                const targetFolder = allMaterialsFlat.find(item => item.id === targetFolderId);
+                const newParentPath = targetFolder.parentPath === '' ? targetFolder.id : `${targetFolder.parentPath}/${targetFolder.id}`;
+
+                const movePromises = [];
+                for (const itemId of selectedItems) {
+                    movePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'materials', itemId), {
+                        parentPath: newParentPath,
+                        order: FieldValue.serverTimestamp() // Reorder moved items to end
+                    }));
+                }
+                await Promise.all(movePromises);
+                selectedItems.clear();
+                showTemporaryMessage(promoMessage, 'Item(s) moved successfully!', false);
+                moveModal.style.display = 'none';
+                await loadFinderItems();
+            } catch (error) {
+                console.error("Error moving items:", error);
+                showConfirmModal('Error', `Failed to move items: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        });
+
+
+        // --- Modals General Close ---
+        document.querySelectorAll('.modal .modal-close').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.target.closest('.modal').style.display = 'none';
+                // Reset PDF viewer if closing preview modal
+                if (event.target.closest('#previewModal')) {
+                    resetPreviewModal();
+                }
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                if (event.target.id === 'previewModal') {
+                    resetPreviewModal();
+                }
+            }
+        });
+
+
+        // --- Preview Modal Functions ---
+
+        /**
+         * Resets the preview modal state.
+         */
+        function resetPreviewModal() {
+            previewContent.innerHTML = '';
+            pdfViewer.classList.add('hidden');
+            previewError.classList.add('hidden');
+            pdfDoc = null;
+            pageNum = 1;
+            pageRendering = false;
+            pageNumPending = null;
+            pdfCanvas.width = 0;
+            pdfCanvas.height = 0;
+        }
+
+        /**
+         * Opens the preview modal for a given file.
+         * @param {Object} file The file object from Firestore.
+         */
+        async function openPreviewModal(file) {
+            resetPreviewModal();
+            previewModalTitle.textContent = file.name;
+            previewModal.style.display = 'flex';
+            previewError.classList.add('hidden');
+
+            try {
+                if (!file.url) {
+                    throw new Error("File URL is missing.");
+                }
+
+                if (file.mimeType.includes('pdf')) {
+                    pdfViewer.classList.remove('hidden');
+                    await loadPdf(file.url);
+                } else if (file.mimeType.includes('image')) {
+                    previewContent.innerHTML = `<img src="${file.url}" alt="${file.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x300/cccccc/333333?text=Image+Load+Error';">`;
+                } else if (file.mimeType.includes('video')) {
+                    previewContent.innerHTML = `<video controls src="${file.url}"><source src="${file.url}" type="${file.mimeType}">Your browser does not support the video tag.</video>`;
+                } else {
+                    throw new Error("Unsupported file type for preview.");
+                }
+            } catch (error) {
+                console.error("Error opening preview:", error);
+                previewError.textContent = `Error: ${error.message}`;
+                previewError.classList.remove('hidden');
+                previewContent.innerHTML = '';
+                pdfViewer.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Initializes PDF.js viewer for a given PDF URL.
+         * @param {string} url The URL of the PDF file.
+         */
+        async function loadPdf(url) {
+            try {
+                pdfDoc = await pdfjsLib.getDocument(url).promise;
+                pdfTotalPagesSpan.textContent = pdfDoc.numPages;
+                pageNum = 1;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                showConfirmModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
+                previewError.textContent = `Failed to load PDF: ${error.message}`;
+                previewError.classList.remove('hidden');
+                pdfViewer.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Renders a specific page of the PDF.
+         * @param {number} num The page number to render.
+         */
+        function renderPage(num) {
+            pageRendering = true;
+            pdfPageNumSpan.textContent = num;
+
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: pdfScale });
+                const pdfContext = pdfCanvas.getContext('2d');
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: pdfContext,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePdfNavButtons();
+                });
+            }).catch(error => {
+                console.error('Error rendering PDF page:', error);
+                showConfirmModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+                pageRendering = false;
+                pageNumPending = null;
+                updatePdfNavButtons();
+            });
+        }
+
+        /**
+         * Queues a PDF page render if one is already in progress.
+         * @param {number} num The page number to queue.
+         */
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        /**
+         * Updates the disabled state of PDF navigation buttons.
+         */
+        function updatePdfNavButtons() {
+            prevPdfPageBtn.disabled = pageNum <= 1;
+            nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+        }
+
+        prevPdfPageBtn.addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        nextPdfPageBtn.addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+
+        // --- My Materials / Shopping Cart Logic ---
+        let purchasedItems = new Set(); // Stores IDs of purchased exercises
+
+        /**
+         * Loads purchased items for the current user from Firestore.
+         */
+        async function loadPurchasedItems() {
+            if (!currentUser) {
+                myMaterialsList.innerHTML = '<p id="noPurchasedMaterials">Please log in to see your purchased materials.</p>';
+                return;
+            }
+
+            showLoading();
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists && userDoc.data().purchasedMaterials) {
+                    purchasedItems = new Set(userDoc.data().purchasedMaterials);
+                } else {
+                    purchasedItems.clear();
+                }
+
+                if (purchasedItems.size > 0) {
+                    const purchasedMaterialsData = allMaterialsFlat.filter(item => purchasedItems.has(item.id));
+                    myMaterialsList.innerHTML = ''; // Clear previous content
+                    purchasedMaterialsData.forEach(item => {
+                        const card = document.createElement('div');
+                        card.classList.add('material-card');
+                        card.innerHTML = `
+                            <div class="card-header">
+                                <span>${item.name}</span>
+                                <span class="badge ${item.fileType}">${item.fileType}</span>
+                            </div>
+                            <div class="card-details">
+                                <span>Subject: ${item.subject}</span>
+                                ${item.topic ? `<span>Topic: ${item.topic}</span>` : ''}
+                                ${item.year ? `<span>Year: ${item.year}</span>` : ''}
+                            </div>
+                            <div class="card-actions">
+                                <button class="action-button primary" data-id="${item.id}">View</button>
+                            </div>
+                        `;
+                        card.querySelector('button').addEventListener('click', () => openPreviewModal(item));
+                        myMaterialsList.appendChild(card);
+                    });
+                } else {
+                    myMaterialsList.innerHTML = '<p id="noPurchasedMaterials">You haven\'t purchased any materials yet.</p>';
+                }
+
+            } catch (error) {
+                console.error("Error loading purchased items:", error);
+                showConfirmModal('Error', `Failed to load purchased items: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Saves the current cart to Firestore.
+         */
+        async function saveCart() {
+            if (!currentUser) return; // Cart not saved for unauthenticated users
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
+                const cartData = Object.values(cart).map(item => ({
+                    id: item.item.id,
+                    quantity: item.quantity
+                }));
+                await updateDoc(userDocRef, { cart: cartData }); // Use updateDoc or setDoc with merge
+            } catch (error) {
+                console.error("Error saving cart:", error);
+            }
+        }
+
+        /**
+         * Loads the cart for the current user from Firestore.
+         */
+        async function loadCart() {
+            if (!currentUser) return;
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists && userDoc.data().cart) {
+                    const loadedCartData = userDoc.data().cart;
+                    cart = {};
+                    for (const cartItem of loadedCartData) {
+                        const material = allMaterialsFlat.find(m => m.id === cartItem.id);
+                        if (material) {
+                            cart[material.id] = { item: material, quantity: cartItem.quantity };
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading cart:", error);
+            } finally {
+                updateCartUI();
+            }
+        }
+
+
+        /**
+         * Adds an item to the shopping cart.
+         * @param {Object} item The material item to add.
+         */
+        async function addToCart(item) {
+            if (purchasedItems.has(item.id)) {
+                showConfirmModal('Already Purchased', `You have already purchased "${item.name}".`);
+                return;
+            }
+            if (cart[item.id]) {
+                cart[item.id].quantity++;
+            } else {
+                cart[item.id] = { item: item, quantity: 1 };
+            }
+            updateCartUI();
+            await saveCart();
+        }
+
+        /**
+         * Removes an item from the shopping cart.
+         * @param {string} itemId The ID of the item to remove.
+         */
+        async function removeFromCart(itemId) {
+            delete cart[itemId];
+            updateCartUI();
+            await saveCart();
+        }
+
+        /**
+         * Applies a promo code and calculates discount.
+         */
+        applyPromoButton.addEventListener('click', async () => {
+            const code = promoCodeInput.value.trim().toUpperCase();
+            if (!code) return;
+
+            // Simple promo code logic for demo (replace with backend validation)
+            if (code === 'PROMO10') {
+                promoCodeApplied = { code: code, discount: 0.10 }; // 10% discount
+                showTemporaryMessage(promoMessage, 'Promo code "PROMO10" applied!', false);
+            } else if (code === 'FREESTUFF') {
+                promoCodeApplied = { code: code, discount: 1.00 }; // 100% discount
+                showTemporaryMessage(promoMessage, 'Promo code "FREESTUFF" applied!', false);
+            } else {
+                promoCodeApplied = null;
+                showTemporaryMessage(promoMessage, 'Invalid promo code.', true);
+            }
+            updateCartUI();
+        });
+
+
+        /**
+         * Updates the shopping cart UI.
+         */
+        function updateCartUI() {
+            let subtotal = 0;
+            let discount = 0;
+            let total = 0;
+            let itemCount = 0;
+
+            cartItemsList.innerHTML = '';
+            if (Object.keys(cart).length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                for (const itemId in cart) {
+                    const cartItem = cart[itemId];
+                    const itemTotal = cartItem.item.price * cartItem.quantity;
+                    subtotal += itemTotal;
+                    itemCount += cartItem.quantity;
+
+                    const li = document.createElement('li');
+                    li.classList.add('cart-item');
+                    li.innerHTML = `
+                        <span>${cartItem.item.name} (${cartItem.quantity} x $${cartItem.item.price.toFixed(2)})</span>
+                        <span>$${itemTotal.toFixed(2)}
+                            <button class="action-button" onclick="removeFromCart('${itemId}')">Remove</button>
+                        </span>
+                    `;
+                    cartItemsList.appendChild(li);
+                }
+            }
+
+            if (promoCodeApplied) {
+                discount = subtotal * promoCodeApplied.discount;
+                if (discount > subtotal) discount = subtotal; // Cannot discount more than subtotal
+            }
+            total = subtotal - discount;
+
+            cartItemCount.textContent = itemCount;
+            cartSubtotalSpan.textContent = `$${subtotal.toFixed(2)}`;
+            cartDiscountSpan.textContent = `-$${discount.toFixed(2)}`;
+            cartTotalSpan.textContent = `$${total.toFixed(2)}`;
+
+            checkoutButton.disabled = Object.keys(cart).length === 0;
+        }
+
+        /**
+         * Handles Stripe checkout.
+         */
+        checkoutButton.addEventListener('click', async () => {
+            if (!currentUser) {
+                await showConfirmModal('Login Required', 'Please log in to proceed with checkout.');
+                return;
+            }
+            if (Object.keys(cart).length === 0) {
+                showConfirmModal('Cart Empty', 'Your cart is empty. Add items before checking out.');
+                return;
+            }
+
+            showLoading();
+            try {
+                // Create a checkout session in Firestore
+                const checkoutSessionRef = await addDoc(collection(db, 'checkout_sessions'), {
+                    items: Object.values(cart).map(item => ({
+                        id: item.item.id,
+                        name: item.item.name,
+                        price: item.item.price,
+                        quantity: item.quantity
+                    })),
+                    promoCode: promoCodeApplied ? promoCodeApplied.code : null,
+                    uid: currentUser.uid,
+                    success_url: window.location.origin + window.location.pathname + '?checkout=success',
+                    cancel_url: window.location.origin + window.location.pathname + '?checkout=cancelled',
+                    created: FieldValue.serverTimestamp(),
+                });
+
+                // Listen for the Checkout Session to get attached by the Cloud Function
+                const unsubscribe = onSnapshot(checkoutSessionRef, (snap) => {
+                    const data = snap.data();
+                    if (data && data.error) {
+                        // Show error to customer (e.g., using a toast)
+                        showConfirmModal('Checkout Error', `An error occurred: ${data.error.message}`);
+                        console.error("Stripe Checkout error:", data.error);
+                        hideLoading();
+                        unsubscribe(); // Stop listening
+                    }
+                    if (data && data.url) {
+                        // We have a Stripe Checkout URL, let's redirect.
+                        window.location.assign(data.url);
+                        unsubscribe(); // Stop listening
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initiating checkout:", error);
+                showConfirmModal('Checkout Error', `Failed to initiate checkout: ${error.message}`);
+            } finally {
+                // Hide loading only if an error occurs before redirect, otherwise the redirect handles it.
+                // hideLoading();
+            }
+        });
+
+        /**
+         * Handles checkout success/cancellation from URL parameters.
+         */
+        async function handleCheckoutStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('checkout')) {
+                const status = urlParams.get('checkout');
+                if (status === 'success') {
+                    await showConfirmModal('Payment Successful!', 'Your purchase has been completed. Materials will appear in "My Materials".');
+                    // Clear cart and update purchased items
+                    cart = {};
+                    promoCodeApplied = null;
+                    await saveCart();
+                    await loadPurchasedItems();
+                    updateCartUI();
+                    // Clear the checkout parameters from the URL
+                    const newUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                } else if (status === 'cancelled') {
+                    showConfirmModal('Payment Cancelled', 'Your payment was cancelled. You can try again.');
+                    // Clear the checkout parameters from the URL
+                    const newUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                }
+            }
+        }
+
+        // --- Initial Load ---
+        window.onload = async () => {
+            // Check if PDFJS is available from the loaded script
+            if (typeof pdfjsLib === 'undefined') {
+                console.error("PDF.js library (pdfjsLib) is not defined. Ensure 'pdf.min.js' is loaded correctly.");
+                // Potentially hide PDF viewer related elements or display a warning.
+            } else {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+            }
+
+            await handleLogin(); // Attempt to log in or create anonymous user
+            await loadFinderItems(); // Load initial finder view
+            await handleCheckoutStatus(); // Check for checkout status
+        };
+
+    </script>
 </body>
 </html>
