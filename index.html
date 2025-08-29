@@ -212,7 +212,7 @@
              background-color: var(--accent-primary);
              color: var(--bg-primary);
              padding: .75rem 1.5rem;
-             border-radius: 8px;
+             border-radius: 8様の;
              border: none;
              cursor: pointer;
              font-weight: 600;
@@ -798,7 +798,7 @@
             <div id="homeSection" style="display: block; opacity: 1;">
                 <section class="hero">
                     <div class="hero-text">
-                        <h2>Hi , how are you today?</h2>
+                        <h2>Hi <span id="homeUserNamePlaceholder"></span>, how are you today?</h2>
                         <span>to fight DSE</span>
                         <div class="buttons">
                             <a href="#tutorial" id="homeTutorialLink">Tutorial Video</a>
@@ -1165,7 +1165,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- IMPORTANT CONFIGURATION ---
@@ -1297,7 +1297,16 @@
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
-            document.getElementById('toggleSubmissionsButton').style.display = 'block'; // Always show submissions button
+            document.getElementById('toggleSubmissionsButton').style.display = 'block';
+            // Personalized greeting: if we have a name, show it; otherwise show generic greeting without name
+            const homeNameSpan = document.getElementById('homeUserNamePlaceholder');
+            const heroHeading = document.querySelector('#homeSection .hero-text h2');
+            if (currentUserName && homeNameSpan) {
+                homeNameSpan.textContent = currentUserName;
+            } else if (heroHeading) {
+                heroHeading.textContent = 'Hi, how are you today?';
+            }
+ // Always show submissions button
 
             // Set personalized greeting for home section
             const homeUserNamePlaceholder = document.getElementById('homeUserNamePlaceholder');
@@ -1309,7 +1318,7 @@
             await checkForSuccessfulPurchase();
 
             showSection('homeSection');
-            loadPastSubmissions();
+            // Removed loadPastSubmissions(); as it's not implemented.
             if(currentUserRole === 'teacher') {
                 loadAuthorizedStudents();
             }
@@ -1349,7 +1358,7 @@
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
+                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
@@ -1779,7 +1788,11 @@
             const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
             try {
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading content', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 if (snapshot.empty) {
                     container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
                     return;
@@ -2068,8 +2081,9 @@
                 return;
             }
 
-            // Prevent dropping into the same folder or an invalid folder structure (e.g., dropping a subject into a topic)
-            if (newFullParentIds.length !== 2) { // Files (level 3) always have 2 parent IDs
+            // Prevent dropping into an invalid folder structure (e.g., dropping a level 3 item into a level 1 subject if it requires a level 2 topic/year)
+            // Files (level 3) should always have 2 parent IDs in their path after the type.
+            if (newFullParentIds.length !== 2) { 
                  showModal('Move Error', 'Files must be moved into a Topic or Year folder (which has a Subject parent).');
                  draggedItem = null;
                  return;
@@ -2122,7 +2136,7 @@
 
             } catch (error) {
                 console.error("Error moving item:", error);
-                showModal('Move Error', `Could not move item. Error: ${e.message}`);
+                showModal('Move Error', `Could not move item. Error: ${error.message}`);
             } finally {
                 draggedItem = null; // Reset dragged item
                 // Remove dragging class from original item if it still exists
@@ -2176,7 +2190,11 @@
              }
 
              try {
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading items', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
                 snapshot.forEach(doc => {
                     const item = doc.data();
@@ -2212,13 +2230,19 @@
                                 : `<button class="add-to-cart-btn btn-primary" data-id="${item.id}" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
                             }`;
                         if(!isPurchased) {
-                           setTimeout(() => card.querySelector('.add-to-cart-btn')?.addEventListener('click', () => addToCart(item)), 0);
+                           const addToCartBtn = card.querySelector('.add-to-cart-btn');
+                           if (addToCartBtn) {
+                               addToCartBtn.addEventListener('click', () => addToCart(item));
+                           }
                         } else {
                             // Ensure the download-btn has the correct data-item for preview
-                            setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
-                                const itemData = JSON.parse(e.target.dataset.item);
-                                handlePreview(type, itemData); // Use the unified preview function
-                            }), 0);
+                            const downloadBtn = card.querySelector('.download-btn');
+                            if (downloadBtn) {
+                                downloadBtn.addEventListener('click', (e) => {
+                                    const itemData = JSON.parse(e.target.dataset.item);
+                                    handlePreview(type, itemData); // Use the unified preview function
+                                });
+                            }
                         }
                     } else { // Free materials like past papers
                         // Changed to a button for consistent styling and click handling
@@ -2229,10 +2253,13 @@
                             <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
                         `;
                         // Attach event listener directly after creating the card
-                        setTimeout(() => card.querySelector('.download-btn')?.addEventListener('click', (e) => {
-                            const itemData = JSON.parse(e.target.dataset.item);
-                            handlePreview(type, itemData); // Use the unified preview function
-                        }), 0);
+                        const downloadBtn = card.querySelector('.download-btn');
+                        if (downloadBtn) {
+                            downloadBtn.addEventListener('click', (e) => {
+                                const itemData = JSON.parse(e.target.dataset.item);
+                                handlePreview(type, itemData); // Use the unified preview function
+                            });
+                        }
                     }
                     card.innerHTML = cardContent;
                     grid.appendChild(card);
@@ -2247,7 +2274,11 @@
             selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
             try {
                 const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading materials', `Could not load ${levelName}s. Error: ${e.message}`);
+                    return {docs:[]};
+                });
                 selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
                 if(snapshot.empty) {
                     selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
@@ -2469,7 +2500,7 @@
                     });
 
                     // Redirect to Stripe
-                    const stripeUrl = `${STRIPE_PAYAPE_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                    const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`; // Corrected variable name
                     window.location.href = stripeUrl;
 
                 } catch (error) {
@@ -2578,7 +2609,11 @@
             const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
 
             try {
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading promo codes', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 if (snapshot.empty) {
                     teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
                     return;
@@ -2934,8 +2969,8 @@
         // New: Homework submission dropzone
         setupDropZone('homeworkDropZone', 'homeworkFile', 'homeworkFileName', 'homeworkFilePreview');
         
-        async function loadPastSubmissions() { /* Placeholder for original function */ }
-        document.getElementById('gradeButton').addEventListener('click', async () => { /* Placeholder for original function */ });
+        // Removed loadPastSubmissions() as it's not implemented.
+        // Removed gradeButton event listener as it's not implemented.
         
         // --- CHAT FUNCTIONALITY ---
         const chatInput = document.getElementById('chatInput');
@@ -3195,47 +3230,48 @@
 
 
         // --- STUDENT MANAGEMENT (TEACHER VIEW) ---
+        
         async function loadAuthorizedStudents() {
             const container = document.getElementById('authorizedStudentsList');
+            if (!container) return; // Ensure container exists
             const loadingIndicator = document.getElementById('studentManagementLoading');
-            loadingIndicator.textContent = 'Loading student data...';
-            container.innerHTML = '';
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            container.innerHTML = ''; // Clear previous content
 
             try {
+                // Get all users who have a profile (which implies they've logged in)
                 const usersRef = collection(db, `artifacts/${appId}/users`);
                 const usersSnapshot = await getDocs(usersRef);
-                
+
                 let studentPromises = [];
 
                 for (const userDoc of usersSnapshot.docs) {
-                    const userId = userDoc.id;
-                    const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile/data`);
-                    
+                    const studentId = userDoc.id;
                     studentPromises.push((async () => {
                         try {
-                            const profileSnap = await getDoc(profileRef);
-                            if (profileSnap.exists() && profileSnap.data().role === 'student') {
-                                const profileData = profileSnap.data();
-                                
-                                const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${userId}/purchased_exercises`);
-                                const purchasedExercisesSnap = await getDocs(purchasedExercisesRef);
-                                
-                                let purchases = [];
-                                purchasedExercisesSnap.forEach(purchaseDoc => {
-                                    purchases.push(purchaseDoc.data());
-                                });
-
-                                return { id: userId, profile: profileData, purchases: purchases };
+                            const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
+                            const studentProfileSnap = await getDoc(studentProfileRef);
+                            
+                            // Only process if profile exists and role is 'student'
+                            if (studentProfileSnap.exists()) {
+                                const profileData = studentProfileSnap.data();
+                                if (profileData.role === 'student') {
+                                    // Fetch purchases for this student
+                                    const purchasesRef = collection(db, `artifacts/${appId}/users/${studentId}/purchased_exercises`);
+                                    let purchases = [];
+                                    try {
+                                        const pSnap = await getDocs(purchasesRef);
+                                        purchases = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                                    } catch (e) {
+                                        console.warn(`Could not fetch purchases for ${studentId}:`, e);
+                                    }
+                                    return { id: studentId, profile: profileData, purchases };
+                                }
                             }
                         } catch (e) {
-                            // Catch specific permission errors and log them clearly
-                            if (e.code === 'permission-denied') {
-                                console.warn(`Permission denied for user ${userId}. Ensure security rules allow teachers to read student data.`);
-                            } else {
-                                console.warn(`Could not load profile or purchases for user ${userId}: ${e.message}`);
-                            }
+                            console.warn(`Could not load profile for user ${studentId}:`, e);
                         }
-                        return null;
+                        return null; // Return null if not a student or error
                     })());
                 }
 
@@ -3269,7 +3305,7 @@
                             <div class="student-info">
                                 <p><strong>Email:</strong> ${student.profile.email || 'N/A'}</p>
                                 <p><strong>Electives:</strong> ${student.profile.electives || 'N/A'}</p>
-                                <p><strong>Last Login:</strong> ${new Date(student.profile.lastLogin).toLocaleString()}</p>
+                                <p><strong>Last Login:</strong> ${student.profile.lastLogin ? new Date(student.profile.lastLogin).toLocaleString() : 'N/A'}</p>
                             </div>
                             <div class="purchase-history">
                                 ${purchasesHtml}
@@ -3288,7 +3324,7 @@
                 console.error("Error loading student data:", error);
                 container.innerHTML = `<p class="error-message">Failed to load student data: ${error.message}. Please check Firebase security rules.</p>`;
             } finally {
-                loadingIndicator.textContent = '';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
             }
         }
 
@@ -3304,7 +3340,7 @@
 
                         // Delete purchased items (get all and delete)
                         const purchasedExercisesRef = collection(db, `artifacts/${appId}/users/${studentId}/purchased_exercises`);
-                        const purchasedSnapshot = await getDocs(purchasedExercisesRef); /* Corrected from purchasesRef */
+                        const purchasedSnapshot = await getDocs(purchasedExercisesRef); 
                         purchasedSnapshot.forEach(doc => batch.delete(doc.ref));
 
                         // Delete chat history
@@ -3362,7 +3398,7 @@
             if (currentUserRole === 'teacher') {
                 renderTeacherSubmissionView(submissionContent, submissionSidebar);
             } else if (currentUserRole === 'student') {
-                renderStudentSubmissionView(submissionContent, submissionSidebar);
+                renderStudentSubmissionView(contentContainer, sidebarContainer);
             } else {
                 submissionContent.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
             }
@@ -3508,7 +3544,11 @@
                     const subjectId = subjectDoc.id;
                     const assignmentsRef = collection(db, getPath('assignments', [subjectId]));
                     const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                    const assignmentsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                    const assignmentsSnapshot = await getDocs(q).catch(e=>{
+                        console.error(e);
+                        showModal('Error loading assignments', 'A database index might be required. Check console for details.');
+                        return {docs:[]};
+                    });
 
                     assignmentsSnapshot.forEach(assignmentDoc => {
                         allAssignments.push({ id: assignmentDoc.id, subjectId: subjectId, ...assignmentDoc.data() });
@@ -3610,7 +3650,11 @@
 
                     const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
                     const q = query(submissionsRef, where('assignmentId', '==', assignmentId), orderBy('submittedAt', 'desc'));
-                    const submissionsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                    const submissionsSnapshot = await getDocs(q).catch(e=>{
+                        console.error(e);
+                        showModal('Error loading submissions', 'A database index might be required. Check console for details.');
+                        return {docs:[]};
+                    });
 
                     submissionsSnapshot.forEach(submissionDoc => {
                         allSubmissions.push({ 
@@ -3702,7 +3746,11 @@
                             const studentId = userDoc.id;
                             const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
                             const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
-                            const submissionsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                            const submissionsSnapshot = await getDocs(q).catch(e=>{
+                                console.error(e);
+                                showModal('Error loading submissions for deletion', 'A database index might be required. Check console for details.');
+                                return {docs:[]};
+                            });
                             for (const submissionDoc of submissionsSnapshot.docs) {
                                 const submissionData = submissionDoc.data();
                                 if (submissionData.filePath) { // Delete file from storage if it exists
@@ -3861,7 +3909,11 @@
             try {
                 const assignmentsRef = collection(db, getPath('assignments', [selectedSubjectId]));
                 const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                const assignmentsSnapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const assignmentsSnapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading assignments', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 
                 assignmentSelect.innerHTML = `<option value="">-- Select Assignment --</option>`;
                 if (assignmentsSnapshot.empty) {
@@ -3960,7 +4012,11 @@
             try {
                 const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
                 const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading submissions', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
 
                 if (snapshot.empty) {
                     mySubmissionsList.innerHTML = '<p>You have not submitted any homework yet.</p>';
@@ -4192,7 +4248,11 @@
             const q = query(collectionRef, orderBy('name', 'asc'));
 
             try {
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading content', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 finderSidebar.innerHTML = '';
                 if (snapshot.empty) {
                     finderSidebar.innerHTML = `<p style="padding:10px;">No ${config.level1.toLowerCase()}s found.</p>`;
@@ -4242,7 +4302,11 @@
             const q = query(collectionRef, orderBy('name', level === 2 ? 'desc' : 'asc')); // Order years descending
 
             try {
-                const snapshot = await getDocs(q).catch(e=>{console.error(e);el('#materialsError').textContent='Error loading content. A database index might be required. Check console for details.';return {docs:[]};});
+                const snapshot = await getDocs(q).catch(e=>{
+                    console.error(e);
+                    showModal('Error loading content', 'A database index might be required. Check console for details.');
+                    return {docs:[]};
+                });
                 finderFileListContent.innerHTML = '';
                 if (snapshot.empty) {
                     finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No items found here.</p>`;
@@ -4528,7 +4592,9 @@
             if (finderSection.style.display === 'flex' && !finderSection.classList.contains('fullscreen')) {
                 finderSection.style.left = '50%';
                 finderSection.style.top = '50%';
-                finderWindow.style.transform = 'translate(-50%, -50%)';
+                // The `finderWindow` variable is not defined here.
+                // Assuming it refers to `finderSection`
+                finderSection.style.transform = 'translate(-50%, -50%)';
             }
 
             // Adjust submission section layout on resize
@@ -4644,7 +4710,18 @@
             prevPdfPageBtn.disabled = pageNum <= 1;
             nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
         }
+        
 
     </script>
+  
+    <script>
+    // Show the login wrapper when the page has fully loaded
+    window.addEventListener('load', function() {
+        const authWrapper = document.getElementById('authWrapper');
+        if (authWrapper) {
+            authWrapper.style.opacity = '1';
+        }
+    });
+</script>
 </body>
 </html>
