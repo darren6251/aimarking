@@ -935,18 +935,17 @@
         // Import Firebase SDKs using modular syntax
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
-        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, FieldValue } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp, onSnapshot, setDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js';
 
 
-        // Firebase Configuration (Replace with your actual Firebase config)
-        // Accessing global variables provided by the Canvas environment
+        // Firebase Configuration
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        const firebaseConfig = {
             apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
             authDomain: "ai-grading-9bb30.firebaseapp.com",
             projectId: "ai-grading-9bb30",
-            storageBucket: "ai-grading-9bb30.appspot.com", // Corrected storage bucket URL
+            storageBucket: "ai-grading-9bb30.appspot.com",
             messagingSenderId: "298162112230",
             appId: "1:298162112230:web:529d3f95536991be685d27",
             measurementId: "G-CHKLKSM17S"
@@ -960,7 +959,6 @@
         const stripe = Stripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your Stripe Public Key
 
         // Global variables for PDF viewer
-        // Make sure PDFJS is correctly defined, as it was in index(8).html
         if (typeof pdfjsLib !== 'undefined') {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         } else {
@@ -1044,9 +1042,8 @@
         const fileUploadInput = document.getElementById('fileUpload');
         const currentFilePathText = document.getElementById('currentFilePath');
         const fileTypeSelect = document.getElementById('fileType');
-        // const fileSubjectSelect = document.getElementById('fileSubject'); // Old select element
-        const fileSubjectInput = document.getElementById('fileSubject'); // New input element
-        const subjectOptionsDatalist = document.getElementById('subjectOptions'); // New datalist element
+        const fileSubjectInput = document.getElementById('fileSubject');
+        const subjectOptionsDatalist = document.getElementById('subjectOptions');
         const fileTopicInput = document.getElementById('fileTopic');
         const fileYearInput = document.getElementById('fileYear');
         const filePriceInput = document.getElementById('filePrice');
@@ -1150,8 +1147,14 @@
                 showLoading();
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } catch (tokenError) {
+                        console.warn("Custom token sign-in failed, attempting anonymous sign-in:", tokenError.message);
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously (fallback).");
+                    }
                 } else {
                     await signInAnonymously(auth);
                     console.log("Signed in anonymously.");
@@ -1182,6 +1185,7 @@
 
         /**
          * Sets up the Firebase authentication state listener.
+         * All initial user-dependent data loading should happen here.
          */
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
@@ -1189,21 +1193,20 @@
                 userStatusSpan.textContent = `Welcome, ${user.uid.substring(0, 8)}...`;
                 authButton.textContent = 'Logout';
                 authButton.onclick = handleLogout;
-                // Enable teacher CRUD tools if user is a teacher (implement role-based access)
-                await checkUserRole(user.uid);
-                // Load purchased items and cart
-                loadPurchasedItems();
-                loadCart();
+                await checkUserRole(user.uid); // This runs after current user is set
+                await loadPurchasedItems(); // These now run after auth state is stable
+                await loadCart();
             } else {
                 userStatusSpan.textContent = 'Not logged in';
                 authButton.textContent = 'Login';
                 authButton.onclick = handleLogin;
                 teacherCrudTools.classList.add('hidden');
                 myMaterialsList.innerHTML = '<p id="noPurchasedMaterials">Please log in to see your purchased materials.</p>';
+                purchasedItems.clear(); // Clear purchased items for logged out user
                 cart = {};
                 updateCartUI();
             }
-            // After auth state is known, load the finder
+            // Load finder items AFTER authentication state is fully established
             await loadFinderItems();
         });
 
@@ -1304,7 +1307,9 @@
                 if (item.type === 'file') {
                     itemElement.classList.toggle('is-assignment', item.isAssignment);
                     // Check if exercise is purchased to determine locked state
-                    if (item.type === 'exercise' && item.price > 0 && currentUser && !item.isTeacher && !purchasedItems.has(item.id)) { // Assuming isTeacher is a property of currentUser or determined elsewhere
+                    // The isTeacher property should be part of the currentUser object or a separate check.
+                    // For now, assuming teacherCrudTools.classList.contains('hidden') implies not a teacher.
+                    if (item.type === 'exercise' && item.price > 0 && currentUser && teacherCrudTools.classList.contains('hidden') && !purchasedItems.has(item.id)) {
                         itemElement.classList.add('is-locked');
                     }
                 }
@@ -1355,7 +1360,7 @@
                 }
             } else if (viewMode === 'list' && currentUser) {
                 if (finderItemsList._sortable) {
-                    finderItems._sortable.destroy(); // Destroy existing instance before creating a new one
+                    finderItemsList._sortable.destroy(); // Destroy existing instance before creating a new one
                 }
                 new Sortable(finderItemsList, {
                     animation: 150,
@@ -1383,13 +1388,13 @@
                         updatedOrder.splice(adjustedNewIndex, 0, movedItem);
 
                         showLoading();
-                        const batch = db.batch();
+                        const batch = writeBatch(db);
                         for (let i = 0; i < updatedOrder.length; i++) {
                             const materialRef = doc(db, 'artifacts', appId, 'public', 'data', 'materials', updatedOrder[i].id);
-                            updateDoc(materialRef, { order: i }); // Use updateDoc
+                            batch.update(materialRef, { order: i });
                         }
-                        await batch.commit(); // No batch.commit() directly on db.batch() in modular SDK, use writeBatch
-                        await loadFinderItems(); // Reload to reflect new order
+                        await batch.commit();
+                        await loadFinderItems();
                         hideLoading();
                     }
                 });
@@ -1432,6 +1437,12 @@
          * Loads items for the current folder path from Firestore.
          */
         async function loadFinderItems() {
+            // Only try to load if currentUser is available
+            if (!currentUser) {
+                finderItemsList.innerHTML = '<p>Please log in to view materials.</p>';
+                return;
+            }
+
             showLoading();
             try {
                 const pathString = currentPath.length > 0 ? currentPath.join('/') : '';
@@ -1448,7 +1459,7 @@
 
                 // Populate filters only for the 'all' tab initially
                 if (document.getElementById('allTab').classList.contains('active')) {
-                    await populateFilters();
+                    await populateFilters(); // This also needs currentUser check within
                 }
 
                 // Apply filters to the current materials
@@ -1469,6 +1480,9 @@
          * This should run once, or when new materials are added.
          */
         async function populateFilters() {
+            // Only populate filters if currentUser is available
+            if (!currentUser) return;
+
             if (allMaterialsFlat.length === 0) {
                 try {
                     const snapshot = await getDocs(publicMaterialsCollectionRef);
@@ -1603,8 +1617,7 @@
 
             // If a locked exercise is clicked and not a teacher
             const itemData = currentMaterialsData.find(item => item.id === itemId);
-            if (itemData && itemData.type === 'exercise' && itemData.price > 0 && currentUser && !item.isTeacher && !purchasedItems.has(itemId)) { // Assuming isTeacher is a property of currentUser or determined elsewhere
-                await showConfirmModal('Locked Exercise', `This exercise is locked. Do you want to add "${itemData.name}" to your cart for $${itemData.price.toFixed(2)}?`);
+            if (itemData && itemData.type === 'exercise' && itemData.price > 0 && currentUser && teacherCrudTools.classList.contains('hidden') && !purchasedItems.has(itemId)) {
                 // If confirmed, add to cart
                 if (await showConfirmModal('Add to Cart?', `Do you want to add "${itemData.name}" to your cart for $${itemData.price.toFixed(2)}?`)) {
                     addToCart(itemData);
@@ -1686,7 +1699,7 @@
                         type: 'folder',
                         parentPath: pathString,
                         order: order, // For sorting
-                        createdAt: FieldValue.serverTimestamp()
+                        createdAt: serverTimestamp()
                     });
                     showTemporaryMessage(promoMessage, 'Folder added successfully!', false);
                 }
@@ -1717,7 +1730,6 @@
             event.preventDefault();
             const displayName = fileDisplayNameInput.value.trim();
             const type = fileTypeSelect.value;
-            // Get subject from the new input field
             const subject = fileSubjectInput.value.trim();
             const topic = fileTopicInput.value.trim();
             const year = fileYearInput.value ? parseInt(fileYearInput.value) : null;
@@ -1776,10 +1788,10 @@
                         const fileUrl = await getDownloadURL(fileRef);
 
                         return addDoc(publicMaterialsCollectionRef, {
-                            name: displayName, // Use display name for document name
-                            filename: file.name, // Original file name
-                            type: 'file', // Always 'file' for content, use fileType for category
-                            fileType: type, // tutorial, pastPaper, exercise
+                            name: displayName,
+                            filename: file.name,
+                            type: 'file',
+                            fileType: type,
                             url: fileUrl,
                             mimeType: file.type,
                             parentPath: pathString,
@@ -1788,8 +1800,8 @@
                             year: year,
                             price: price,
                             isAssignment: isAssignment,
-                            order: order, // For sorting
-                            createdAt: FieldValue.serverTimestamp()
+                            order: order,
+                            createdAt: serverTimestamp()
                         });
                     });
                     await Promise.all(uploadPromises);
@@ -1844,10 +1856,9 @@
                     if (itemToDelete) {
                         // If it's a file, delete from storage as well
                         if (itemToDelete.type === 'file' && itemToDelete.url) {
-                            // Firebase Storage ref expects path or full URL. If url is full, extract path.
                             const storagePath = itemToDelete.url.includes(firebaseConfig.storageBucket)
-                                ? decodeURIComponent(itemToDelete.url.split('?')[0].split('%2F').slice(1).join('/'))
-                                : itemToDelete.url; // Fallback if URL is not a Firebase Storage URL format
+                                ? decodeURIComponent(new URL(itemToDelete.url).pathname.split('/').slice(2).join('/'))
+                                : itemToDelete.url;
                             const fileRef = ref(storage, storagePath);
                             deletePromises.push(deleteObject(fileRef).catch(error => console.warn("Could not delete storage file, it might not exist or permissions:", error)));
                         }
@@ -1890,14 +1901,14 @@
                 fileModalTitle.textContent = 'Edit File';
                 fileDisplayNameInput.value = itemToEdit.name;
                 fileTypeSelect.value = itemToEdit.fileType || '';
-                await populateFileModalSubjects(); // Ensure subjects datalist is loaded
-                fileSubjectInput.value = itemToEdit.subject || ''; // Set value for the input field
+                await populateFileModalSubjects();
+                fileSubjectInput.value = itemToEdit.subject || '';
                 fileTopicInput.value = itemToEdit.topic || '';
                 fileYearInput.value = itemToEdit.year || '';
                 filePriceInput.value = itemToEdit.price || 0;
                 isAssignmentCheckbox.checked = itemToEdit.isAssignment || false;
                 currentFilePathText.textContent = itemToEdit.filename ? `Current file: ${itemToEdit.filename}` : 'No file uploaded.';
-                fileUploadInput.value = ''; // Clear file input
+                fileUploadInput.value = '';
                 fileModal.style.display = 'flex';
             }
         });
@@ -1910,11 +1921,10 @@
 
             // Populate the dropdown with available folders (excluding current path and selected folders)
             moveTargetFolderSelect.innerHTML = '<option value="">Select Target Folder</option>';
-            const folders = allMaterialsFlat.filter(item => item.type === 'folder' && !selectedItems.has(item.id)); // Exclude selected items from being move targets
+            const folders = allMaterialsFlat.filter(item => item.type === 'folder' && !selectedItems.has(item.id));
             folders.forEach(folder => {
                 const option = document.createElement('option');
                 option.value = folder.id;
-                // Display full path for clarity
                 const folderPath = getFolderPath(folder.id, allMaterialsFlat);
                 option.textContent = folderPath.length > 0 ? `/ ${folderPath.join(' / ')} / ${folder.name}` : `/ ${folder.name}`;
                 moveTargetFolderSelect.appendChild(option);
@@ -1964,7 +1974,7 @@
                 for (const itemId of selectedItems) {
                     movePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'materials', itemId), {
                         parentPath: newParentPath,
-                        order: FieldValue.serverTimestamp() // Reorder moved items to end
+                        order: serverTimestamp()
                     }));
                 }
                 await Promise.all(movePromises);
@@ -2105,7 +2115,7 @@
                 showConfirmModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
                 pageRendering = false;
                 pageNumPending = null;
-                updatePdfNavButtons();
+                    updatePdfNavButtons();
             });
         }
 
@@ -2159,15 +2169,18 @@
                 const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
                 const userDoc = await getDoc(userDocRef);
 
-                if (userDoc.exists && userDoc.data().purchasedMaterials) {
+                if (userDoc.exists() && userDoc.data() && userDoc.data().purchasedMaterials) {
                     purchasedItems = new Set(userDoc.data().purchasedMaterials);
                 } else {
                     purchasedItems.clear();
+                    if (!userDoc.exists()) {
+                        await setDoc(userDocRef, { purchasedMaterials: [] });
+                    }
                 }
 
                 if (purchasedItems.size > 0) {
                     const purchasedMaterialsData = allMaterialsFlat.filter(item => purchasedItems.has(item.id));
-                    myMaterialsList.innerHTML = ''; // Clear previous content
+                    myMaterialsList.innerHTML = '';
                     purchasedMaterialsData.forEach(item => {
                         const card = document.createElement('div');
                         card.classList.add('material-card');
@@ -2204,14 +2217,14 @@
          * Saves the current cart to Firestore.
          */
         async function saveCart() {
-            if (!currentUser) return; // Cart not saved for unauthenticated users
+            if (!currentUser) return;
             try {
                 const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
                 const cartData = Object.values(cart).map(item => ({
                     id: item.item.id,
                     quantity: item.quantity
                 }));
-                await updateDoc(userDocRef, { cart: cartData }); // Use updateDoc or setDoc with merge
+                await setDoc(userDocRef, { cart: cartData }, { merge: true });
             } catch (error) {
                 console.error("Error saving cart:", error);
             }
@@ -2225,7 +2238,7 @@
             try {
                 const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
                 const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists && userDoc.data().cart) {
+                if (userDoc.exists() && userDoc.data() && userDoc.data().cart) {
                     const loadedCartData = userDoc.data().cart;
                     cart = {};
                     for (const cartItem of loadedCartData) {
@@ -2234,6 +2247,8 @@
                             cart[material.id] = { item: material, quantity: cartItem.quantity };
                         }
                     }
+                } else {
+                    cart = {};
                 }
             } catch (error) {
                 console.error("Error loading cart:", error);
@@ -2280,10 +2295,10 @@
 
             // Simple promo code logic for demo (replace with backend validation)
             if (code === 'PROMO10') {
-                promoCodeApplied = { code: code, discount: 0.10 }; // 10% discount
+                promoCodeApplied = { code: code, discount: 0.10 };
                 showTemporaryMessage(promoMessage, 'Promo code "PROMO10" applied!', false);
             } else if (code === 'FREESTUFF') {
-                promoCodeApplied = { code: code, discount: 1.00 }; // 100% discount
+                promoCodeApplied = { code: code, discount: 1.00 };
                 showTemporaryMessage(promoMessage, 'Promo code "FREESTUFF" applied!', false);
             } else {
                 promoCodeApplied = null;
@@ -2327,7 +2342,7 @@
 
             if (promoCodeApplied) {
                 discount = subtotal * promoCodeApplied.discount;
-                if (discount > subtotal) discount = subtotal; // Cannot discount more than subtotal
+                if (discount > subtotal) discount = subtotal;
             }
             total = subtotal - discount;
 
@@ -2366,23 +2381,21 @@
                     uid: currentUser.uid,
                     success_url: window.location.origin + window.location.pathname + '?checkout=success',
                     cancel_url: window.location.origin + window.location.pathname + '?checkout=cancelled',
-                    created: FieldValue.serverTimestamp(),
+                    created: serverTimestamp(),
                 });
 
                 // Listen for the Checkout Session to get attached by the Cloud Function
                 const unsubscribe = onSnapshot(checkoutSessionRef, (snap) => {
                     const data = snap.data();
                     if (data && data.error) {
-                        // Show error to customer (e.g., using a toast)
                         showConfirmModal('Checkout Error', `An error occurred: ${data.error.message}`);
                         console.error("Stripe Checkout error:", data.error);
                         hideLoading();
-                        unsubscribe(); // Stop listening
+                        unsubscribe();
                     }
                     if (data && data.url) {
-                        // We have a Stripe Checkout URL, let's redirect.
                         window.location.assign(data.url);
-                        unsubscribe(); // Stop listening
+                        unsubscribe();
                     }
                 });
 
@@ -2390,8 +2403,7 @@
                 console.error("Error initiating checkout:", error);
                 showConfirmModal('Checkout Error', `Failed to initiate checkout: ${error.message}`);
             } finally {
-                // Hide loading only if an error occurs before redirect, otherwise the redirect handles it.
-                // hideLoading();
+                // hideLoading(); // Hidden because we expect a redirect or error to be handled
             }
         });
 
@@ -2404,18 +2416,15 @@
                 const status = urlParams.get('checkout');
                 if (status === 'success') {
                     await showConfirmModal('Payment Successful!', 'Your purchase has been completed. Materials will appear in "My Materials".');
-                    // Clear cart and update purchased items
                     cart = {};
                     promoCodeApplied = null;
                     await saveCart();
                     await loadPurchasedItems();
                     updateCartUI();
-                    // Clear the checkout parameters from the URL
                     const newUrl = window.location.origin + window.location.pathname;
                     window.history.replaceState({}, document.title, newUrl);
                 } else if (status === 'cancelled') {
                     showConfirmModal('Payment Cancelled', 'Your payment was cancelled. You can try again.');
-                    // Clear the checkout parameters from the URL
                     const newUrl = window.location.origin + window.location.pathname;
                     window.history.replaceState({}, document.title, newUrl);
                 }
@@ -2424,16 +2433,13 @@
 
         // --- Initial Load ---
         window.onload = async () => {
-            // Check if PDFJS is available from the loaded script
             if (typeof pdfjsLib === 'undefined') {
                 console.error("PDF.js library (pdfjsLib) is not defined. Ensure 'pdf.min.js' is loaded correctly.");
-                // Potentially hide PDF viewer related elements or display a warning.
             } else {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
             }
 
-            await handleLogin(); // Attempt to log in or create anonymous user
-            await loadFinderItems(); // Load initial finder view
+            await handleLogin(); // This will trigger onAuthStateChanged
             await handleCheckoutStatus(); // Check for checkout status
         };
 
