@@ -90,6 +90,7 @@
         `;
 
         onAuthStateChanged(auth, async (user) => {
+            console.log("onAuthStateChanged fired. User:", user ? user.uid : "null");
             if (user) {
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
@@ -101,48 +102,48 @@
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || user.displayName;
                         await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                        console.log("User profile found and role set:", currentUserRole);
                         showApp();
                     } else {
                         currentUserName = user.displayName;
-                        currentUserRole = 'unassigned';
-                        showCodeEntry();
+                        currentUserRole = 'unassigned'; // User is authenticated but role not set
+                        console.log("User authenticated but role unassigned. Showing code entry.");
+                        showCodeEntry(); // Prompt for role
                     }
                 } catch (e) {
                      console.error("Error checking user profile:", e);
                      showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     showLogin();
+                     showLogin(); // Fallback if profile access fails
                 }
             } else {
+                // No user authenticated
                 currentUserId = null;
                 currentUserRole = null;
                 currentUserName = null;
-                // Sign in anonymously if no user and no initial auth token
+                console.log("No user authenticated.");
+
                 try {
                     if (typeof __initial_auth_token !== 'undefined') {
+                        console.log("Canvas environment: Signing in with custom token.");
                         await signInWithCustomToken(auth, __initial_auth_token);
+                        // This will trigger onAuthStateChanged again with a user.
                     } else {
-                        // Only show login if not in Canvas environment or no token provided
-                        if (typeof __initial_auth_token === 'undefined' && !auth.currentUser) {
-                            showLogin();
-                        }
-                        // This else block implicitly falls through to showLogin if signInAnonymously isn't called
-                        // or if it fails. Let's make it more explicit.
-                        showLogin(); // Always show login if not authenticated
+                        console.log("Not Canvas/No token: Attempting anonymous sign-in for basic reads.");
+                        // Attempt anonymous sign-in to allow basic reads.
+                        await signInAnonymously(auth);
+                        // This will trigger onAuthStateChanged again with an anonymous user.
+                        // The anonymous user will then go through the 'unassigned' role flow and potentially showCodeEntry.
                     }
                 } catch (anonError) {
-                    console.error("Anonymous sign-in failed:", anonError);
-                    showModal('Authentication Error', `Failed to sign in anonymously: ${anonError.message}. Materials may not load.`);
-                    showLogin(); // Fallback to full login if anonymous fails
+                    console.error("Initial authentication failed:", anonError);
+                    showModal('Authentication Error', `Initial authentication failed: ${anonError.message}. Materials may not load.`);
+                    showLogin(); // Always show login if all initial auth attempts fail
                 }
-                
-                // This check below is redundant if showLogin is reliably called above.
-                // if (!auth.currentUser && !document.getElementById('authWrapper').style.display.includes('flex')) {
-                //     showLogin();
-                // }
             }
         });
 
         function showLogin() {
+            console.log("Showing login screen.");
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
@@ -151,6 +152,7 @@
         }
 
         function showCodeEntry() {
+            console.log("Showing code entry screen.");
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
@@ -168,12 +170,26 @@
         }
 
         async function showApp() {
+            // Ensure the user has a valid role before proceeding to app sections
+            if (!currentUserRole || currentUserRole === 'unassigned') {
+                console.log("showApp called but user role is unassigned. Redirecting to code entry.");
+                showCodeEntry(); // Redirect to code entry if role is not assigned
+                return;
+            }
+            console.log("Showing main app section. Current role:", currentUserRole);
             authWrapper.style.display = 'none';
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            initializeAllMaterialSections(); // Call materials initializer here
-            updateMaterialSectionVisibility();
-            // Highlight the correct tab in the header based on the URL or current view
+            initializeAllMaterialSections();
+            
+            // Determine which material section to show initially
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderParam = urlParams.get('folder');
+            const initialMaterialType = folderParam && materialsConfig[folderParam] ? folderParam : 'tutorials';
+            
+            // Directly call showMaterialSection to ensure proper display and content loading
+            showMaterialSection(initialMaterialType); // This will handle updating visibility and rendering for the chosen section
+            
             highlightCurrentNavTab();
             await checkForSuccessfulPurchase(); // Check for Stripe redirect
         }
@@ -181,6 +197,7 @@
         async function handleGoogleSignIn() {
             const provider = new GoogleAuthProvider();
             try { 
+                console.log("Initiating Google Sign-In popup.");
                 await signInWithPopup(auth, provider); 
             } catch (error) { 
                 document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
@@ -198,24 +215,32 @@
             else if (code === STUDENT_CODE) roleToSet = 'student';
             else { 
                 if(codeError) codeError.textContent = 'Invalid access code.';
+                console.warn("Invalid access code entered:", code);
                 return; 
             }
             
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                console.log(`Attempting to set role to '${roleToSet}' for user: ${currentUserId}`);
                 await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                currentUserRole = roleToSet;
-                showModal('Success', `Your role has been set to ${roleToSet}.`);
-                showApp();
+                console.log("Role set in Firestore. onAuthStateChanged will now re-evaluate.");
+                showModal('Success', `Your role has been set to ${roleToSet}. The page will now update.`);
+                // Do NOT call showApp() directly here. Let onAuthStateChanged handle the app display.
+                // Optionally, hide the code entry wrapper immediately
+                authWrapper.style.display = 'none'; // Fade out or hide more gracefully if needed
             } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${e.message}`;
+                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
                 console.error("Submit Code Error:", error);
             }
         }
 
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            console.log("Logging out user.");
+            signOut(auth);
+        });
 
         document.getElementById('switchRoleButton').addEventListener('click', () => {
+            console.log("Switch Role button clicked. Showing input modal.");
             showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
                 await handleSubmitCode(code);
             });
@@ -304,10 +329,12 @@
             let pathParts = [`artifacts/${appId}/public/data/${collection}`];
             if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
             if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            console.log("Generated Firestore path:", pathParts.join('/'), "for type:", type, "ids:", ids);
             return pathParts.join('/');
         }
 
         function initializeAllMaterialSections() {
+            console.log("Initializing all material sections setup.");
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
@@ -316,6 +343,7 @@
         }
 
         function showMaterialSection(typeToShow) {
+            console.log("Attempting to show material section:", typeToShow);
             for (const type in materialsConfig) {
                 const config = materialsConfig[type];
                 const section = document.getElementById(config.sectionId);
@@ -335,9 +363,13 @@
         }
 
         function updateMaterialSectionVisibility(type) {
+            console.log(`Updating visibility for section: ${type}, current role: ${currentUserRole}`);
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
-            if (!section) return;
+            if (!section) {
+                console.warn(`Section element not found for type: ${type}`);
+                return;
+            }
 
             const isTeacher = currentUserRole === 'teacher';
             const teacherView = document.getElementById(`teacher-${type}-view`);
@@ -349,9 +381,11 @@
             // Only re-render content if the section is currently visible AND the role matches
             if (section.style.display === 'block') {
                 if (isTeacher) { 
+                    console.log(`Rendering teacher content for ${type}`);
                     renderContent(type, `level1-${type}-container`, 1);
                     if (type === 'exercises') loadPromoCodesForTeacher();
                 } else { // Student view
+                    console.log(`Setting up student filters for ${type}`);
                     setupStudentFilters(type);
                 }
             }
@@ -361,6 +395,7 @@
         function setupMaterialSection(type) {
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
+            if (!section) return; // Ensure section exists before proceeding
 
             // Construct student view HTML (with/without shopping cart)
             let studentViewHtml = `
@@ -500,7 +535,7 @@
                     loadPromoCodesForTeacher();
                 }
             } else { // Student view setup
-                setupStudentFilters(type);
+                // Filters are set up and items rendered by updateMaterialSectionVisibility when the section becomes active
                 if(config.isPaid) {
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
                     document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
@@ -510,42 +545,47 @@
                  // Add toggle for student view (desktop only)
                  if (window.innerWidth >= 769) {
                     const studentViewContainer = document.getElementById(`student-${type}-view`);
-                    const titleContainer = section.querySelector('.section-title'); // Find the title for placement
-                    const toggleButton = document.createElement('button');
-                    toggleButton.className = 'material-view-toggle btn-primary';
-                    toggleButton.textContent = 'Switch to Finder View';
+                    const filterContainer = section.querySelector('.filters-container'); // Find the filter container for placement
                     
-                    // Append after the title or at the start of the view section
-                    const formContainer = section.querySelector('.form-container');
-                    if (formContainer) {
-                        formContainer.prepend(toggleButton); // Add before the filters
-                    } else {
-                        titleContainer.after(toggleButton); // As a fallback
-                    }
-
-                    toggleButton.addEventListener('click', () => {
-                        if (currentMaterialViewMode === 'card') {
-                            currentMaterialViewMode = 'finder';
-                            studentViewContainer.style.display = 'none'; // Hide the card view
-                            showFinderView(type); // Show finder window for the current type
-                            toggleButton.textContent = 'Switch to Card View';
-                        } else {
-                            currentMaterialViewMode = 'card';
-                            document.getElementById('finderMaterialsSection').style.display = 'none'; // Hide finder
-                            studentViewContainer.style.display = 'block'; // Show card view
-                            toggleButton.textContent = 'Switch to Finder View';
-                            renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
+                    if (filterContainer) { // Only if filters are present
+                        let toggleButton = filterContainer.querySelector(`.material-view-toggle`);
+                        if (!toggleButton) { // Create if it doesn't exist
+                            toggleButton = document.createElement('button');
+                            toggleButton.className = 'material-view-toggle btn-primary';
+                            filterContainer.prepend(toggleButton); // Add before the filters
                         }
-                    });
+                        toggleButton.textContent = currentMaterialViewMode === 'card' ? 'Switch to Finder View' : 'Switch to Card View';
+
+
+                        toggleButton.addEventListener('click', () => {
+                            if (currentMaterialViewMode === 'card') {
+                                currentMaterialViewMode = 'finder';
+                                studentViewContainer.style.display = 'none'; // Hide the card view
+                                showFinderView(type); // Show finder window for the current type
+                                toggleButton.textContent = 'Switch to Card View';
+                            } else {
+                                currentMaterialViewMode = 'card';
+                                document.getElementById('finderMaterialsSection').style.display = 'none'; // Hide finder
+                                studentViewContainer.style.display = 'block'; // Show card view
+                                toggleButton.textContent = 'Switch to Finder View';
+                                renderStudentItems(type); // Re-render the card view to ensure it's up-to-date
+                            }
+                        });
+                    }
                 }
             }
         }
         
         // --- Render Material Content (Teacher View) ---
         async function renderContent(type, containerId, level, parentIds = []) {
+            console.log(`renderContent called for type: ${type}, containerId: ${containerId}, level: ${level}, parentIds:`, parentIds);
             const container = document.getElementById(containerId);
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
+            if (!container) {
+                console.warn(`Container element not found: ${containerId}`);
+                return;
+            }
             container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
 
             const collectionRef = collection(db, getPath(type, parentIds));
@@ -553,7 +593,7 @@
 
             try {
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching level ${level} for ${type} at path ${collectionRef.path}:`, e);
                     showModal('Error loading content', 'A database index might be required. Check console for details.');
                     return {docs:[]};
                 });
@@ -659,6 +699,7 @@
 
         // --- Unified Preview Function ---
         function handlePreview(type, item) {
+            console.log("Attempting to preview item:", item);
             if (type === 'tutorials') {
                 const videoPreviewModal = document.getElementById('videoPreviewModal');
                 const videoPreviewTitle = document.getElementById('videoPreviewTitle');
@@ -788,6 +829,7 @@
             e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
             e.dataTransfer.effectAllowed = 'move';
             subItem.classList.add('dragging');
+            console.log("Drag started:", draggedItem);
         }
 
         function handleDragOver(e, type) {
@@ -815,10 +857,14 @@
                 targetElement.classList.remove('drag-over');
             }
 
-            if (!draggedItem) return;
+            if (!draggedItem) {
+                console.warn("Drop event occurred, but no item was being dragged.");
+                return;
+            }
 
             const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
-            
+            console.log("Drop event: droppedItemData:", droppedItemData, "targetElement:", targetElement);
+
             if (droppedItemData.type !== type) {
                 showModal('Move Error', 'Cannot move items between different material types.');
                 draggedItem = null;
@@ -855,7 +901,7 @@
                 draggedItem = null;
                 return;
             }
-
+            console.log(`Moving item ${itemId} from ${getPath(itemType, oldParentIds)} to ${getPath(itemType, newFullParentIds)}`);
             const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
             const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
 
@@ -877,13 +923,14 @@
                 const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
                 const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
                 
+                // Re-render only if the containers are currently expanded
                 if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
                     renderContent(itemType, oldContainerId, 3, oldParentIds);
                 }
                 if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
                      renderContent(itemType, newContainerId, 3, newFullParentIds);
                 }
-
+                 // If either container is not expanded, the item will appear/disappear on next expansion.
             } catch (error) {
                 console.error("Error moving item:", error);
                 showModal('Move Error', `Could not move item. Error: ${error.message}`);
@@ -896,14 +943,21 @@
 
         // --- STUDENT FILTER LOGIC ---
         function setupStudentFilters(type) {
+            console.log(`Setting up student filters for type: ${type}`);
             const config = materialsConfig[type];
             const level1Filter = document.getElementById(`level1-${type}-filter`);
             const level2Filter = document.getElementById(`level2-${type}-filter`);
             const grid = document.getElementById(`level3-${type}-grid`);
 
+            if (!level1Filter || !level2Filter || !grid) {
+                console.warn(`Student filter elements not found for type: ${type}. Cannot set up filters.`);
+                return;
+            }
+
             populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
 
             level1Filter.onchange = () => {
+                console.log(`Level 1 filter changed for ${type}. Value: ${level1Filter.value}`);
                 const level1Id = level1Filter.value;
                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
                 level2Filter.disabled = true;
@@ -913,34 +967,51 @@
                     level2Filter.disabled = false;
                 }
             };
-            level2Filter.onchange = () => renderStudentItems(type);
+            level2Filter.onchange = () => {
+                console.log(`Level 2 filter changed for ${type}. Value: ${level2Filter.value}`);
+                renderStudentItems(type);
+            };
+            // Initial render for student items if filters already have values (e.g. from refresh)
+            if (level1Filter.value && level2Filter.value) {
+                renderStudentItems(type);
+            }
         }
 
         async function renderStudentItems(type) {
+             console.log(`renderStudentItems called for type: ${type}`);
              const config = materialsConfig[type];
              const grid = document.getElementById(`level3-${type}-grid`);
-             const level1Id = document.getElementById(`level1-${type}-filter`).value;
-             const level2Id = document.getElementById(`level2-${type}-filter`).value;
+             const level1Filter = document.getElementById(`level1-${type}-filter`);
+             const level2Filter = document.getElementById(`level2-${type}-filter`);
+
+             if (!grid || !level1Filter || !level2Filter) {
+                 console.warn(`Student item rendering elements not found for type: ${type}.`);
+                 return;
+             }
+
+             const level1Id = level1Filter.value;
+             const level2Id = level2Filter.value;
 
              grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
              if (!level1Id || !level2Id) {
                  grid.innerHTML = `<p>Please select a ${config.level1.toLowerCase()} and ${config.level2.toLowerCase()}.</p>`;
                  return;
              }
-
+             console.log(`Fetching student items for ${type} with level1Id: ${level1Id}, level2Id: ${level2Id}`);
              const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
              const q = query(itemsRef, orderBy('name', 'asc'));
              
              let purchasedItems = {};
-             if(config.isPaid && currentUserId !== 'anonymous') {
+             if(config.isPaid && currentUserId && currentUserId !== 'anonymous') { // Check currentUserId for null/anonymous
                  const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
                  const snapshot = await getDocs(purchaseCollectionRef);
                  snapshot.forEach(doc => purchasedItems[doc.id] = true);
+                 console.log("Purchased items for current user:", purchasedItems);
              }
 
              try {
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching student items for ${type} at path ${itemsRef.path}:`, e);
                     showModal('Error loading items', 'A database index might be required. Check console for details.');
                     return {docs:[]};
                 });
@@ -1009,11 +1080,12 @@
         }
         
         async function populateFilter(selectElement, collectionRef, levelName) {
+            console.log(`Populating filter for ${levelName}. CollectionRef path: ${collectionRef.path}`);
             selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
             try {
                 const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching filter options for ${levelName} at path ${collectionRef.path}:`, e);
                     showModal('Error loading materials', `Could not load ${levelName}s. Error: ${e.message}`);
                     return {docs:[]};
                 });
@@ -1034,18 +1106,21 @@
 
         // --- E-COMMERCE LOGIC ---
         function addToCart(item) {
+            console.log("Adding to cart:", item);
             shoppingCart.push(item);
             updateCartUI();
             renderStudentItems('exercises'); 
         }
 
         function removeFromCart(itemId) {
+            console.log("Removing from cart:", itemId);
             shoppingCart = shoppingCart.filter(item => item.id !== itemId);
             updateCartUI();
             renderStudentItems('exercises');
         }
 
         function updateCartUI() {
+            console.log("Updating cart UI. Current cart:", shoppingCart);
             const cartItemsContainer = document.getElementById('cart-items');
             const subtotalPriceEl = document.getElementById('cart-subtotal-price');
             const promoDiscountLine = document.getElementById('promo-discount-line');
@@ -1096,12 +1171,14 @@
                 applyPromoCodeBtn.disabled = true;
                 promoCodeInput.value = appliedPromoCode.code;
                 promoCodeError.textContent = '';
+                console.log("Promo code applied:", appliedPromoCode.code, "Discount:", appliedPromoCode.discountAmount);
             } else {
                 promoDiscountLine.style.display = 'none';
                 appliedPromoCodeDisplay.style.display = 'none';
                 promoCodeInput.disabled = false;
                 applyPromoCodeBtn.disabled = false;
                 promoCodeInput.value = '';
+                console.log("No promo code applied.");
             }
 
             totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
@@ -1115,6 +1192,7 @@
                 } else {
                     validationMsg.textContent = '';
                 }
+                console.log("Checkout enabled. Final price:", finalPrice);
             } else {
                 checkoutBtn.disabled = true;
                 if (shoppingCart.length === 0) {
@@ -1124,10 +1202,12 @@
                 } else {
                     validationMsg.textContent = '';
                 }
+                console.log("Checkout disabled. Final price:", finalPrice);
             }
         }
 
         async function applyPromoCode() {
+            console.log("Attempting to apply promo code.");
             const promoCodeInput = document.getElementById('promoCodeInput');
             const promoCodeError = document.getElementById('promoCodeError');
             const code = promoCodeInput.value.trim().toUpperCase();
@@ -1164,6 +1244,7 @@
         }
 
         function removeAppliedPromoCode() {
+            console.log("Removing applied promo code.");
             appliedPromoCode = null;
             updateCartUI();
             document.getElementById('promoCodeInput').value = '';
@@ -1173,6 +1254,7 @@
 
 
         async function handleCheckout() {
+            console.log("Initiating checkout process.");
             if (!currentUserId || currentUserId === 'anonymous') {
                 return showModal('Error', 'You must be logged in to check out.');
             }
@@ -1188,6 +1270,7 @@
             }
 
             if (finalPrice === 0) {
+                console.log("Processing free checkout.");
                 try {
                     const batch = writeBatch(db);
                     shoppingCart.forEach(item => {
@@ -1217,7 +1300,7 @@
                 if (STRIPE_PAYMENT_LINK.includes("YOUR_STRIPE_PAYMENT_LINK")) {
                     return showModal('Configuration Error', 'The Stripe Payment Link has not been configured by the site administrator.');
                 }
-
+                console.log("Initiating Stripe paid checkout.");
                 const checkoutSessionId = crypto.randomUUID();
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
 
@@ -1243,16 +1326,19 @@
         }
         
         async function checkForSuccessfulPurchase() {
+            console.log("Checking for successful purchase from URL parameters.");
             const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('session_id');
 
             if (params.get('payment_status') === 'success' && sessionId) {
+                console.log("Payment successful detected. Session ID:", sessionId);
                 const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
                 try {
                     const sessionDoc = await getDoc(checkoutSessionRef);
                     if (sessionDoc.exists()) {
                         const sessionData = sessionDoc.data();
                         const purchasedItems = sessionData.cart;
+                        console.log("Processing purchased items:", purchasedItems);
 
                         const batch = writeBatch(db);
                         purchasedItems.forEach(item => {
@@ -1272,6 +1358,7 @@
                         shoppingCart = [];
                         appliedPromoCode = null;
                         
+                        // Clear URL parameters to prevent re-processing on refresh
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
                         // Re-render the exercises page to show purchased items
@@ -1295,6 +1382,7 @@
         }
 
         async function generateAndSavePromoCode() {
+            console.log("Generating and saving promo code.");
             const promoDiscountAmountInput = document.getElementById('promoDiscountAmount');
             const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
             const discountAmount = parseFloat(promoDiscountAmountInput.value);
@@ -1328,7 +1416,12 @@
         }
 
         async function loadPromoCodesForTeacher() {
+            console.log("Loading promo codes for teacher view.");
             const teacherPromoCodeList = document.getElementById('teacherPromoCodeList');
+            if (!teacherPromoCodeList) {
+                console.warn("teacherPromoCodeList element not found.");
+                return;
+            }
             teacherPromoCodeList.innerHTML = '<p class="loading-indicator">Loading promo codes...</p>';
 
             const promoCodesCollectionRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
@@ -1336,7 +1429,7 @@
 
             try {
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching promo codes at path ${promoCodesCollectionRef.path}:`, e);
                     showModal('Error loading promo codes', 'A database index might be required. Check console for details.');
                     return {docs:[]};
                 });
@@ -1378,6 +1471,7 @@
         }
 
         async function togglePromoCodeStatus(code, currentStatus) {
+            console.log(`Toggling status for promo code: ${code} to ${!currentStatus}`);
             const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
             try {
                 await updateDoc(promoCodeRef, { isActive: !currentStatus });
@@ -1390,6 +1484,7 @@
         }
 
         async function deletePromoCode(code) {
+            console.log("Deleting promo code:", code);
             showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"? This action cannot be undone.`, [
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
@@ -1773,6 +1868,7 @@
         let finderCurrentType = null;
 
         function showFinderView(type) {
+            console.log("Showing finder view for type:", type);
             const finderWindow = document.getElementById('finderMaterialsSection');
             const finderFileListContent = document.getElementById('finderFileListContent');
             
@@ -1796,7 +1892,12 @@
         }
 
         async function loadFinderSidebar(type) {
+            console.log("Loading finder sidebar for type:", type);
             const finderSidebar = document.getElementById('finderSidebar');
+            if (!finderSidebar) {
+                console.warn("finderSidebar element not found.");
+                return;
+            }
             finderSidebar.innerHTML = `<p class="loading-indicator">Loading subjects...</p>`;
             const config = materialsConfig[type];
             const collectionRef = collection(db, getPath(type));
@@ -1804,7 +1905,7 @@
 
             try {
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching finder sidebar content at path ${collectionRef.path}:`, e);
                     showModal('Error loading content', 'A database index might be required. Check console for details.');
                     return {docs:[]};
                 });
@@ -1834,6 +1935,7 @@
             const item = e.target;
             const type = item.dataset.type;
             const level1Id = item.dataset.id;
+            console.log(`Finder sidebar item clicked: ${item.textContent}, type: ${type}, id: ${level1Id}`);
             finderCurrentPath = [type, level1Id];
             
             document.querySelectorAll('.finder-sidebar-item').forEach(el => el.classList.remove('active'));
@@ -1843,7 +1945,12 @@
         }
 
         async function loadFinderFileList(type, parentIds, level) {
+            console.log(`Loading finder file list for type: ${type}, parentIds:`, parentIds, `level: ${level}`);
             const finderFileListContent = document.getElementById('finderFileListContent');
+            if (!finderFileListContent) {
+                console.warn("finderFileListContent element not found.");
+                return;
+            }
             finderFileListContent.innerHTML = `<p class="loading-indicator">Loading items...</p>`;
             const config = materialsConfig[type];
             const collectionPath = getPath(type, parentIds);
@@ -1853,7 +1960,7 @@
 
             try {
                 const snapshot = await getDocs(q).catch(e=>{
-                    console.error(e);
+                    console.error(`Error fetching finder file list content at path ${collectionRef.path}:`, e);
                     showModal('Error loading content', 'A database index might be required. Check console for details.');
                     return {docs:[]};
                 });
@@ -1911,6 +2018,10 @@
 
         function setupFinderWindow() {
             const finderWindow = document.getElementById('finderMaterialsSection');
+            if (!finderWindow) {
+                console.warn("finderMaterialsSection element not found.");
+                return;
+            }
             const dragBar = document.getElementById('finderDragBar');
             const fullscreenToggle = document.getElementById('finderFullscreenToggle');
             const minimizeButton = finderWindow.querySelector('.finder-circle.min');
@@ -1967,10 +2078,11 @@
             });
 
             finderWindow.querySelector('.finder-circle.close').addEventListener('click', () => {
+                console.log("Closing finder window.");
                 finderWindow.style.display = 'none';
                 currentMaterialViewMode = 'card';
                 // Re-render the currently active material section in card view
-                const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
+                const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id)?.style.display !== 'none');
                 if (activeMaterialSectionId) {
                     document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
                     const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
@@ -1991,10 +2103,119 @@
             });
         }
 
+        // --- PDF PREVIEW LOGIC ---
+        let pdfDoc = null;
+        let pageNum = 1;
+
+        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const pdfContext = pdfCanvas?.getContext('2d'); // Safely get context
+        const pdfPageNumSpan = document.getElementById('pdfPageNum');
+        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
+        const prevPdfPageBtn = document.getElementById('prevPdfPageBtn');
+        const nextPdfPageBtn = document.getElementById('nextPdfPageBtn');
+        const pdfModalTitle = document.getElementById('pdfModalTitle'); // Get the title element
+
+        prevPdfPageBtn?.addEventListener('click', () => { // Use optional chaining
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        nextPdfPageBtn?.addEventListener('click', () => { // Use optional chaining
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+        function showPdfPreviewModal(title, pdfUrl) {
+            if (!pdfPreviewModal || !pdfCanvas || !pdfContext) {
+                console.error("PDF preview elements not found.");
+                return;
+            }
+            pdfModalTitle.textContent = title;
+            pdfPreviewModal.style.display = 'flex';
+            loadPdf(pdfUrl);
+        }
+
+        async function loadPdf(pdfUrl) {
+            console.log("Loading PDF from URL:", pdfUrl);
+            pdfDoc = null;
+            pageNum = 1;
+            if (pdfPageNumSpan) pdfPageNumSpan.textContent = '';
+            if (pdfTotalPagesSpan) pdfTotalPagesSpan.textContent = '';
+            if (pdfContext) pdfContext.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                pdfDoc = await loadingTask.promise;
+                if (pdfTotalPagesSpan) pdfTotalPagesSpan.textContent = pdfDoc.numPages;
+                queueRenderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
+                if (pdfPreviewModal) pdfPreviewModal.style.display = 'none';
+            }
+        }
+
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        function renderPage(num) {
+            if (!pdfDoc || !pdfCanvas || !pdfContext || !pdfPageNumSpan) {
+                console.error("PDF rendering elements not fully initialized.");
+                return;
+            }
+            pageRendering = true;
+            pdfPageNumSpan.textContent = num;
+
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: pdfContext,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePdfNavButtons();
+                });
+            }).catch(error => {
+                console.error('Error rendering PDF page:', error);
+                showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+                pageRendering = false;
+                pageNumPending = null;
+                updatePdfNavButtons();
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updatePdfNavButtons() {
+            if (prevPdfPageBtn) prevPdfPageBtn.disabled = pageNum <= 1;
+            if (nextPdfPageBtn && pdfDoc) nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+        }
+
         // Responsive adjustments for finder window
         window.addEventListener('resize', () => {
             const isDesktop = window.innerWidth >= 769;
             const finderSection = document.getElementById('finderMaterialsSection');
+            if (!finderSection) return;
             
             // Determine active material section for visibility toggling
             let activeMaterialSectionId = null;
