@@ -163,71 +163,69 @@
         /* --- MODALS --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; position: relative; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); z-index: 1010; }
         
-        /* --- YOUTUBE-LIKE VIDEO PLAYER MODAL (FINAL FIX) --- */
+        /* --- VIDEO PLAYER MODAL (FIXED) --- */
         #videoPreviewModal .modal-content {
-            max-width: 85vw;
-            width: 1400px;
-            height: 85vh;
-            padding: 20px;
+            max-width: 90vw;
+            width: 1280px;
+            height: 720px;
+            max-height: 80vh;
+            padding: 0;
             display: flex;
-            flex-direction: column;
+            background-color: var(--bg-primary);
+            overflow: hidden;
         }
+
         .video-player-layout {
             display: flex;
-            gap: 1.5rem;
             width: 100%;
-            flex-grow: 1;
-            overflow: hidden;
+            height: 100%;
         }
+
         .video-player-main {
-            flex: 1;
-            min-width: 0;
+            flex: 1; /* Occupy remaining space */
+            background-color: #000;
             display: flex;
-            flex-direction: column;
-        }
-        .video-embed-container {
+            justify-content: center;
+            align-items: center;
             position: relative;
-            width: 100%;
-            padding-bottom: 56.25%; /* Classic 16:9 aspect ratio */
-            height: 0;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            flex-shrink: 0; /* Prevent flexbox from shrinking it */
         }
+        
+        .video-embed-container {
+            width: 100%;
+            height: 100%;
+        }
+
         .video-embed-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             border: 0;
         }
+
         .video-player-sidebar {
             width: 320px;
             flex-shrink: 0;
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
+            overflow-y: auto;
         }
         #videoPreviewTitle {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
+            line-height: 1.4;
         }
         .watch-status-control {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem;
             background-color: var(--bg-tertiary);
             padding: 1rem;
             border-radius: 8px;
-        }
-        #watchStatusToggle {
-            height: 1.5rem;
-            width: 1.5rem;
-            accent-color: var(--accent-primary);
+            font-weight: 500;
         }
         
         /* --- PDF MODAL --- */
@@ -237,7 +235,15 @@
         
         /* --- FOOTER & RESPONSIVENESS --- */
         footer { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: auto; }
-        @media (max-width: 1024px) { .sidebar { display: none; } .store-layout, .video-player-layout { flex-direction: column; } .shopping-cart, .video-player-sidebar { width: 100%; } #videoPreviewModal .modal-content { height: auto; } }
+        @media (max-width: 1024px) { 
+            .sidebar { display: none; } 
+            .store-layout { flex-direction: column; } 
+            .shopping-cart { width: 100%; } 
+            
+            .video-player-layout { flex-direction: column; }
+            .video-player-sidebar { width: 100%; height: auto; max-height: 40%; }
+            #videoPreviewModal .modal-content { width: 100%; height: 100%; max-width: 100vw; max-height: 100vh; border-radius: 0; }
+        }
         @media (max-width: 768px) { #authWrapper { flex-direction: column; position: static; } .login-left-panel, .login-right-panel { width: 100%; } header { flex-direction: column; height: auto; padding: 1rem; } .main-layout { flex-direction: column; } main { padding: 16px; } }
     </style>
 </head>
@@ -494,6 +500,7 @@
         
         async function renderContent(type, containerId, level, parentIds = []) {
             const container = document.getElementById(containerId);
+            if (!container) return; // Prevent errors if container not found
             const config = materialsConfig[type];
             container.innerHTML = `<p>Loading...</p>`;
             
@@ -526,7 +533,6 @@
                     container.appendChild(el);
                 });
             } catch(e) { 
-                showFirestoreIndexErrorModal(e);
                 container.innerHTML = `<p class="error-message">Error loading content.</p>`;
             }
         }
@@ -586,18 +592,54 @@
         async function setVideoWatchStatus(isWatched) {
             if (!currentUserId || !currentVideoId) return;
             const watchStatusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/watched_status/${currentVideoId}`);
-            try { isWatched ? await setDoc(watchStatusRef, { watched: true, timestamp: Date.now() }) : await deleteDoc(watchStatusRef); renderStudentItems('tutorials'); } 
+            try { 
+                if (isWatched) {
+                    await setDoc(watchStatusRef, { watched: true, timestamp: Date.now() });
+                } else {
+                    await deleteDoc(watchStatusRef);
+                }
+                // No need to re-render the whole student view, just update UI if needed
+            } 
             catch (error) { console.error("Error updating watch status:", error); }
         }
         document.getElementById('watchStatusToggle').addEventListener('change', (e) => setVideoWatchStatus(e.target.checked));
 
+        // FIX FOR DUPLICATION: Manually create and append new element instead of re-rendering the whole list
+        function createSubItemElement(type, item, parentIds) {
+            const config = materialsConfig[type];
+            const el = document.createElement('div');
+            el.className = 'sub-item';
+            let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
+            let headerHtml = `<span>${item.name || item.title}${itemPrice}</span><div class="item-actions">${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}<button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button><a href="${item.link}" download="${item.name || item.title}.pdf" class="btn-primary no-underline">Download</a><button class="delete-item-btn logout-btn" data-level="3" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div>`;
+            el.innerHTML = headerHtml;
+            // Re-add event listeners to the new buttons
+            el.querySelector('.preview-item-btn').addEventListener('click', () => handlePreview(type, item));
+            el.querySelector('.delete-item-btn').addEventListener('click', () => handleDeleteItem(type, 3, item.id, parentIds));
+            if (type === 'pastPapers') {
+                el.querySelector('.edit-item-btn').addEventListener('click', () => showEditPastPaperModal(item, parentIds));
+            }
+            return el;
+        }
+
+
         function showAddItemModal(type, level, parentIds = []) {
             const config = materialsConfig[type];
             showInputModal(`Add New ${config[`level${level}`]}`, `Enter Name:`, async (name) => {
-                await addDoc(collection(db, getPath(type, parentIds)), { name: name.trim(), timestamp: Date.now() });
+                const newItem = { name: name.trim(), timestamp: Date.now() };
+                const docRef = await addDoc(collection(db, getPath(type, parentIds)), newItem);
                 showModal('Success', `${config[`level${level}`]} added.`);
+                // Manually add to UI to prevent re-render bugs
                 const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length-1]}`;
-                renderContent(type, containerId, level, parentIds);
+                const container = document.getElementById(containerId);
+                if (container) {
+                     const el = document.createElement('div');
+                     el.className = 'content-item';
+                     const newParentIds = [...parentIds, docRef.id];
+                     el.innerHTML = `<div class="content-header" data-level="${level}" data-id="${docRef.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false"><h${level+2}>${name} <span class="collapse-arrow">&#9654;</span></h${level+2}><div class="item-actions"><button class="add-item-btn btn-primary" data-level="${level+1}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${level+1}`]}</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${docRef.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div></div><div class="nested-container" id="container-level${level+1}-${type}-${docRef.id}"></div>`;
+                     // Remove placeholder if it exists
+                     if(container.querySelector('p')) container.innerHTML = '';
+                     container.appendChild(el);
+                }
             });
         }
 
@@ -615,8 +657,7 @@
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     await deleteDoc(doc(db, getPath(type, parentIds), id));
                     showModal('Success', 'Item deleted.');
-                    const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
-                    renderContent(type, containerId, level, parentIds);
+                    await renderContent(type, `level1-${type}-container`, 1); // Full refresh on delete is safest
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
             ]);
@@ -693,7 +734,6 @@
                 });
              } catch(error) {
                 grid.innerHTML = `<p class="error-message">Error loading items.</p>`;
-                showFirestoreIndexErrorModal(error);
              }
         }
         
@@ -715,7 +755,6 @@
 
             } catch(error) {
                 selectEl.innerHTML = `<option value="">-- Error --</option>`;
-                showFirestoreIndexErrorModal(error);
             }
         }
 
@@ -889,9 +928,21 @@
             const videoDetails = parseVideoInput(document.getElementById('tutorialLink').value);
             const title = document.getElementById('tutorialTitle').value;
             if (!videoDetails?.id || !title) return showModal('Input Error', 'Please provide a title and valid YouTube link.');
-            await addDoc(collection(db, getPath('tutorials', parentIds)), { title, name: title, youtubeId: videoDetails.id, timestamp: Date.now() });
+            
+            const newItemData = { title, name: title, youtubeId: videoDetails.id, timestamp: Date.now() };
+            const docRef = await addDoc(collection(db, getPath('tutorials', parentIds)), newItemData);
+            newItemData.id = docRef.id; // Add the new ID to the object
+            
+            // FIX: Manually append the new element instead of re-rendering
+            const container = document.getElementById(`container-level3-tutorials-${parentIds[1]}`);
+            if (container) {
+                // Remove placeholder if it exists
+                if(container.querySelector('p')) container.innerHTML = '';
+                const newElement = createSubItemElement('tutorials', newItemData, parentIds);
+                container.appendChild(newElement);
+            }
+
             e.target.closest('.modal').style.display = 'none';
-            renderContent('tutorials', `container-level3-tutorials-${parentIds[1]}`, 3, parentIds);
         });
 
         async function handleFileUploadAndSave(e, type) {
@@ -924,9 +975,18 @@
                     data.filePath = filePath;
                 } else { data.link = link; }
                 
-                await addDoc(collection(db, getPath(type, parentIds)), data);
+                const docRef = await addDoc(collection(db, getPath(type, parentIds)), data);
+                data.id = docRef.id;
+
+                // FIX: Manually append the new element
+                const container = document.getElementById(`container-level3-${type}-${parentIds[1]}`);
+                if (container) {
+                    if(container.querySelector('p')) container.innerHTML = '';
+                    const newElement = createSubItemElement(type, data, parentIds);
+                    container.appendChild(newElement);
+                }
+
                 form.closest('.modal').style.display = 'none';
-                renderContent(type, `container-level3-${type}-${parentIds[1]}`, 3, parentIds);
             } catch(error) { showModal('Error', `Upload failed: ${error.message}`); }
             finally { 
                 submitButton.disabled = false;
@@ -950,7 +1010,7 @@
             try {
                 await updateDoc(docRef, { name, link });
                 form.closest('.modal').style.display = 'none';
-                renderContent('pastPapers', `container-level3-pastPapers-${parentIds[1]}`, 3, parentIds);
+                await renderContent('pastPapers', `container-level3-pastPapers-${parentIds[1]}`, 3, parentIds);
                 showModal('Success', 'Past paper updated!');
             } catch (error) {
                 showModal('Error', `Update failed: ${error.message}`);
@@ -1001,24 +1061,7 @@
             input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); }};
             cancelBtn.onclick = closeModal; closeBtn.onclick = closeModal; modal.onclick = (e) => { if (e.target === modal) closeModal(); }; input.focus();
         }
-
-        function showFirestoreIndexErrorModal(error) {
-            console.error("Firestore Error:", error);
-            const detailedMessage = `
-                <p class="mb-4">Could not load items because a Firestore database index is missing. This is a one-time setup step.</p>
-                <div class="text-left text-sm bg-[var(--bg-primary)] p-4 rounded-lg">
-                    <h4 class="font-bold mb-2">To fix this:</h4>
-                    <ol class="list-decimal list-inside space-y-2">
-                        <li>Open your browser's <strong>Developer Console</strong> (press F12, or Ctrl+Shift+I).</li>
-                        <li>Find the error message from Firestore that starts with <code class="bg-[var(--bg-tertiary)] p-1 rounded">'The query requires an index...'</code>.</li>
-                        <li><strong>Click the link</strong> in that error message. It will take you to your Firebase console to create the index.</li>
-                        <li>Wait a few minutes for the index to build, then refresh this page.</li>
-                    </ol>
-                </div>
-            `;
-            showModal('Database Index Required', detailedMessage);
-        }
-
+        
         document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => {
              const modal = btn.closest('.modal');
              modal.style.display = 'none';
