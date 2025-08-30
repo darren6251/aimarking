@@ -1038,7 +1038,6 @@
             };
             await setDoc(userProfileRef, profileData, { merge: true });
 
-            // **FIX**: If the user is a student, also create a public profile document for teachers to read.
             if (roleToSet === 'student') {
                 const publicStudentProfileRef = doc(db, `artifacts/${appId}/public/data/studentProfiles/${currentUserId}`);
                 await setDoc(publicStudentProfileRef, profileData);
@@ -1090,11 +1089,9 @@
             }
 
             try {
-                // Update the private profile
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await updateDoc(userProfileRef, { name: newName });
                 
-                // **FIX**: If the user is a student, update the public profile as well.
                 if (currentUserRole === 'student') {
                     const publicStudentProfileRef = doc(db, `artifacts/${appId}/public/data/studentProfiles/${currentUserId}`);
                     await updateDoc(publicStudentProfileRef, { name: newName });
@@ -1171,13 +1168,13 @@
             studentView.style.display = 'block';
             teacherView.style.display = 'none';
             await loadSubjectsForStudentSubmission();
-            await loadAllTasks(); // Load all tasks for student submission options
+            await loadAllTasks(); 
             await loadMySubmissions();
         } else if (currentUserRole === 'teacher') {
             studentView.style.display = 'none';
             teacherView.style.display = 'block';
             await loadTeacherDashboardData();
-            activateTeacherTab('subjectsSection'); // Default to subjects tab
+            activateTeacherTab('subjectsSection');
         } else {
             showModal('Access Denied', 'Your role is not recognized. Please contact an administrator.');
             studentView.style.display = 'none';
@@ -1190,8 +1187,9 @@
         submissionSubjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
         const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
-            const qSnap = await getDocs(subjectsRef);
+            const qSnap = await getDocs(subjectsRef); // No orderBy needed, can sort client-side if desired
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            allSubjects.sort((a, b) => a.name.localeCompare(b.name)); // Sort client-side
             allSubjects.forEach(subject => {
                 const option = document.createElement('option');
                 option.value = subject.id;
@@ -1209,7 +1207,8 @@
         submissionTaskSelect.innerHTML = '<option value="">-- Select a Task (Optional) --</option>';
         if (subjectId) {
             const filteredTasks = allTasks.filter(task => task.subjectId === subjectId);
-            filteredTasks.sort((a, b) => a.dueDate - b.dueDate).forEach(task => {
+            filteredTasks.sort((a, b) => a.dueDate - b.dueDate);
+            filteredTasks.forEach(task => {
                 const option = document.createElement('option');
                 option.value = task.id;
                 option.textContent = `${task.name} (Due: ${new Date(task.dueDate).toLocaleDateString()})`;
@@ -1292,7 +1291,8 @@
         if (!currentUserId) { mySubmissionsList.innerHTML = '<p class="loading-indicator">Please log in to see your submissions.</p>'; return; }
 
         const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
-        const q = query(submissionsRef, where('studentId', '==', currentUserId), orderBy('submissionDate', 'desc'));
+        // **FIX**: Removed orderBy from the query to prevent index-related permission errors.
+        const q = query(submissionsRef, where('studentId', '==', currentUserId));
 
         try {
             const qSnap = await getDocs(q);
@@ -1302,8 +1302,12 @@
             }
 
             mySubmissionsList.innerHTML = '';
-            for (const docSnap of qSnap.docs) {
-                const submission = { id: docSnap.id, ...docSnap.data() };
+            
+            // **FIX**: Map results to an array and sort client-side.
+            const submissions = qSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            submissions.sort((a, b) => (b.submissionDate?.toDate() || 0) - (a.submissionDate?.toDate() || 0));
+
+            for (const submission of submissions) {
                 const subject = allSubjects.find(s => s.id === submission.subjectId);
                 const task = submission.taskId ? allTasks.find(t => t.id === submission.taskId) : null;
 
@@ -1368,8 +1372,11 @@
 
         const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
-            const qSnap = await getDocs(query(subjectsRef, orderBy('name')));
+            // **FIX**: Removed orderBy from query.
+            const qSnap = await getDocs(query(subjectsRef));
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // **FIX**: Sort client-side.
+            allSubjects.sort((a,b) => a.name.localeCompare(b.name));
 
             if (allSubjects.length === 0) {
                 subjectsList.innerHTML = '<p class="loading-indicator">No subjects created yet.</p>';
@@ -1453,8 +1460,9 @@
         taskSubjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
         const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
-            const qSnap = await getDocs(query(subjectsRef, orderBy('name')));
+            const qSnap = await getDocs(query(subjectsRef));
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            allSubjects.sort((a,b) => a.name.localeCompare(b.name));
             allSubjects.forEach(subject => {
                 const option = document.createElement('option');
                 option.value = subject.id;
@@ -1479,8 +1487,11 @@
 
         const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
         try {
-            const qSnap = await getDocs(query(tasksRef, orderBy('dueDate')));
+            // **FIX**: Removed orderBy from query.
+            const qSnap = await getDocs(query(tasksRef));
             const subjectTasks = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // **FIX**: Sort client-side.
+            subjectTasks.sort((a,b) => (a.dueDate || 0) - (b.dueDate || 0));
 
             if (subjectTasks.length === 0) {
                 tasksList.innerHTML = '<p class="loading-indicator">No tasks for this subject yet.</p>';
@@ -1514,13 +1525,15 @@
             for (const subjectDoc of qSnapSubjects.docs) {
                 const subjectId = subjectDoc.id;
                 const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
-                const qSnapTasks = await getDocs(query(tasksRef, orderBy('dueDate')));
+                // **FIX**: Removed orderBy from query.
+                const qSnapTasks = await getDocs(query(tasksRef));
                 qSnapTasks.forEach(taskDoc => {
                     allTasks.push({ id: taskDoc.id, subjectId: subjectId, ...taskDoc.data() });
                 });
             }
             filterTaskSelect.innerHTML = '<option value="">All Tasks</option>';
-            allTasks.sort((a, b) => a.name.localeCompare(b.name)).forEach(task => {
+            allTasks.sort((a, b) => a.name.localeCompare(b.name));
+            allTasks.forEach(task => {
                 const option = document.createElement('option');
                 option.value = task.id;
                 option.textContent = task.name;
@@ -1588,14 +1601,13 @@
     async function loadAllStudents() {
         studentsList.innerHTML = '<p class="loading-indicator">Loading student information...</p>';
         
-        // **FIX**: Query the new public collection of student profiles instead of the private user data.
         const studentProfilesRef = collection(db, `artifacts/${appId}/public/data/studentProfiles`);
 
         try {
             const qSnap = await getDocs(studentProfilesRef);
             const studentProfiles = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            allStudents = studentProfiles; // Update global allStudents array
+            allStudents = studentProfiles;
 
             if (studentProfiles.length === 0) {
                 studentsList.innerHTML = '<p class="loading-indicator">No students registered yet.</p>';
@@ -1603,7 +1615,8 @@
             }
 
             studentsList.innerHTML = '';
-            studentProfiles.sort((a,b) => (a.name || a.email).localeCompare(b.name || b.email)).forEach(student => {
+            studentProfiles.sort((a,b) => (a.name || a.email).localeCompare(b.name || b.email));
+            studentProfiles.forEach(student => {
                 const studentElement = document.createElement('div');
                 studentElement.className = 'student-card';
                 studentElement.innerHTML = `
@@ -1625,26 +1638,28 @@
     async function loadAllSubmissions() {
         allSubmissionsList.innerHTML = '<p class="loading-indicator">Loading all submissions...</p>';
         const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
-        let q = query(submissionsRef, orderBy('submissionDate', 'desc'));
-
+        
         const selectedSubjectId = filterSubjectSelect.value;
         const selectedTaskId = filterTaskSelect.value;
-
+        
+        // **FIX**: Build query without ordering, apply filters if they exist.
+        let q;
         let filters = [];
-        if (selectedSubjectId) {
-            filters.push(where('subjectId', '==', selectedSubjectId));
-        }
-        if (selectedTaskId) {
-            filters.push(where('taskId', '==', selectedTaskId));
-        }
+        if (selectedSubjectId) filters.push(where('subjectId', '==', selectedSubjectId));
+        if (selectedTaskId) filters.push(where('taskId', '==', selectedTaskId));
 
         if (filters.length > 0) {
-            q = query(submissionsRef, ...filters, orderBy('submissionDate', 'desc'));
+            q = query(submissionsRef, ...filters);
+        } else {
+            q = query(submissionsRef);
         }
 
         try {
             const qSnap = await getDocs(q);
             allSubmissions = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // **FIX**: Sort client-side.
+            allSubmissions.sort((a,b) => (b.submissionDate?.toDate() || 0) - (a.submissionDate?.toDate() || 0));
+
 
             if (allSubmissions.length === 0) {
                 allSubmissionsList.innerHTML = '<p class="loading-indicator">No submissions found matching criteria.</p>';
@@ -1793,3 +1808,4 @@
   </script>
 </body>
 </html>
+
