@@ -197,6 +197,9 @@
         }
 
         .video-embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             border: 0;
@@ -588,9 +591,13 @@
                 document.getElementById('videoPreviewTitle').textContent = item.title;
                 document.getElementById('videoPreviewContent').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1&rel=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
                 const watchStatusToggle = document.getElementById('watchStatusToggle');
-                const watchStatusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/watched_status/${currentVideoId}`);
-                const docSnap = await getDoc(watchStatusRef);
-                watchStatusToggle.checked = docSnap.exists();
+                if (currentUserId) {
+                    const watchStatusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/watched_status/${currentVideoId}`);
+                    const docSnap = await getDoc(watchStatusRef);
+                    watchStatusToggle.checked = docSnap.exists();
+                } else {
+                    watchStatusToggle.checked = false;
+                }
                 videoModal.style.display = 'flex';
             } else if (['pastPapers', 'exercises'].includes(type) && item.link) {
                 const isPdf = item.link.toLowerCase().includes('.pdf') || item.link.includes('drive.google.com');
@@ -710,6 +717,13 @@
                 const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                let purchasedItems = {};
+                if (config.isPaid && currentUserId) {
+                    const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises`);
+                    const snapshot = await getDocs(purchaseCollectionRef);
+                    snapshot.forEach(doc => purchasedItems[doc.id] = true);
+                }
+
                 let watchedVideos = new Set();
                 if (type === 'tutorials' && currentUserId) {
                     const watchedSnapshot = await getDocs(collection(db, `artifacts/${appId}/users/${currentUserId}/watched_status`));
@@ -726,8 +740,10 @@
                         cardContent = `<div class="material-card-thumbnail" data-type="tutorials" data-item='${JSON.stringify(item)}'><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}"><div class="play-button-overlay">&#9658;</div> ${isWatched ? '<div class="watched-indicator">✔</div>' : ''}</div><div class="material-card-content"><h3>${item.title}</h3></div>`;
                     } else if (materialsConfig[type].isPaid) {
                         card.className = 'product-card';
+                        const isPurchased = purchasedItems[item.id];
                         const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
-                        cardContent = `<h4>${item.name}</h4><p class="product-price">$${item.price.toFixed(2)}</p><button class="add-to-cart-btn btn-primary w-full" data-item='${JSON.stringify(item)}' ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`;
+                        cardContent = `<h4>${item.name}</h4><p class="product-price">$${item.price.toFixed(2)}</p>
+                        ${isPurchased ? `<button class="download-btn btn-primary w-full" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>` : `<button class="add-to-cart-btn btn-primary w-full" data-item='${JSON.stringify(item)}' ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`}`;
                     } else { 
                         card.className = 'material-card';
                         cardContent = `<div class="material-card-content"><h3>${item.name}</h3></div><div class="p-6 pt-0"><button class="download-btn btn-primary w-full" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button></div>`;
@@ -748,7 +764,7 @@
                     };
                 });
              } catch(error) {
-                grid.innerHTML = `<p class="error-message">Error loading items.</p>`;
+                grid.innerHTML = `<p class="error-message">Error loading items. Please check your permissions.</p>`;
              }
         }
         
@@ -944,7 +960,7 @@
             const title = document.getElementById('tutorialTitle').value;
             if (!videoDetails?.id || !title) return showModal('Input Error', 'Please provide a title and valid YouTube link.');
             
-            const newItemData = { title, name: title, youtubeId: videoDetails.id, timestamp: Date.now() };
+            const newItemData = { title, name: title, youtubeId: videoDetails.id, timestamp: Date.now(), type: 'youtube' };
             const docRef = await addDoc(collection(db, getPath('tutorials', parentIds)), newItemData);
             newItemData.id = docRef.id; // Add the new ID to the object
             
