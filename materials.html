@@ -1126,35 +1126,4 @@
     </script>
 </body>
 </html>
-```
-
-And now, here are the instructions to fix the database permissions issue.
-
-### **How to Fix the "Missing Permissions" Error**
-
-This error happens because your Firebase database is correctly secured, but we haven't told it to allow your website to read the public materials. You just need to copy and paste the correct rules.
-
-1.  **Go to your Firebase Console.**
-2.  Select your project (`ai-grading-9bb30`).
-3.  In the left-hand menu, go to **Build > Firestore Database**.
-4.  Click on the **"Rules"** tab at the top.
-5.  Delete all the text currently in the rules editor.
-6.  Copy the code below and paste it into the editor:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // This rule allows ANYONE to read public data, but only logged-in users to write it.
-    match /artifacts/{appId}/public/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // This rule allows a user to read/write their OWN private data, but no one else's.
-    match /artifacts/{appId}/users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
 
