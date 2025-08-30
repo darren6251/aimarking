@@ -3,1875 +3,1545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Marker - Materials</title>
+    <title>Materials</title>
+    <!-- Firebase Libraries -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js"></script>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Stripe.js for payments -->
+    <script src="https://js.stripe.com/v3/"></script>
     <!-- Custom styles -->
     <style>
-        /* --- NEW DRIVE-LIKE THEME --- */
+        /* --- MODERN BLACK & WHITE THEME --- */
         :root {
-            --bg-primary: #0a0a0a; /* neutral-950 */
-            --bg-secondary: #171717; /* neutral-900 */
-            --bg-tertiary: #262626; /* neutral-800 */
-            --text-primary: #f5f5f5; /* neutral-100 */
-            --text-secondary: #a3a3a3; /* neutral-400 */
-            --accent-primary: #3b82f6; /* blue-500 */
-            --accent-primary-hover: #2563eb; /* blue-600 */
-            --accent-red: #ef4444; /* red-500 */
-            --border-color: #262626; /* neutral-800 */
-            --focus-ring-color: rgba(59, 130, 246, 0.5);
-        }
-        
-        body.light-theme {
-            --bg-primary: #f9fafb; /* gray-50 */
-            --bg-secondary: #ffffff; /* white */
-            --bg-tertiary: #f3f4f6; /* gray-100 */
-            --text-primary: #111827; /* gray-900 */
-            --text-secondary: #6b7280; /* gray-500 */
-            --accent-primary: #2563eb; /* blue-600 */
-            --accent-primary-hover: #1d4ed8; /* blue-700 */
-            --accent-red: #dc2626; /* red-600 */
-            --border-color: #e5e7eb; /* gray-200 */
-            --focus-ring-color: rgba(37, 99, 235, 0.5);
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a3a3a3;
+            --accent-primary: #ffffff;
+            --accent-red: #ef4444;
+            --border-color: #333333;
+            --focus-ring-color: rgba(245, 245, 245, 0.5);
+
+            --finder-bg-primary: #1c1c1c;
+            --finder-bg-secondary: #0a0a0a;
+            --finder-border-color: #444;
+            --finder-text-color: #f5f5f5;
+            --finder-heading-color: #fff;
+            --finder-hover-bg: #2a2a2a;
+            --finder-selected-bg: #444;
+            --finder-selected-text: #fff;
         }
 
-        * {
-            box-sizing: border-box;
+        /* --- THEME TOGGLE --- */
+        body.light-theme {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #e0e4eb;
+            --bg-tertiary: #d0d5dc;
+            --text-primary: #1c1c1c;
+            --text-secondary: #5a5a5a;
+            --accent-primary: #000000;
+            --accent-red: #cc0000;
+            --border-color: #b0b0b0;
+            --focus-ring-color: rgba(0, 0, 0, 0.2);
+
+            --finder-bg-primary: #d0d5dc;
+            --finder-bg-secondary: #f0f2f5;
+            --finder-border-color: #b0b0b0;
+            --finder-text-color: #1c1c1c;
+            --finder-heading-color: #000;
+            --finder-hover-bg: #e0e4eb;
+            --finder-selected-bg: #ccc;
+            --finder-selected-text: #000;
+        }
+
+        html, body {
+            height: 100%;
             margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
+        }
+
+        /* Loading state overlay */
+        .loading-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary);
+            z-index: 1000;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 1;
+        }
+
+        .loading-state h2 {
+            font-size: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--text-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .btn.btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .btn.btn-primary:hover {
+            background-color: var(--text-primary);
+        }
+
+        .btn.logout-btn {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        .btn.logout-btn:hover {
+            background-color: var(--accent-red);
+            color: var(--text-primary);
+        }
+
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- TABS --- */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+        }
+
+        .tab-button {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .tab-button.active {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background-color: var(--bg-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        .item-list.list-mode {
+            grid-template-columns: 1fr;
+        }
+
+        .item-card {
+            background-color: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            border: 1px solid transparent;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        .item-card:hover {
+            border-color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .item-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .item-card.placeholder {
+            border: 2px dashed var(--accent-primary);
+            background-color: transparent;
+            min-height: 100px;
+            transition: all 0.2s;
+            visibility: hidden;
+        }
+        
+        .item-card.placeholder.visible {
+            visibility: visible;
+        }
+
+
+        .item-info h4 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .item-info p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .item-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .item-meta span {
+            background-color: var(--bg-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .item-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .item-actions button {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .item-actions button:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* --- CRUD & Finder Interface --- */
+        .finder-interface {
+            display: flex;
+            height: 100%;
+            background-color: var(--finder-bg-primary);
+        }
+
+        .finder-sidebar {
+            width: 250px;
+            padding: 1rem;
+            border-right: 1px solid var(--finder-border-color);
+            overflow-y: auto;
+            background-color: var(--finder-bg-primary);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .finder-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--finder-heading-color);
+        }
+
+        .finder-toggle {
+            background-color: var(--finder-bg-secondary);
+            color: var(--finder-text-color);
+            border: 1px solid var(--finder-border-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .finder-toggle:hover {
+            background-color: var(--finder-bg-primary);
+        }
+
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-section h3 {
+            font-size: 1rem;
+            color: var(--finder-heading-color);
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-section select {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--finder-border-color);
+            background-color: var(--finder-bg-secondary);
+            color: var(--finder-text-color);
+            appearance: none;
+        }
+
+        .finder-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .finder-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .finder-item.active {
+            background-color: var(--finder-selected-bg);
+            color: var(--finder-selected-text);
+        }
+
+        .finder-item:hover {
+            background-color: var(--finder-hover-bg);
+        }
+
+        .finder-item.drag-over {
+            border: 1px dashed var(--accent-primary);
+        }
+
+        .crud-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .close-button {
+            color: var(--text-secondary);
+            font-size: 28px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .full-preview-modal-content {
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            max-height: 900px;
+            background-color: #000;
             padding: 0;
         }
 
-        body {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            overflow-x: hidden;
-            scroll-behavior: smooth;
+        .full-preview-container {
+            width: 100%;
+            height: 100%;
             display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
-        button,
-        input,
-        textarea,
-        select {
-            transition: all .2s ease-in-out;
-            font-family: inherit;
+        .full-preview-container > * {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
-
-        button:disabled {
-            opacity: .5;
+        
+        #pdfCanvas {
+            border: 1px solid var(--border-color);
+        }
+        
+        #pdfNav {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        #pdfNav button {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #pdfNav button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        /* Keyframe animations */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        /* --- LOGIN PAGE --- */
-        #authWrapper { display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001; }
-        .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
-        .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; }
-        .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 1rem; }
-        .login-left-panel p { font-size: 1.25rem; font-weight: 400; line-height: 1.5; margin-bottom: .5rem; color: var(--text-secondary); }
-        .login-right-panel { background: var(--bg-tertiary); flex-direction: column; }
-        #authContainer { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: stretch; background-color: var(--bg-secondary); padding: 2.5rem; border-radius: 0.75rem; border: 1px solid var(--border-color); }
-        #authContainer h2 { font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
-        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: .75rem; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
-        .google-btn:hover { background-color: var(--bg-tertiary); }
-        .google-btn img { height: 20px; }
-        #accessCodeInput { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 0.5rem; width: 100%; margin-bottom: 1rem; text-align: center; font-size: 1rem; }
-        #accessCodeInput:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
-        .btn-primary { background-color: var(--accent-primary); color: white; padding: .75rem 1.5rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; font-size: 1rem; }
-        body.light-theme .btn-primary { color: white; }
-        .btn-primary:hover { background-color: var(--accent-primary-hover); }
-        
-        #appSection { display: none; flex-direction: column; height: 100vh; background-color: var(--bg-primary); animation: fadeIn .6s ease-out both; }
-        
-        /* --- HEADER --- */
-        header { background: var(--bg-secondary); color: var(--text-primary); display: flex; align-items: center; padding: 0 24px; height: 64px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-        .logo-container { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; }
-        .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
-        .logo-container p { font-weight: 400; color: var(--text-secondary); }
-        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-        .header-actions .tab { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; transition: .2s; border: none; border-radius: 0.5rem; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; }
-        .header-actions .tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-        .header-actions .tab.active { background: var(--accent-primary); color: white; font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-        #userDisplayName { font-weight: 500; cursor: pointer; }
-        .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 0.5rem; font-weight: 500; }
-        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: white; }
-        
-        /* --- DROPDOWN MENU --- */
-        .dropdown-menu { position: relative; display: inline-block; }
-        .dropdown-menu-content { display: none; position: absolute; top: 110%; left: 0; background-color: var(--bg-secondary); min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 10; border-radius: 0.75rem; border: 1px solid var(--border-color); padding: 4px; animation: fadeIn 0.2s ease-out; }
-        .dropdown-menu-content a, .dropdown-menu-content button { color: var(--text-secondary); padding: 8px 12px; text-decoration: none; display: block; background: none; border: none; width: 100%; text-align: left; cursor: pointer; border-radius: 0.375rem; font-size: 0.875rem; }
-        .dropdown-menu-content a:hover, .dropdown-menu-content button:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
-        .dropdown-menu:hover .dropdown-menu-content { display: block; }
-
-        /* --- MAIN CONTENT --- */
-        main { flex: 1; display: flex; overflow-y: auto; padding: 32px; gap: 32px; justify-content: center; }
-        #tutorialSection, #pastPapersSection, #exerciseSection { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; width: 100%; max-width: 1200px; margin: 0 auto; }
-        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
-
-        /* --- FORMS & INPUTS --- */
-        label { display: block; font-weight: 500; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.875rem; }
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"] { width: 100%; background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 12px; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 1rem; }
-        textarea { resize: vertical; min-height: 120px; }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
-        .drop-zone { border: 2px dashed var(--border-color); border-radius: 0.75rem; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; padding: 1rem; text-align: center; }
-        .drop-zone.highlight { border-color: var(--accent-primary); background: rgba(59, 130, 246, 0.1); }
-        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
-
-        /* --- UNIVERSAL STYLES --- */
-        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
-        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 0.75rem; border: 1px solid var(--border-color); }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-
-        /* --- MATERIAL CARDS --- */
-        .material-card { background-color: var(--bg-secondary); border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .material-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .material-card-thumbnail { position: relative; cursor: pointer; }
-        .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
-        .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-        .material-card-content h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; }
-        
-        /* --- TEACHER CONTENT MANAGEMENT --- */
-        .content-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 0.75rem; margin-bottom: 1rem; background: var(--bg-primary); transition: background-color 0.2s ease-in-out; }
-        .content-item.drag-over { background-color: rgba(59, 130, 246, 0.1); border-color: var(--accent-primary); }
-        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
-        .content-header h3, .content-header h4 { margin: 0; font-weight: 600; }
-        .item-actions button, .item-actions a { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; }
-        .nested-container { padding-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border-color); overflow: hidden; transition: max-height 0.3s ease-out; max-height: 0; }
-        .nested-container.expanded { max-height: 2000px; }
-        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 0.5rem; cursor: grab; }
-        .sub-item:hover { background-color: var(--bg-tertiary); }
-        .collapse-arrow { margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary); }
-        .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
-
-        /* --- VIDEO & PLAY BUTTON --- */
-        .video-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 0.75rem; }
-        .video-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-        .play-button-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 15px rgba(0, 0, 0, 0.5); pointer-events: none; transition: all 0.2s ease; }
-        .material-card-thumbnail:hover .play-button-overlay { color: #fff; transform: translate(-50%, -50%) scale(1.1); }
-
-        /* --- E-COMMERCE --- */
-        .store-layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; width: 100%; }
-        .product-grid { flex-grow: 1; }
-        .shopping-cart { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem; height: fit-content; }
-        .shopping-cart h3 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; font-weight: 600; }
-        #cart-items { display: flex; flex-direction: column; gap: 0.75rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-        .remove-from-cart-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; margin-left: 0.5rem; }
-        .remove-from-cart-btn:hover { color: var(--accent-red); }
-        #cart-summary { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; }
-        #checkout-btn { width: 100%; margin-top: 1rem; }
-        .product-card { background-color: var(--bg-secondary); border-radius: 0.75rem; border: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
-        .product-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; }
-        .add-to-cart-btn, .download-btn { width: 100%; }
-
-        /* --- MODALS --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 0.75rem; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
-        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
-        .close-button:hover { color: var(--text-primary); }
-        #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
-        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
-
-        /* --- FOOTER --- */
-        footer { padding: 1rem 1.5rem; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; text-align: right; }
-        footer a { color: var(--text-secondary); text-decoration: none; }
-        footer a:hover { text-decoration: underline; color: var(--text-primary); }
-
-        /* --- FINDER WINDOW --- */
-        .finder-window-wrapper { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; height: 90vh; max-width: 1200px; max-height: 800px; border: 1px solid var(--border-color); border-radius: 0.75rem; background: var(--bg-secondary); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: all 0.3s ease; z-index: 100; resize: both; min-width: 300px; min-height: 200px; color: var(--text-primary); }
-        .finder-titlebar { background: var(--bg-tertiary); height: 32px; display: flex; align-items: center; padding: 0 10px; cursor: grab; flex-shrink: 0; border-bottom: 1px solid var(--border-color); justify-content: flex-start; }
-        .finder-titlebar .buttons { display: flex; gap: 8px; }
-        .finder-circle { width: 12px; height: 12px; border-radius: 50%; }
-        .finder-circle.close { background: #ff5f57; }
-        .finder-circle.min { background: #ffbd2e; }
-        .finder-circle.max { background: #28c840; cursor: pointer; }
-        .finder-content { flex: 1; display: flex; overflow: hidden; }
-        .finder-sidebar { width: 220px; min-width: 150px; border-right: 1px solid var(--border-color); background: var(--bg-primary); padding: 10px 0; overflow-y: auto; flex-shrink: 0; }
-        .finder-sidebar-item { padding: 8px 20px; font-size: 14px; color: var(--text-primary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 0.375rem; margin: 0 4px; }
-        .finder-sidebar-item:hover { background: var(--bg-tertiary); }
-        .finder-sidebar-item.active { background: var(--accent-primary); color: white; font-weight: 600; }
-        .finder-file-list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-secondary); }
-        .finder-file-list .columns, .finder-file-list .row { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr; padding: 10px 15px; border-bottom: 1px solid var(--border-color); align-items: center; }
-        .finder-file-list .columns { background: var(--bg-primary); font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
-        .finder-file-list .row { font-size: 14px; color: var(--text-primary); cursor: pointer; }
-        .finder-file-list .row:hover { background: var(--bg-tertiary); }
-        .finder-file-list .row.folder { font-weight: bold; }
-        
-        /* --- RESPONSIVENESS --- */
-        @media (max-width: 992px) {
-            .store-layout { grid-template-columns: 1fr; }
-            .shopping-cart { width: 100%; position: sticky; bottom: 0; border-radius: 0.75rem 0.75rem 0 0; }
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            transition: border-color 0.2s;
         }
-        @media (max-width: 768px) {
-            #authWrapper { flex-direction: column; position: static; height: auto; }
-            .login-left-panel, .login-right-panel { width: 100%; }
-            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
-            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
-            main { flex-direction: column; padding: 16px; }
-            .finder-window-wrapper { display: none !important; }
+        
+        .drop-zone.drag-over {
+            border-color: var(--accent-primary);
+            background-color: var(--bg-tertiary);
         }
+
     </style>
 </head>
 <body>
-
-    <div id="authWrapper" style="display: none;">
-        <div class="login-left-panel">
-            <h1>AI Marker</h1>
-            <p>Your AI-powered materials hub.</p>
-        </div>
-        <div class="login-right-panel">
-            <div id="authContainer">
-                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
-            </div>
-        </div>
+    <div id="loadingOverlay" class="loading-state">
+        <div class="spinner"></div>
+        <h2>Loading...</h2>
     </div>
 
-    <div id="appSection" style="display: none;">
+    <!-- Main Content -->
+    <div id="mainContent" class="main-container">
         <header>
-            <a href="index.html" class="logo-container">
-                <h1>AI Marker</h1>
-            </a>
-            <div class="header-actions">
-                <a href="index.html" class="tab">Home</a>
-                
-                <div class="dropdown-menu">
-                    <button class="tab">Work with AI</button>
-                    <div class="dropdown-menu-content">
-                        <a href="grading.html" class="tab">Exam Grader</a>
-                        <a href="chat.html" class="tab">Chat with Gemini</a>
-                    </div>
-                </div>
-
-                <div class="dropdown-menu">
-                    <button class="tab active" id="materialsButton">Materials</button>
-                    <div class="dropdown-menu-content">
-                        <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
-                        <button id="togglePastPapersButton" class="tab">Past Papers</button>
-                        <button id="toggleExercisesButton" class="tab">Exercises for Sale</button>
-                    </div>
-                </div>
-
-                <a href="submissions.html" class="tab" id="navSubmissionsButton" style="display: none;">Submissions</a>
-                <a href="manage.html" class="tab" id="navManageStudentsButton" style="display: none;">Manage Students</a>
-                <a href="profile.html" class="tab">Profile</a>
-
-                <button id="themeToggleButton" class="tab">Theme</button>
-                <div class="user-info">
-                     <span id="userDisplayName"></span>
-                     <button id="logoutButton" class="logout-btn">Log Out</button>
-                </div>
+            <div class="logo">AI Marker</div>
+            <div class="nav-buttons">
+                <button id="themeToggleButton" class="btn">Toggle Theme</button>
+                <button id="logoutButton" class="btn logout-btn" style="display:none;">Logout</button>
             </div>
         </header>
-        
-        <main>
-            <!-- Generic Material Section Template -->
-            <div id="tutorialSection"></div>
-            <div id="pastPapersSection"></div>
-            <div id="exerciseSection"></div>
-            
-            <!-- Finder Style Materials Section (Desktop Only) -->
-            <div id="finderMaterialsSection" class="finder-window-wrapper" style="display: none;">
-                <div class="finder-titlebar" id="finderDragBar">
-                    <div class="buttons">
-                        <div class="finder-circle close"></div>
-                        <div class="finder-circle min"></div>
-                        <div class="finder-circle max" id="finderFullscreenToggle"></div>
-                    </div>
-                    <span style="margin-left: 10px; font-weight: bold;">Materials</span>
+
+        <div class="content-area">
+            <!-- Finder Sidebar -->
+            <aside class="finder-sidebar">
+                <div class="sidebar-header">
+                    <h2 class="finder-title">Finder</h2>
+                    <button id="listModeToggle" class="finder-toggle">List</button>
+                </div>
+                
+                <div class="filter-section">
+                    <h3>Subject</h3>
+                    <select id="subjectFilter">
+                        <option value="">All Subjects</option>
+                    </select>
                 </div>
 
-                <div class="finder-content">
-                    <aside class="finder-sidebar" id="finderSidebar">
-                        <!-- Level 1 items (Subjects) will be loaded here -->
-                    </aside>
-                    <section class="finder-file-list">
-                        <div class="columns">
-                            <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
-                        </div>
-                        <div id="finderFileListContent">
-                            <p style="text-align:center; padding:20px; color:var(--text-secondary);">Select a subject from the sidebar.</p>
-                        </div>
-                    </section>
+                <div class="filter-section">
+                    <h3>Year</h3>
+                    <select id="yearFilter">
+                        <option value="">All Years</option>
+                    </select>
                 </div>
-            </div>
+                
+                <div class="filter-section">
+                    <h3>Topic</h3>
+                    <select id="topicFilter">
+                        <option value="">All Topics</option>
+                    </select>
+                </div>
 
-        </main>
-        
-        <footer>
-            <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
-        </footer>
+                <div class="crud-buttons">
+                    <button id="addMaterialButton" class="btn" style="display:none;">Add New Material</button>
+                </div>
+
+                <ul id="finderList" class="finder-list">
+                    <!-- Finder items will be dynamically added here -->
+                </ul>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab-id="tutorials">Tutorials</button>
+                    <button class="tab-button" data-tab-id="pastPapers">Past Papers</button>
+                    <button class="tab-button" data-tab-id="exercises">Exercises</button>
+                </div>
+
+                <div id="tutorialsTab" class="tab-content active">
+                    <div id="tutorialsList" class="item-list"></div>
+                </div>
+
+                <div id="pastPapersTab" class="tab-content">
+                    <div id="pastPapersList" class="item-list"></div>
+                </div>
+
+                <div id="exercisesTab" class="tab-content">
+                    <div id="exercisesList" class="item-list"></div>
+                </div>
+            </main>
+        </div>
     </div>
 
+    <!-- Modals -->
 
-    <!-- Universal Modal -->
+    <!-- Main Message Modal -->
     <div id="messageModal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <div id="modalMessage"></div>
-            <div id="modalButtons"></div>
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title"></h2>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage"></p>
+                <div id="modalForm" style="display:none;">
+                    <input type="text" id="modalInput" class="btn" placeholder="Enter promo code">
+                </div>
+            </div>
+            <div id="modalButtons" class="modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- Full Preview Modal -->
+    <div id="fullPreviewModal" class="modal">
+        <div class="modal-content full-preview-modal-content">
+            <div class="modal-header">
+                <h2 id="fullPreviewTitle" class="modal-title"></h2>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="full-preview-container">
+                <img id="fullPreviewImage" style="display:none;">
+                <video id="fullPreviewVideo" controls style="display:none;"></video>
+                <div id="pdfViewer" style="display:none; width: 100%; height: 100%; overflow: auto;">
+                    <canvas id="pdfCanvas"></canvas>
+                    <div id="pdfNav">
+                        <button id="prevPdfPageBtn">Previous</button>
+                        <span>Page <span id="pageNum"></span> of <span id="pageCount"></span></span>
+                        <button id="nextPdfPageBtn">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Material Modal -->
+    <div id="crudModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="crudModalTitle" class="modal-title"></h2>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="crudForm">
+                    <label for="materialName">Name:</label>
+                    <input type="text" id="materialName" required><br><br>
+                    <label for="materialSubject">Subject:</label>
+                    <input type="text" id="materialSubject" required><br><br>
+                    <label for="materialYear">Year:</label>
+                    <input type="text" id="materialYear"><br><br>
+                    <label for="materialTopic">Topic:</label>
+                    <input type="text" id="materialTopic"><br><br>
+                    <label for="materialUrl">URL:</label>
+                    <input type="url" id="materialUrl"><br><br>
+                    <div id="promoCodeContainer" style="display:none;">
+                        <label for="materialPromoCode">Promo Code:</label>
+                        <input type="text" id="materialPromoCode"><br><br>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelCrud" class="btn">Cancel</button>
+                </form>
+            </div>
         </div>
     </div>
     
-    <!-- Modals for adding content -->
-    <div id="addVideoModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Tutorial Video</h3>
-             <form id="addVideoForm">
-                <input type="hidden" id="videoParentId1">
-                <input type="hidden" id="videoParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialLink">YouTube Link or Embed Code</label>
-                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
-                     <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialTitle">Video Title</label>
-                     <input type="text" id="tutorialTitle" required>
-                 </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Video</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <div id="addPastPaperModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Past Paper</h3>
-             <form id="addPastPaperForm">
-                <input type="hidden" id="paperParentId1">
-                <input type="hidden" id="paperParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="pastPaperName">Paper Name / Title</label>
-                     <input type="text" id="pastPaperName" required placeholder="e.g., Paper 1 Section A">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="pastPaperDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="pastPaperFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="pastPaperFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="pastPaperLink">Paste External Link (for large files)</label>
-                    <input type="url" id="pastPaperLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Paper</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <!-- New Modal for Editing Past Papers -->
-    <div id="editPastPaperModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3>Edit Past Paper</h3>
-            <form id="editPastPaperForm">
-                <input type="hidden" id="editPaperId">
-                <input type="hidden" id="editPaperParentId1">
-                <input type="hidden" id="editPaperParentId2">
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperName">Paper Name / Title</label>
-                    <input type="text" id="editPastPaperName" required>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperLink">Download Link</label>
-                    <input type="url" id="editPastPaperLink" required>
-                </div>
-                <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="addExerciseModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Exercise</h3>
-             <form id="addExerciseForm">
-                <input type="hidden" id="exerciseParentId1">
-                <input type="hidden" id="exerciseParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exerciseName">Exercise Name / Title</label>
-                     <input type="text" id="exerciseName" required placeholder="e.g., Chapter 1 MCQs">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exercisePrice">Price (USD)</label>
-                     <input type="number" id="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="exerciseDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="exerciseFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="exerciseFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="exerciseLink">Paste External Link (for large files)</label>
-                    <input type="url" id="exerciseLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Exercise</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <!-- Video Preview Modal -->
-    <div id="videoPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="videoPreviewTitle"></h3>
-            <div id="videoPreviewContent" class="video-embed-container"></div>
-        </div>
-    </div>
-
-    <!-- PDF Preview Modal -->
-    <div id="pdfPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="pdfPreviewTitle"></h3>
-            <div id="pdfCanvasContainer">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-            <div id="pdfControls">
-                <button id="prevPdfPage">Previous</button>
-                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
-                <button id="nextPdfPage">Next</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // --- IMPORTANT CONFIGURATION ---
-        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
-
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
-          authDomain: "ai-grading-9bb30.firebaseapp.com",
-          projectId: "ai-grading-9bb30",
-          storageBucket: "ai-grading-9bb30.appspot.com",
-          messagingSenderId: "298162112230",
-          appId: "1:298162112230:web:529d3f95536991be685d27",
-          measurementId: "G-CHKLKSM17S"
-        };
-        
+        // Global variables for Firebase configuration
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const TEACHER_CODE = "Derren0625";
-        const STUDENT_CODE = "STUDENT456";
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-        let app, db, auth, storage;
-        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let shoppingCart = [];
-        let appliedPromoCode = null;
-
-        // --- AUTH & INITIALIZATION ---
-        
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
-
-        const googleSignInTemplate = `
-            <h2>Sign In</h2>
-            <button id="googleSignInButton" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-                <span>Sign in with Google</span>
-            </button>
-            <p id="authError" class="error-message"></p>
-        `;
-
-        const codeEntryTemplate = `
-            <h2>Enter Access Code</h2>
-            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
-            <input type="text" id="accessCodeInput" placeholder="Enter code here">
-            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-            <p id="codeError" class="error-message"></p>
-        `;
-
+        // --- Firebase Initialization ---
+        let app, db, auth, storage, userId;
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             storage = getStorage(app);
-            console.log("Firebase initialized successfully.");
         } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
+            console.error("Firebase initialization error:", error);
+            showModal('Firebase Error', 'Failed to initialize Firebase. Please check the configuration.');
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                currentUserEmail = user.email;
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                try {
-                    const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                        const profileData = userProfileDoc.data();
-                        currentUserRole = profileData.role;
-                        currentUserName = profileData.name || user.displayName;
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                        showApp();
-                    } else {
-                        currentUserName = user.displayName;
-                        currentUserRole = 'unassigned';
-                        showCodeEntry();
-                    }
-                } catch (e) {
-                     console.error("Error checking user profile:", e);
-                     showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     showLogin();
-                }
-            } else {
-                currentUserId = null;
-                currentUserRole = null;
-                currentUserName = null;
-                showLogin();
-            }
-        });
-
-        function showLogin() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            setTimeout(() => { authWrapper.style.opacity = '1'; }, 10);
-            authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        }
-
-        function showCodeEntry() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            setTimeout(() => { authWrapper.style.opacity = '1'; }, 10);
-            authContainer.innerHTML = codeEntryTemplate;
-            const submitCodeBtn = document.getElementById('submitCodeButton');
-            const accessCodeInput = document.getElementById('accessCodeInput');
-            submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
-            accessCodeInput?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSubmitCode();
-                }
-            });
-            accessCodeInput?.focus();
-        }
-
-        async function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            
-            // Show/hide role-specific nav links
-            const isTeacher = currentUserRole === 'teacher';
-            document.getElementById('navManageStudentsButton').style.display = isTeacher ? 'block' : 'none';
-            document.getElementById('navSubmissionsButton').style.display = 'block'; // Show for all roles
-
-            initializeAllMaterialSections();
-            await checkForSuccessfulPurchase();
-
-            // Default to showing tutorial section
-            showSection('tutorialSection');
-        }
-
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
-            try { 
-                await signInWithPopup(auth, provider); 
-            } catch (error) { 
-                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-                console.error("Google Sign-In Error:", error);
-            }
-        }
-
-        async function handleSubmitCode(codeValue) {
-            const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
-            const codeError = document.getElementById('codeError');
-            if(codeError) codeError.textContent = '';
-            
-            let roleToSet = null;
-            if (code === TEACHER_CODE) roleToSet = 'teacher';
-            else if (code === STUDENT_CODE) roleToSet = 'student';
-            else { 
-                if(codeError) codeError.textContent = 'Invalid access code.';
-                return; 
-            }
-            
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                currentUserRole = roleToSet;
-                showModal('Success!', `Your role has been set to ${roleToSet}.`);
-                showApp();
-            } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
-                console.error("Submit Code Error:", error);
-            }
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-
-        // --- NAVIGATION & UI ---
-
-        let currentMaterialViewMode = 'card'; // 'card' or 'finder'
-
-        function showSection(sectionIdToShow) {
-            const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection'];
-            
-            sections.forEach(id => {
-                const section = document.getElementById(id);
-                if (section) {
-                    const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? 'block' : 'none';
-                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
-                }
-            });
-
-            // Handle visibility of finder window based on section and screen size
-            const finderSection = document.getElementById('finderMaterialsSection');
-            const isMaterialSection = sections.includes(sectionIdToShow);
-            
-            if (isMaterialSection && window.innerWidth >= 769) { // Desktop
-                finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
-                document.getElementById(sectionIdToShow).style.display = currentMaterialViewMode === 'card' ? 'block' : 'none';
-            } else { // Mobile or non-material section
-                finderSection.style.display = 'none';
-                document.getElementById(sectionIdToShow).style.display = 'block';
-            }
-
-
-            if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
-                loadPromoCodesForTeacher();
-            }
-        }
-
-        function setupSectionToggle() {
-            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
-                showSection('tutorialSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('tutorials');
-                    else renderStudentItems('tutorials');
-                } else {
-                    renderStudentItems('tutorials');
-                }
-            });
-            document.getElementById('togglePastPapersButton')?.addEventListener('click', () => {
-                showSection('pastPapersSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('pastPapers');
-                    else renderStudentItems('pastPapers');
-                } else {
-                    renderStudentItems('pastPapers');
-                }
-            });
-            document.getElementById('toggleExercisesButton')?.addEventListener('click', () => {
-                showSection('exerciseSection');
-                if (window.innerWidth >= 769) {
-                    if (currentMaterialViewMode === 'finder') showFinderView('exercises');
-                    else renderStudentItems('exercises');
-                } else {
-                    renderStudentItems('exercises');
-                }
-            });
-        }
-        setupSectionToggle();
-        
-        // --- REFACTORED MATERIALS MANAGEMENT ---
-
-        const materialsConfig = {
-            tutorials: {
-                sectionId: 'tutorialSection',
-                collectionName: 'tutorials',
-                title: 'Tutorial Videos',
-                level1: 'Subject',
-                level2: 'Topic',
-                level3: 'Video',
-                modalId: 'addVideoModal',
-                isPaid: false
-            },
-            pastPapers: {
-                sectionId: 'pastPapersSection',
-                collectionName: 'pastPapers',
-                title: 'Past Papers',
-                level1: 'Subject',
-                level2: 'Year',
-                level3: 'Paper',
-                modalId: 'addPastPaperModal',
-                editModalId: 'editPastPaperModal',
-                isPaid: false
-            },
-            exercises: {
-                sectionId: 'exerciseSection',
-                collectionName: 'exercises',
-                title: 'Exercises for Sale',
-                level1: 'Subject',
-                level2: 'Topic',
-                level3: 'Exercise',
-                modalId: 'addExerciseModal',
-                isPaid: true
-            }
+        const materialsCollections = {
+            'tutorials': 'tutorials',
+            'pastPapers': 'past_papers',
+            'exercises': 'exercises'
         };
 
-        function getPath(type, ids = []) {
-            const config = materialsConfig[type];
-            const collection = config.collectionName;
-            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
-            if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
-            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
-            return pathParts.join('/');
-        }
-        
+        let isTeacher = false;
+        let allMaterials = {
+            tutorials: [],
+            pastPapers: [],
+            exercises: []
+        };
+        let filteredMaterials = { ...allMaterials };
+        let currentTab = 'tutorials';
+        let currentFilters = { subject: '', year: '', topic: '' };
+        let purchasedItems = [];
 
-        function initializeAllMaterialSections() {
-            for (const type in materialsConfig) {
-                setupMaterialSection(type);
+        // --- DOM Elements ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const mainContent = document.getElementById('mainContent');
+        const logoutButton = document.getElementById('logoutButton');
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const lists = {
+            tutorials: document.getElementById('tutorialsList'),
+            pastPapers: document.getElementById('pastPapersList'),
+            exercises: document.getElementById('exercisesList')
+        };
+        const finderSidebar = document.querySelector('.finder-sidebar');
+        const listModeToggle = document.getElementById('listModeToggle');
+        const finderList = document.getElementById('finderList');
+        const subjectFilter = document.getElementById('subjectFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const topicFilter = document.getElementById('topicFilter');
+        const addMaterialButton = document.getElementById('addMaterialButton');
+
+        // Modal Elements
+        const messageModal = document.getElementById('messageModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalForm = document.getElementById('modalForm');
+        const modalInput = document.getElementById('modalInput');
+        const modalButtons = document.getElementById('modalButtons');
+        const fullPreviewModal = document.getElementById('fullPreviewModal');
+        const fullPreviewTitle = document.getElementById('fullPreviewTitle');
+        const fullPreviewImage = document.getElementById('fullPreviewImage');
+        const fullPreviewVideo = document.getElementById('fullPreviewVideo');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const pageNumSpan = document.getElementById('pageNum');
+        const pageCountSpan = document.getElementById('pageCount');
+        const prevPdfPageBtn = document.getElementById('prevPdfPageBtn');
+        const nextPdfPageBtn = document.getElementById('nextPdfPageBtn');
+        const crudModal = document.getElementById('crudModal');
+        const crudModalTitle = document.getElementById('crudModalTitle');
+        const crudForm = document.getElementById('crudForm');
+        const materialNameInput = document.getElementById('materialName');
+        const materialSubjectInput = document.getElementById('materialSubject');
+        const materialYearInput = document.getElementById('materialYear');
+        const materialTopicInput = document.getElementById('materialTopic');
+        const materialUrlInput = document.getElementById('materialUrl');
+        const promoCodeContainer = document.getElementById('promoCodeContainer');
+        const materialPromoCodeInput = document.getElementById('materialPromoCode');
+
+        // PDF.js variables
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        const pdfContext = pdfCanvas.getContext('2d');
+        const maxPdfWidth = 800;
+
+        // Drag and drop variables
+        let draggedItem = null;
+        let placeholder = null;
+        let dropTargetList = null;
+
+        // --- Core Functions ---
+        async function fetchInitialData() {
+            try {
+                // Fetch user data including purchased items
+                const userDocRef = doc(db, `/artifacts/${appId}/users/${userId}`);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    purchasedItems = userData.purchasedItems || [];
+                    if (userData.role === 'teacher') {
+                        isTeacher = true;
+                        addMaterialButton.style.display = 'block';
+                    }
+                }
+
+                // Listen for changes to materials
+                for (const key in materialsCollections) {
+                    const collectionName = materialsCollections[key];
+                    const collectionRef = collection(db, `/artifacts/${appId}/public/data/${collectionName}`);
+                    onSnapshot(collectionRef, (snapshot) => {
+                        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        allMaterials[key] = items;
+                        applyFiltersAndRender();
+                    }, (error) => {
+                        console.error("Error listening to collection:", collectionName, error);
+                        showModal('Data Error', `Failed to load ${key}: ${error.message}`);
+                    });
+                }
+
+                // Initial load is successful
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    mainContent.style.opacity = '1';
+                    mainContent.style.display = 'flex';
+                }, 500);
+
+            } catch (error) {
+                console.error("Initial data fetch error:", error);
+                showModal('Initialization Error', `Failed to load data: ${error.message}`);
             }
-            document.getElementById('tutorialSection').addEventListener('click', (e) => {
-                const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
-                if (thumbnail) {
-                    e.preventDefault();
-                    const videoId = thumbnail.dataset.youtubeId;
-                    const embedContainer = document.createElement('div');
-                    embedContainer.className = 'video-embed-container';
-                    embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
-                    thumbnail.replaceWith(embedContainer);
+        }
+
+        function applyFiltersAndRender() {
+            // Get selected filter values
+            const selectedSubject = subjectFilter.value;
+            const selectedYear = yearFilter.value;
+            const selectedTopic = topicFilter.value;
+
+            // Update filter options
+            updateFilterOptions();
+
+            for (const tab in allMaterials) {
+                filteredMaterials[tab] = allMaterials[tab].filter(item => {
+                    const matchesSubject = !selectedSubject || item.subject === selectedSubject;
+                    const matchesYear = !selectedYear || item.year === parseInt(selectedYear);
+                    const matchesTopic = !selectedTopic || item.topic === selectedTopic;
+                    return matchesSubject && matchesYear && matchesTopic;
+                });
+                renderMaterials(tab, filteredMaterials[tab]);
+            }
+        }
+
+        function updateFilterOptions() {
+            const allSubjects = new Set();
+            const allYears = new Set();
+            const allTopics = new Set();
+
+            for (const tab in allMaterials) {
+                allMaterials[tab].forEach(item => {
+                    if (item.subject) allSubjects.add(item.subject);
+                    if (item.year) allYears.add(item.year);
+                    if (item.topic) allTopics.add(item.topic);
+                });
+            }
+
+            // Populate subject filter
+            const currentSubject = subjectFilter.value;
+            subjectFilter.innerHTML = '<option value="">All Subjects</option>';
+            Array.from(allSubjects).sort().forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectFilter.appendChild(option);
+            });
+            subjectFilter.value = currentSubject;
+
+            // Populate year filter
+            const currentYear = yearFilter.value;
+            yearFilter.innerHTML = '<option value="">All Years</option>';
+            Array.from(allYears).sort((a, b) => b - a).forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+            });
+            yearFilter.value = currentYear;
+
+            // Populate topic filter
+            const currentTopic = topicFilter.value;
+            topicFilter.innerHTML = '<option value="">All Topics</option>';
+            Array.from(allTopics).sort().forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicFilter.appendChild(option);
+            });
+            topicFilter.value = currentTopic;
+        }
+
+        function renderMaterials(tabId, materials) {
+            const listEl = lists[tabId];
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            
+            // Re-render finder sidebar list for the current active tab
+            if (tabId === currentTab) {
+                finderList.innerHTML = '';
+            }
+
+            if (materials.length === 0) {
+                listEl.innerHTML = `<p style="color:var(--text-secondary); text-align:center;">No materials found for this section.</p>`;
+                return;
+            }
+
+            materials.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                const isPurchased = purchasedItems.includes(item.id);
+                const isAssignment = item.path && item.path.includes('assignments');
+                const isLocked = item.isPaid && !isPurchased;
+                const card = createMaterialCard(item, tabId, isLocked, isAssignment);
+                listEl.appendChild(card);
+                
+                // Add to finder sidebar list
+                if (tabId === currentTab) {
+                    const finderItem = createFinderItem(item);
+                    finderList.appendChild(finderItem);
                 }
             });
-
-            setupFinderWindow();
-            setupGoogleDriveLinkConversion();
+        }
+        
+        function createFinderItem(item) {
+            const li = document.createElement('li');
+            li.className = 'finder-item';
+            li.textContent = item.name;
+            li.dataset.id = item.id;
+            li.onclick = () => {
+                // Scroll to the card
+                const card = document.querySelector(`.item-card[data-id="${item.id}"]`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Briefly highlight the card
+                    card.style.transition = 'none';
+                    card.style.backgroundColor = '#444';
+                    setTimeout(() => {
+                        card.style.transition = 'background-color 0.3s';
+                        card.style.backgroundColor = '';
+                    }, 500);
+                }
+            };
+            return li;
         }
 
-        function setupMaterialSection(type) {
-            const config = materialsConfig[type];
-            const section = document.getElementById(config.sectionId);
-
-            let studentViewHtml = `
-                <div class="filters-container" style="display: flex; gap: 1rem; margin-bottom: 2rem; justify-content: center;">
-                    <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
-                    <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
-                </div>
-                <div id="level3-${type}-grid" class="grid-container"></div>`;
-
-            if (config.isPaid) {
-                studentViewHtml = `
-                    <div class="store-layout">
-                        <div class="product-grid">
-                            ${studentViewHtml}
-                        </div>
-                        <div class="shopping-cart">
-                            <h3>Shopping Cart</h3>
-                            <div id="cart-items"></div>
-                            <div id="cart-summary">
-                                <p>Subtotal: <span id="cart-subtotal-price">$0.00</span></p>
-                                <p id="promo-discount-line" style="display:none;">Promo Discount: <span id="cart-promo-discount">-$0.00</span></p>
-                                <p><strong>Total: <span id="cart-total-price">$0.00</span></strong></p>
-                            </div>
-                             <div class="promo-code-section" style="margin-top: 1rem;">
-                                <label for="promoCodeInput">Promo Code:</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="text" id="promoCodeInput" placeholder="Enter code" style="margin-bottom:0;">
-                                    <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
-                                </div>
-                                <div id="appliedPromoCodeDisplay" style="display:none; margin-top: 0.5rem;">
-                                    Applied: <span id="appliedPromoCodeText"></span>
-                                    <button id="removePromoCodeBtn" style="background:none; border:none; color:var(--accent-red); cursor:pointer; margin-left: 0.5rem;">Remove</button>
-                                </div>
-                                <p id="promoCodeError" class="error-message" style="margin-top: 0.5rem;"></p>
-                            </div>
-                            <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
-                        </div>
-                    </div>`;
-            }
-
-            section.innerHTML = `
-                <h2 class="section-title">${config.title}</h2>
-                <div id="teacher-${type}-view" style="display:none;">
-                    <div class="form-container" style="max-width: initial;">
-                        <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
-                    </div>
-                    <div id="level1-${type}-container"></div>
-                     ${type === 'exercises' ? `
-                        <div class="form-container" style="max-width: initial; margin-top: 2rem;">
-                            <h3>Promo Code Management</h3>
-                            <div style="margin-bottom: 1rem;">
-                                <label for="promoDiscountAmount">Discount Amount ($)</label>
-                                <input type="number" id="promoDiscountAmount" placeholder="e.g., 10.00" step="0.01" min="0">
-                            </div>
-                            <button id="generatePromoCodeBtn" class="btn-primary">Generate New Promo Code</button>
-                            <p id="promoCodeGenerationStatus" class="loading-indicator"></p>
-                            <div id="teacherPromoCodeList" style="margin-top:1rem;"></div>
-                        </div>
-                    ` : ''}
-                </div>
-                <div id="student-${type}-view" style="display:none;">
-                    ${studentViewHtml}
-                </div>`;
-
-            const isTeacher = currentUserRole === 'teacher';
-            document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
-            document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+        function createMaterialCard(item, tabId, isLocked, isAssignment) {
+            const card = document.createElement('li');
+            card.className = 'item-card';
+            card.dataset.id = item.id;
+            card.dataset.tabId = tabId;
+            card.dataset.name = item.name;
 
             if (isTeacher) {
-                renderContent(type, `level1-${type}-container`, 1);
-                document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
-                document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
-                
-                const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
-                teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
-                teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
-                teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
+                card.draggable = true;
+                addDragEvents(card);
+            }
 
-                if (type === 'exercises') {
-                    document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
-                    loadPromoCodesForTeacher();
-                }
-            } else {
-                setupStudentFilters(type);
-                if(config.isPaid) {
-                    document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
-                    document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
-                    document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
-                }
-
-                if (window.innerWidth >= 769) {
-                    const studentViewContainer = document.getElementById(`student-${type}-view`);
-                    const materialsSectionTitle = section.querySelector('.section-title');
-                    if (!document.getElementById(`toggle-view-btn-${type}`)) {
-                        const toggleButton = document.createElement('button');
-                        toggleButton.id = `toggle-view-btn-${type}`;
-                        toggleButton.className = 'btn-primary';
-                        toggleButton.textContent = 'Switch to Finder View';
-                        toggleButton.style.marginBottom = '1rem';
-                        materialsSectionTitle.after(toggleButton);
-
-                        toggleButton.addEventListener('click', () => {
-                            if (currentMaterialViewMode === 'card') {
-                                currentMaterialViewMode = 'finder';
-                                studentViewContainer.style.display = 'none';
-                                showFinderView(type);
-                                toggleButton.textContent = 'Switch to Card View';
-                            } else {
-                                currentMaterialViewMode = 'card';
-                                studentViewContainer.style.display = 'block';
-                                document.getElementById('finderMaterialsSection').style.display = 'none';
-                                toggleButton.textContent = 'Switch to Finder View';
-                                renderStudentItems(type);
-                            }
-                        });
-                    }
+            let actionsHtml = `<button class="preview-btn">Preview</button>`;
+            if (item.isPaid && !isAssignment) {
+                actionsHtml += `<button class="purchase-btn">${isLocked ? 'Purchase' : 'Purchased'}</button>`;
+            }
+            if (isTeacher) {
+                actionsHtml += `<button class="edit-btn">Edit</button>`;
+                actionsHtml += `<button class="delete-btn">Delete</button>`;
+                if (item.path) {
+                    actionsHtml += `<button class="move-btn">Move</button>`;
                 }
             }
-        }
-        
-        async function renderContent(type, containerId, level, parentIds = []) {
-            const container = document.getElementById(containerId);
-            const config = materialsConfig[type];
-            const levelName = config[`level${level}`];
-            container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
-
-            const collectionRef = collection(db, getPath(type, parentIds));
-            const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
-            try {
-                const snapshot = await getDocs(q);
-                if (snapshot.empty) {
-                    container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
-                    return;
+            card.innerHTML = `
+                <div class="item-info">
+                    <h4>${item.name}</h4>
+                    <p>${item.description || 'No description provided.'}</p>
+                </div>
+                <div class="item-meta">
+                    ${item.subject ? `<span>Subject: ${item.subject}</span>` : ''}
+                    ${item.year ? `<span>Year: ${item.year}</span>` : ''}
+                    ${item.topic ? `<span>Topic: ${item.topic}</span>` : ''}
+                    ${item.isPaid ? `<span>${isLocked ? 'Locked' : 'Unlocked'}</span>` : '<span>Free</span>'}
+                </div>
+                <div class="item-actions">
+                    ${actionsHtml}
+                </div>
+            `;
+            
+            // Add event listeners to buttons
+            card.querySelector('.preview-btn').onclick = () => previewMaterial(item);
+            const purchaseBtn = card.querySelector('.purchase-btn');
+            if (purchaseBtn) {
+                if (isLocked) {
+                    purchaseBtn.onclick = () => handlePurchase(item);
+                } else {
+                    purchaseBtn.disabled = true;
                 }
-                
-                container.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    item.id = doc.id;
-                    const el = document.createElement('div');
-                    el.className = level < 3 ? 'content-item' : 'sub-item';
-                    el.dataset.level = level;
-                    el.dataset.id = doc.id;
-                    el.dataset.parentIds = JSON.stringify(parentIds);
-
-
-                    let headerHtml;
-                    if (level < 3) {
-                        const nextLevel = level + 1;
-                        const newParentIds = [...parentIds, doc.id];
-                        headerHtml = `
-                            <div class="content-header" aria-expanded="false">
-                                <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
-                                <div class="item-actions">
-                                    <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
-                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
-                                </div>
-                            </div>
-                            <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
-                        `;
-                    } else { 
-                        let itemName = item.name || item.title;
-                        let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
-                        headerHtml = `<span>${itemName}${itemPrice}</span>
-                                     <div class="item-actions">
-                                        ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
-                                        <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
-                                        <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem; text-decoration: none; display: inline-block; padding: 6px 10px;">Download</a>
-                                        <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
-                                     </div>`;
-                        el.setAttribute('draggable', 'true');
-                        el.dataset.itemId = doc.id;
-                        el.dataset.itemType = type;
-                        el.addEventListener('dragstart', handleDragStart);
-                    }
-                    el.innerHTML = headerHtml;
-                    container.appendChild(el);
-                });
-            } catch (error) {
-                console.error(`Error rendering level ${level} for ${type}:`, error);
-                container.innerHTML = `<p class="error-message">Error loading content. A database index might be required. Check console for details.</p>`;
             }
+            const editBtn = card.querySelector('.edit-btn');
+            if (editBtn) editBtn.onclick = () => editMaterial(item);
+            const deleteBtn = card.querySelector('.delete-btn');
+            if (deleteBtn) deleteBtn.onclick = () => deleteMaterial(item);
+            const moveBtn = card.querySelector('.move-btn');
+            if (moveBtn) moveBtn.onclick = () => moveMaterial(item);
+
+            return card;
+        }
+
+        function addDragEvents(card) {
+            card.addEventListener('dragstart', (e) => {
+                draggedItem = e.target;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedItem.dataset.id);
+                setTimeout(() => {
+                    draggedItem.classList.add('dragging');
+                    // Create a visual placeholder
+                    placeholder = document.createElement('li');
+                    placeholder.className = 'item-card placeholder';
+                    placeholder.style.height = `${draggedItem.offsetHeight}px`;
+                    draggedItem.parentNode.insertBefore(placeholder, draggedItem);
+                    placeholder.classList.add('visible');
+                }, 0);
+            });
+
+            card.addEventListener('dragend', () => {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+                if (placeholder) {
+                    placeholder.remove();
+                    placeholder = null;
+                }
+                if (dropTargetList) {
+                    dropTargetList.classList.remove('drag-over');
+                    dropTargetList = null;
+                }
+            });
         }
         
-        async function handleTeacherClick(e, type) {
-            const header = e.target.closest('.content-header');
-            const button = e.target.closest('button, a');
-
-            if (button) {
-                e.stopPropagation();
-                if(button.classList.contains('download-item-btn')) return; // Let download link behave normally
-
-                const parentElement = button.closest('.content-item, .sub-item');
-                const parentIdsArray = parentElement ? JSON.parse(parentElement.dataset.parentIds) : [];
+        // Add drop event listeners to all lists
+        Object.values(lists).forEach(listEl => {
+            listEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                listEl.classList.add('drag-over');
+                dropTargetList = listEl;
                 
-                if (button.matches('.add-item-btn')) {
-                    const nextLevel = parseInt(button.dataset.level);
-                    const newParentIds = JSON.parse(button.dataset.parentIds);
-                    if (nextLevel < 3) {
-                        showAddItemModal(type, nextLevel, newParentIds);
-                    } else { 
-                        showAddFinalItemModal(type, newParentIds);
-                    }
-                } else if (button.matches('.delete-item-btn')) {
-                    const idToDelete = button.dataset.id;
-                    const level = parseInt(button.dataset.level);
-                    handleDeleteItem(type, level, idToDelete, parentIdsArray);
-                } else if (button.matches('.preview-item-btn')) {
-                    const itemData = JSON.parse(button.dataset.item);
-                    handlePreview(type, itemData);
-                } else if (button.matches('.edit-item-btn')) {
-                    const itemData = JSON.parse(button.dataset.item);
-                    const itemParentIds = JSON.parse(button.dataset.parentIds);
-                    showEditPastPaperModal(itemData, itemParentIds);
-                }
-            } else if (header) {
-                const parentItem = header.closest('.content-item');
-                const { level, id, parentIds } = parentItem.dataset;
-                const currentLevel = parseInt(level);
-                if (currentLevel >= 3) return; 
-                
-                const nextLevel = currentLevel + 1;
-                const container = document.getElementById(`container-level${nextLevel}-${type}-${id}`);
-                if (!container) return;
-
-                const isExpanded = header.getAttribute('aria-expanded') === 'true';
-                header.setAttribute('aria-expanded', !isExpanded);
-                container.classList.toggle('expanded', !isExpanded);
-
-                if (!isExpanded && !container.dataset.loaded) {
-                    const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
-                    await renderContent(type, container.id, nextLevel, [...parentIdsArray, id]);
-                    container.dataset.loaded = 'true';
-                }
-            }
-        }
-
-        function handlePreview(type, item) {
-            if (type === 'tutorials') {
-                const videoPreviewModal = document.getElementById('videoPreviewModal');
-                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
-                const videoPreviewContent = document.getElementById('videoPreviewContent');
-                
-                videoPreviewTitle.textContent = item.title;
-                 if (item.type === 'youtube') {
-                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture; gyroscope" allowfullscreen></iframe>`;
-                } else if (item.type === 'embed') {
-                    videoPreviewContent.innerHTML = item.embedCode;
-                }
-                videoPreviewModal.style.display = 'flex';
-            } else if (type === 'pastPapers' || type === 'exercises') {
-                if (item.link) {
-                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
-                        showPdfPreviewModal(item.name, item.link);
-                    } else if (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-                        showModal(item.name, `<img src="${item.link}" style="max-width: 100%; border-radius: 8px;" alt="Image Preview">`);
+                // Find the best drop location
+                const afterElement = getDragAfterElement(listEl, e.clientY);
+                if (placeholder) {
+                    if (afterElement == null) {
+                        listEl.appendChild(placeholder);
                     } else {
-                        window.open(item.link, '_blank');
+                        listEl.insertBefore(placeholder, afterElement);
+                    }
+                }
+            });
+            listEl.addEventListener('dragleave', () => {
+                listEl.classList.remove('drag-over');
+                if (placeholder) {
+                    placeholder.classList.remove('visible');
+                }
+            });
+            listEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                listEl.classList.remove('drag-over');
+                if (!draggedItem) return;
+                
+                const dragId = draggedItem.dataset.id;
+                const sourceTab = draggedItem.dataset.tabId;
+                const destinationTab = listEl.id.replace('List', '');
+                
+                // Get the old and new positions
+                const siblings = Array.from(listEl.children).filter(el => el.dataset.id !== dragId);
+                const newIndex = siblings.indexOf(placeholder);
+
+                // Perform the move logic
+                if (sourceTab === destinationTab) {
+                    // Reorder within the same collection
+                    const oldIndex = allMaterials[sourceTab].findIndex(item => item.id === dragId);
+                    if (oldIndex !== newIndex) {
+                         const itemToMove = allMaterials[sourceTab].splice(oldIndex, 1)[0];
+                         allMaterials[sourceTab].splice(newIndex, 0, itemToMove);
+                         showModal('Reorder Success', 'Material reordered successfully.');
                     }
                 } else {
-                    showModal('Preview Error', 'No link available for this item.');
-                }
-            }
-        }
-
-
-        function showAddItemModal(type, level, parentIds = []) {
-            const config = materialsConfig[type];
-            const levelName = config[`level${level}`];
-            const prompt = levelName === 'Year' ? 'Year (e.g., 2024)' : levelName;
-            
-            showInputModal(`Add New ${levelName}`, `Enter ${prompt} Name:`, async (name) => {
-                const collectionRef = collection(db, getPath(type, parentIds));
-                try {
-                    await addDoc(collectionRef, { name: name.trim() });
-                    showModal('Success', `${levelName} added.`);
-                    const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
-                    renderContent(type, containerId, level, parentIds);
-                } catch(e) {
-                    console.error("Error adding item:", e);
-                    showModal('Error', `Could not add ${levelName}. Error: ${e.message}`);
-                }
-            });
-        }
-
-        function showAddFinalItemModal(type, parentIds) {
-            const config = materialsConfig[type];
-            const modal = document.getElementById(config.modalId);
-            modal.style.display = 'flex';
-            
-            const form = modal.querySelector('form');
-            form.querySelector('input[type=hidden]:nth-of-type(1)').value = parentIds[0];
-            form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
-            form.reset();
-
-            if (type === 'pastPapers') {
-                document.getElementById('pastPaperFileName').textContent = 'No file chosen';
-                document.getElementById('pastPaperLink').value = '';
-            }
-            if (type === 'exercises') {
-                document.getElementById('exerciseFileName').textContent = 'No file chosen';
-                document.getElementById('exerciseLink').value = '';
-            }
-            if (type === 'tutorials') {
-                document.getElementById('tutorialThumbnailPreview').style.display = 'none';
-            }
-        }
-
-        async function handleDeleteItem(type, level, id, parentIds) {
-            const config = materialsConfig[type];
-            const levelName = config[`level${level}`];
-
-            showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    const docRef = doc(db, getPath(type, parentIds), id);
-                    try {
-                        if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
-                            const itemSnap = await getDoc(docRef);
-                            const itemData = itemSnap.data();
-                            if (itemData && itemData.link && !itemData.link.startsWith('https://drive.google.com')) {
-                                try {
-                                    const fileRef = ref(storage, itemData.link);
-                                    await deleteObject(fileRef);
-                                } catch (storageError) {
-                                    console.warn('Could not delete file from storage (may not exist or external link):', storageError);
-                                }
-                            }
-                        }
-
-                        await deleteDoc(docRef);
-                        showModal('Success', `${levelName} deleted.`);
-                        const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
-                        renderContent(type, containerId, level, parentIds);
-                    } catch(e) {
-                         console.error("Error deleting item:", e);
-                         showModal('Error', `Could not delete ${levelName}. Error: ${e.message}`);
+                    // Move to a different collection
+                    const itemToMove = allMaterials[sourceTab].find(item => item.id === dragId);
+                    if (itemToMove) {
+                        moveMaterialToCollection(itemToMove, sourceTab, destinationTab);
                     }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-        
-        // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
-        let draggedItem = null;
-
-        function handleDragStart(e) {
-            const subItem = e.target.closest('.sub-item');
-            if (!subItem) return;
-
-            draggedItem = {
-                id: subItem.dataset.itemId,
-                type: subItem.dataset.itemType,
-                parentIds: JSON.parse(subItem.dataset.parentIds)
-            };
-            e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragOver(e, type) {
-            e.preventDefault();
-            const targetElement = e.target.closest('.content-item .content-header');
-            if (targetElement && draggedItem && draggedItem.type === type) {
-                targetElement.closest('.content-item').classList.add('drag-over');
-                e.dataTransfer.dropEffect = 'move';
-            } else {
-                e.dataTransfer.dropEffect = 'none';
-            }
-        }
-
-        function handleDragLeave(e, type) {
-            const targetElement = e.target.closest('.content-item');
-            if (targetElement) {
-                targetElement.classList.remove('drag-over');
-            }
-        }
-
-        async function handleDrop(e, type) {
-            e.preventDefault();
-            const targetElement = e.target.closest('.content-item');
-            if (targetElement) targetElement.classList.remove('drag-over');
-            if (!draggedItem || !targetElement) return;
-
-            const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
-            if (droppedItemData.type !== type) return;
-
-            const targetParentItem = targetElement.closest('[data-level]');
-            const newParentLevel = parseInt(targetParentItem.dataset.level);
-            
-            // Files (level 3) must be dropped into a level 2 container
-            if (newParentLevel !== 2) {
-                showModal('Move Error', 'Files can only be moved into a Topic or Year folder.');
-                return;
-            }
-
-            const newParentIds = [...JSON.parse(targetParentItem.dataset.parentIds), targetParentItem.dataset.id];
-
-            const oldParentIds = draggedItem.parentIds;
-            const itemId = draggedItem.id;
-
-            if (JSON.stringify(oldParentIds) === JSON.stringify(newParentIds)) return;
-
-            const oldDocRef = doc(db, getPath(type, oldParentIds), itemId);
-            const newDocRef = doc(db, getPath(type, newParentIds), itemId);
-
-            try {
-                const docSnap = await getDoc(oldDocRef);
-                if (!docSnap.exists()) throw new Error("Item not found for moving.");
-                const itemData = docSnap.data();
-
-                const batch = writeBatch(db);
-                batch.set(newDocRef, itemData);
-                batch.delete(oldDocRef);
-                await batch.commit();
-
-                showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+                }
                 
-                if (document.getElementById(`container-level3-${type}-${oldParentIds[1]}`)?.classList.contains('expanded')) {
-                    renderContent(type, `container-level3-${type}-${oldParentIds[1]}`, 3, oldParentIds);
+                if (placeholder) {
+                    placeholder.remove();
+                    placeholder = null;
                 }
-                if (document.getElementById(`container-level3-${type}-${newParentIds[1]}`)?.classList.contains('expanded')) {
-                     renderContent(type, `container-level3-${type}-${newParentIds[1]}`, 3, newParentIds);
-                }
-
-            } catch (error) {
-                console.error("Error moving item:", error);
-                showModal('Move Error', `Could not move item. Error: ${error.message}`);
-            } finally {
+                draggedItem.classList.remove('dragging');
                 draggedItem = null;
-            }
+                applyFiltersAndRender();
+            });
+        });
+
+        // Helper function for drag-and-drop
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.item-card:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
+        // --- CRUD Functions ---
+        let currentCrudItem = null;
+        function showCrudModal(item = null) {
+            currentCrudItem = item;
+            crudModalTitle.textContent = item ? 'Edit Material' : 'Add New Material';
+            crudForm.reset();
+            
+            // Show promo code field only for exercises
+            const exercisesTab = document.querySelector('.tab-button[data-tab-id="exercises"]');
+            if (exercisesTab.classList.contains('active')) {
+                promoCodeContainer.style.display = 'block';
+            } else {
+                promoCodeContainer.style.display = 'none';
+            }
 
-        // --- STUDENT FILTER LOGIC ---
-        function setupStudentFilters(type) {
-            const config = materialsConfig[type];
-            const level1Filter = document.getElementById(`level1-${type}-filter`);
-            const level2Filter = document.getElementById(`level2-${type}-filter`);
-            const grid = document.getElementById(`level3-${type}-grid`);
-
-            populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
-
-            level1Filter.onchange = () => {
-                const level1Id = level1Filter.value;
-                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
-                level2Filter.disabled = true;
-                grid.innerHTML = `<p>Please select a ${config.level2.toLowerCase()}.</p>`;
-                if (level1Id) {
-                    populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
-                    level2Filter.disabled = false;
+            if (item) {
+                materialNameInput.value = item.name || '';
+                materialSubjectInput.value = item.subject || '';
+                materialYearInput.value = item.year || '';
+                materialTopicInput.value = item.topic || '';
+                materialUrlInput.value = item.url || '';
+                if (materialPromoCodeInput) {
+                    materialPromoCodeInput.value = item.promoCode || '';
                 }
+            }
+            crudModal.style.display = 'flex';
+        }
+
+        crudForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: materialNameInput.value,
+                subject: materialSubjectInput.value,
+                year: parseInt(materialYearInput.value) || null,
+                topic: materialTopicInput.value || null,
+                url: materialUrlInput.value || null,
+                promoCode: materialPromoCodeInput ? materialPromoCodeInput.value : null
             };
-            level2Filter.onchange = () => renderStudentItems(type);
-        }
-
-        async function renderStudentItems(type) {
-             const config = materialsConfig[type];
-             const grid = document.getElementById(`level3-${type}-grid`);
-             const level1Id = document.getElementById(`level1-${type}-filter`).value;
-             const level2Id = document.getElementById(`level2-${type}-filter`).value;
-
-             grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-             if (!level1Id || !level2Id) {
-                 grid.innerHTML = `<p>Please select a ${config.level1.toLowerCase()} and ${config.level2.toLowerCase()}.</p>`;
-                 return;
-             }
-
-             const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
-             const q = query(itemsRef, orderBy('name', 'asc'));
-             
-             let purchasedItems = {};
-             if(config.isPaid && currentUserId) {
-                 const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
-                 const snapshot = await getDocs(purchaseCollectionRef);
-                 snapshot.forEach(doc => purchasedItems[doc.id] = true);
-             }
-
-             try {
-                const snapshot = await getDocs(q);
-                grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    item.id = doc.id;
-                    const card = document.createElement('div');
-                    
-                    let cardContent = '';
-                    if (type === 'tutorials') {
-                        card.className = 'material-card';
-                        if (item.type === 'youtube') {
-                            cardContent = `
-                                <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
-                                    <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
-                                    <div class="play-button-overlay">▶</div>
-                                </div>
-                                <div class="material-card-content"><h3>${item.title}</h3></div>
-                            `;
-                        } else if (item.type === 'embed') {
-                            cardContent = `
-                                <div class="video-embed-container">${item.embedCode}</div>
-                                <div class="material-card-content"><h3>${item.title}</h3></div>
-                            `;
-                        }
-                    } else if (config.isPaid) {
-                        const isPurchased = purchasedItems[item.id];
-                        const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
-                        card.className = 'product-card';
-                        cardContent = `
-                            <h4>${item.name}</h4>
-                            <p class="product-price">$${item.price.toFixed(2)}</p>
-                            ${isPurchased 
-                                ? `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>`
-                                : `<button class="add-to-cart-btn btn-primary" data-item='${JSON.stringify(item)}' ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
-                            }`;
-                    } else {
-                        card.className = 'material-card';
-                        cardContent = `
-                            <div class="material-card-content"><h3>${item.name}</h3></div>
-                            <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
-                        `;
-                    }
-                    card.innerHTML = cardContent;
-                    grid.appendChild(card);
-                });
-                // Add event listeners after all cards are in the DOM
-                grid.querySelectorAll('.download-btn').forEach(btn => btn.onclick = (e) => handlePreview(e.target.dataset.type, JSON.parse(e.target.dataset.item)));
-                grid.querySelectorAll('.add-to-cart-btn').forEach(btn => btn.onclick = (e) => addToCart(JSON.parse(e.target.dataset.item)));
-             } catch(e) {
-                console.error("Error loading student items:", e);
-                grid.innerHTML = "<p class='error-message'>Error loading items.</p>"
-             }
-        }
-        
-        async function populateFilter(selectElement, collectionRef, levelName) {
-            selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+            
+            const collectionName = materialsCollections[currentTab];
+            const collectionRef = collection(db, `/artifacts/${appId}/public/data/${collectionName}`);
+            
             try {
-                const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
-                const snapshot = await getDocs(q);
-                selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
-                if(snapshot.empty) {
-                    selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
+                if (currentCrudItem) {
+                    // Update existing document
+                    const docRef = doc(db, collectionRef.path, currentCrudItem.id);
+                    await updateDoc(docRef, data);
+                    showModal('Update Success', 'Material updated successfully.');
+                } else {
+                    // Add new document
+                    await addDoc(collectionRef, data);
+                    showModal('Add Success', 'New material added successfully.');
                 }
-                snapshot.forEach(doc => {
-                    selectElement.add(new Option(doc.data().name, doc.id));
-                });
-            }
-            catch (e) {
-                console.error(`Error loading ${levelName}s:`, e);
-                selectElement.innerHTML = `<option value="">-- Error --</option>`;
-            }
-        }
-
-        // --- E-COMMERCE LOGIC ---
-        function addToCart(item) {
-            shoppingCart.push(item);
-            updateCartUI();
-            renderStudentItems('exercises'); 
-        }
-
-        function removeFromCart(itemId) {
-            shoppingCart = shoppingCart.filter(item => item.id !== itemId);
-            updateCartUI();
-            renderStudentItems('exercises');
-        }
-
-        function updateCartUI() {
-            const cartItemsContainer = document.getElementById('cart-items');
-            const subtotalPriceEl = document.getElementById('cart-subtotal-price');
-            const promoDiscountLine = document.getElementById('promo-discount-line');
-            const promoDiscountEl = document.getElementById('cart-promo-discount');
-            const totalPriceEl = document.getElementById('cart-total-price');
-            const checkoutBtn = document.getElementById('checkout-btn');
-            const promoCodeInput = document.getElementById('promoCodeInput');
-            const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
-            const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
-            const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
-
-            cartItemsContainer.innerHTML = '';
-            let subtotal = 0;
-
-            if (shoppingCart.length === 0) {
-                cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
-            }
-
-            shoppingCart.forEach(item => {
-                subtotal += item.price;
-                const itemEl = document.createElement('div');
-                itemEl.className = 'cart-item';
-                itemEl.innerHTML = `<span>${item.name}</span><span>$${item.price.toFixed(2)}</span><button class="remove-from-cart-btn" data-id="${item.id}">✖</button>`;
-                cartItemsContainer.appendChild(itemEl);
-            });
-            
-            document.querySelectorAll('.remove-from-cart-btn').forEach(btn => btn.onclick = () => removeFromCart(btn.dataset.id));
-
-            subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
-            let finalPrice = subtotal;
-
-            if (appliedPromoCode) {
-                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
-                promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
-                promoDiscountLine.style.display = 'block';
-                appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
-                appliedPromoCodeDisplay.style.display = 'block';
-                promoCodeInput.disabled = true;
-                applyPromoCodeBtn.disabled = true;
-            } else {
-                promoDiscountLine.style.display = 'none';
-                appliedPromoCodeDisplay.style.display = 'none';
-                promoCodeInput.disabled = false;
-                applyPromoCodeBtn.disabled = false;
-            }
-
-            totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
-            checkoutBtn.disabled = shoppingCart.length === 0;
-        }
-
-        async function applyPromoCode() {
-            const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
-            const promoCodeError = document.getElementById('promoCodeError');
-            promoCodeError.textContent = '';
-            if (!code) return;
-
-            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
-            const docSnap = await getDoc(promoCodeRef);
-            if (docSnap.exists() && docSnap.data().isActive) {
-                appliedPromoCode = { code, discountAmount: docSnap.data().discountAmount };
-                updateCartUI();
-                showModal('Promo Code Applied', `Successfully applied code "${code}"!`);
-            } else {
-                promoCodeError.textContent = 'Invalid or inactive promo code.';
-            }
-        }
-
-        function removeAppliedPromoCode() {
-            appliedPromoCode = null;
-            updateCartUI();
-            document.getElementById('promoCodeInput').value = '';
-        }
-
-        async function handleCheckout() {
-            if (!currentUserId) return showModal('Error', 'You must be logged in to check out.');
-            
-            let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
-            let finalPrice = subtotal - (appliedPromoCode ? appliedPromoCode.discountAmount : 0);
-            finalPrice = Math.max(0, finalPrice);
-
-            if (finalPrice > 0) {
-                const checkoutSessionId = crypto.randomUUID();
-                const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
-                await setDoc(checkoutSessionRef, { cart: shoppingCart, appliedPromoCode, created: Date.now() });
-                const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
-                window.location.href = stripeUrl;
-            } else { // Free checkout
-                const batch = writeBatch(db);
-                shoppingCart.forEach(item => {
-                    const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
-                    batch.set(purchaseRef, { ...item, purchasedAt: Date.now() });
-                });
-                await batch.commit();
-                showModal('Purchase Successful!', 'Your free items are now available for download.');
-                shoppingCart = [];
-                appliedPromoCode = null;
-                updateCartUI();
-                renderStudentItems('exercises');
-            }
-        }
-        
-        async function checkForSuccessfulPurchase() {
-            // This function is simplified. A real implementation would use webhooks.
-            // For now, we assume a redirect parameter indicates success.
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('purchase') === 'success' && currentUserId) {
-                 showModal('Purchase Successful!', 'Your new exercises are now available for download.');
-                 window.history.replaceState({}, document.title, window.location.pathname);
-                 renderStudentItems('exercises');
-            }
-        }
-
-        // --- PROMO CODE MANAGEMENT (TEACHER SIDE) ---
-        function generateRandomCode(length) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            return Array.from({length}, () => characters.charAt(Math.floor(Math.random() * characters.length))).join('');
-        }
-
-        async function generateAndSavePromoCode() {
-            const discountAmount = parseFloat(document.getElementById('promoDiscountAmount').value);
-            if (isNaN(discountAmount) || discountAmount <= 0) {
-                showModal('Error', 'Please enter a valid positive discount amount.');
-                return;
-            }
-            const newCode = generateRandomCode(8);
-            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
-            await setDoc(promoCodeRef, { code: newCode, discountAmount, isActive: true, createdAt: Date.now() });
-            showModal('Success', `Promo code "${newCode}" generated!`);
-            loadPromoCodesForTeacher();
-        }
-
-        async function loadPromoCodesForTeacher() {
-            const listContainer = document.getElementById('teacherPromoCodeList');
-            listContainer.innerHTML = '<p class="loading-indicator">Loading codes...</p>';
-            const promoCodesRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
-            const q = query(promoCodesRef, orderBy('createdAt', 'desc'));
-            const snapshot = await getDocs(q);
-            if(snapshot.empty) {
-                listContainer.innerHTML = '<p>No promo codes generated yet.</p>';
-                return;
-            }
-            listContainer.innerHTML = snapshot.docs.map(doc => {
-                const promo = doc.data();
-                return `<div style="display:flex; justify-content:space-between; padding:0.5rem; border-bottom:1px solid var(--border-color);">
-                            <span>${promo.code} - $${promo.discountAmount.toFixed(2)} (${promo.isActive ? 'Active' : 'Inactive'})</span>
-                            <div>
-                                <button class="btn-primary toggle-promo-status-btn" data-code="${promo.code}" data-is-active="${promo.isActive}">${promo.isActive ? 'Deactivate' : 'Activate'}</button>
-                                <button class="logout-btn delete-promo-btn" data-code="${promo.code}">Delete</button>
-                            </div>
-                        </div>`;
-            }).join('');
-            listContainer.querySelectorAll('.toggle-promo-status-btn').forEach(btn => btn.onclick = (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
-            listContainer.querySelectorAll('.delete-promo-btn').forEach(btn => btn.onclick = (e) => deletePromoCode(e.target.dataset.code));
-        }
-        
-        async function togglePromoCodeStatus(code, currentStatus) {
-            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
-            await updateDoc(promoCodeRef, { isActive: !currentStatus });
-            loadPromoCodesForTeacher();
-        }
-
-        async function deletePromoCode(code) {
-             showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"?`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/promoCodes`, code));
-                    loadPromoCodesForTeacher();
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-
-
-        // --- VIDEO PARSING ---
-        function parseVideoInput(input) {
-            const text = input.trim();
-            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/
-\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-            const youtubeMatch = text.match(youtubeRegex);
-            if (youtubeMatch && youtubeMatch[1]) {
-                return { type: 'youtube', id: youtubeMatch[1] };
-            }
-            if (text.startsWith('<iframe') && text.endsWith('>')) {
-                return { type: 'embed', code: text };
-            }
-            return null;
-        }
-
-        // --- GOOGLE DRIVE LINK CONVERSION ---
-        function convertGoogleDriveLink(url) {
-            const match = url.match(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view/);
-            return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url;
-        }
-
-        function setupGoogleDriveLinkConversion() {
-            ['pastPaperLink', 'exerciseLink', 'editPastPaperLink'].forEach(id => {
-                const input = document.getElementById(id);
-                if (input) input.addEventListener('input', e => e.target.value = convertGoogleDriveLink(e.target.value));
-            });
-        }
-
-        // --- MODAL SUBMISSION LOGIC ---
-        document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const parentId1 = e.target.querySelector('#videoParentId1').value;
-            const parentId2 = e.target.querySelector('#videoParentId2').value;
-            const videoDetails = parseVideoInput(document.getElementById('tutorialLink').value);
-            const title = document.getElementById('tutorialTitle').value.trim();
-            if (!videoDetails || !title) return showModal('Input Error', 'Please provide a title and a valid YouTube link or embed code.');
-            
-            const dataToSave = { title, name: title, timestamp: Date.now() };
-            if (videoDetails.type === 'youtube') Object.assign(dataToSave, { type: 'youtube', youtubeId: videoDetails.id });
-            else Object.assign(dataToSave, { type: 'embed', embedCode: videoDetails.code });
-
-            await addDoc(collection(db, getPath('tutorials', [parentId1, parentId2])), dataToSave);
-            showModal('Success', 'Video added.');
-            document.getElementById('addVideoModal').style.display = 'none';
-            renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
-        });
-
-        async function handleFileUploadAndSave(type, parentIds, name, file, link, price = null) {
-            const modalId = materialsConfig[type].modalId;
-            const modal = document.getElementById(modalId);
-            const submitButton = modal.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Processing...';
-
-            try {
-                let downloadURL = link;
-                if (file) {
-                    const filePath = `materials/${type}/${Date.now()}_${file.name}`;
-                    const storageRef = ref(storage, filePath);
-                    const uploadResult = await uploadBytes(storageRef, file);
-                    downloadURL = await getDownloadURL(uploadResult.ref);
-                }
-                if (!downloadURL) throw new Error("No valid file or link provided.");
-
-                const dataToSave = { name, link: downloadURL, timestamp: Date.now() };
-                if (price !== null) dataToSave.price = price;
-
-                await addDoc(collection(db, getPath(type, parentIds)), dataToSave);
-                showModal('Success', `${materialsConfig[type].level3} added.`);
-                modal.style.display = 'none';
-                renderContent(type, `container-level3-${type}-${parentIds[1]}`, 3, parentIds);
+                crudModal.style.display = 'none';
             } catch (error) {
-                showModal('Error', `Could not add item: ${error.message}`);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = `Add ${materialsConfig[type].level3}`;
+                console.error("CRUD operation failed:", error);
+                showModal('Error', `Operation failed: ${error.message}`);
+            }
+        });
+        
+        document.getElementById('cancelCrud').onclick = () => {
+            crudModal.style.display = 'none';
+        };
+
+        function editMaterial(item) {
+            showCrudModal(item);
+        }
+
+        async function deleteMaterial(item) {
+            if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
+                try {
+                    const collectionName = materialsCollections[currentTab];
+                    const docRef = doc(db, `/artifacts/${appId}/public/data/${collectionName}/${item.id}`);
+                    await deleteDoc(docRef);
+                    showModal('Delete Success', 'Material deleted successfully.');
+                } catch (error) {
+                    console.error("Delete failed:", error);
+                    showModal('Error', `Delete failed: ${error.message}`);
+                }
+            }
+        }
+        
+        async function moveMaterialToCollection(item, sourceTab, destinationTab) {
+            try {
+                const sourceCollectionRef = collection(db, `/artifacts/${appId}/public/data/${materialsCollections[sourceTab]}`);
+                const destinationCollectionRef = collection(db, `/artifacts/${appId}/public/data/${materialsCollections[destinationTab]}`);
+                
+                const itemRef = doc(sourceCollectionRef, item.id);
+                const newDocRef = doc(destinationCollectionRef);
+                
+                await runTransaction(db, async (transaction) => {
+                    const itemDoc = await transaction.get(itemRef);
+                    if (!itemDoc.exists()) {
+                        throw "Document does not exist!";
+                    }
+                    const data = itemDoc.data();
+                    transaction.set(newDocRef, data);
+                    transaction.delete(itemRef);
+                });
+                
+                showModal('Move Success', `Material moved from ${sourceTab} to ${destinationTab}.`);
+            } catch (error) {
+                console.error("Move failed:", error);
+                showModal('Error', `Move failed: ${error.message}`);
             }
         }
 
-        document.getElementById('addPastPaperForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const parentIds = [e.target.querySelector('#paperParentId1').value, e.target.querySelector('#paperParentId2').value];
-            const name = document.getElementById('pastPaperName').value.trim();
-            const file = document.getElementById('pastPaperFile').files[0];
-            const link = document.getElementById('pastPaperLink').value.trim();
-            if (!name || (!file && !link)) return showModal('Input Error', 'Please provide a paper name and either upload a PDF or paste a link.');
-            handleFileUploadAndSave('pastPapers', parentIds, name, file, link);
-        });
-
-        document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const itemId = e.target.querySelector('#editPaperId').value;
-            const parentIds = [e.target.querySelector('#editPaperParentId1').value, e.target.querySelector('#editPaperParentId2').value];
-            const name = document.getElementById('editPastPaperName').value.trim();
-            const link = document.getElementById('editPastPaperLink').value.trim();
-            if (!name || !link) return showModal('Input Error', 'Please provide a name and link.');
+        function moveMaterial(item) {
+            let otherTabs = Object.keys(materialsCollections).filter(tab => tab !== currentTab);
+            const buttonsHtml = otherTabs.map(tab => 
+                `<button class="btn" onclick="performMove('${item.id}', '${tab}')">${tab.charAt(0).toUpperCase() + tab.slice(1)}</button>`
+            ).join('');
             
-            await updateDoc(doc(db, getPath('pastPapers', parentIds), itemId), { name, link });
-            showModal('Success', 'Past paper updated!');
-            document.getElementById('editPastPaperModal').style.display = 'none';
-            renderContent('pastPapers', `container-level3-pastPapers-${parentIds[1]}`, 3, parentIds);
-        });
-
-        function showEditPastPaperModal(itemData, parentIds) {
-            const modal = document.getElementById('editPastPaperModal');
-            document.getElementById('editPaperId').value = itemData.id;
-            document.getElementById('editPaperParentId1').value = parentIds[0];
-            document.getElementById('editPaperParentId2').value = parentIds[1];
-            document.getElementById('editPastPaperName').value = itemData.name;
-            document.getElementById('editPastPaperLink').value = itemData.link;
-            modal.style.display = 'flex';
-        }
-
-        document.getElementById('addExerciseForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const parentIds = [e.target.querySelector('#exerciseParentId1').value, e.target.querySelector('#exerciseParentId2').value];
-            const name = document.getElementById('exerciseName').value.trim();
-            const price = parseFloat(document.getElementById('exercisePrice').value);
-            const file = document.getElementById('exerciseFile').files[0];
-            const link = document.getElementById('exerciseLink').value.trim();
-            if (!name || isNaN(price) || price < 0 || (!file && !link)) return showModal('Input Error', 'Please provide a name, valid price, and a file or link.');
-            handleFileUploadAndSave('exercises', parentIds, name, file, link, price);
-        });
-        
-        // --- UTILITY ---
-        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) {
-            const dropZone = document.getElementById(dropZoneId);
-            const fileInput = document.getElementById(fileInputId);
-            const fileNameDisplay = document.getElementById(fileNameDisplayId);
-            if (!dropZone || !fileInput || !fileNameDisplay) return;
-
-            dropZone.addEventListener('click', () => fileInput.click());
-            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('highlight'); });
-            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('highlight'));
-            dropZone.addEventListener('drop', e => {
-                e.preventDefault();
-                dropZone.classList.remove('highlight');
-                fileInput.files = e.dataTransfer.files;
-                fileNameDisplay.textContent = fileInput.files[0].name;
-            });
-            fileInput.addEventListener('change', () => fileNameDisplay.textContent = fileInput.files[0].name);
+            showModal('Move Material', `Select a new location for "${item.name}":<br><br>${buttonsHtml}`);
         }
         
-        setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
-        setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
-        
-        document.getElementById('tutorialLink').addEventListener('input', (e) => {
-            const videoDetails = parseVideoInput(e.target.value);
-            const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
-            thumbnailPreview.style.display = (videoDetails && videoDetails.type === 'youtube') ? 'block' : 'none';
-            if (thumbnailPreview.style.display === 'block') thumbnailPreview.src = `https://img.youtube.com/vi/${videoDetails.id}/mqdefault.jpg`;
-        });
-        
-        // --- MODALS ---
-        function showModal(title, message, buttons = []) {
-            const messageModal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = message;
-            const modalButtons = document.getElementById('modalButtons');
+        window.performMove = async (itemId, destinationTab) => {
+            const itemToMove = allMaterials[currentTab].find(item => item.id === itemId);
+            if (itemToMove) {
+                await moveMaterialToCollection(itemToMove, currentTab, destinationTab);
+            }
+            messageModal.style.display = 'none';
+        };
+
+        // --- Stripe & Purchase Logic ---
+        async function handlePurchase(item) {
+            modalTitle.textContent = 'Purchase Exercise';
+            modalMessage.textContent = `Are you sure you want to purchase "${item.name}"? Price: $${item.price}.`;
+            modalForm.style.display = 'block';
             modalButtons.innerHTML = '';
 
-            if (buttons.length === 0) {
-                 const okButton = document.createElement('button');
-                 okButton.textContent = 'OK';
-                 okButton.className = 'btn-primary';
-                 okButton.onclick = () => { messageModal.style.display = 'none'; };
-                 modalButtons.appendChild(okButton);
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'btn btn-primary';
+            confirmBtn.textContent = 'Confirm Purchase';
+            confirmBtn.onclick = () => redirectToStripe(item);
+            modalButtons.appendChild(confirmBtn);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn logout-btn';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = () => messageModal.style.display = 'none';
+            modalButtons.appendChild(cancelBtn);
+
+            messageModal.style.display = 'flex';
+        }
+
+        async function redirectToStripe(item) {
+            const promoCode = modalInput.value;
+            const docRef = await addDoc(collection(db, `checkout_sessions`), {
+                priceId: item.stripePriceId, // Assuming item has a Stripe price ID
+                success_url: window.location.href,
+                cancel_url: window.location.href,
+                metadata: { itemId: item.id },
+                promo_code: promoCode || null
+            });
+            onSnapshot(docRef, async (snap) => {
+                const { error, url } = snap.data();
+                if (error) {
+                    showModal('Stripe Error', `Checkout failed: ${error.message}`);
+                } else if (url) {
+                    window.location.assign(url);
+                }
+            });
+        }
+        
+        async function checkStripeStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            if (sessionId) {
+                try {
+                    const docRef = doc(db, `/artifacts/${appId}/public/data/checkout_sessions/${sessionId}`);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().payment_status === 'paid') {
+                        const { itemId } = docSnap.data().metadata;
+                        await runTransaction(db, async (transaction) => {
+                            const userRef = doc(db, `/artifacts/${appId}/users/${userId}`);
+                            const userDoc = await transaction.get(userRef);
+                            if (userDoc.exists()) {
+                                const newPurchasedItems = [...(userDoc.data().purchasedItems || []), itemId];
+                                transaction.update(userRef, { purchasedItems: newPurchasedItems });
+                            }
+                        });
+                        showModal('Purchase Successful', 'Thank you for your purchase!');
+                        purchasedItems.push(itemId);
+                        applyFiltersAndRender();
+                    }
+                } catch (error) {
+                    console.error('Stripe status check failed:', error);
+                }
+            }
+        }
+
+        // --- UI & Event Listeners ---
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tabId;
+                switchTab(tabId);
+            });
+        });
+
+        function switchTab(tabId) {
+            document.querySelector('.tab-button.active').classList.remove('active');
+            document.querySelector(`.tab-button[data-tab-id="${tabId}"]`).classList.add('active');
+            document.querySelector('.tab-content.active').classList.remove('active');
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+            currentTab = tabId;
+            applyFiltersAndRender();
+        }
+
+        listModeToggle.addEventListener('click', () => {
+            const list = document.getElementById(`${currentTab}List`);
+            list.classList.toggle('list-mode');
+            listModeToggle.textContent = list.classList.contains('list-mode') ? 'Grid' : 'List';
+        });
+
+        subjectFilter.addEventListener('change', applyFiltersAndRender);
+        yearFilter.addEventListener('change', applyFiltersAndRender);
+        topicFilter.addEventListener('change', applyFiltersAndRender);
+        addMaterialButton.addEventListener('click', () => showCrudModal());
+
+        // --- Modals ---
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = message;
+            modalForm.style.display = 'none';
+            modalButtons.innerHTML = '';
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn';
+            closeBtn.textContent = 'Close';
+            closeBtn.onclick = () => messageModal.style.display = 'none';
+            modalButtons.appendChild(closeBtn);
+            messageModal.style.display = 'flex';
+        }
+
+        function showFullPreviewModal(item) {
+            fullPreviewTitle.textContent = item.name;
+            const fileUrl = item.url;
+            fullPreviewImage.style.display = 'none';
+            fullPreviewVideo.style.display = 'none';
+            pdfViewer.style.display = 'none';
+
+            if (!fileUrl) {
+                showModal('Preview Error', 'No file URL provided for this item.');
+                return;
+            }
+
+            const fileExtension = fileUrl.split('.').pop().toLowerCase();
+
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                fullPreviewImage.src = fileUrl;
+                fullPreviewImage.style.display = 'block';
+            } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+                fullPreviewVideo.src = fileUrl;
+                fullPreviewVideo.style.display = 'block';
+            } else if (fileExtension === 'pdf') {
+                pdfViewer.style.display = 'block';
+                loadPdf(fileUrl);
             } else {
-                 buttons.forEach(btnConfig => {
-                    const button = document.createElement('button');
-                    button.textContent = btnConfig.text;
-                    button.className = btnConfig.className;
-                    button.onclick = () => { 
-                        messageModal.style.display = 'none';
-                        if (btnConfig.onClick) btnConfig.onClick();
-                    };
-                    modalButtons.appendChild(button);
-                });
+                showModal('Unsupported Format', 'This file type cannot be previewed.');
+                return;
             }
-            messageModal.style.display = 'flex';
+            fullPreviewModal.style.display = 'flex';
         }
-        
-        function showInputModal(title, label, callback) {
-            const messageModal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = `<label>${label}</label><input type="text" id="modalInput" style="width:100%;">`;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = ''; 
 
-            const modalInput = document.getElementById('modalInput');
-            const saveButton = document.createElement('button');
-            saveButton.textContent = 'Save';
-            saveButton.className = 'btn-primary';
-            saveButton.onclick = () => {
-                const value = modalInput.value.trim();
-                if (value) {
-                    messageModal.style.display = 'none';
-                    callback(value);
+        // Event listeners for preview buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('preview-btn')) {
+                const card = e.target.closest('.item-card');
+                const tabId = card.dataset.tabId;
+                const itemId = card.dataset.id;
+                const item = allMaterials[tabId].find(i => i.id === itemId);
+                if (item) {
+                    showFullPreviewModal(item);
                 }
-            };
-            modalButtons.appendChild(saveButton);
-
-            const cancelButton = document.createElement('button');
-            cancelButton.textContent = 'Cancel';
-            cancelButton.className = 'logout-btn';
-            cancelButton.onclick = () => { messageModal.style.display = 'none'; };
-            modalButtons.appendChild(cancelButton);
-
-            messageModal.style.display = 'flex';
-            modalInput.focus();
-        }
-
-        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
+            }
+        });
+        
+        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => {
             const modal = btn.closest('.modal');
-            modal.style.display = 'none'; 
-            if (modal.id === 'videoPreviewModal') document.getElementById('videoPreviewContent').innerHTML = '';
-            if (modal.id === 'pdfPreviewModal') pdfDoc = null;
+            modal.style.display = 'none';
         });
-
-        // --- THEME ---
-        const themeToggleButton = document.getElementById('themeToggleButton');
-        function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
-        function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-        loadTheme();
-
-        // --- FINDER WINDOW ---
-        let finderCurrentType = null;
-
-        function showFinderView(type) {
-            const finderWindow = document.getElementById('finderMaterialsSection');
-            finderCurrentType = type;
-            finderWindow.querySelector('.finder-titlebar span').textContent = materialsConfig[type].title;
-            finderWindow.style.display = 'flex';
-            loadFinderSidebar(type);
-            document.getElementById('finderFileListContent').innerHTML = `<p style="text-align:center; padding:20px; color:var(--text-secondary);">Select an item from the sidebar.</p>`;
-        }
-
-        async function loadFinderSidebar(type) {
-            const finderSidebar = document.getElementById('finderSidebar');
-            finderSidebar.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            const q = query(collection(db, getPath(type)), orderBy('name', 'asc'));
-            const snapshot = await getDocs(q);
-            finderSidebar.innerHTML = '';
-            snapshot.forEach(doc => {
-                const item = doc.data();
-                const el = document.createElement('div');
-                el.className = 'finder-sidebar-item';
-                el.textContent = item.name;
-                el.dataset.id = doc.id;
-                el.onclick = () => handleFinderSidebarClick(type, doc.id, el);
-                finderSidebar.appendChild(el);
-            });
-        }
         
-        async function handleFinderSidebarClick(type, level1Id, element) {
-            document.querySelectorAll('.finder-sidebar-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-            await loadFinderFileList(type, [level1Id], 2);
-        }
-
-        async function loadFinderFileList(type, parentIds, level) {
-            const fileListContent = document.getElementById('finderFileListContent');
-            fileListContent.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            const config = materialsConfig[type];
-            const q = query(collection(db, getPath(type, parentIds)), orderBy('name', level === 2 ? 'desc' : 'asc'));
-            const snapshot = await getDocs(q);
-            fileListContent.innerHTML = '';
-            snapshot.forEach(doc => {
-                const item = doc.data();
-                item.id = doc.id;
-                const el = document.createElement('div');
-                el.className = 'row';
-                el.innerHTML = `
-                    <div>${level < 3 ? '📁' : '📄'} ${item.name || item.title}</div>
-                    <div></div><div>${config[`level${level}`]}</div>
-                    <div>${new Date(item.timestamp).toLocaleDateString()}</div>`;
-                if (level < 3) {
-                    el.classList.add('folder');
-                    el.onclick = () => loadFinderFileList(type, [...parentIds, doc.id], level + 1);
-                } else {
-                    el.onclick = () => handlePreview(type, item);
-                }
-                fileListContent.appendChild(el);
+        // --- PDF Viewer Functions ---
+        function loadPdf(url) {
+            pdfjsLib.getDocument(url).promise.then(pdf => {
+                pdfDoc = pdf;
+                pageCountSpan.textContent = pdf.numPages;
+                pageNum = 1;
+                renderPage(pageNum);
+                updatePdfNavButtons();
+            }).catch(error => {
+                console.error('Error loading PDF:', error);
+                showModal('PDF Error', `Failed to load PDF file: ${error.message}`);
             });
-        }
-
-        function setupFinderWindow() {
-            const finderWindow = document.getElementById('finderMaterialsSection');
-            const dragBar = document.getElementById('finderDragBar');
-            let isDragging = false, offsetX = 0, offsetY = 0;
-            dragBar.onmousedown = (e) => {
-                isDragging = true;
-                offsetX = e.clientX - finderWindow.offsetLeft;
-                offsetY = e.clientY - finderWindow.offsetTop;
-            };
-            document.onmouseup = () => isDragging = false;
-            document.onmousemove = (e) => {
-                if (isDragging) {
-                    finderWindow.style.left = (e.clientX - offsetX) + 'px';
-                    finderWindow.style.top = (e.clientY - offsetY) + 'px';
-                }
-            };
-            document.getElementById('finderFullscreenToggle').onclick = () => finderWindow.classList.toggle('fullscreen');
-            finderWindow.querySelector('.finder-circle.close').onclick = () => {
-                finderWindow.style.display = 'none';
-                currentMaterialViewMode = 'card';
-                document.getElementById(`toggle-view-btn-${finderCurrentType}`).textContent = 'Switch to Finder View';
-                showSection(materialsConfig[finderCurrentType].sectionId);
-            };
-        }
-
-
-        // --- PDF PREVIEW LOGIC ---
-        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
-        const pdfCanvas = document.getElementById('pdfCanvas'), pdfContext = pdfCanvas.getContext('2d');
-        
-        function showPdfPreviewModal(title, pdfUrl) {
-            document.getElementById('pdfPreviewTitle').textContent = title;
-            document.getElementById('pdfPreviewModal').style.display = 'flex';
-            loadPdf(pdfUrl);
-        }
-
-        async function loadPdf(pdfUrl) {
-            try {
-                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
-                document.getElementById('pdfTotalPages').textContent = pdfDoc.numPages;
-                renderPage(pageNum = 1);
-            } catch (error) {
-                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
-            }
         }
 
         function renderPage(num) {
             pageRendering = true;
+            pageNumSpan.textContent = num;
             pdfDoc.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale: 1.5 });
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
-                page.render({ canvasContext: pdfContext, viewport }).promise.then(() => {
+                const scaledViewport = viewport.clone({ scale: Math.min(1, maxPdfWidth / viewport.width) });
+                pdfCanvas.width = scaledViewport.width;
+                pdfCanvas.height = scaledViewport.height;
+
+                const renderContext = {
+                    canvasContext: pdfContext,
+                    viewport: scaledViewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(() => {
                     pageRendering = false;
-                    if (pageNumPending !== null) renderPage(pageNumPending);
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePdfNavButtons();
                 });
+            }).catch(error => {
+                console.error('Error rendering PDF page:', error);
+                showModal('PDF Render Error', `Failed to render page ${num}: ${error.message}`);
+                pageRendering = false;
+                pageNumPending = null;
+                updatePdfNavButtons();
             });
-            document.getElementById('pdfPageNum').textContent = num;
         }
 
         function queueRenderPage(num) {
-            if (pageRendering) pageNumPending = num; else renderPage(num);
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
         }
 
-        document.getElementById('prevPdfPage').addEventListener('click', () => { if (pageNum > 1) queueRenderPage(--pageNum); });
-        document.getElementById('nextPdfPage').addEventListener('click', () => { if (pageNum < pdfDoc.numPages) queueRenderPage(++pageNum); });
+        function updatePdfNavButtons() {
+            prevPdfPageBtn.disabled = pageNum <= 1;
+            nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
+        }
 
+        prevPdfPageBtn.onclick = () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        };
+
+        nextPdfPageBtn.onclick = () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        };
+        
+        // --- THEME TOGGLE ---\n
+        function applyTheme(theme) {
+            document.body.classList.toggle('light-theme', theme === 'light');
+        }
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
+            applyTheme(savedTheme);
+        }
+        if (themeToggleButton) {
+            themeToggleButton.addEventListener('click', () => {
+                const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('ai-marker-theme', newTheme);
+            });
+        }
+        loadTheme();
+
+        // --- Authentication & Initialization ---
+        async function authenticateAndLoad() {
+            try {
+                // Sign in with custom token if provided, otherwise anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                showModal('Authentication Error', `Could not sign in: ${error.message}`);
+            }
+        }
+        
+        // This is the login gate. It's commented out as requested.
+        // Uncomment the lines below to re-enable the login requirement.
+        // onAuthStateChanged(auth, user => {
+        //     if (user) {
+        //         userId = user.uid;
+        //         fetchInitialData();
+        //     } else {
+        //         // This is where you would show the login/signup UI
+        //         showModal('Login Required', 'Please log in to view materials.');
+        //     }
+        // });
+
+        // Direct load for testing purposes
         window.addEventListener('load', () => {
-             if (!currentUserId) document.getElementById('authWrapper').style.display = 'flex';
+            authenticateAndLoad().then(() => {
+                userId = auth.currentUser.uid;
+                fetchInitialData();
+            });
         });
+        
     </script>
 </body>
 </html>
-
