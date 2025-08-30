@@ -6,299 +6,793 @@
     <title>AI Marker - Materials</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom styles from original file -->
     <style>
-        :root { color-scheme: light dark; }
-        html { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; scroll-behavior: smooth; }
-        
-        .modal { display: none; }
-        .modal.flex { display: flex; }
+        /* --- MODERN BLACK & WHITE THEME --- */
+        :root {
+            --bg-primary: #0a0a0a; /* Near black for main background */
+            --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
+            --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
+            --text-primary: #f5f5f5; /* Off-white for primary text */
+            --text-secondary: #a3a3a3; /* Muted gray for secondary text */
+            --accent-primary: #ffffff; /* White for key actions and highlights */
+            --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
+            --border-color: #333333; /* Subtle border color */
+            --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
 
-        .nested-container {
-            max-height: 0;
+            /* Finder Window Specific Variables */
+            --finder-bg-primary: #1c1c1c;
+            --finder-bg-secondary: #0a0a0a;
+            --finder-text-primary: #f5f5f5;
+            --finder-text-secondary: #a3a3a3;
+            --finder-border-color: #333333;
+            --finder-titlebar-bg: #2a2a2a;
+            --finder-hover-bg: #333333;
+            --finder-active-bg: var(--accent-primary);
+            --finder-active-text: #0a0a0a;
+        }
+        
+        /* --- LIGHT THEME OVERRIDES --- */
+        body.light-theme {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e5e5e5;
+            --text-primary: #0a0a0a;
+            --text-secondary: #737373;
+            --accent-primary: #0a0a0a;
+            --border-color: #d4d4d4;
+            --focus-ring-color: rgba(10, 10, 10, 0.5);
+
+            /* Finder Window Light Theme */
+            --finder-bg-primary: #ffffff;
+            --finder-bg-secondary: #f5f5f5;
+            --finder-text-primary: #0a0a0a;
+            --finder-text-secondary: #737373;
+            --finder-border-color: #d4d4d4;
+            --finder-titlebar-bg: #e5e5e5;
+            --finder-hover-bg: #e5e5e5;
+            --finder-active-bg: var(--accent-primary);
+            --finder-active-text: #ffffff;
+        }
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            transition: all .2s ease-in-out;
+            font-family: inherit;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        /* Keyframe animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* --- LOGIN PAGE --- */
+        #authWrapper {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1001;
+        }
+
+        .login-left-panel,
+        .login-right-panel {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .login-left-panel {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .login-left-panel h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+        }
+
+        .login-left-panel p {
+            font-size: 1.25rem;
+            font-weight: 400;
+            line-height: 1.5;
+            margin-bottom: .5rem;
+            color: var(--text-secondary);
+        }
+
+        .login-right-panel {
+            background: var(--bg-secondary);
+            flex-direction: column;
+        }
+        
+        #authContainer {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            background-color: var(--bg-primary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        #authContainer h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: .75rem;
+            cursor: pointer;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
+        .google-btn img { height: 20px; }
+        
+        #accessCodeInput {
+             background-color: var(--bg-secondary);
+             border: 1px solid var(--border-color);
+             color: var(--text-primary);
+             padding: 12px;
+             border-radius: 8px;
+             width: 100%;
+             margin-bottom: 1rem;
+             text-align: center;
+             font-size: 1rem;
+        }
+        #accessCodeInput:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--focus-ring-color);
+        }
+
+        .btn-primary {
+             background-color: var(--accent-primary);
+             color: var(--bg-primary);
+             padding: .75rem 1.5rem;
+             border-radius: 8px;
+             border: none;
+             cursor: pointer;
+             font-weight: 600;
+             font-size: 1rem;
+        }
+        
+        body.light-theme .btn-primary {
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+             opacity: 0.85;
+             transform: translateY(-1px);
+        }
+        
+        #appSection {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--bg-primary);
+            animation: fadeIn .6s ease-out both;
+        }
+        
+        /* --- HEADER --- */
+        header {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            height: 64px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
+        .logo-container p { font-weight: 400; color: var(--text-secondary); }
+        
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Modernized Header Buttons */
+        .header-actions .tab {
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: .2s;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .header-actions .tab:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .header-actions .tab.active {
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+        #userDisplayName { font-weight: 500; cursor: pointer; }
+        .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
+        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
+        
+        #switchRoleButton {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #switchRoleButton:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            display: flex;
+            overflow-y: auto;
+            padding: 32px;
+            gap: 32px;
+            justify-content: center; /* Center content horizontally */
+        }
+        
+        #tutorialSection, #pastPapersSection, #exerciseSection {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            width: 100%; /* Take full width of main */
+            max-width: 1200px; /* Max width for content readability */
+            margin: 0 auto; /* Center content within main */
+        }
+
+        /* --- FORMS --- */
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
+        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"] {
+            width: 100%; 
+            background-color: var(--bg-secondary); 
+            border: 1px solid var(--border-color); 
+            color: var(--text-primary);
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        textarea { resize: vertical; min-height: 120px; }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; 
+            border-color: var(--accent-primary); 
+            box-shadow: 0 0 0 3px var(--focus-ring-color); 
+        }
+        
+        .drop-zone { 
+            border: 2px dashed var(--border-color); 
+            border-radius: 8px; 
+            min-height: 140px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--text-secondary); 
+            font-size: 1rem; 
+            margin-bottom: 1.5rem; 
+            cursor: pointer; 
+            word-wrap: break-word; 
+            padding: 1rem; 
+            text-align: center; 
+        }
+        .drop-zone.highlight { 
+            border-color: var(--accent-primary); 
+            background: rgba(245, 245, 245, .05); 
+        }
+        
+        body.light-theme .drop-zone.highlight {
+            background: rgba(10, 10, 10, .05);
+        }
+
+        .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
+        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
+        
+        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
+
+        /* --- UNIVERSAL STYLES --- */
+        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
+        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+
+        /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
+        .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .material-card-thumbnail { position: relative; cursor: pointer; }
+        .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+        .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        
+        /* --- TEACHER CONTENT MANAGEMENT --- */
+        .content-item { 
+            padding: 1rem; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            margin-bottom: 1rem; 
+            background: var(--bg-primary); 
+            transition: background-color 0.2s ease-in-out;
+        }
+        .content-item.drag-over {
+            background-color: rgba(245, 245, 245, 0.1);
+            border-color: var(--accent-primary);
+        }
+        body.light-theme .content-item.drag-over {
+            background-color: rgba(10, 10, 10, 0.1);
+        }
+
+        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
+        .content-header h3, .content-header h4 { margin: 0; }
+        .item-actions button { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; }
+        
+        .nested-container { 
+            padding-left: 1.5rem; 
+            margin-top: 0.5rem;
+            border-left: 2px solid var(--border-color); 
             overflow: hidden;
-            transition: max-height 0.4s ease-out;
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
         }
-        .nested-container.expanded {
-            max-height: 2000px; /* Adjust as needed */
-        }
-        .collapse-arrow { transition: transform 0.3s ease-out; }
-        [aria-expanded="true"] .collapse-arrow { transform: rotate(45deg); }
-        [aria-expanded="false"] .collapse-arrow { transform: rotate(-45deg); }
+        .nested-container.expanded { max-height: 1000px; } /* Sufficiently large to show content */
 
-        .finder-window-wrapper.fullscreen { 
-            top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important;
-            max-width: 100vw !important; max-height: 100vh !important; border-radius: 0 !important;
-            transform: none !important;
-        }
+        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; cursor: grab; }
+        .sub-item:hover { background-color: var(--bg-tertiary); }
+        .sub-item a { color: var(--text-primary); text-decoration: none; }
+        .sub-item a:hover { text-decoration: underline; }
 
-        .dropdown:hover .dropdown-menu { display: block; }
+        .collapse-arrow {
+            margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0;
+            border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary);
+        }
+        .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
+        .content-header[aria-expanded="false"] .collapse-arrow { transform: rotate(0deg); }
+
+        /* --- VIDEO & HERO --- */
+        .video-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px 8px 0 0; }
+        .video-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+        .play-button-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 15px rgba(0, 0, 0, 0.5); pointer-events: none; transition: all 0.2s ease; }
+        .material-card-thumbnail:hover .play-button-overlay { color: #fff; transform: translate(-50%, -50%) scale(1.1); }
+
+        /* --- E-COMMERCE --- */
+        .store-layout { display: flex; gap: 24px; width: 100%; }
+        .product-grid { flex-grow: 1; }
+        .shopping-cart { width: 320px; flex-shrink: 0; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; height: fit-content; }
+        .shopping-cart h3 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        #cart-items { display: flex; flex-direction: column; gap: 0.75rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
+        .remove-from-cart-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; margin-left: 0.5rem; }
+        .remove-from-cart-btn:hover { color: var(--accent-red); }
+        #cart-summary { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; }
+        #checkout-btn { width: 100%; margin-top: 1rem; }
+        .product-card { background-color: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+        .product-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; }
+        .add-to-cart-btn, .download-btn { width: 100%; }
+        .download-btn { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .download-btn:hover { background-color: var(--bg-tertiary); }
+
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
+        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
+        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-button:hover { color: var(--text-primary); }
+        #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+
+        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
+        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
+        #pdfControls button { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        #pdfControls button:hover:not(:disabled) { background-color: #444; }
         
-        .drag-over {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-color: #3b82f6;
+        /* --- FOOTER --- */
+        footer { padding: 20px; text-align: center; color: var(--text-secondary); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: auto; }
+        footer a { color: var(--text-secondary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; color: var(--text-primary); }
+
+        /* --- FINDER WINDOW --- */
+        .finder-window-wrapper { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; height: 90vh; max-width: 1200px; max-height: 800px; border: 1px solid var(--finder-border-color); border-radius: 12px; background: var(--finder-bg-primary); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: all 0.3s ease; z-index: 100; resize: both; min-width: 300px; min-height: 200px; color: var(--finder-text-primary); }
+        .finder-window-wrapper.fullscreen { top: 0 !important; left: 0 !important; transform: none !important; width: 100vw !important; height: 100vh !important; border-radius: 0 !important; }
+        .finder-titlebar { background: var(--finder-titlebar-bg); height: 32px; display: flex; align-items: center; padding: 0 10px; cursor: grab; flex-shrink: 0; border-bottom: 1px solid var(--finder-border-color); justify-content: flex-start; }
+        .finder-titlebar .buttons { display: flex; gap: 8px; }
+        .finder-circle { width: 12px; height: 12px; border-radius: 50%; }
+        .finder-circle.close { background: #ff5f57; }
+        .finder-circle.min { background: #ffbd2e; }
+        .finder-circle.max { background: #28c840; cursor: pointer; }
+        .finder-content { flex: 1; display: flex; overflow: hidden; }
+        .finder-sidebar { width: 220px; min-width: 150px; border-right: 1px solid var(--finder-border-color); background: var(--finder-bg-secondary); padding: 10px 0; overflow-y: auto; flex-shrink: 0; }
+        .finder-sidebar-item { padding: 8px 20px; font-size: 14px; color: var(--finder-text-primary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .finder-sidebar-item:hover { background: var(--finder-hover-bg); }
+        .finder-sidebar-item.active { background: var(--finder-active-bg); color: var(--finder-active-text); font-weight: 600; }
+        .finder-file-list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--finder-bg-primary); }
+        .finder-file-list .columns, .finder-file-list .row { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr; padding: 10px 15px; border-bottom: 1px solid var(--finder-border-color); align-items: center; }
+        .finder-file-list .columns { background: var(--finder-bg-secondary); font-size: 12px; color: var(--finder-text-secondary); font-weight: 600; text-transform: uppercase; }
+        .finder-file-list .row { font-size: 14px; color: var(--finder-text-primary); cursor: pointer; }
+        .finder-file-list .row:hover { background: var(--finder-hover-bg); }
+        .finder-file-list .row.folder { font-weight: bold; color: var(--text-primary); }
+
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 992px) {
+            .store-layout { flex-direction: column; }
+            .shopping-cart { width: 100%; position: sticky; bottom: 0; border-radius: 8px 8px 0 0; }
         }
-        .dragging {
-             opacity: 0.5;
+        @media (max-width: 768px) {
+            #authWrapper { flex-direction: column; position: static; height: auto; }
+            .login-left-panel, .login-right-panel { width: 100%; }
+            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
+            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
+            main { flex-direction: column; padding: 16px; }
+            .finder-window-wrapper { display: none !important; }
         }
 
+        /* --- Additional Styles for Materials Page --- */
+        .filters-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .promo-code-section {
+            margin-top: 1rem;
+        }
+        .promo-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        #promoCodeInput {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+        #applyPromoCodeBtn {
+            flex-shrink: 0;
+        }
+        .promo-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        .remove-promo-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .promo-error {
+            color: var(--accent-red);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .hidden-on-desktop {
+            display: none !important;
+        }
+        .material-view-toggle {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<body>
 
-    <div id="authWrapper" class="fixed inset-0 z-[1001] bg-gray-100 dark:bg-neutral-900 flex items-center justify-center p-4 transition-opacity duration-500 ease-in-out opacity-0">
-        <div class="w-full max-w-4xl mx-auto grid md:grid-cols-2 rounded-2xl shadow-2xl overflow-hidden bg-white dark:bg-neutral-950">
-             <div class="p-8 md:p-12 flex flex-col items-center justify-center text-center">
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white">AI Marker</h1>
-                <p class="mt-4 text-gray-600 dark:text-neutral-300">Mark with AI, learn better.</p>
-            </div>
-            <div class="p-8 md:p-12 bg-gray-50 dark:bg-neutral-900 flex flex-col justify-center">
-                <div id="authContainer" class="w-full max-w-sm mx-auto">
-                    <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
-                </div>
+    <!-- Authentication Wrapper -->
+    <div id="authWrapper" style="display: none;">
+        <div class="login-left-panel">
+            <h1>AI Marker</h1>
+            <p>Your Materials Portal</p>
+        </div>
+        <div class="login-right-panel">
+            <div id="authContainer">
+                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
             </div>
         </div>
     </div>
 
-    <div id="appSection" class="hidden flex-col h-screen">
-        <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 dark:bg-neutral-900/80 border-b border-gray-200 dark:border-neutral-800">
-            <div class="max-w-screen-xl mx-auto px-4">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center gap-4">
-                        <a href="#" class="flex items-center gap-2 mr-2 select-none">
-                             <div class="h-8 w-8 grid place-content-center rounded-lg bg-gradient-to-br from-blue-500 via-sky-500 to-cyan-400 text-white font-black">A</div>
-                             <span class="text-lg font-semibold tracking-tight">AI Marker</span>
-                        </a>
-                    </div>
-                    <nav class="hidden md:flex items-center gap-1">
-                        <a href="#" class="tab px-3 py-2 text-sm font-medium rounded-lg text-gray-500 dark:text-neutral-400">Home</a>
-                         <div class="relative dropdown">
-                            <button class="tab px-3 py-2 text-sm font-medium rounded-lg text-gray-500 dark:text-neutral-400 flex items-center gap-1">Work with AI &#9662;</button>
-                            <div class="dropdown-menu absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-lg p-1 hidden">
-                                <a href="#" class="block w-full text-left px-3 py-2 text-sm rounded-lg text-gray-500 dark:text-neutral-400">Exam Grader</a>
-                                <a href="#" class="block w-full text-left px-3 py-2 text-sm rounded-lg text-gray-500 dark:text-neutral-400">Chat with Gemini</a>
-                            </div>
-                        </div>
-                        <div class="relative dropdown">
-                            <button id="materialsButton" class="tab px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10 flex items-center gap-1">Materials &#9662;</button>
-                            <div class="dropdown-menu absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-lg p-1 hidden">
-                                <button id="toggleTutorialButton" class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10">Tutorial Videos</button>
-                                <button id="togglePastPapersButton" class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10">Past Papers</button>
-                                <button id="toggleExercisesButton" class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10">Exercises for Sale</button>
-                            </div>
-                        </div>
-                        <a href="#" class="tab px-3 py-2 text-sm font-medium rounded-lg text-gray-500 dark:text-neutral-400">Submissions</a>
-                        <a href="#" class="tab px-3 py-2 text-sm font-medium rounded-lg text-gray-500 dark:text-neutral-400">Manage Students</a>
-                        <a href="#" class="tab px-3 py-2 text-sm font-medium rounded-lg text-gray-500 dark:text-neutral-400">Profile</a>
-                        <button id="themeToggleButton" class="tab px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10">Theme</button>
-                    </nav>
-                    <div class="flex items-center gap-2">
-                         <div id="userDisplayName" class="text-sm font-medium hidden sm:block"></div>
-                         <button id="switchRoleButton" class="px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10 border border-gray-300 dark:border-neutral-700">Switch Role</button>
-                         <button id="logoutButton" class="px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10 border border-gray-300 dark:border-neutral-700">Log Out</button>
-                    </div>
+    <!-- Main App Section -->
+    <div id="appSection" style="display: none;">
+        <header>
+            <div class="logo-container">
+                <h1>AI Marker</h1>
+                <p>Materials</p>
+            </div>
+            <div class="header-actions">
+                <button id="toggleTutorialButton" class="tab active">Tutorial Videos</button>
+                <button id="togglePastPapersButton" class="tab">Past Papers</button>
+                <button id="toggleExercisesButton" class="tab">Exercises for Sale</button>
+                <button id="themeToggleButton" class="tab">Theme</button>
+
+                <div class="user-info">
+                     <span id="userDisplayName"></span>
+                     <button id="switchRoleButton">Switch Role</button>
+                     <button id="logoutButton" class="logout-btn">Log Out</button>
                 </div>
             </div>
         </header>
         
-        <main class="flex-1 overflow-y-auto p-4 md:p-8">
-            <div class="max-w-screen-xl mx-auto">
-                <div id="tutorialSection"></div>
-                <div id="pastPapersSection"></div>
-                <div id="exerciseSection"></div>
+        <main>
+            <!-- Material Sections -->
+            <div id="tutorialSection"></div>
+            <div id="pastPapersSection"></div>
+            <div id="exerciseSection"></div>
+            
+            <!-- Finder Style Materials Section (Desktop Only) -->
+            <div id="finderMaterialsSection" class="finder-window-wrapper" style="display: none;">
+                <div class="finder-titlebar" id="finderDragBar">
+                    <div class="buttons">
+                        <div class="finder-circle close"></div>
+                        <div class="finder-circle min"></div>
+                        <div class="finder-circle max" id="finderFullscreenToggle"></div>
+                    </div>
+                    <span style="margin-left: 10px; font-weight: bold;">Materials</span>
+                </div>
+
+                <div class="finder-content">
+                    <aside class="finder-sidebar" id="finderSidebar">
+                        <!-- Level 1 items (Subjects) will be loaded here -->
+                    </aside>
+                    <section class="finder-file-list">
+                        <div class="columns">
+                            <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
+                        </div>
+                        <div id="finderFileListContent">
+                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
+                        </div>
+                    </section>
+                </div>
             </div>
         </main>
+
+        <footer>
+            <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
+        </footer>
     </div>
 
-    <!-- Finder Window -->
-    <div id="finderMaterialsSection" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[90vh] max-w-[1200px] max-h-[800px] border border-neutral-300 dark:border-neutral-800 rounded-xl bg-gray-50 dark:bg-neutral-950 overflow-hidden flex flex-col shadow-2xl resize z-[100]" style="display:none;">
-        <div class="bg-gray-100 dark:bg-neutral-900 h-9 flex items-center px-3 cursor-grab flex-shrink-0 border-b border-gray-200 dark:border-neutral-800 justify-between" id="finderDragBar">
-            <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-red-500 close-button"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500" id="finderFullscreenToggle"></div>
-            </div>
-            <span class="text-sm font-medium">Materials</span>
-            <div class="w-16"></div>
-        </div>
-        <div class="flex-1 flex overflow-hidden">
-            <aside class="w-56 min-w-[180px] border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 p-2 overflow-y-auto flex-shrink-0" id="finderSidebar"></aside>
-            <section class="flex-1 flex flex-col overflow-y-auto">
-                <div class="grid grid-cols-[3fr,1fr,1fr,1fr] p-3 border-b border-gray-200 dark:border-neutral-800 bg-gray-50/80 dark:bg-neutral-900/60">
-                    <div class="text-xs font-semibold uppercase text-gray-500 dark:text-neutral-400">Name</div>
-                    <div class="text-xs font-semibold uppercase text-gray-500 dark:text-neutral-400">Size</div>
-                    <div class="text-xs font-semibold uppercase text-gray-500 dark:text-neutral-400">Kind</div>
-                    <div class="text-xs font-semibold uppercase text-gray-500 dark:text-neutral-400">Date Added</div>
-                </div>
-                <div id="finderFileListContent" class="flex-1 p-2"></div>
-            </section>
-        </div>
-    </div>
-
-    <!-- All Modals -->
-    <div id="messageModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl w-full max-w-md relative">
-            <button type="button" class="close-button absolute top-3 right-3 p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-            <h3 id="modalTitle" class="text-lg font-semibold"></h3>
-            <div id="modalMessage" class="mt-2 text-sm text-gray-600 dark:text-neutral-300"></div>
-            <div id="modalButtons" class="flex justify-end gap-2 mt-6"></div>
+    <!-- Universal Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <div id="modalMessage"></div>
+            <div id="modalButtons"></div>
         </div>
     </div>
     
-    <div id="addVideoModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <form id="addVideoForm" class="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl w-full max-w-lg relative">
-             <button type="button" class="close-button absolute top-3 right-3 p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-             <h3 class="text-lg font-semibold mb-4">Add New Tutorial Video</h3>
-             <input type="hidden" id="videoParentId1"><input type="hidden" id="videoParentId2">
-             <div class="space-y-4">
-                 <div>
-                     <label for="tutorialLink" class="text-sm font-medium text-gray-700 dark:text-neutral-300">YouTube Link or Embed Code</label>
-                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..." class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                     <img id="tutorialThumbnailPreview" class="max-w-[200px] mt-2 rounded-lg" style="display:none;" alt="Video Thumbnail Preview"/>
+    <!-- Modals for adding content -->
+    <div id="addVideoModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3>Add New Tutorial Video</h3>
+             <form id="addVideoForm">
+                <input type="hidden" id="videoParentId1">
+                <input type="hidden" id="videoParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="tutorialLink">YouTube Link or Embed Code</label>
+                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
+                     <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
                  </div>
-                 <div>
-                     <label for="tutorialTitle" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Video Title</label>
-                     <input type="text" id="tutorialTitle" required class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="tutorialTitle">Video Title</label>
+                     <input type="text" id="tutorialTitle" required>
                  </div>
-             </div>
-             <div class="flex justify-end gap-2 mt-6">
-                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Add Video</button>
-             </div>
-        </form>
-    </div>
-
-    <div id="addPastPaperModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <form id="addPastPaperForm" class="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl w-full max-w-lg relative">
-             <button type="button" class="close-button absolute top-3 right-3 p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-             <h3 class="text-lg font-semibold mb-4">Add New Past Paper</h3>
-             <input type="hidden" name="paperParentId1"><input type="hidden" name="paperParentId2">
-             <div class="space-y-4">
-                 <div>
-                     <label for="pastPaperName" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Paper Name / Title</label>
-                     <input type="text" id="pastPaperName" name="pastPaperName" required placeholder="e.g., Paper 1 Section A" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
+                 <div class="modal-form-buttons" id="modalButtons">
+                    <button type="submit" class="btn-primary">Add Video</button>
                  </div>
-                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-neutral-300">Upload File (PDF only)</label>
-                    <div id="pastPaperDropZone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-xl cursor-pointer hover:border-blue-500 dark:hover:border-blue-500">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                            <div class="flex text-sm text-gray-600 dark:text-neutral-400"><p class="pl-1">Drag & Drop PDF Here, or click to select</p></div>
-                             <input type="file" id="pastPaperFile" name="pastPaperFile" accept="application/pdf" class="sr-only">
-                        </div>
-                    </div>
-                    <span id="pastPaperFileName" class="text-xs text-gray-500 dark:text-neutral-400 mt-1">No file chosen</span>
-                </div>
-                <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300 dark:border-neutral-700"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-neutral-900 text-gray-500 dark:text-neutral-400">OR</span></div></div>
-                <div>
-                    <label for="pastPaperLink" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Paste External Link</label>
-                    <input type="url" id="pastPaperLink" name="pastPaperLink" placeholder="https://..." class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-             </div>
-             <div class="flex justify-end gap-2 mt-6">
-                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Add Paper</button>
-             </div>
-        </form>
-    </div>
-
-    <div id="editPastPaperModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <form id="editPastPaperForm" class="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl w-full max-w-lg relative">
-            <button type="button" class="close-button absolute top-3 right-3 p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-            <h3 class="text-lg font-semibold mb-4">Edit Past Paper</h3>
-            <input type="hidden" name="editPaperId"><input type="hidden" name="editPaperParentId1"><input type="hidden" name="editPaperParentId2">
-            <div class="space-y-4">
-                <div>
-                    <label for="editPastPaperName" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Paper Name / Title</label>
-                    <input type="text" id="editPastPaperName" name="editPastPaperName" required class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label for="editPastPaperLink" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Download Link</label>
-                    <input type="url" id="editPastPaperLink" name="editPastPaperLink" required class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            </div>
-            <div class="flex justify-end gap-2 mt-6">
-                <button type="button" class="close-button px-4 py-2 text-sm font-semibold rounded-xl hover:bg-gray-900/5 dark:hover:bg-white/10">Cancel</button>
-                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Save Changes</button>
-            </div>
-        </form>
-    </div>
-
-    <div id="addExerciseModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <form id="addExerciseForm" class="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl w-full max-w-lg relative">
-             <button type="button" class="close-button absolute top-3 right-3 p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-             <h3 class="text-lg font-semibold mb-4">Add New Exercise</h3>
-             <input type="hidden" name="exerciseParentId1"><input type="hidden" name="exerciseParentId2">
-             <div class="space-y-4">
-                 <div>
-                     <label for="exerciseName" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Exercise Name / Title</label>
-                     <input type="text" id="exerciseName" name="exerciseName" required placeholder="e.g., Chapter 1 MCQs" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                 </div>
-                 <div>
-                     <label for="exercisePrice" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Price (USD)</label>
-                     <input type="number" id="exercisePrice" name="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                 </div>
-                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-neutral-300">Upload File (PDF only)</label>
-                    <div id="exerciseDropZone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-xl cursor-pointer hover:border-blue-500 dark:hover:border-blue-500">
-                        <div class="space-y-1 text-center">
-                           <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                           <div class="flex text-sm text-gray-600 dark:text-neutral-400"><p class="pl-1">Drag & Drop PDF Here, or click to select</p></div>
-                            <input type="file" id="exerciseFile" name="exerciseFile" accept="application/pdf" class="sr-only">
-                        </div>
-                    </div>
-                    <span id="exerciseFileName" class="text-xs text-gray-500 dark:text-neutral-400 mt-1">No file chosen</span>
-                </div>
-                 <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300 dark:border-neutral-700"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-neutral-900 text-gray-500 dark:text-neutral-400">OR</span></div></div>
-                <div>
-                    <label for="exerciseLink" class="text-sm font-medium text-gray-700 dark:text-neutral-300">Paste External Link</label>
-                    <input type="url" id="exerciseLink" name="exerciseLink" placeholder="https://..." class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-             </div>
-             <div class="flex justify-end gap-2 mt-6">
-                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Add Exercise</button>
-             </div>
-        </form>
-    </div>
-
-    <div id="videoPreviewModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl w-full max-w-4xl h-[80vh] flex flex-col p-0 overflow-hidden">
-            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-neutral-800 flex-shrink-0">
-                <h3 id="videoPreviewTitle" class="text-lg font-semibold"></h3>
-                <button type="button" class="close-button p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-            </div>
-            <div class="flex-1 bg-black" id="videoPreviewContent"></div>
+             </form>
         </div>
     </div>
 
-    <div id="pdfPreviewModal" class="modal fixed inset-0 z-[1001] bg-black/60 items-center justify-center p-4">
-        <div class="bg-white dark:bg-neutral-900 w-full max-w-4xl h-[90vh] flex flex-col p-4 rounded-2xl shadow-xl">
-            <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                 <h3 id="pdfPreviewTitle" class="text-lg font-semibold"></h3>
-                 <button type="button" class="close-button p-1 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/10">&times;</button>
-            </div>
-            <div id="pdfCanvasContainer" class="flex-1 overflow-auto bg-gray-100 dark:bg-neutral-800 rounded-lg flex justify-center p-2">
+    <div id="addPastPaperModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3>Add New Past Paper</h3>
+             <form id="addPastPaperForm">
+                <input type="hidden" id="paperParentId1">
+                <input type="hidden" id="paperParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="pastPaperName">Paper Name / Title</label>
+                     <input type="text" id="pastPaperName" required placeholder="e.g., Paper 1 Section A">
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label>Upload File (PDF only)</label>
+                    <div id="pastPaperDropZone" class="drop-zone">
+                        <span>Drag & Drop PDF Here or click to select</span>
+                        <input type="file" id="pastPaperFile" accept="application/pdf" hidden>
+                    </div>
+                    <span id="pastPaperFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="pastPaperLink">Paste External Link (for large files)</label>
+                    <input type="url" id="pastPaperLink" placeholder="https://example.com/document.pdf">
+                </div>
+                 <div class="modal-form-buttons" id="modalButtons">
+                    <button type="submit" class="btn-primary">Add Paper</button>
+                 </div>
+             </form>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Past Papers -->
+    <div id="editPastPaperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Past Paper</h3>
+            <form id="editPastPaperForm">
+                <input type="hidden" id="editPaperId">
+                <input type="hidden" id="editPaperParentId1">
+                <input type="hidden" id="editPaperParentId2">
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperName">Paper Name / Title</label>
+                    <input type="text" id="editPastPaperName" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperLink">Download Link</label>
+                    <input type="url" id="editPastPaperLink" required>
+                </div>
+                <div class="modal-form-buttons" id="modalButtons">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="addExerciseModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3>Add New Exercise</h3>
+             <form id="addExerciseForm">
+                <input type="hidden" id="exerciseParentId1">
+                <input type="hidden" id="exerciseParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="exerciseName">Exercise Name / Title</label>
+                     <input type="text" id="exerciseName" required placeholder="e.g., Chapter 1 MCQs">
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                     <label for="exercisePrice">Price (USD)</label>
+                     <input type="number" id="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0">
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label>Upload File (PDF only)</label>
+                    <div id="exerciseDropZone" class="drop-zone">
+                        <span>Drag & Drop PDF Here or click to select</span>
+                        <input type="file" id="exerciseFile" accept="application/pdf" hidden>
+                    </div>
+                    <span id="exerciseFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="exerciseLink">Paste External Link (for large files)</label>
+                    <input type="url" id="exerciseLink" placeholder="https://example.com/document.pdf">
+                </div>
+                 <div class="modal-form-buttons" id="modalButtons">
+                    <button type="submit" class="btn-primary">Add Exercise</button>
+                 </div>
+             </form>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div id="videoPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="videoPreviewTitle"></h3>
+            <div id="videoPreviewContent" class="video-embed-container"></div>
+        </div>
+    </div>
+
+    <!-- PDF Preview Modal -->
+    <div id="pdfPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="pdfPreviewTitle"></h3>
+            <div id="pdfCanvasContainer">
                 <canvas id="pdfCanvas"></canvas>
             </div>
-            <div id="pdfControls" class="flex justify-center items-center gap-4 mt-2 flex-shrink-0">
-                <button id="prevPdfPage" class="px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10 disabled:opacity-50">Previous</button>
-                <span class="text-sm">Page <span id="pdfPageNum">0</span> / <span id="pdfTotalPages">0</span></span>
-                <button id="nextPdfPage" class="px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10 disabled:opacity-50">Next</button>
+            <div id="pdfControls">
+                <button id="prevPdfPage">Previous</button>
+                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                <button id="nextPdfPage">Next</button>
             </div>
         </div>
     </div>
-    
+
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- IMPORTANT CONFIGURATION ---
+        // TODO: PASTE YOUR STRIPE PAYMENT LINK HERE
         const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
-        const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/";
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -321,8 +815,7 @@
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
         let shoppingCart = [];
         let appliedPromoCode = null;
-        let geminiChatHistory = [];
-        
+
         // --- AUTH & INITIALIZATION ---
         
         const authWrapper = document.getElementById('authWrapper');
@@ -330,21 +823,20 @@
         const authContainer = document.getElementById('authContainer');
 
         const googleSignInTemplate = `
-            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white">Sign In</h2>
-            <p class="text-center text-sm text-gray-600 dark:text-neutral-400 mt-2 mb-6">Please sign in to access your materials.</p>
-            <button id="googleSignInButton" class="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-gray-300 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800/50 font-medium">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon" class="h-5 w-5">
+            <h2>Sign In</h2>
+            <button id="googleSignInButton" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
                 <span>Sign in with Google</span>
             </button>
-            <p id="authError" class="text-sm text-red-600 text-center mt-4"></p>
+            <p id="authError" class="error-message"></p>
         `;
 
         const codeEntryTemplate = `
-            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white">Enter Access Code</h2>
-            <p class="text-center text-sm text-gray-600 dark:text-neutral-400 mt-2 mb-6">Please enter the access code provided by your administrator.</p>
-            <input type="text" id="accessCodeInput" placeholder="Enter code here" class="block w-full text-center rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-            <button id="submitCodeButton" class="w-full mt-4 px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Submit Code</button>
-            <p id="codeError" class="text-sm text-red-600 text-center mt-4"></p>
+            <h2>Enter Access Code</h2>
+            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
+            <input type="text" id="accessCodeInput" placeholder="Enter code here">
+            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
+            <p id="codeError" class="error-message"></p>
         `;
 
         try {
@@ -355,7 +847,7 @@
             console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
-            document.body.innerHTML = '<h1>Error initializing application. Please check console.</h1>';
+            showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -378,6 +870,7 @@
                     }
                 } catch (e) {
                      console.error("Error checking user profile:", e);
+                     showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
                      showLogin();
                 }
             } else {
@@ -391,7 +884,7 @@
         function showLogin() {
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
-            setTimeout(() => authWrapper.style.opacity = '1', 10);
+            authWrapper.style.opacity = '1';
             authContainer.innerHTML = googleSignInTemplate;
             document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
@@ -415,18 +908,14 @@
 
         async function showApp() {
             authWrapper.style.display = 'none';
-            authWrapper.style.opacity = '0';
-            appSection.classList.remove('hidden');
-            appSection.classList.add('flex');
+            appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'inline-flex' : 'none';
-            document.getElementById('toggleSubmissionsButton').style.display = 'inline-flex';
-            document.getElementById('homeUserNamePlaceholder').textContent = currentUserName || 'there';
-
+            
             initializeAllMaterialSections();
             await checkForSuccessfulPurchase();
-
-            showSection('homeSection'); 
+            
+            // Default to the tutorial section on load
+            showSection('tutorialSection'); 
         }
 
         async function handleGoogleSignIn() {
@@ -456,6 +945,7 @@
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                 currentUserRole = roleToSet;
+                showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
                 if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
@@ -473,108 +963,144 @@
 
         // --- NAVIGATION & UI ---
 
-        let currentMaterialViewMode = 'card';
+        let currentMaterialViewMode = 'card'; // 'card' or 'finder'
 
         function showSection(sectionIdToShow) {
-            const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection', 'submissionSection'];
+            const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection'];
             const buttons = {
-                toggleHomeButton: 'homeSection', workWithAIButton: ['gradingSection', 'chatSection'], materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
-                toggleSubmissionsButton: 'submissionSection', manageStudentsButton: 'studentManagementSection', toggleProfileButton: 'profileSection'
+                toggleTutorialButton: 'tutorialSection',
+                togglePastPapersButton: 'pastPapersSection',
+                toggleExercisesButton: 'exerciseSection'
             };
             
-            document.querySelectorAll('header .tab').forEach(t => t.classList.remove('bg-gray-900/10', 'dark:bg-white/10'));
-            
-            let activeButtonId = Object.keys(buttons).find(btnId => Array.isArray(buttons[btnId]) ? buttons[btnId].includes(sectionIdToShow) : buttons[btnId] === sectionIdToShow);
-            if (activeButtonId) document.getElementById(activeButtonId)?.classList.add('bg-gray-900/10', 'dark:bg-white/10');
+            document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
+
+            let activeButtonId = null;
+            for (const [btnId, secId] of Object.entries(buttons)) {
+                if (secId === sectionIdToShow) {
+                    activeButtonId = btnId;
+                    break;
+                }
+            }
+            if (activeButtonId) {
+                document.getElementById(activeButtonId)?.classList.add('active');
+            }
 
             sections.forEach(id => {
                 const section = document.getElementById(id);
-                if (section) section.style.display = id === sectionIdToShow ? 'block' : 'none';
+                if (section) {
+                    const isTarget = id === sectionIdToShow;
+                    section.style.display = isTarget ? 'block' : 'none';
+                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
+                }
             });
 
+            // Handle visibility of finder window based on section and screen size
             const finderSection = document.getElementById('finderMaterialsSection');
-            const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(sectionIdToShow);
+            const isMaterialSection = sections.includes(sectionIdToShow);
             
-            if (isMaterialSection && window.innerWidth >= 769) {
+            if (isMaterialSection && window.innerWidth >= 769) { // Desktop
                 finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
-                document.getElementById(sectionIdToShow).classList.toggle('hidden', currentMaterialViewMode === 'finder');
-            } else {
+                document.getElementById(sectionIdToShow).classList.toggle('hidden-on-desktop', currentMaterialViewMode === 'finder');
+            } else { // Mobile or non-material section
                 finderSection.style.display = 'none';
-                if(isMaterialSection) document.getElementById(sectionIdToShow).classList.remove('hidden');
+                document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
             }
-
-            if (sectionIdToShow === 'profileSection') loadProfileData();
-            if (sectionIdToShow === 'chatSection') loadChatHistory();
-            if (sectionIdToShow === 'studentManagementSection' && currentUserRole === 'teacher') loadAuthorizedStudents();
-            if (sectionIdToShow === 'submissionSection') renderSubmissionSection();
         }
 
         function setupSectionToggle() {
-            document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
-            document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
-            document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
-            document.getElementById('manageStudentsButton')?.addEventListener('click', () => showSection('studentManagementSection'));
-            document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
-            document.getElementById('toggleSubmissionsButton')?.addEventListener('click', () => showSection('submissionSection'));
-            document.getElementById('homeTutorialLink')?.addEventListener('click', () => showSection('tutorialSection'));
-            document.getElementById('homeGraderLink')?.addEventListener('click', () => showSection('gradingSection'));
-            
-            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => showSection('tutorialSection'));
-            document.getElementById('togglePastPapersButton')?.addEventListener('click', () => showSection('pastPapersSection'));
-            document.getElementById('toggleExercisesButton')?.addEventListener('click', () => showSection('exerciseSection'));
+            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
+                showSection('tutorialSection');
+                if (window.innerWidth >= 769) { 
+                    if (currentMaterialViewMode === 'finder') showFinderView('tutorials');
+                    else renderStudentItems('tutorials'); 
+                } else {
+                    renderStudentItems('tutorials'); 
+                }
+            });
+            document.getElementById('togglePastPapersButton')?.addEventListener('click', () => {
+                showSection('pastPapersSection');
+                if (window.innerWidth >= 769) {
+                    if (currentMaterialViewMode === 'finder') showFinderView('pastPapers');
+                    else renderStudentItems('pastPapers');
+                } else {
+                    renderStudentItems('pastPapers');
+                }
+            });
+            document.getElementById('toggleExercisesButton')?.addEventListener('click', () => {
+                showSection('exerciseSection');
+                if (window.innerWidth >= 769) {
+                    if (currentMaterialViewMode === 'finder') showFinderView('exercises');
+                    else renderStudentItems('exercises');
+                } else {
+                    renderStudentItems('exercises');
+                }
+            });
         }
         setupSectionToggle();
         
-        // --- PROFILE MANAGEMENT ---
+        // --- REFACTORED MATERIALS MANAGEMENT ---
 
-        document.getElementById('profileForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUserId) return showModal('Error', 'You must be logged in.');
-            
-            const profileData = Object.fromEntries(new FormData(e.target));
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, profileData, { merge: true });
-                currentUserName = profileData.name;
-                document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-                showModal('Success', 'Your profile has been updated!');
-            } catch (error) {
-                showModal('Error', `Could not save profile: ${error.message}`);
-            }
-        });
-
-        async function loadProfileData() {
-            if (!currentUserId) return;
-            const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`));
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('profileName').value = data.name || '';
-                document.getElementById('profileAge').value = data.age || '';
-                document.getElementById('profileGrade').value = data.grade || '';
-                document.getElementById('profileSchool').value = data.school || '';
-                document.getElementById('profileElectives').value = data.electives || '';
-            }
-        }
-        
-        // --- MATERIALS MANAGEMENT (Full logic from original file) ---
         const materialsConfig = {
-            tutorials: { sectionId: 'tutorialSection', collectionName: 'tutorials', title: 'Tutorial Videos', level1: 'Subject', level2: 'Topic', level3: 'Video', modalId: 'addVideoModal', isPaid: false },
-            pastPapers: { sectionId: 'pastPapersSection', collectionName: 'pastPapers', title: 'Past Papers', level1: 'Subject', level2: 'Year', level3: 'Paper', modalId: 'addPastPaperModal', editModalId: 'editPastPaperModal', isPaid: false },
-            exercises: { sectionId: 'exerciseSection', collectionName: 'exercises', title: 'Exercises for Sale', level1: 'Subject', level2: 'Topic', level3: 'Exercise', modalId: 'addExerciseModal', isPaid: true }
+            tutorials: {
+                sectionId: 'tutorialSection',
+                collectionName: 'tutorials',
+                title: 'Tutorial Videos',
+                level1: 'Subject',
+                level2: 'Topic',
+                level3: 'Video',
+                modalId: 'addVideoModal',
+                isPaid: false
+            },
+            pastPapers: {
+                sectionId: 'pastPapersSection',
+                collectionName: 'pastPapers',
+                title: 'Past Papers',
+                level1: 'Subject',
+                level2: 'Year',
+                level3: 'Paper',
+                modalId: 'addPastPaperModal',
+                editModalId: 'editPastPaperModal',
+                isPaid: false
+            },
+            exercises: {
+                sectionId: 'exerciseSection',
+                collectionName: 'exercises',
+                title: 'Exercises for Sale',
+                level1: 'Subject',
+                level2: 'Topic',
+                level3: 'Exercise',
+                modalId: 'addExerciseModal',
+                isPaid: true
+            }
         };
 
         function getPath(type, ids = []) {
             const config = materialsConfig[type];
-            let pathParts = [`artifacts/${appId}/public/data/${config.collectionName}`];
+            const collection = config.collectionName;
+            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
             if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
             if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
             return pathParts.join('/');
         }
-
+        
         function initializeAllMaterialSections() {
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
+            
+            document.getElementById('tutorialSection').addEventListener('click', (e) => {
+                const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
+                if (thumbnail) {
+                    e.preventDefault();
+                    const videoId = thumbnail.dataset.youtubeId;
+                    const embedContainer = document.createElement('div');
+                    embedContainer.className = 'video-embed-container';
+                    embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
+                    thumbnail.replaceWith(embedContainer);
+                }
+            });
+
             setupFinderWindow();
             setupGoogleDriveLinkConversion();
         }
@@ -584,107 +1110,131 @@
             const section = document.getElementById(config.sectionId);
 
             let studentViewHtml = `
-                <div class="flex items-center gap-4 mb-6 flex-wrap">
-                    <select id="level1-${type}-filter" class="w-full sm:w-64 rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:ring-blue-500 focus:border-blue-500"></select>
-                    <select id="level2-${type}-filter" class="w-full sm:w-64 rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:ring-blue-500 focus:border-blue-500" disabled></select>
+                <div class="filters-container">
+                    <select id="level1-${type}-filter" style="width:250px;"><option value="">-- Select ${config.level1} --</option></select>
+                    <select id="level2-${type}-filter" style="width:250px;" disabled><option value="">-- Select ${config.level2} --</option></select>
                 </div>
-                <div id="level3-${type}-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`;
+                <div id="level3-${type}-grid" class="grid-container"></div>`;
 
             if (config.isPaid) {
                 studentViewHtml = `
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div class="lg:col-span-8 xl:col-span-9">${studentViewHtml}</div>
-                        <div class="lg:col-span-4 xl:col-span-3">
-                            <div class="sticky top-24 p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-sm">
-                                <h3 class="text-lg font-semibold mb-4 pb-4 border-b border-gray-200 dark:border-neutral-800">Shopping Cart</h3>
-                                <div id="cart-items" class="max-h-60 overflow-y-auto space-y-3"></div>
-                                <div id="cart-summary" class="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 space-y-2 text-sm">
-                                    <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal-price">$0.00</span></div>
-                                    <div class="flex justify-between" id="promo-discount-line" style="display:none;"><span>Promo Discount:</span><span id="cart-promo-discount">-$0.00</span></div>
-                                    <div class="flex justify-between font-bold text-base"><span>Total Price:</span><span id="cart-total-price">$0.00</span></div>
+                    <div class="store-layout">
+                        <div class="product-grid">
+                            ${studentViewHtml}
+                        </div>
+                        <div class="shopping-cart">
+                            <h3>Shopping Cart</h3>
+                            <div id="cart-items"></div>
+                            <div id="cart-summary">
+                                <div class="summary-line">
+                                    <span>Subtotal:</span>
+                                    <span id="cart-subtotal-price">$0.00</span>
                                 </div>
-                                <div class="mt-4">
-                                    <label for="promoCodeInput" class="text-xs font-medium">Promo Code:</label>
-                                    <div class="flex gap-2 mt-1">
-                                        <input type="text" id="promoCodeInput" placeholder="Enter code" class="flex-grow block w-full text-sm rounded-xl border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                                        <button id="applyPromoCodeBtn" class="px-3 py-2 text-sm font-semibold rounded-xl bg-gray-900/5 hover:bg-gray-900/10 dark:bg-white/10 dark:hover:bg-white/20">Apply</button>
-                                    </div>
-                                    <div id="appliedPromoCodeDisplay" class="text-xs mt-2" style="display:none;"><span>Applied: <span id="appliedPromoCodeText"></span></span><button id="removePromoCodeBtn" class="ml-2 text-red-500 hover:underline">Remove</button></div>
-                                    <p id="promoCodeError" class="text-xs text-red-500 mt-1"></p>
+                                <div class="summary-line" id="promo-discount-line" style="display:none;">
+                                    <span>Promo Discount:</span>
+                                    <span id="cart-promo-discount">-$0.00</span>
                                 </div>
-                                <p id="cart-validation-message" class="text-xs text-red-500 mt-4"></p>
-                                <button id="checkout-btn" class="w-full mt-4 px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">Proceed to Checkout</button>
+                                <div class="summary-line">
+                                    <span>Total Price:</span>
+                                    <span id="cart-total-price">$0.00</span>
+                                </div>
                             </div>
+                            <div class="promo-code-section">
+                                <label for="promoCodeInput">Promo Code:</label>
+                                <div class="promo-input-group">
+                                    <input type="text" id="promoCodeInput" placeholder="Enter promo code">
+                                    <button id="applyPromoCodeBtn" class="btn-primary">Apply</button>
+                                </div>
+                                <div id="appliedPromoCodeDisplay" class="promo-display" style="display:none;">
+                                    <span>Applied: <span id="appliedPromoCodeText"></span></span>
+                                    <button id="removePromoCodeBtn" class="remove-promo-btn">Remove</button>
+                                </div>
+                                <p id="promoCodeError" class="promo-error"></p>
+                            </div>
+                            <div id="cart-validation-message"></div>
+                            <button id="checkout-btn" class="btn-primary" disabled>Proceed to Checkout</button>
                         </div>
                     </div>`;
             }
 
             section.innerHTML = `
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">${config.title}</h2>
-                    <button class="material-view-toggle hidden md:block px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-900/5 dark:hover:bg-white/10">Finder View</button>
-                </div>
+                <h2 class="section-title">${config.title}</h2>
                 <div id="teacher-${type}-view" style="display:none;">
-                    <div class="mb-6 p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800">
-                        <button id="add-level1-${type}-btn" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Add New ${config.level1}</button>
+                    <div class="form-container" style="max-width: initial;">
+                        <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                        <button id="toggle-view-mode-${type}" class="material-view-toggle">Switch View Mode</button>
+                        <p id="view-mode-status-${type}" style="display:inline-block; margin-left:1rem; color:var(--text-secondary);"></p>
                     </div>
-                    <div id="level1-${type}-container" class="space-y-4"></div>
+                    <div id="level1-${type}-container" class="folder-view"></div>
                     ${type === 'exercises' ? `
-                        <div class="mt-8 p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800">
-                            <h3 class="text-lg font-semibold mb-4">Promo Code Management</h3>
-                            <div class="flex items-end gap-4 mb-4">
-                                <div class="flex-grow">
-                                    <label for="promoDiscountAmount" class="text-sm font-medium">Discount Amount ($)</label>
-                                    <input type="number" id="promoDiscountAmount" placeholder="10.00" step="0.01" min="0" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <button id="generatePromoCodeBtn" class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Generate</button>
+                        <div class="form-container" style="max-width: initial; margin-top: 2rem;">
+                            <h3>Promo Code Management</h3>
+                            <div style="margin-bottom: 1rem;">
+                                <label for="promoDiscountAmount">Discount Amount ($)</label>
+                                <input type="number" id="promoDiscountAmount" placeholder="e.g., 10.00" step="0.01" min="0">
                             </div>
-                            <p id="promoCodeGenerationStatus" class="text-sm"></p>
-                            <div id="teacherPromoCodeList" class="mt-4 text-sm space-y-2"></div>
+                            <button id="generatePromoCodeBtn" class="btn-primary">Generate New Promo Code</button>
+                            <p id="promoCodeGenerationStatus" class="loading-indicator"></p>
+                            <div class="promo-code-list" id="teacherPromoCodeList">
+                                <p>No promo codes generated yet.</p>
+                            </div>
                         </div>
                     ` : ''}
                 </div>
-                <div id="student-${type}-view" style="display:none;">${studentViewHtml}</div>`;
+                <div id="student-${type}-view" style="display:none;">
+                    ${studentViewHtml}
+                </div>`;
 
             const isTeacher = currentUserRole === 'teacher';
             document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
             document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
-            if (isTeacher) section.querySelector('.material-view-toggle').style.display = 'none';
 
             if (isTeacher) {
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+                
                 const teacherViewContainer = document.getElementById(`teacher-${type}-view`);
                 teacherViewContainer.addEventListener('dragover', (e) => handleDragOver(e, type));
                 teacherViewContainer.addEventListener('drop', (e) => handleDrop(e, type));
-                teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e));
+                teacherViewContainer.addEventListener('dragleave', (e) => handleDragLeave(e, type));
+
                 if (type === 'exercises') {
                     document.getElementById('generatePromoCodeBtn').addEventListener('click', generateAndSavePromoCode);
                     loadPromoCodesForTeacher();
                 }
-            } else {
+            } else { // Student view
                 setupStudentFilters(type);
                 if(config.isPaid) {
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
                     document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
                     document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
                 }
-                const toggleButton = section.querySelector('.material-view-toggle');
-                toggleButton?.addEventListener('click', () => {
+
+                if (window.innerWidth >= 769) {
                     const studentViewContainer = document.getElementById(`student-${type}-view`);
-                    if (currentMaterialViewMode === 'card') {
-                        currentMaterialViewMode = 'finder';
-                        studentViewContainer.classList.add('hidden');
-                        showFinderView(type);
-                        toggleButton.textContent = 'Card View';
-                    } else {
-                        currentMaterialViewMode = 'card';
-                        studentViewContainer.classList.remove('hidden');
-                        document.getElementById('finderMaterialsSection').style.display = 'none';
-                        toggleButton.textContent = 'Finder View';
-                    }
-                });
+                    const materialsSectionTitle = section.querySelector('.section-title');
+                    const toggleButton = document.createElement('button');
+                    toggleButton.className = 'material-view-toggle btn-primary';
+                    toggleButton.textContent = 'Switch to Finder View';
+                    toggleButton.style.marginLeft = '1rem';
+                    materialsSectionTitle.appendChild(toggleButton); 
+
+                    toggleButton.addEventListener('click', () => {
+                        if (currentMaterialViewMode === 'card') {
+                            currentMaterialViewMode = 'finder';
+                            studentViewContainer.classList.add('hidden-on-desktop');
+                            showFinderView(type);
+                            toggleButton.textContent = 'Switch to Card View';
+                        } else {
+                            currentMaterialViewMode = 'card';
+                            studentViewContainer.classList.remove('hidden-on-desktop');
+                            document.getElementById('finderMaterialsSection').style.display = 'none';
+                            toggleButton.textContent = 'Switch to Finder View';
+                            renderStudentItems(type);
+                        }
+                    });
+                }
             }
         }
         
@@ -692,55 +1242,59 @@
             const container = document.getElementById(containerId);
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
-            container.innerHTML = `<div class="text-center text-gray-500 p-4">Loading...</div>`;
+            container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
 
-            const q = query(collection(db, getPath(type, parentIds)), orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
+            const collectionRef = collection(db, getPath(type, parentIds));
+            const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             
             try {
                 const snapshot = await getDocs(q);
                 if (snapshot.empty) {
-                    container.innerHTML = `<div class="text-center text-gray-500 dark:text-neutral-400 p-4">No ${levelName.toLowerCase()}s added yet.</div>`;
+                    container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
                     return;
                 }
                 
                 container.innerHTML = '';
                 snapshot.forEach(doc => {
-                    const item = { id: doc.id, ...doc.data() };
+                    const item = doc.data();
+                    item.id = doc.id;
                     const el = document.createElement('div');
-
+                    el.className = level < 3 ? 'content-item' : 'sub-item';
+                    
                     if (level < 3) {
-                        el.className = 'bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl';
                         const nextLevel = level + 1;
-                        const newParentIds = [...parentIds, item.id];
+                        const newParentIds = [...parentIds, doc.id];
                         el.innerHTML = `
-                            <div class="content-header p-4 flex justify-between items-center cursor-pointer" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
-                                <h3 class="font-semibold">${item.name} <span class="collapse-arrow inline-block ml-1 w-2.5 h-2.5 border-t-2 border-r-2 border-gray-500 dark:border-neutral-400 -rotate-45"></span></h3>
-                                <div class="item-actions flex items-center gap-2">
-                                    <button class="add-item-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
-                                    <button class="delete-item-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                            <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                                <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
+                                <div class="item-actions">
+                                    <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                 </div>
                             </div>
-                            <div class="nested-container border-t border-gray-200 dark:border-neutral-800 p-4 space-y-2" id="container-level${nextLevel}-${type}-${item.id}"></div>
+                            <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
                         `;
-                    } else {
-                        el.className = 'flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800/50 cursor-grab';
+                    } else { // Level 3
                         let itemName = item.name || item.title;
                         let itemPrice = config.isPaid ? ` - $${item.price.toFixed(2)}` : '';
-                        el.innerHTML = `<span class="font-medium text-sm">${itemName}${itemPrice}</span>
-                                     <div class="item-actions flex items-center gap-2">
-                                        ${type === 'pastPapers' ? `<button class="edit-item-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-900/5 hover:bg-gray-900/10 dark:bg-white/10 dark:hover:bg-white/20" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
-                                        <button class="preview-item-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-900/5 hover:bg-gray-900/10 dark:bg-white/10 dark:hover:bg-white/20" data-item='${JSON.stringify(item)}'>Preview</button>
-                                        <button class="delete-item-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                        el.innerHTML = `<span>${itemName}${itemPrice}</span>
+                                     <div class="item-actions">
+                                        ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
+                                        <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
+                                        <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem;">Download</a>
+                                        <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
                         el.setAttribute('draggable', 'true');
-                        el.dataset.itemId = item.id; el.dataset.itemType = type; el.dataset.itemParentIds = JSON.stringify(parentIds);
+                        el.dataset.itemId = doc.id;
+                        el.dataset.itemType = type;
+                        el.dataset.itemParentIds = JSON.stringify(parentIds);
                         el.addEventListener('dragstart', handleDragStart);
                     }
                     container.appendChild(el);
                 });
             } catch (error) {
                 console.error(`Error rendering level ${level} for ${type}:`, error);
-                container.innerHTML = `<div class="text-center text-red-500 p-4">Error loading content. A database index might be required.</div>`;
+                container.innerHTML = `<p class="error-message">Error loading content. A database index might be required. Check console for details.</p>`;
             }
         }
         
@@ -750,19 +1304,26 @@
 
             if (button) {
                 e.stopPropagation();
-                const { level, parentIds, item } = button.dataset;
+                const { level, parentIds } = button.dataset;
                 const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
 
                 if (button.matches('.add-item-btn')) {
                     const nextLevel = parseInt(level);
-                    if(nextLevel < 3) showAddItemModal(type, nextLevel, parentIdsArray);
-                    else showAddFinalItemModal(type, parentIdsArray);
+                    if (nextLevel < 3) {
+                        showAddItemModal(type, nextLevel, parentIdsArray);
+                    } else { 
+                        showAddFinalItemModal(type, parentIdsArray);
+                    }
                 } else if (button.matches('.delete-item-btn')) {
-                    handleDeleteItem(type, parseInt(level) || 3, button.dataset.id, parentIdsArray);
+                    const idToDelete = button.dataset.id;
+                    handleDeleteItem(type, parseInt(level), idToDelete, parentIdsArray);
                 } else if (button.matches('.preview-item-btn')) {
-                    handlePreview(type, JSON.parse(item));
+                    const itemData = JSON.parse(button.dataset.item);
+                    handlePreview(type, itemData);
                 } else if (button.matches('.edit-item-btn')) {
-                    showEditPastPaperModal(JSON.parse(item), parentIdsArray);
+                    const itemData = JSON.parse(button.dataset.item);
+                    const itemParentIds = JSON.parse(button.dataset.parentIds);
+                    showEditPastPaperModal(itemData, itemParentIds);
                 }
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
@@ -771,12 +1332,15 @@
                 
                 const nextLevel = currentLevel + 1;
                 const container = document.getElementById(`container-level${nextLevel}-${type}-${id}`);
+                if (!container) return;
+
                 const isExpanded = header.getAttribute('aria-expanded') === 'true';
                 header.setAttribute('aria-expanded', !isExpanded);
                 container.classList.toggle('expanded', !isExpanded);
 
                 if (!isExpanded && !container.dataset.loaded) {
-                    await renderContent(type, container.id, nextLevel, [...JSON.parse(parentIds), id]);
+                    const parentIdsArray = parentIds ? JSON.parse(parentIds) : [];
+                    await renderContent(type, container.id, nextLevel, [...parentIdsArray, id]);
                     container.dataset.loaded = 'true';
                 }
             }
@@ -784,311 +1348,1086 @@
 
         function handlePreview(type, item) {
             if (type === 'tutorials') {
-                showVideoPreviewModal(item);
+                const videoPreviewModal = document.getElementById('videoPreviewModal');
+                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
+                const videoPreviewContent = document.getElementById('videoPreviewContent');
+                
+                videoPreviewTitle.textContent = item.title;
+                if (item.type === 'youtube') {
+                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
+                } else if (item.type === 'embed') {
+                    videoPreviewContent.innerHTML = item.embedCode;
+                }
+                videoPreviewModal.style.display = 'flex';
             } else if (type === 'pastPapers' || type === 'exercises') {
                 if (item.link) {
-                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com')) {
+                    if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
                         showPdfPreviewModal(item.name, item.link);
                     } else if (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-                        showModal('Image Preview', `<img src="${item.link}" class="w-full h-auto rounded-lg" alt="Preview">`);
+                        showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Preview">`);
                     } else {
                         window.open(item.link, '_blank');
                     }
+                } else {
+                    showModal('Preview Error', 'No link available for this item.');
                 }
             }
         }
 
+
         function showAddItemModal(type, level, parentIds = []) {
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
-            showInputModal(`Add New ${levelName}`, `Enter ${levelName} Name:`, async (name) => {
+            const prompt = levelName === 'Year' ? 'Year (e.g., 2024)' : levelName;
+            
+            showInputModal(`Add New ${levelName}`, `Enter ${prompt} Name:`, async (name) => {
+                const collectionRef = collection(db, getPath(type, parentIds));
                 try {
-                    await addDoc(collection(db, getPath(type, parentIds)), { name: name.trim() });
+                    await addDoc(collectionRef, { name: name.trim() });
+                    showModal('Success', `${levelName} added.`);
                     const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                     renderContent(type, containerId, level, parentIds);
                 } catch(e) {
+                    console.error("Error adding item:", e);
                     showModal('Error', `Could not add ${levelName}. Error: ${e.message}`);
                 }
             });
         }
 
         function showAddFinalItemModal(type, parentIds) {
-            const modal = document.getElementById(materialsConfig[type].modalId);
-            modal.classList.add('flex');
+            const config = materialsConfig[type];
+            const modal = document.getElementById(config.modalId);
+            modal.style.display = 'flex';
+            
             const form = modal.querySelector('form');
-            form.elements[1].value = parentIds[0];
-            form.elements[2].value = parentIds[1];
+            form.querySelector('input[type=hidden]:nth-of-type(1)').value = parentIds[0];
+            form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
             form.reset();
-            const fileNameEl = form.querySelector('[id$="FileName"]');
-            if(fileNameEl) fileNameEl.textContent = 'No file chosen';
+
+            if (type === 'pastPapers') {
+                document.getElementById('pastPaperFileName').textContent = 'No file chosen';
+                document.getElementById('pastPaperLink').value = '';
+            }
+            if (type === 'exercises') {
+                document.getElementById('exerciseFileName').textContent = 'No file chosen';
+                document.getElementById('exerciseLink').value = '';
+            }
+            if (type === 'tutorials') {
+                document.getElementById('tutorialThumbnailPreview').style.display = 'none';
+            }
         }
-        
+
         async function handleDeleteItem(type, level, id, parentIds) {
             const config = materialsConfig[type];
-            showModal('Confirm Deletion', `Are you sure you want to delete this item? This action cannot be undone.`, [
-                { text: 'Delete', className: 'px-4 py-2 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700', onClick: async () => {
+            const levelName = config[`level${level}`];
+
+            showModal('Confirm Deletion', `Are you sure you want to delete this ${levelName.toLowerCase()}? This will also delete all items inside it. This action cannot be undone.`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    const docRef = doc(db, getPath(type, parentIds), id);
                     try {
-                        const docRef = doc(db, getPath(type, parentIds), id);
-                        if (level === 3) {
+                        if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
                             const itemSnap = await getDoc(docRef);
-                            if (itemSnap.exists() && itemSnap.data().filePath) {
-                                try { await deleteObject(ref(storage, itemSnap.data().filePath)); } catch (e) { console.warn('File delete failed:', e.code); }
+                            const itemData = itemSnap.data();
+                            if (itemData && itemData.link && !itemData.link.startsWith('https://drive.google.com')) {
+                                const storagePath = ref(storage, itemData.link).fullPath;
+                                const fileRef = ref(storage, storagePath);
+                                try {
+                                    await deleteObject(fileRef);
+                                } catch (storageError) {
+                                    console.warn('Could not delete file from storage:', storageError);
+                                }
                             }
                         }
+
                         await deleteDoc(docRef);
+                        showModal('Success', `${levelName} deleted.`);
                         const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                         renderContent(type, containerId, level, parentIds);
-                    } catch(e) { showModal('Error', `Could not delete item. Error: ${e.message}`); }
+                    } catch(e) {
+                         console.error("Error deleting item:", e);
+                         showModal('Error', `Could not delete ${levelName}. Error: ${e.message}`);
+                    }
                 }},
-                { text: 'Cancel', className: 'px-4 py-2 text-sm font-semibold rounded-xl hover:bg-gray-900/5 dark:hover:bg-white/10' }
+                { text: 'Cancel', className: 'logout-btn' }
             ]);
         }
         
-        // --- ALL OTHER FUNCTIONS (GRADING, CHAT, SUBMISSIONS, ETC.) ARE INCLUDED BELOW ---
-        // --- THEY HAVE BEEN ADAPTED TO THE NEW THEME ---
+        // --- DRAG AND DROP LOGIC (TEACHER SIDE) ---
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            const subItem = e.target.closest('.sub-item');
+            if (!subItem) return;
+
+            draggedItem = {
+                id: subItem.dataset.itemId,
+                type: subItem.dataset.itemType,
+                parentIds: JSON.parse(subItem.dataset.itemParentIds)
+            };
+            e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e, type) {
+            e.preventDefault();
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement && draggedItem && draggedItem.type === type) {
+                targetElement.classList.add('drag-over');
+                e.dataTransfer.dropEffect = 'move';
+            } else {
+                e.dataTransfer.dropEffect = 'none';
+            }
+        }
+
+        function handleDragLeave(e, type) {
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement) {
+                targetElement.classList.remove('drag-over');
+            }
+        }
+
+        async function handleDrop(e, type) {
+            e.preventDefault();
+            const targetElement = e.target.closest('.content-item');
+            if (targetElement) {
+                targetElement.classList.remove('drag-over');
+            }
+
+            if (!draggedItem) return;
+
+            const droppedItemData = JSON.parse(e.dataTransfer.getData('text/plain'));
+            
+            if (droppedItemData.type !== type) {
+                showModal('Move Error', 'Cannot move items between different material types.');
+                draggedItem = null;
+                return;
+            }
+
+            const newParentLevel = parseInt(targetElement.querySelector('.content-header').dataset.level);
+            const newParentId = targetElement.querySelector('.content-header').dataset.id;
+            const newParentIds = JSON.parse(targetElement.querySelector('.content-header').dataset.parentIds);
+            
+            let newFullParentIds = [];
+            if (newParentLevel === 1) { 
+                newFullParentIds = [newParentId];
+            } else if (newParentLevel === 2) {
+                newFullParentIds = [...newParentIds, newParentId];
+            } else {
+                showModal('Move Error', 'Items can only be dropped into Subject or Topic/Year folders.');
+                draggedItem = null;
+                return;
+            }
+            
+            if (newFullParentIds.length !== 2) { 
+                 showModal('Move Error', 'Files must be moved into a Topic or Year folder.');
+                 draggedItem = null;
+                 return;
+            }
+
+            const oldParentIds = draggedItem.parentIds;
+            const itemId = draggedItem.id;
+            const itemType = draggedItem.type;
+            
+            if (oldParentIds[0] === newFullParentIds[0] && oldParentIds[1] === newFullParentIds[1]) {
+                draggedItem = null;
+                return;
+            }
+
+            const oldDocRef = doc(db, getPath(itemType, oldParentIds), itemId);
+            const newDocRef = doc(db, getPath(itemType, newFullParentIds), itemId);
+
+            try {
+                const docSnap = await getDoc(oldDocRef);
+                if (!docSnap.exists()) {
+                    throw new Error("Item not found for moving.");
+                }
+                const itemData = docSnap.data();
+
+                const batch = writeBatch(db);
+                batch.set(newDocRef, itemData);
+                batch.delete(oldDocRef);
+                await batch.commit();
+
+                showModal('Success', `Item "${itemData.name || itemData.title}" moved successfully!`);
+                
+                const oldContainerId = `container-level3-${itemType}-${oldParentIds[1]}`;
+                const newContainerId = `container-level3-${itemType}-${newFullParentIds[1]}`;
+                
+                if (document.getElementById(oldContainerId)?.classList.contains('expanded')) {
+                    renderContent(itemType, oldContainerId, 3, oldParentIds);
+                }
+                if (document.getElementById(newContainerId)?.classList.contains('expanded')) {
+                     renderContent(itemType, newContainerId, 3, newFullParentIds);
+                }
+
+            } catch (error) {
+                console.error("Error moving item:", error);
+                showModal('Move Error', `Could not move item. Error: ${error.message}`);
+            } finally {
+                draggedItem = null;
+            }
+        }
+
+
+        // --- STUDENT FILTER LOGIC ---
+        function setupStudentFilters(type) {
+            const config = materialsConfig[type];
+            const level1Filter = document.getElementById(`level1-${type}-filter`);
+            const level2Filter = document.getElementById(`level2-${type}-filter`);
+            const grid = document.getElementById(`level3-${type}-grid`);
+
+            populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+
+            level1Filter.onchange = () => {
+                const level1Id = level1Filter.value;
+                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                level2Filter.disabled = true;
+                grid.innerHTML = `<p>Please select a ${config.level2.toLowerCase()}.</p>`;
+                if (level1Id) {
+                    populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
+                    level2Filter.disabled = false;
+                }
+            };
+            level2Filter.onchange = () => renderStudentItems(type);
+        }
+
+        async function renderStudentItems(type) {
+             const config = materialsConfig[type];
+             const grid = document.getElementById(`level3-${type}-grid`);
+             const level1Id = document.getElementById(`level1-${type}-filter`).value;
+             const level2Id = document.getElementById(`level2-${type}-filter`).value;
+
+             grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+             if (!level1Id || !level2Id) {
+                 grid.innerHTML = `<p>Please select a ${config.level1.toLowerCase()} and ${config.level2.toLowerCase()}.</p>`;
+                 return;
+             }
+
+             const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
+             const q = query(itemsRef, orderBy('name', 'asc'));
+             
+             let purchasedItems = {};
+             if(config.isPaid) {
+                 const purchaseCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/purchased_${config.collectionName}`);
+                 const snapshot = await getDocs(purchaseCollectionRef);
+                 snapshot.forEach(doc => purchasedItems[doc.id] = true);
+             }
+
+             try {
+                const snapshot = await getDocs(q);
+                grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    item.id = doc.id;
+                    const card = document.createElement('div');
+                    
+                    if (type === 'tutorials') {
+                        card.className = 'material-card';
+                        if (item.type === 'youtube') {
+                            card.innerHTML = `
+                                <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
+                                    <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
+                                    <div class="play-button-overlay">▶</div>
+                                </div>
+                                <div class="material-card-content"><h3>${item.title}</h3></div>
+                            `;
+                        } else if (item.type === 'embed') {
+                            card.innerHTML = `
+                                <div class="video-embed-container">${item.embedCode}</div>
+                                <div class="material-card-content"><h3>${item.title}</h3></div>
+                            `;
+                        }
+                    } else if (config.isPaid) {
+                        const isPurchased = purchasedItems[item.id];
+                        const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
+                        card.className = 'product-card';
+                        card.innerHTML = `
+                            <h4>${item.name}</h4>
+                            <p class="product-price">$${item.price.toFixed(2)}</p>
+                            ${isPurchased 
+                                ? `<button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>`
+                                : `<button class="add-to-cart-btn btn-primary" data-id="${item.id}" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
+                            }`;
+                        if(!isPurchased) {
+                           const addToCartBtn = card.querySelector('.add-to-cart-btn');
+                           if (addToCartBtn) {
+                               addToCartBtn.onclick = () => addToCart(item);
+                           }
+                        }
+                    } else { // Free materials
+                        card.className = 'material-card';
+                        card.innerHTML = `
+                            <div class="material-card-content">
+                                <h3>${item.name}</h3>
+                            </div>
+                            <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
+                        `;
+                    }
+                    
+                    const downloadBtn = card.querySelector('.download-btn');
+                    if(downloadBtn){
+                        downloadBtn.onclick = (e) => handlePreview(type, JSON.parse(e.target.dataset.item));
+                    }
+                    
+                    grid.appendChild(card);
+                });
+             } catch(e) {
+                console.error("Error loading student items:", e);
+                grid.innerHTML = "<p class='error-message'>Error loading items. A database index might be required. Check console for details.</p>"
+             }
+        }
         
-        // --- GRADING & CHAT & OTHER ---
-        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
+        async function populateFilter(selectElement, collectionRef, levelName) {
+            selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+            try {
+                const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
+                const snapshot = await getDocs(q);
+                selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
+                if(snapshot.empty) {
+                    selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    selectElement.add(new Option(doc.data().name, doc.id));
+                });
+            }
+            catch (e) {
+                console.error(`Error loading ${levelName}s:`, e);
+                selectElement.innerHTML = `<option value="">-- Error --</option>`;
+            }
+        }
+
+        // --- E-COMMERCE LOGIC ---
+        function addToCart(item) {
+            shoppingCart.push(item);
+            updateCartUI();
+            renderStudentItems('exercises'); 
+        }
+
+        function removeFromCart(itemId) {
+            shoppingCart = shoppingCart.filter(item => item.id !== itemId);
+            updateCartUI();
+            renderStudentItems('exercises');
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const subtotalPriceEl = document.getElementById('cart-subtotal-price');
+            const promoDiscountLine = document.getElementById('promo-discount-line');
+            const promoDiscountEl = document.getElementById('cart-promo-discount');
+            const totalPriceEl = document.getElementById('cart-total-price');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            const validationMsg = document.getElementById('cart-validation-message');
+            const promoCodeInput = document.getElementById('promoCodeInput');
+            const applyPromoCodeBtn = document.getElementById('applyPromoCodeBtn');
+            const appliedPromoCodeDisplay = document.getElementById('appliedPromoCodeDisplay');
+            const appliedPromoCodeText = document.getElementById('appliedPromoCodeText');
+
+            cartItemsContainer.innerHTML = '';
+            let subtotal = 0;
+
+            if (shoppingCart.length === 0) {
+                cartItemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+            }
+
+            shoppingCart.forEach(item => {
+                subtotal += item.price;
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cart-item';
+                itemEl.innerHTML = `
+                    <span class="cart-item-name">${item.name}</span>
+                    <span class="cart-item-price">$${item.price.toFixed(2)}</span>
+                    <button class="remove-from-cart-btn" data-id="${item.id}">✖</button>
+                `;
+                itemEl.querySelector('.remove-from-cart-btn').onclick = () => removeFromCart(item.id);
+                cartItemsContainer.appendChild(itemEl);
+            });
+            
+            subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+            let finalPrice = subtotal;
+
+            if (appliedPromoCode) {
+                finalPrice = Math.max(0, subtotal - appliedPromoCode.discountAmount);
+                promoDiscountEl.textContent = `-$${appliedPromoCode.discountAmount.toFixed(2)}`;
+                promoDiscountLine.style.display = 'flex';
+                appliedPromoCodeText.textContent = `${appliedPromoCode.code} (-$${appliedPromoCode.discountAmount.toFixed(2)})`;
+                appliedPromoCodeDisplay.style.display = 'flex';
+                promoCodeInput.disabled = true;
+                applyPromoCodeBtn.disabled = true;
+            } else {
+                promoDiscountLine.style.display = 'none';
+                appliedPromoCodeDisplay.style.display = 'none';
+                promoCodeInput.disabled = false;
+                applyPromoCodeBtn.disabled = false;
+            }
+
+            totalPriceEl.textContent = `$${finalPrice.toFixed(2)}`;
+            const canCheckout = shoppingCart.length > 0 && (finalPrice === 0 || finalPrice >= 100);
+
+            checkoutBtn.disabled = !canCheckout;
+            if (shoppingCart.length > 0 && finalPrice > 0 && finalPrice < 100) {
+                validationMsg.textContent = 'Minimum total of $100 required to checkout.';
+            } else {
+                validationMsg.textContent = '';
+            }
+        }
+
+        async function applyPromoCode() {
+            const promoCodeInput = document.getElementById('promoCodeInput');
+            const promoCodeError = document.getElementById('promoCodeError');
+            const code = promoCodeInput.value.trim().toUpperCase();
+
+            promoCodeError.textContent = '';
+            if (!code) {
+                promoCodeError.textContent = 'Please enter a promo code.';
+                return;
+            }
+
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+            try {
+                const docSnap = await getDoc(promoCodeRef);
+                if (docSnap.exists() && docSnap.data().isActive) {
+                    appliedPromoCode = { code: code, discountAmount: docSnap.data().discountAmount };
+                    updateCartUI();
+                    showModal('Promo Code Applied', `Successfully applied promo code!`);
+                } else {
+                    promoCodeError.textContent = 'Invalid or inactive promo code.';
+                }
+            } catch (error) {
+                console.error("Error applying promo code:", error);
+                promoCodeError.textContent = `Error applying code.`;
+            }
+        }
+
+        function removeAppliedPromoCode() {
+            appliedPromoCode = null;
+            updateCartUI();
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('promoCodeError').textContent = '';
+        }
+
+        async function handleCheckout() {
+            if (!currentUserId) return showModal('Error', 'You must be logged in.');
+
+            let subtotal = shoppingCart.reduce((sum, item) => sum + item.price, 0);
+            let finalPrice = appliedPromoCode ? Math.max(0, subtotal - appliedPromoCode.discountAmount) : subtotal;
+
+            if (shoppingCart.length === 0) return showModal('Error', 'Your cart is empty.');
+
+            if (finalPrice === 0) {
+                try {
+                    const batch = writeBatch(db);
+                    shoppingCart.forEach(item => {
+                        const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                        batch.set(purchaseRef, { name: item.name, price: item.price, purchasedAt: Date.now(), purchaseMethod: 'promo', promoCodeUsed: appliedPromoCode?.code });
+                    });
+                    await batch.commit();
+
+                    showModal('Purchase Successful!', 'Your new exercises are available.');
+                    shoppingCart = [];
+                    appliedPromoCode = null;
+                    updateCartUI();
+                    renderStudentItems('exercises');
+                } catch (error) {
+                    showModal('Checkout Error', `Could not complete free checkout. Error: ${error.message}`);
+                }
+            } else {
+                if (STRIPE_PAYMENT_LINK.includes("...")) return showModal('Configuration Error', 'Stripe is not configured.');
+
+                const checkoutSessionId = crypto.randomUUID();
+                const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${checkoutSessionId}`);
+                try {
+                    await setDoc(checkoutSessionRef, { cart: shoppingCart, appliedPromoCode: appliedPromoCode, created: Date.now(), totalAmount: finalPrice });
+                    const stripeUrl = `${STRIPE_PAYMENT_LINK}?client_reference_id=${checkoutSessionId}&prefilled_email=${currentUserEmail}`;
+                    window.location.href = stripeUrl;
+                } catch (error) {
+                    showModal('Checkout Error', `Could not initiate checkout. Error: ${error.message}`);
+                }
+            }
+        }
+        
+        async function checkForSuccessfulPurchase() {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id');
+
+            if (params.get('payment_status') === 'success' && sessionId) {
+                const checkoutSessionRef = doc(db, `artifacts/${appId}/users/${currentUserId}/checkout_sessions/${sessionId}`);
+                try {
+                    const sessionDoc = await getDoc(checkoutSessionRef);
+                    if (sessionDoc.exists()) {
+                        const { cart } = sessionDoc.data();
+                        const batch = writeBatch(db);
+                        cart.forEach(item => {
+                            const purchaseRef = doc(db, `artifacts/${appId}/users/${currentUserId}/purchased_exercises/${item.id}`);
+                            batch.set(purchaseRef, { name: item.name, price: item.price, purchasedAt: Date.now(), purchaseMethod: 'paid' });
+                        });
+                        batch.delete(checkoutSessionRef);
+                        await batch.commit();
+                        
+                        showModal('Purchase Successful!', 'Your new exercises are available.');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        showSection('exerciseSection');
+                        renderStudentItems('exercises');
+                    }
+                } catch (error) {
+                    showModal('Purchase Error', 'There was an issue verifying your purchase.');
+                }
+            }
+        }
+
+        // --- PROMO CODE MANAGEMENT (TEACHER SIDE) ---
+        function generateRandomCode(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        async function generateAndSavePromoCode() {
+            const promoDiscountAmountInput = document.getElementById('promoDiscountAmount');
+            const promoCodeGenerationStatus = document.getElementById('promoCodeGenerationStatus');
+            const discountAmount = parseFloat(promoDiscountAmountInput.value);
+
+            if (isNaN(discountAmount) || discountAmount <= 0) {
+                promoCodeGenerationStatus.textContent = 'Please enter a valid positive discount amount.';
+                return;
+            }
+
+            const newCode = generateRandomCode(8);
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, newCode);
+            try {
+                await setDoc(promoCodeRef, { code: newCode, discountAmount, isActive: true, createdAt: Date.now(), createdBy: currentUserId });
+                promoCodeGenerationStatus.textContent = `Promo code "${newCode}" generated!`;
+                promoDiscountAmountInput.value = '';
+                loadPromoCodesForTeacher();
+            } catch (error) {
+                promoCodeGenerationStatus.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadPromoCodesForTeacher() {
+            const teacherPromoCodeList = document.getElementById('teacherPromoCodeList');
+            if(!teacherPromoCodeList) return;
+            teacherPromoCodeList.innerHTML = '<p class="loading-indicator">Loading promo codes...</p>';
+
+            const promoCodesCollectionRef = collection(db, `artifacts/${appId}/public/data/promoCodes`);
+            const q = query(promoCodesCollectionRef, orderBy('createdAt', 'desc'));
+            try {
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    teacherPromoCodeList.innerHTML = '<p>No promo codes generated yet.</p>';
+                    return;
+                }
+                teacherPromoCodeList.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const promo = doc.data();
+                    teacherPromoCodeList.innerHTML += `
+                        <div class="promo-code-item" style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color);">
+                            <span>${promo.code}</span>
+                            <span>$${promo.discountAmount.toFixed(2)}</span>
+                            <span>${promo.isActive ? 'Active' : 'Inactive'}</span>
+                            <div class="actions">
+                                <button class="btn-primary toggle-promo-status-btn" data-code="${promo.code}" data-is-active="${promo.isActive ? 'true' : 'false'}">${promo.isActive ? 'Deactivate' : 'Activate'}</button>
+                                <button class="logout-btn delete-promo-btn" data-code="${promo.code}">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                teacherPromoCodeList.querySelectorAll('.toggle-promo-status-btn').forEach(button => button.onclick = (e) => togglePromoCodeStatus(e.target.dataset.code, e.target.dataset.isActive === 'true'));
+                teacherPromoCodeList.querySelectorAll('.delete-promo-btn').forEach(button => button.onclick = (e) => deletePromoCode(e.target.dataset.code));
+            } catch (error) {
+                teacherPromoCodeList.innerHTML = '<p class="error-message">Error loading promo codes.</p>';
+            }
+        }
+
+        async function togglePromoCodeStatus(code, currentStatus) {
+            const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+            try {
+                await updateDoc(promoCodeRef, { isActive: !currentStatus });
+                showModal('Status Updated', `Promo code status changed.`);
+                loadPromoCodesForTeacher();
+            } catch (error) {
+                showModal('Error', `Could not update status: ${error.message}`);
+            }
+        }
+
+        async function deletePromoCode(code) {
+            showModal('Confirm Deletion', `Are you sure you want to delete promo code "${code}"?`, [
+                { text: 'Delete', className: 'btn-primary', onClick: async () => {
+                    const promoCodeRef = doc(db, `artifacts/${appId}/public/data/promoCodes`, code);
+                    try {
+                        await deleteDoc(promoCodeRef);
+                        showModal('Success', `Promo code deleted.`);
+                        loadPromoCodesForTeacher();
+                    } catch (error) {
+                        showModal('Error', `Could not delete: ${error.message}`);
+                    }
+                }},
+                { text: 'Cancel', className: 'logout-btn' }
+            ]);
+        }
+
+        // --- VIDEO & FILE & MODAL HELPERS ---
+        function parseVideoInput(input) {
+            const text = input.trim();
+            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            const youtubeMatch = text.match(youtubeRegex);
+            if (youtubeMatch && youtubeMatch[1]) return { type: 'youtube', id: youtubeMatch[1] };
+            if (text.startsWith('<iframe') && text.endsWith('>')) return { type: 'embed', code: text };
+            return null;
+        }
+
+        function convertGoogleDriveLink(url) {
+            const driveViewRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view(?:\?usp=drive_link)?/;
+            const match = url.match(driveViewRegex);
+            return (match && match[1]) ? `https://drive.google.com/uc?export=download&id=${match[1]}` : url;
+        }
+
+        function setupGoogleDriveLinkConversion() {
+            ['pastPaperLink', 'exerciseLink', 'editPastPaperLink'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.addEventListener('input', (e) => e.target.value = convertGoogleDriveLink(e.target.value));
+            });
+        }
+
+        // --- MODAL SUBMISSION LOGIC ---
+        document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const parentId1 = e.target.querySelector('#videoParentId1').value;
+            const parentId2 = e.target.querySelector('#videoParentId2').value;
+            const input = document.getElementById('tutorialLink').value;
+            const title = document.getElementById('tutorialTitle').value;
+            
+            const videoDetails = parseVideoInput(input);
+            if (!videoDetails || !title.trim()) return showModal('Input Error', 'Please provide a title and a valid YouTube link or embed code.');
+            
+            const dataToSave = { title: title.trim(), name: title.trim(), timestamp: Date.now() };
+            if (videoDetails.type === 'youtube') {
+                dataToSave.type = 'youtube';
+                dataToSave.youtubeId = videoDetails.id;
+            } else {
+                dataToSave.type = 'embed';
+                dataToSave.embedCode = videoDetails.code;
+            }
+
+            try {
+                await addDoc(collection(db, getPath('tutorials', [parentId1, parentId2])), dataToSave);
+                showModal('Success', 'Video added.');
+                document.getElementById('addVideoModal').style.display = 'none';
+                renderContent('tutorials', `container-level3-tutorials-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) { showModal('Error', `Could not add video: ${error.message}`); }
+        });
+
+        async function handleFileUploadForm(e, type) {
+            e.preventDefault();
+            const form = e.target;
+            const config = materialsConfig[type];
+            const parentId1 = form.querySelector(`input[type=hidden]:nth-of-type(1)`).value;
+            const parentId2 = form.querySelector(`input[type=hidden]:nth-of-type(2)`).value;
+            const name = form.querySelector(`input[type=text]`).value;
+            const fileInput = form.querySelector(`input[type=file]`);
+            const file = fileInput.files[0];
+            const link = form.querySelector(`input[type=url]`).value.trim();
+            const price = type === 'exercises' ? parseFloat(form.querySelector(`input[type=number]`).value) : null;
+            
+            if (!name.trim() || (!file && !link) || (type === 'exercises' && (isNaN(price) || price < 0))) {
+                return showModal('Input Error', 'Please fill all required fields correctly.');
+            }
+
+            const buttonsContainer = form.querySelector('.modal-form-buttons');
+            const originalButtonsHTML = buttonsContainer.innerHTML;
+            buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
+            
+            let downloadURL = link;
+            let filePath = '';
+
+            try {
+                if (file) {
+                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
+                    filePath = `materials/${config.collectionName}/${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadResult = await uploadBytes(storageRef, file);
+                    downloadURL = await getDownloadURL(uploadResult.ref);
+                }
+
+                if (!downloadURL) throw new Error("No valid file or link provided.");
+
+                const data = { name: name.trim(), link: downloadURL, timestamp: Date.now(), filePath: filePath };
+                if (type === 'exercises') data.price = price;
+                
+                await addDoc(collection(db, getPath(type, [parentId1, parentId2])), data);
+                showModal('Success', `${config.level3} added.`);
+                form.closest('.modal').style.display = 'none';
+                renderContent(type, `container-level3-${type}-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) { 
+                showModal('Error', `Could not add item: ${error.message}`); 
+            } finally {
+                buttonsContainer.innerHTML = originalButtonsHTML;
+            }
+        }
+        
+        document.getElementById('addPastPaperForm').addEventListener('submit', (e) => handleFileUploadForm(e, 'pastPapers'));
+        document.getElementById('addExerciseForm').addEventListener('submit', (e) => handleFileUploadForm(e, 'exercises'));
+
+        document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const itemId = form.querySelector('#editPaperId').value;
+            const parentId1 = form.querySelector('#editPaperParentId1').value;
+            const parentId2 = form.querySelector('#editPaperParentId2').value;
+            const name = document.getElementById('editPastPaperName').value.trim();
+            const link = document.getElementById('editPastPaperLink').value.trim();
+
+            if (!name || !link) return showModal('Input Error', 'Please provide a paper name and link.');
+
+            try {
+                await updateDoc(doc(db, getPath('pastPapers', [parentId1, parentId2]), itemId), { name, link });
+                showModal('Success', 'Past paper updated!');
+                document.getElementById('editPastPaperModal').style.display = 'none';
+                renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) {
+                showModal('Error', `Could not update past paper: ${error.message}`);
+            }
+        });
+
+        function showEditPastPaperModal(itemData, parentIds) {
+            const modal = document.getElementById('editPastPaperModal');
+            document.getElementById('editPaperId').value = itemData.id;
+            document.getElementById('editPaperParentId1').value = parentIds[0];
+            document.getElementById('editPaperParentId2').value = parentIds[1];
+            document.getElementById('editPastPaperName').value = itemData.name;
+            document.getElementById('editPastPaperLink').value = itemData.link;
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('tutorialLink').addEventListener('input', (e) => {
+            const videoDetails = parseVideoInput(e.target.value);
+            const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
+            if (videoDetails && videoDetails.type === 'youtube') {
+                thumbnailPreview.src = `https://img.youtube.com/vi/${videoDetails.id}/mqdefault.jpg`;
+                thumbnailPreview.style.display = 'block';
+            } else {
+                thumbnailPreview.style.display = 'none';
+                thumbnailPreview.src = '';
+            }
+        });
+        
+        // --- UI HELPERS & THEME ---
+        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) {
             const dropZone = document.getElementById(dropZoneId);
             const fileInput = document.getElementById(fileInputId);
             const fileNameDisplay = document.getElementById(fileNameDisplayId);
-            const filePreview = filePreviewId ? document.getElementById(filePreviewId) : null;
-
             if (!dropZone || !fileInput || !fileNameDisplay) return;
 
-            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.onclick = () => fileInput.click();
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, e => {e.preventDefault(); e.stopPropagation();}));
-            ['dragenter', 'dragover'].forEach(eName => dropZone.classList.add('border-blue-500'));
-            ['dragleave', 'drop'].forEach(eName => dropZone.classList.remove('border-blue-500'));
-
-            dropZone.addEventListener('drop', e => {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.dispatchEvent(new Event('change'));
-            });
-
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    fileNameDisplay.textContent = file.name;
-                    if (filePreview && file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => { filePreview.src = e.target.result; filePreview.style.display = 'block'; };
-                        reader.readAsDataURL(file);
-                    } else {
-                        if(filePreview) filePreview.style.display = 'none';
-                    }
-                } else {
-                    fileNameDisplay.textContent = 'No file chosen';
-                    if(filePreview) filePreview.style.display = 'none';
-                }
-            });
+            ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.add('highlight')));
+            ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.remove('highlight')));
+            dropZone.ondrop = e => { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); };
+            fileInput.onchange = (e) => fileNameDisplay.textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
         }
-        setupDropZone('studentDropZone', 'studentAnswerFile', 'studentFileName', 'studentFilePreview');
-        setupDropZone('answerKeyDropZone', 'answerKeyFile', 'answerKeyFileName', 'answerKeyFilePreview');
+
         setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
         setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
-
-        // CHAT FUNCTIONALITY
-        const chatInput = document.getElementById('chatInput');
-        const sendChatButton = document.getElementById('sendChatButton');
-        const chatDisplay = document.getElementById('chatDisplay');
-        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
-
-        async function handleSendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            appendChatMessage(message, 'user');
-            chatInput.value = '';
-            chatLoadingIndicator.style.display = 'block';
-            chatLoadingIndicator.textContent = 'AI is typing...';
-            
-            geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
-
-            try {
-                const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=`;
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: geminiChatHistory })
-                });
-
-                if (!response.ok) throw new Error(`API error: ${response.statusText}`);
-
-                const result = await response.json();
-                const aiResponse = result.candidates[0].content.parts[0].text;
-                appendChatMessage(aiResponse, 'gemini');
-                geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                await saveChatHistory();
-            } catch (error) {
-                appendChatMessage(`Error: ${error.message}`, 'gemini');
-            } finally {
-                chatLoadingIndicator.style.display = 'none';
-            }
-        }
-
-        function appendChatMessage(text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.className = `p-3 rounded-2xl max-w-[80%] ${sender === 'user' ? 'bg-blue-600 text-white self-end' : 'bg-gray-100 dark:bg-neutral-800 self-start'}`;
-            messageElement.textContent = text;
-            chatDisplay.appendChild(messageElement);
-            chatDisplay.scrollTop = chatDisplay.scrollHeight;
-        }
-
-        sendChatButton.addEventListener('click', handleSendMessage);
-        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }});
-        document.getElementById('clearChatMemoryButton').addEventListener('click', clearChatHistory);
         
-        const CHAT_HISTORY_DOC_PATH = (userId) => `artifacts/${appId}/users/${userId}/chatHistory/data`;
+        function showModal(title, message, buttons = []) {
+            const messageModal = document.getElementById('messageModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            const modalButtons = document.getElementById('modalButtons');
+            modalButtons.innerHTML = '';
 
-        async function loadChatHistory() {
-            if (!currentUserId) return;
-            chatDisplay.innerHTML = '';
-            const docSnap = await getDoc(doc(db, CHAT_HISTORY_DOC_PATH(currentUserId)));
-            if (docSnap.exists() && docSnap.data().history) {
-                geminiChatHistory = docSnap.data().history;
-                geminiChatHistory.forEach(msg => appendChatMessage(msg.parts[0].text, msg.role === "user" ? "user" : "gemini"));
+            if (buttons.length === 0) {
+                 const okButton = document.createElement('button');
+                 okButton.textContent = 'OK';
+                 okButton.className = 'btn-primary';
+                 okButton.onclick = () => { messageModal.style.display = 'none'; };
+                 modalButtons.appendChild(okButton);
             } else {
-                geminiChatHistory = [{ role: "user", parts: [{text: "You are an AI assistant."}]}, { role: "model", parts: [{text: "Hello! How can I assist you?"}]}];
-                appendChatMessage("Hello! How can I help you today?", 'gemini');
-            }
-        }
-        async function saveChatHistory() {
-            if (currentUserId) await setDoc(doc(db, CHAT_HISTORY_DOC_PATH(currentUserId)), { history: geminiChatHistory });
-        }
-        async function clearChatHistory() {
-            showModal('Confirm', 'Are you sure you want to clear your chat history?', [
-                { text: 'Clear', className: 'px-4 py-2 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700', onClick: async () => {
-                    if (currentUserId) await deleteDoc(doc(db, CHAT_HISTORY_DOC_PATH(currentUserId)));
-                    loadChatHistory();
-                }},
-                { text: 'Cancel', className: 'px-4 py-2 text-sm font-semibold rounded-xl hover:bg-gray-900/5 dark:hover:bg-white/10' }
-            ]);
-        }
-
-        // --- SUBMISSION LOGIC (Full logic, adapted to new theme) ---
-        async function renderSubmissionSection() {
-            const submissionSection = document.getElementById('submissionSection');
-            submissionSection.innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">Homework Submissions</h2>
-                <div id="submissionContent" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start"></div>
-            `;
-            const contentContainer = document.getElementById('submissionContent');
-
-            if (currentUserRole === 'teacher') {
-                contentContainer.innerHTML = `
-                    <div class="md:col-span-1 space-y-6">
-                        <div class="p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800">
-                             <h3 class="text-lg font-semibold mb-4">Create Assignment</h3>
-                             <form id="createAssignmentForm" class="space-y-4">
-                                <div>
-                                    <label for="newAssignmentSubject" class="text-sm font-medium">Subject</label>
-                                    <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <div>
-                                    <label for="newAssignmentTitle" class="text-sm font-medium">Title</label>
-                                    <input type="text" id="newAssignmentTitle" required class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <div>
-                                    <label for="newAssignmentDescription" class="text-sm font-medium">Description</label>
-                                    <textarea id="newAssignmentDescription" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                                </div>
-                                 <div>
-                                    <label for="newAssignmentDueDate" class="text-sm font-medium">Due Date</label>
-                                    <input type="date" id="newAssignmentDueDate" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Create</button>
-                             </form>
-                        </div>
-                    </div>
-                    <div class="md:col-span-2">
-                        <h3 class="text-lg font-semibold mb-4">Active Assignments</h3>
-                        <div id="teacherAssignmentsList" class="space-y-4"></div>
-                    </div>
-                `;
-                document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
-                loadTeacherAssignments();
-            } else { // Student View
-                contentContainer.innerHTML = `
-                    <div class="md:col-span-1 space-y-6">
-                        <div class="p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800">
-                             <h3 class="text-lg font-semibold mb-4">Submit Homework</h3>
-                             <form id="submitHomeworkForm" class="space-y-4">
-                                <div>
-                                    <label for="studentSubmissionSubjectFilter" class="text-sm font-medium">Subject</label>
-                                    <select id="studentSubmissionSubjectFilter" required class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500"></select>
-                                </div>
-                                 <div>
-                                    <label for="studentSubmissionAssignmentFilter" class="text-sm font-medium">Assignment</label>
-                                    <select id="studentSubmissionAssignmentFilter" required disabled class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-blue-500 focus:border-blue-500"></select>
-                                </div>
-                                <div id="assignmentDetails" class="text-xs p-3 border border-dashed rounded-lg" style="display:none;"></div>
-                                <div>
-                                    <label class="text-sm font-medium">Upload File</label>
-                                    <div id="homeworkDropZone" class="mt-1 flex justify-center px-6 py-4 border-2 border-dashed rounded-xl cursor-pointer">...</div>
-                                    <input type="file" id="homeworkFile" class="sr-only">
-                                    <span id="homeworkFileName" class="text-xs text-gray-500 mt-1">No file chosen</span>
-                                </div>
-                                 <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-neutral-900 text-gray-500">OR</span></div></div>
-                                <div>
-                                    <label for="homeworkTextAnswer" class="text-sm font-medium">Type Answer</label>
-                                    <textarea id="homeworkTextAnswer" class="mt-1 block w-full rounded-xl border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800"></textarea>
-                                </div>
-                                <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700">Submit</button>
-                             </form>
-                        </div>
-                    </div>
-                     <div class="md:col-span-2">
-                        <h3 class="text-lg font-semibold mb-4">My Past Submissions</h3>
-                        <div id="mySubmissionsList" class="space-y-4"></div>
-                    </div>
-                `;
-                const subjectFilter = document.getElementById('studentSubmissionSubjectFilter');
-                const assignmentFilter = document.getElementById('studentSubmissionAssignmentFilter');
-                populateSubjectDropdowns(subjectFilter);
-                subjectFilter.addEventListener('change', () => {
-                    assignmentFilter.disabled = !subjectFilter.value;
-                    if(subjectFilter.value) populateStudentAssignmentDropdown(assignmentFilter, subjectFilter.value);
+                 buttons.forEach(btnConfig => {
+                    const button = document.createElement('button');
+                    button.textContent = btnConfig.text;
+                    button.className = btnConfig.className;
+                    button.onclick = () => { 
+                        messageModal.style.display = 'none';
+                        if (btnConfig.onClick) btnConfig.onClick();
+                    };
+                    modalButtons.appendChild(button);
                 });
-                assignmentFilter.addEventListener('change', showAssignmentDetails);
-                document.getElementById('submitHomeworkForm').addEventListener('submit', submitHomework);
-                setupDropZone('homeworkDropZone', 'homeworkFile', 'homeworkFileName');
-                loadMySubmissions();
             }
+            messageModal.style.display = 'flex';
+        }
+        
+        function showInputModal(title, label, callback) {
+            const messageModal = document.getElementById('messageModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = `<label for="modalInput" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" style="width: 100%;" required>`;
+            const modalButtons = document.getElementById('modalButtons');
+            modalButtons.innerHTML = ''; 
+
+            const modalInput = document.getElementById('modalInput');
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save';
+            saveButton.className = 'btn-primary';
+            saveButton.onclick = () => {
+                const value = modalInput.value.trim();
+                if (value) {
+                    messageModal.style.display = 'none';
+                    callback(value);
+                }
+            };
+            modalButtons.appendChild(saveButton);
+
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.className = 'logout-btn';
+            cancelButton.onclick = () => { messageModal.style.display = 'none'; };
+            modalButtons.appendChild(cancelButton);
+
+            messageModal.style.display = 'flex';
+            modalInput.focus();
+            modalInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } };
         }
 
-        async function createAssignment(e) { /* ... same logic as original ... */ }
-        async function getUniqueAssignmentSubjects() { /* ... same logic ... */ }
-        async function populateSubjectDropdowns(dropdown) { /* ... same logic ... */ }
-        async function loadTeacherAssignments() { /* ... same logic, adapted for new theme classes ... */ }
-        async function toggleSubmissionList(assignmentId, subjectId) { /* ... same logic ... */ }
-        async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) { /* ... same logic, adapted for new theme ... */ }
-        async function deleteAssignment(assignmentId, subjectId) { /* ... same logic ... */ }
-        async function deleteSubmission(studentId, submissionId, assignmentId, subjectId, filePath) { /* ... same logic ... */ }
-        async function populateStudentAssignmentDropdown(assignmentSelect, subjectId) { /* ... same logic ... */ }
-        async function showAssignmentDetails() { /* ... same logic ... */ }
-        async function submitHomework(e) { /* ... same logic ... */ }
-        async function loadMySubmissions() { /* ... same logic, adapted for new theme ... */ }
-        async function deleteMySubmission(submissionId, filePath) { /* ... same logic ... */ }
-        
-        // --- STUDENT MANAGEMENT ---
-        async function loadAuthorizedStudents() { /* ... same logic, adapted for new theme ... */ }
-        async function deleteStudent(studentId) { /* ... same logic ... */ }
-        
-        // --- THEME TOGGLE ---
+        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
+            const modal = btn.closest('.modal');
+            modal.style.display = 'none'; 
+            if (modal.id === 'videoPreviewModal') document.getElementById('videoPreviewContent').innerHTML = '';
+            if (modal.id === 'pdfPreviewModal') pdfDoc = null;
+        });
+
         const themeToggleButton = document.getElementById('themeToggleButton');
-        function applyTheme(theme) { document.documentElement.classList.toggle('dark', theme === 'dark'); }
-        function loadTheme() { const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark'; applyTheme(savedTheme); }
+        function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
+        function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
         themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
             applyTheme(newTheme);
             localStorage.setItem('ai-marker-theme', newTheme);
         });
+
         loadTheme();
+
+        // --- FINDER WINDOW LOGIC ---
+        let finderCurrentPath = [];
+        let finderCurrentType = null;
+
+        function showFinderView(type) {
+            const finderWindow = document.getElementById('finderMaterialsSection');
+            finderCurrentType = type;
+            finderCurrentPath = [type];
+            finderWindow.querySelector('.finder-titlebar span').textContent = materialsConfig[type].title;
+            finderWindow.style.display = 'flex';
+            loadFinderSidebar(type);
+            document.getElementById('finderFileListContent').innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a ${materialsConfig[type].level1.toLowerCase()} from the sidebar.</p>`;
+        }
+
+        async function loadFinderSidebar(type) {
+            const finderSidebar = document.getElementById('finderSidebar');
+            finderSidebar.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+            const q = query(collection(db, getPath(type)), orderBy('name', 'asc'));
+            try {
+                const snapshot = await getDocs(q);
+                finderSidebar.innerHTML = '';
+                if (snapshot.empty) {
+                    finderSidebar.innerHTML = `<p style="padding:10px;">No ${materialsConfig[type].level1.toLowerCase()}s found.</p>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const el = document.createElement('div');
+                    el.className = 'finder-sidebar-item';
+                    el.textContent = doc.data().name;
+                    el.dataset.id = doc.id;
+                    el.dataset.type = type;
+                    el.onclick = handleFinderSidebarClick;
+                    finderSidebar.appendChild(el);
+});
+            } catch (error) {
+                finderSidebar.innerHTML = `<p class="error-message" style="padding:10px;">Error loading subjects.</p>`;
+            }
+        }
+
+        async function handleFinderSidebarClick(e) {
+            const item = e.target;
+            const type = item.dataset.type;
+            const level1Id = item.dataset.id;
+            finderCurrentPath = [type, level1Id];
+            document.querySelectorAll('.finder-sidebar-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            await loadFinderFileList(type, [level1Id], 2);
+        }
+
+        async function loadFinderFileList(type, parentIds, level) {
+            const finderFileListContent = document.getElementById('finderFileListContent');
+            finderFileListContent.innerHTML = `<p class="loading-indicator">Loading items...</p>`;
+            const config = materialsConfig[type];
+            const q = query(collection(db, getPath(type, parentIds)), orderBy('name', level === 2 ? 'desc' : 'asc'));
+
+            try {
+                const snapshot = await getDocs(q);
+                finderFileListContent.innerHTML = '';
+                if (snapshot.empty) {
+                    finderFileListContent.innerHTML = `<p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">No items found here.</p>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const el = document.createElement('div');
+                    el.className = 'row';
+                    el.dataset.id = doc.id;
+                    el.dataset.type = type;
+                    el.dataset.parentIds = JSON.stringify(parentIds);
+                    
+                    let icon = '', kind = '';
+                    const dateAdded = item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'N/A';
+                    
+                    if (level === 2) {
+                        el.classList.add('folder');
+                        icon = '📁 ';
+                        kind = config.level2;
+                        el.onclick = async () => {
+                            finderCurrentPath = [type, ...parentIds, doc.id];
+                            await loadFinderFileList(type, finderCurrentPath.slice(1), 3);
+                        };
+                    } else if (level === 3) {
+                        el.classList.add('file');
+                        icon = (type === 'tutorials' ? '🎬 ' : '📄 ');
+                        kind = config.level3;
+                        el.onclick = () => handlePreview(type, item);
+                    }
+
+                    el.innerHTML = `<div>${icon}${item.name || item.title}</div><div></div><div>${kind}</div><div>${dateAdded}</div>`;
+                    finderFileListContent.appendChild(el);
+                });
+            } catch (error) {
+                finderFileListContent.innerHTML = `<p class="error-message" style="text-align:center; padding:20px;">Error loading items.</p>`;
+            }
+        }
+
+        function setupFinderWindow() {
+            const finderWindow = document.getElementById('finderMaterialsSection');
+            const dragBar = document.getElementById('finderDragBar');
+            const fullscreenToggle = document.getElementById('finderFullscreenToggle');
+            let isDragging = false, offsetX = 0, offsetY = 0;
+            
+            dragBar.onmousedown = (e) => {
+                isDragging = true;
+                finderWindow.style.transform = 'none';
+                offsetX = e.clientX - finderWindow.getBoundingClientRect().left;
+                offsetY = e.clientY - finderWindow.getBoundingClientRect().top;
+            };
+
+            document.onmouseup = () => isDragging = false;
+            document.onmousemove = (e) => {
+                if (isDragging) {
+                    finderWindow.style.left = `${e.clientX - offsetX}px`;
+                    finderWindow.style.top = `${e.clientY - offsetY}px`;
+                }
+            };
+
+            fullscreenToggle.onclick = () => {
+                finderWindow.classList.toggle('fullscreen');
+                if(!finderWindow.classList.contains('fullscreen')){
+                    finderWindow.style.left = '50%';
+                    finderWindow.style.top = '50%';
+                    finderWindow.style.transform = 'translate(-50%, -50%)';
+                }
+            };
+
+            finderWindow.querySelector('.finder-circle.close').onclick = () => {
+                finderWindow.style.display = 'none';
+                currentMaterialViewMode = 'card';
+                const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
+                if (activeMaterialSectionId) {
+                    const type = Object.keys(materialsConfig).find(key => materialsConfig[key].sectionId === activeMaterialSectionId);
+                    document.getElementById(activeMaterialSectionId).classList.remove('hidden-on-desktop');
+                    if (type) renderStudentItems(type);
+                }
+            };
+        }
+
+        window.onresize = () => {
+            const isDesktop = window.innerWidth >= 769;
+            const finderSection = document.getElementById('finderMaterialsSection');
+            const activeMaterialSectionId = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].find(id => document.getElementById(id).style.display !== 'none');
+            
+            if (!isDesktop) finderSection.style.display = 'none';
+            if (activeMaterialSectionId) {
+                document.getElementById(activeMaterialSectionId).classList.toggle('hidden-on-desktop', isDesktop && currentMaterialViewMode === 'finder');
+            }
+        };
+
+        // --- PDF PREVIEW LOGIC ---
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const pdfContext = pdfCanvas.getContext('2d');
+        const pdfPageNumSpan = document.getElementById('pdfPageNum');
+        const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
         
-        // --- All other helper functions and the rest of the logic from the original file ---
-        // They are included below and have been fully integrated.
+        document.getElementById('prevPdfPage').onclick = () => { if (pageNum > 1) { pageNum--; queueRenderPage(pageNum); } };
+        document.getElementById('nextPdfPage').onclick = () => { if (pageNum < pdfDoc.numPages) { pageNum++; queueRenderPage(pageNum); } };
+
+        function showPdfPreviewModal(title, pdfUrl) {
+            document.getElementById('pdfPreviewTitle').textContent = title;
+            pdfPreviewModal.style.display = 'flex';
+            loadPdf(pdfUrl);
+        }
+
+        async function loadPdf(pdfUrl) {
+            pdfDoc = null; pageNum = 1;
+            try {
+                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                pdfTotalPagesSpan.textContent = pdfDoc.numPages;
+                queueRenderPage(pageNum);
+            } catch (error) {
+                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
+                pdfPreviewModal.style.display = 'none';
+            }
+        }
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfPageNumSpan.textContent = num;
+
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                page.render({ canvasContext: pdfContext, viewport }).promise.then(() => {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePdfNavButtons();
+                });
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) pageNumPending = num;
+            else renderPage(num);
+        }
+
+        function updatePdfNavButtons() {
+            document.getElementById('prevPdfPage').disabled = pageNum <= 1;
+            document.getElementById('nextPdfPage').disabled = pageNum >= pdfDoc.numPages;
+        }
     </script>
+  
+    <script>
+    // Show the login wrapper when the page has fully loaded
+    window.addEventListener('load', function() {
+        document.getElementById('authWrapper').style.opacity = '1';
+    });
+</script>
 </body>
 </html>
-
