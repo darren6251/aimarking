@@ -575,6 +575,7 @@
             <div class="logo">AI Marker</div>
             <div class="nav-buttons">
                 <button id="themeToggleButton" class="btn">Toggle Theme</button>
+                <button id="uploadButton" class="btn btn-primary">Upload File</button>
                 <button id="logoutButton" class="btn logout-btn" style="display:none;">Logout</button>
             </div>
         </header>
@@ -711,6 +712,33 @@
         </div>
     </div>
     
+    <!-- Upload File Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload File</h2>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <label for="uploadName">File Name:</label>
+                    <input type="text" id="uploadName" required><br><br>
+                    <label for="uploadSubject">Subject:</label>
+                    <input type="text" id="uploadSubject" required><br><br>
+                    <label for="uploadCategory">Category:</label>
+                    <select id="uploadCategory" required>
+                        <option value="tutorials">Tutorials</option>
+                        <option value="pastPapers">Past Papers</option>
+                        <option value="exercises">Exercises</option>
+                    </select><br><br>
+                    <input type="file" id="fileInput" required><br><br>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                    <button type="button" class="btn cancel-upload-btn">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -725,7 +753,6 @@
         // --- Firebase Initialization ---
         let app, db, auth, storage;
         let userId = null;
-        let isAuthReady = false;
 
         try {
             app = initializeApp(firebaseConfig);
@@ -759,6 +786,7 @@
         const mainContent = document.getElementById('mainContent');
         const logoutButton = document.getElementById('logoutButton');
         const themeToggleButton = document.getElementById('themeToggleButton');
+        const uploadButton = document.getElementById('uploadButton');
         const tabButtons = document.querySelectorAll('.tab-button');
         const lists = {
             tutorials: document.getElementById('tutorialsList'),
@@ -800,6 +828,12 @@
         const materialUrlInput = document.getElementById('materialUrl');
         const promoCodeContainer = document.getElementById('promoCodeContainer');
         const materialPromoCodeInput = document.getElementById('materialPromoCode');
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadNameInput = document.getElementById('uploadName');
+        const uploadSubjectInput = document.getElementById('uploadSubject');
+        const uploadCategorySelect = document.getElementById('uploadCategory');
+        const fileInput = document.getElementById('fileInput');
 
         // PDF.js variables
         let pdfDoc = null;
@@ -1367,6 +1401,49 @@
         yearFilter.addEventListener('change', applyFiltersAndRender);
         topicFilter.addEventListener('change', applyFiltersAndRender);
         addMaterialButton.addEventListener('click', () => showCrudModal());
+        uploadButton.addEventListener('click', () => uploadModal.style.display = 'flex');
+        document.querySelector('.cancel-upload-btn').addEventListener('click', () => uploadModal.style.display = 'none');
+        
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                showModal('Upload Error', 'Please select a file to upload.');
+                return;
+            }
+
+            const fileName = uploadNameInput.value;
+            const subject = uploadSubjectInput.value;
+            const category = uploadCategorySelect.value;
+            const fileExtension = file.name.split('.').pop();
+            const storagePath = `materials/${category}/${fileName}.${fileExtension}`;
+            const fileRef = ref(storage, storagePath);
+            
+            try {
+                // Upload the file to Firebase Storage
+                await uploadBytes(fileRef, file);
+                const fileUrl = await getDownloadURL(fileRef);
+                
+                // Add a new document to the corresponding Firestore collection
+                const newDocData = {
+                    name: fileName,
+                    subject: subject,
+                    category: category,
+                    url: fileUrl,
+                    createdAt: new Date()
+                };
+                
+                const collectionRef = collection(db, `/artifacts/${appId}/public/data/${materialsCollections[category]}`);
+                await addDoc(collectionRef, newDocData);
+                
+                showModal('Upload Successful', `Your file "${fileName}" has been uploaded.`);
+                uploadModal.style.display = 'none';
+                uploadForm.reset();
+            } catch (error) {
+                console.error("File upload failed:", error);
+                showModal('Upload Error', `Failed to upload file: ${error.message}`);
+            }
+        });
 
         // --- Modals ---
         function showModal(title, message) {
