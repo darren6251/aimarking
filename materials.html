@@ -165,38 +165,39 @@
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; position: relative; }
         .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         
-        /* --- YOUTUBE-LIKE VIDEO PLAYER MODAL (FINAL FIX) --- */
+        /* --- YOUTUBE-LIKE VIDEO PLAYER MODAL (FIXED) --- */
         #videoPreviewModal .modal-content {
-            max-width: 85vw;
-            width: 1400px;
+            max-width: 90vw;
+            width: 1400px; /* Max width for large screens */
             height: 85vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
+            padding: 0; /* Remove padding to have video flush against edges */
+            display: flex; /* Use flex to make the layout child take full height */
+            background-color: var(--bg-primary); /* Darker background */
+            overflow: hidden; /* Hide anything that spills out */
         }
+
         .video-player-layout {
             display: flex;
-            gap: 1.5rem;
             width: 100%;
-            flex-grow: 1;
-            overflow: hidden;
+            height: 100%;
         }
+
         .video-player-main {
-            flex: 1;
-            min-width: 0;
+            flex-grow: 1; /* Takes up most of the space */
+            background-color: #000;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 0; /* Important for flexbox shrinking */
         }
+        
         .video-embed-container {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* Classic 16:9 aspect ratio */
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
             height: 0;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            flex-shrink: 0; /* Prevent flexbox from shrinking it */
         }
+
         .video-embed-container iframe {
             position: absolute;
             top: 0;
@@ -205,31 +206,92 @@
             height: 100%;
             border: 0;
         }
+
         .video-player-sidebar {
-            width: 320px;
+            width: 350px; /* Slightly wider sidebar */
             flex-shrink: 0;
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
+            overflow-y: auto; /* In case content is long */
         }
+
         #videoPreviewTitle {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
+            line-height: 1.4;
         }
+
         .watch-status-control {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem;
             background-color: var(--bg-tertiary);
             padding: 1rem;
             border-radius: 8px;
-        }
-        #watchStatusToggle {
-            height: 1.5rem;
-            width: 1.5rem;
-            accent-color: var(--accent-primary);
+            font-weight: 500;
         }
 
+        /* --- Custom Toggle Switch --- */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle-checkbox {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-label {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4d4d4d;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .toggle-label:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: var(--accent-primary);
+        }
+        body.light-theme .toggle-checkbox:checked + .toggle-label {
+             background-color: #28c840; /* Green for light mode */
+        }
+        .toggle-checkbox:checked + .toggle-label:before {
+            transform: translateX(22px);
+        }
+        #videoPreviewModal .close-button {
+             z-index: 10; /* Ensure close button is on top */
+             color: #fff;
+             background-color: rgba(0,0,0,0.5);
+             border-radius: 50%;
+             width: 32px;
+             height: 32px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             line-height: 1;
+             top: 15px;
+             right: 365px; /* Position it just outside the sidebar */
+        }
+        
         /* --- PDF MODAL --- */
         #pdfPreviewModal .modal-content { max-width: 90vw; width: auto; padding: 15px; display: flex; flex-direction: column; height: 90vh; }
         #pdfCanvasContainer { width: 100%; flex-grow: 1; overflow: auto; text-align: center; }
@@ -237,8 +299,39 @@
         
         /* --- FOOTER & RESPONSIVENESS --- */
         footer { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: auto; }
-        @media (max-width: 1024px) { .sidebar { display: none; } .store-layout, .video-player-layout { flex-direction: column; } .shopping-cart, .video-player-sidebar { width: 100%; } #videoPreviewModal .modal-content { height: auto; } }
-        @media (max-width: 768px) { #authWrapper { flex-direction: column; position: static; } .login-left-panel, .login-right-panel { width: 100%; } header { flex-direction: column; height: auto; padding: 1rem; } .main-layout { flex-direction: column; } main { padding: 16px; } }
+        @media (max-width: 1024px) { 
+            .sidebar { display: none; } 
+            .store-layout { flex-direction: column; } 
+            .shopping-cart { width: 100%; } 
+            
+            /* Responsive Video Player */
+            .video-player-layout {
+                flex-direction: column;
+            }
+            .video-player-sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40%; /* Limit sidebar height on mobile */
+            }
+            #videoPreviewModal .modal-content {
+                 width: 100%;
+                 height: 100%;
+                 max-width: 100vw;
+                 max-height: 100vh;
+                 border-radius: 0;
+            }
+            #videoPreviewModal .close-button {
+                top: 15px;
+                right: 15px;
+            }
+        }
+        @media (max-width: 768px) { 
+            #authWrapper { flex-direction: column; position: static; } 
+            .login-left-panel, .login-right-panel { width: 100%; } 
+            header { flex-direction: column; height: auto; padding: 1rem; } 
+            .main-layout { flex-direction: column; } 
+            main { padding: 16px; } 
+        }
     </style>
 </head>
 <body>
@@ -282,7 +375,33 @@
     <div id="addPastPaperModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3>Add New Past Paper</h3><form id="addPastPaperForm"><input type="hidden" id="paperParentId1"><input type="hidden" id="paperParentId2"><div><label for="pastPaperName">Paper Name</label><input type="text" id="pastPaperName" required></div><div><label>Upload File (PDF)</label><div id="pastPaperDropZone" class="drop-zone"><span>Drag & Drop PDF or Click to Upload</span><input type="file" id="pastPaperFile" accept="application/pdf" hidden></div><span id="pastPaperFileName">No file chosen</span></div><p class="text-center my-2 text-sm text-gray-500">OR</p><div><label for="pastPaperLink">External Link</label><input type="url" id="pastPaperLink"></div><div class="mt-4 modal-form-buttons"><button type="submit" class="btn-primary">Add Paper</button></div></form></div></div>
     <div id="editPastPaperModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3>Edit Past Paper</h3><form id="editPastPaperForm"><input type="hidden" id="editPaperId"><input type="hidden" id="editPaperParentId1"><input type="hidden" id="editPaperParentId2"><div><label for="editPastPaperName">Paper Name</label><input type="text" id="editPastPaperName" required></div><div><label for="editPastPaperLink">Download Link</label><input type="url" id="editPastPaperLink" required></div><div class="mt-4 flex justify-end gap-2"><button type="submit" class="btn-primary">Save Changes</button><button type="button" class="logout-btn" onclick="this.closest('.modal').style.display='none'">Cancel</button></div></form></div></div>
     <div id="addExerciseModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3>Add New Exercise</h3><form id="addExerciseForm"><input type="hidden" id="exerciseParentId1"><input type="hidden" id="exerciseParentId2"><div><label for="exerciseName">Exercise Name</label><input type="text" id="exerciseName" required></div><div><label for="exercisePrice">Price (USD)</label><input type="number" id="exercisePrice" required step="0.01" min="0"></div><div><label>Upload File (PDF)</label><div id="exerciseDropZone" class="drop-zone"><span>Drag & Drop PDF or Click to Upload</span><input type="file" id="exerciseFile" accept="application/pdf" hidden></div><span id="exerciseFileName">No file chosen</span></div><p class="text-center my-2 text-sm text-gray-500">OR</p><div><label for="exerciseLink">External Link</label><input type="url" id="exerciseLink"></div><div class="mt-4 modal-form-buttons"><button type="submit" class="btn-primary">Add Exercise</button></div></form></div></div>
-    <div id="videoPreviewModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><div class="video-player-layout"><div class="video-player-main"><div id="videoPreviewContent" class="video-embed-container"></div></div><div class="video-player-sidebar"><h3 id="videoPreviewTitle"></h3><div class="watch-status-control"><label for="watchStatusToggle" class="text-lg font-medium">Mark as Watched</label><input type="checkbox" id="watchStatusToggle"></div></div></div></div></div>
+    
+    <!-- Video Preview Modal (FIXED) -->
+    <div id="videoPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="video-player-layout">
+                <!-- Main Video Area -->
+                <div class="video-player-main">
+                    <div id="videoPreviewContent" class="video-embed-container">
+                        <!-- iFrame will be injected here by JS -->
+                    </div>
+                </div>
+                <!-- Sidebar with details and controls -->
+                <div class="video-player-sidebar">
+                    <h3 id="videoPreviewTitle">Video Title Goes Here</h3>
+                    <div class="watch-status-control">
+                        <label for="watchStatusToggle">Mark as Watched</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="watchStatusToggle" class="toggle-checkbox">
+                            <label for="watchStatusToggle" class="toggle-label"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="pdfPreviewModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3 id="pdfPreviewTitle" class="text-center mb-2"></h3><div id="pdfCanvasContainer"><canvas id="pdfCanvas"></canvas></div><div id="pdfControls" class="text-center mt-2"><button id="prevPdfPage" class="btn-primary">Prev</button><span class="mx-4"><span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span></span><button id="nextPdfPage" class="btn-primary">Next</button></div></div></div>
     <!-- MODALS END HERE -->
 
@@ -1027,4 +1146,3 @@
     </script>
 </body>
 </html>
-
