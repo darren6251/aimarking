@@ -107,6 +107,9 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            opacity: 0;
+            display: none;
+            transition: opacity 0.5s ease-in-out;
         }
 
         header {
@@ -720,7 +723,10 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // --- Firebase Initialization ---
-        let app, db, auth, storage, userId;
+        let app, db, auth, storage;
+        let userId = null;
+        let isAuthReady = false;
+
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -836,18 +842,23 @@
                         showModal('Data Error', `Failed to load ${key}: ${error.message}`);
                     });
                 }
-
-                // Initial load is successful
+                
+                // Dimiss loading screen once the app is ready
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
-                    mainContent.style.opacity = '1';
                     mainContent.style.display = 'flex';
+                    mainContent.style.opacity = '1';
                 }, 500);
 
             } catch (error) {
                 console.error("Initial data fetch error:", error);
                 showModal('Initialization Error', `Failed to load data: ${error.message}`);
+                // Dismiss loading screen even on auth failure
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                }, 500);
             }
         }
 
@@ -1508,38 +1519,28 @@
         loadTheme();
 
         // --- Authentication & Initialization ---
-        async function authenticateAndLoad() {
-            try {
-                // Sign in with custom token if provided, otherwise anonymously
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
+        // The central point for initializing the app and fetching data
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                console.log("User authenticated:", userId);
+                await fetchInitialData();
+                logoutButton.style.display = 'block';
+            } else {
+                // User is not signed in, sign them in anonymously
+                console.log("No user found, signing in anonymously...");
+                try {
                     await signInAnonymously(auth);
+                } catch (error) {
+                    console.error("Anonymous sign-in failed:", error);
+                    showModal('Authentication Error', `Could not sign in: ${error.message}`);
+                    // Dismiss loading screen even on auth failure
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
                 }
-            } catch (error) {
-                console.error("Authentication failed:", error);
-                showModal('Authentication Error', `Could not sign in: ${error.message}`);
             }
-        }
-        
-        // This is the login gate. It's commented out as requested.
-        // Uncomment the lines below to re-enable the login requirement.
-        // onAuthStateChanged(auth, user => {
-        //     if (user) {
-        //         userId = user.uid;
-        //         fetchInitialData();
-        //     } else {
-        //         // This is where you would show the login/signup UI
-        //         showModal('Login Required', 'Please log in to view materials.');
-        //     }
-        // });
-
-        // Direct load for testing purposes
-        window.addEventListener('load', () => {
-            authenticateAndLoad().then(() => {
-                userId = auth.currentUser.uid;
-                fetchInitialData();
-            });
         });
         
     </script>
