@@ -270,7 +270,7 @@
         .modal.flex { display: flex; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
         #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); background: none; border: none; }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); background: none; border: none; z-index: 10; }
         .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
 
@@ -726,7 +726,7 @@
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 try {
                     const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
+                    if (userProfileDoc.exists() && userProfileDoc.data().role && userProfileDoc.data().role !== 'unassigned') {
                         const profileData = userProfileDoc.data();
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || user.displayName;
@@ -824,6 +824,29 @@
 
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
 
+        // --- ROLE SWITCHING ---
+        document.getElementById('switchRoleButton').addEventListener('click', async () => {
+            if (!currentUserId) return;
+            showModal('Switch Role', 'Are you sure you want to switch your role? This will require you to enter a new access code.', [
+                {
+                    text: 'Yes, switch role',
+                    className: 'btn-primary',
+                    onClick: async () => {
+                        try {
+                            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                            await updateDoc(userProfileRef, { role: 'unassigned' });
+                            location.reload(); 
+                        } catch (error) {
+                            console.error("Error switching role:", error);
+                            showModal('Error', 'Could not switch roles. Please try again.');
+                        }
+                    }
+                },
+                { text: 'Cancel', className: 'px-4 py-2' }
+            ]);
+        });
+
+
         // --- NAVIGATION & UI ---
 
         let currentMaterialViewMode = 'card'; // 'card' or 'finder'
@@ -846,7 +869,7 @@
             });
 
             const finderSection = document.getElementById('finderMaterialsSection');
-            if (window.innerWidth >= 769) {
+            if (currentUserRole !== 'teacher' && window.innerWidth >= 769) {
                 finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
                 document.getElementById(sectionIdToShow).style.display = currentMaterialViewMode === 'finder' ? 'none' : 'block';
             } else {
@@ -858,18 +881,18 @@
         function setupSectionToggle() {
             document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
                 showSection('tutorialSection');
-                if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('tutorials');
-                else renderStudentItems('tutorials');
+                if (currentUserRole !== 'teacher' && window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('tutorials');
+                else if (currentUserRole !== 'teacher') renderStudentItems('tutorials');
             });
             document.getElementById('togglePastPapersButton')?.addEventListener('click', () => {
                 showSection('pastPapersSection');
-                if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('pastPapers');
-                else renderStudentItems('pastPapers');
+                if (currentUserRole !== 'teacher' && window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('pastPapers');
+                else if (currentUserRole !== 'teacher') renderStudentItems('pastPapers');
             });
             document.getElementById('toggleExercisesButton')?.addEventListener('click', () => {
                 showSection('exerciseSection');
-                if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('exercises');
-                else renderStudentItems('exercises');
+                if (currentUserRole !== 'teacher' && window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('exercises');
+                else if (currentUserRole !== 'teacher') renderStudentItems('exercises');
             });
         }
         setupSectionToggle();
@@ -891,6 +914,7 @@
         }
 
         function initializeAllMaterialSections() {
+            currentMaterialViewMode = 'card'; // Reset to card view on initialization
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
@@ -964,35 +988,34 @@
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
             } else {
                 setupStudentFilters(type);
-                if(config.isPaid) {
+                 if(config.isPaid) {
                     document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
                     document.getElementById('applyPromoCodeBtn').addEventListener('click', applyPromoCode);
                     document.getElementById('removePromoCodeBtn').addEventListener('click', removeAppliedPromoCode);
                 }
-                if (window.innerWidth >= 769) {
-                    const sectionTitleContainer = section.querySelector('.flex.justify-between');
-                    if (!section.querySelector('.material-view-toggle')) {
-                        const toggleButton = document.createElement('button');
-                        toggleButton.className = 'material-view-toggle tab';
-                        toggleButton.textContent = 'Finder View';
-                        sectionTitleContainer.appendChild(toggleButton);
+                
+                const sectionTitleContainer = section.querySelector('.flex.justify-between');
+                if (window.innerWidth >= 769 && !section.querySelector('.material-view-toggle')) {
+                    const toggleButton = document.createElement('button');
+                    toggleButton.className = 'material-view-toggle tab';
+                    toggleButton.textContent = 'Finder View';
+                    sectionTitleContainer.appendChild(toggleButton);
 
-                        toggleButton.addEventListener('click', () => {
-                            const studentViewContainer = document.getElementById(`student-${type}-view`);
-                            if (currentMaterialViewMode === 'card') {
-                                currentMaterialViewMode = 'finder';
-                                studentViewContainer.style.display = 'none';
-                                showFinderView(type);
-                                toggleButton.textContent = 'Card View';
-                            } else {
-                                currentMaterialViewMode = 'card';
-                                studentViewContainer.style.display = 'block';
-                                document.getElementById('finderMaterialsSection').style.display = 'none';
-                                toggleButton.textContent = 'Finder View';
-                                renderStudentItems(type);
-                            }
-                        });
-                    }
+                    toggleButton.addEventListener('click', () => {
+                        const studentViewContainer = document.getElementById(`student-${type}-view`);
+                        if (currentMaterialViewMode === 'card') {
+                            currentMaterialViewMode = 'finder';
+                            studentViewContainer.style.display = 'none';
+                            showFinderView(type);
+                            toggleButton.textContent = 'Card View';
+                        } else {
+                            currentMaterialViewMode = 'card';
+                            studentViewContainer.style.display = 'block';
+                            document.getElementById('finderMaterialsSection').style.display = 'none';
+                            toggleButton.textContent = 'Finder View';
+                            renderStudentItems(type); // Re-render in card mode
+                        }
+                    });
                 }
             }
         }
@@ -1176,9 +1199,6 @@
              } catch(e) { grid.innerHTML = "<p class='text-center col-span-full text-red-500'>Error loading items.</p>" }
         }
         
-        // --- All other JS functions from materials(2).html remain here, shortened for brevity ---
-        // --- but with the finder and PDF logic updated as planned. ---
-        
         function showAddItemModal(type, level, parentIds = []) { /* ... as before ... */ }
         function showAddFinalItemModal(type, parentIds) { /* ... as before ... */ }
         async function handleDeleteItem(type, level, id, parentIds) { /* ... as before ... */ }
@@ -1279,8 +1299,27 @@
         document.getElementById('tutorialLink').addEventListener('input', (e) => { /* ... */ });
         function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) { /* ... */ }
         function showModal(title, message, buttons = []) { /* ... as before ... */ }
-        document.querySelectorAll('.modal .close-button').forEach(btn => { /* ... */ });
-
+        
+        // --- UNIVERSAL MODAL CLOSE HANDLER ---
+        document.addEventListener('click', function(e) {
+            let modalToClose = null;
+            // Check if a close button was clicked
+            if (e.target.matches('.close-button')) {
+                modalToClose = e.target.closest('.modal');
+            }
+            // Check if the modal backdrop was clicked (but not its content)
+            if (e.target.matches('.modal')) {
+                modalToClose = e.target;
+            }
+            
+            if (modalToClose) {
+                modalToClose.classList.remove('flex');
+                 // If it's the video modal, stop the video
+                if (modalToClose.id === 'videoPreviewModal') {
+                    document.getElementById('videoPreviewContent').innerHTML = '';
+                }
+            }
+        });
 
         // --- UPDATED FINDER WINDOW LOGIC ---
         function showFinderView(type) {
@@ -1376,14 +1415,16 @@
             };
 
             document.getElementById('finderFullscreenToggle').onclick = () => finderWindow.classList.toggle('fullscreen');
-            finderWindow.querySelector('.close-button').onclick = () => {
-                finderWindow.style.display = 'none';
+            finderWindow.querySelector('.finder-titlebar .close-button').onclick = () => {
+                 finderWindow.style.display = 'none';
                 currentMaterialViewMode = 'card';
-                const type = ['tutorials', 'pastPapers', 'exercises'].find(t => document.getElementById(materialsConfig[t].sectionId).style.display !== 'none');
-                if (type) {
-                    document.getElementById(materialsConfig[t].sectionId).style.display = 'block';
-                    const toggle = document.querySelector(`.material-view-toggle`);
+                 // Find which section is active to update its toggle button text
+                const activeSection = Array.from(document.querySelector('main').children).find(s => s.style.display === 'block' || s.style.display === '');
+                if (activeSection) {
+                    const toggle = activeSection.querySelector('.material-view-toggle');
                     if(toggle) toggle.textContent = 'Finder View';
+                    const studentView = activeSection.querySelector('[id^="student-"]');
+                    if (studentView) studentView.style.display = 'block';
                 }
             };
         }
@@ -1391,8 +1432,6 @@
         // --- UPDATED PDF PREVIEW & DOWNLOAD LOGIC ---
         let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
         const pdfPreviewModal = document.getElementById('pdfPreviewModal');
-        const pdfCanvas = document.getElementById('pdfCanvas');
-        const pdfContext = pdfCanvas.getContext('2d');
         const pdfPageNumSpan = document.getElementById('pdfPageNum');
         const pdfTotalPagesSpan = document.getElementById('pdfTotalPages');
         const prevPdfPageBtn = document.getElementById('prevPdfPage');
@@ -1403,9 +1442,9 @@
 
         function showPdfPreviewModal(title, pdfUrl) {
             document.getElementById('pdfPreviewTitle').textContent = title;
-            const controls = document.getElementById('pdfControls');
+            document.getElementById('pdfControls').style.display = 'flex'; // Ensure controls are visible
             
-            // Add download button
+            const controls = document.getElementById('pdfControls');
             let downloadBtn = document.getElementById('pdfDownloadBtn');
             if (!downloadBtn) {
                 downloadBtn = document.createElement('button');
@@ -1414,7 +1453,6 @@
                 controls.appendChild(downloadBtn);
             }
             
-            // **FIX**: Use a more reliable download method
             downloadBtn.onclick = () => {
                 window.open(pdfUrl, '_blank');
             };
@@ -1428,33 +1466,24 @@
             const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
             pdfCanvasContainer.innerHTML = '<div class="flex justify-center items-center h-full" style="color:var(--text-secondary)">Loading Preview...</div>';
             
-            // **FIX**: Use a CORS proxy to prevent cross-origin errors
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(pdfUrl)}`;
 
             try {
-                pdfCanvasContainer.innerHTML = '<canvas id="pdfCanvas"></canvas>'; // Reset canvas
                 const loadingTask = pdfjsLib.getDocument(proxyUrl);
                 pdfDoc = await loadingTask.promise;
+                pdfCanvasContainer.innerHTML = '<canvas id="pdfCanvas"></canvas>'; // Reset canvas
                 pdfTotalPagesSpan.textContent = pdfDoc.numPages;
                 queueRenderPage(pageNum);
             } catch (error) {
                 console.error("PDF Load Error:", error);
-                pdfPreviewModal.classList.remove('flex'); // Close the failing preview modal
-                showModal(
-                    'Preview Failed', 
-                    `Could not display a preview for "${title}". This can happen due to browser security settings (CORS) or an invalid link.<br><br>You can download the file directly instead.`, 
-                    [
-                        { 
-                            text: 'Download File', 
-                            className: 'btn-primary', 
-                            // **FIX**: Use a more reliable download method
-                            onClick: () => {
-                                window.open(pdfUrl, '_blank');
-                            }
-                        },
-                        { text: 'Close', className: 'px-4 py-2' }
-                    ]
-                );
+                document.getElementById('pdfControls').style.display = 'none'; // Hide nav controls on error
+                pdfCanvasContainer.innerHTML = `
+                    <div class="p-8 text-center flex flex-col justify-center items-center h-full">
+                        <h4 class="font-semibold mb-2 text-lg">Preview Failed</h4>
+                        <p class="text-sm mb-4" style="color:var(--text-secondary)">Could not display a preview for this file.</p>
+                        <button onclick="window.open('${pdfUrl.replace(/'/g, "\\'")}', '_blank')" class="btn-primary" style="width: auto;">Download File Directly</button>
+                    </div>
+                `;
             }
         }
 
@@ -1462,6 +1491,7 @@
             pageRendering = true;
             pdfDoc.getPage(num).then(page => {
                 const canvas = document.getElementById('pdfCanvas');
+                if(!canvas) return; // If canvas was removed due to an error
                 const ctx = canvas.getContext('2d');
                 const viewport = page.getViewport({ scale: 1.5 });
                 canvas.height = viewport.height; 
