@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Marker - Submissions</title>
     <!-- PDF.js library for rendering PDFs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js)"></script>
     <!-- Custom styles -->
     <style>
         /* --- MODERN BLACK & WHITE THEME --- */
@@ -309,10 +309,10 @@
 
     <!-- Firebase and Application Logic -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+        import { initializeApp } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js)";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js)";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js)";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js)";
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -329,7 +329,7 @@
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
 
-        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        pdfjsLib.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js)';
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserRole = null, currentUserName = null;
@@ -342,7 +342,7 @@
         const googleSignInTemplate = `
             <h2>Sign In</h2>
             <button id="googleSignInButton" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
+                <img src="[https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg](https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg)" alt="Google icon">
                 <span>Sign in with Google</span>
             </button>
             <p id="authError" class="error-message"></p>
@@ -656,37 +656,32 @@
 
         async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) {
             try {
-                // This is a more efficient query using collectionGroup.
-                // IMPORTANT: This requires a Firestore index. Go to Firestore > Indexes > Composite Indexes
-                // Create an index for the 'submissions' collection group:
-                // Field 1: assignmentId (Ascending)
-                const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
-                const querySnapshot = await getDocs(submissionsQuery);
+                const usersRef = collection(db, `artifacts/${appId}/users`);
+                const usersSnapshot = await getDocs(usersRef);
+                let allSubmissions = [];
 
-                if (querySnapshot.empty) {
+                for (const userDoc of usersSnapshot.docs) {
+                    const studentId = userDoc.id;
+                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
+                    const studentProfileSnap = await getDoc(studentProfileRef);
+                    const studentName = studentProfileSnap.exists() ? (studentProfileSnap.data().name || `Student ${studentId.substring(0,6)}`) : `Student ${studentId.substring(0,6)}`;
+
+                    const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
+                    const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
+                    const submissionsSnapshot = await getDocs(q);
+                    submissionsSnapshot.forEach(subDoc => {
+                        allSubmissions.push({ studentId, studentName, ...subDoc.data(), subId: subDoc.id });
+                    });
+                }
+
+                if (allSubmissions.length === 0) {
                     container.innerHTML = '<h4>Submissions</h4><p>No submissions yet.</p>';
                     return;
                 }
 
                 let submissionsHtml = '<h4>Submissions</h4>';
-                // Fetch all user profiles once to avoid multiple reads inside a loop
-                const userProfiles = new Map();
-                const usersSnapshot = await getDocs(collection(db, `artifacts/${appId}/users`));
-                for(const userDoc of usersSnapshot.docs) {
-                    const profileSnap = await getDoc(doc(db, `artifacts/${appId}/users/${userDoc.id}/profile/data`));
-                    if(profileSnap.exists()) {
-                         userProfiles.set(userDoc.id, profileSnap.data().name || `Student ${userDoc.id.substring(0,6)}`);
-                    } else {
-                         userProfiles.set(userDoc.id, `Student ${userDoc.id.substring(0,6)}`);
-                    }
-                }
-
-                const submissions = querySnapshot.docs.map(d => ({...d.data(), subId: d.id}));
-                submissions.sort((a, b) => b.submittedAt - a.submittedAt);
-                
-                submissions.forEach(sub => {
+                allSubmissions.sort((a, b) => b.submittedAt - a.submittedAt).forEach(sub => {
                     const submittedAt = new Date(sub.submittedAt).toLocaleString();
-                    const studentName = userProfiles.get(sub.submittedBy) || "Unknown Student";
                     let previewContent;
                     if (sub.fileLink) {
                         previewContent = `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview File</button>`;
@@ -700,11 +695,10 @@
                             </div>
                             <div class="submission-actions">
                                 ${previewContent}
-                                <button class="logout-btn delete-submission-btn" data-student-id="${sub.submittedBy}" data-submission-id="${sub.subId}" data-file-path="${sub.filePath || ''}" data-assignment-id="${assignmentId}" data-subject-id="${subjectId}">Delete</button>
+                                <button class="logout-btn delete-submission-btn" data-student-id="${sub.studentId}" data-submission-id="${sub.subId}" data-file-path="${sub.filePath || ''}" data-assignment-id="${assignmentId}" data-subject-id="${subjectId}">Delete</button>
                             </div>
                         </div>`;
                 });
-
                 container.innerHTML = submissionsHtml;
                 container.querySelectorAll('.preview-btn').forEach(btn => btn.addEventListener('click', e => handlePreview(e.target.dataset.type, JSON.parse(e.target.dataset.item))));
                 container.querySelectorAll('.delete-submission-btn').forEach(btn => btn.addEventListener('click', e => deleteSubmission(e.target.dataset.studentId, e.target.dataset.submissionId, e.target.dataset.assignmentId, e.target.dataset.subjectId, e.target.dataset.filePath)));
