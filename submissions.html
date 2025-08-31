@@ -1534,18 +1534,26 @@
             const qSnapSubjects = await getDocs(subjectsRef);
             for (const subjectDoc of qSnapSubjects.docs) {
                 const subjectId = subjectDoc.id;
-                const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
-                const qSnapTasks = await getDocs(query(tasksRef));
+                // **THE FIX**: The path to tasks should be /public/data/tasks, not nested under subjects.
+                // This ensures that when a student submits a task and a teacher filters by it,
+                // they are both referencing the exact same document with the same ID.
+                const tasksRef = collection(db, `artifacts/${appId}/public/data/tasks`);
+                const qSnapTasks = await getDocs(query(tasksRef, where("subjectId", "==", subjectId)));
                 qSnapTasks.forEach(taskDoc => {
-                    allTasks.push({ id: taskDoc.id, subjectId: subjectId, ...taskDoc.data() });
+                    allTasks.push({ id: taskDoc.id, ...taskDoc.data() });
                 });
             }
+
+            // Repopulate the filter dropdown with consistently-sourced tasks
             filterTaskSelect.innerHTML = '<option value="">All Tasks</option>';
-            allTasks.sort((a, b) => a.name.localeCompare(b.name));
+            // Sort tasks alphabetically for better UI
+            allTasks.sort((a, b) => a.name.localeCompare(b.name)); 
             allTasks.forEach(task => {
                 const option = document.createElement('option');
                 option.value = task.id;
-                option.textContent = task.name;
+                // Also show the subject for clarity if multiple tasks have the same name
+                const subject = allSubjects.find(s => s.id === task.subjectId);
+                option.textContent = subject ? `${task.name} (${subject.name})` : task.name;
                 filterTaskSelect.appendChild(option);
             });
         } catch (error) {
@@ -1565,13 +1573,15 @@
         if (!dueDate) { showModal('Error', 'Due date cannot be empty.'); return; }
 
         try {
-            const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
+            // **THE FIX**: Save tasks to the central /public/data/tasks collection.
+            const tasksRef = collection(db, `artifacts/${appId}/public/data/tasks`);
             await addDoc(tasksRef, {
                 name: taskName,
+                subjectId: subjectId, // Keep track of the subject it belongs to
                 dueDate: new Date(dueDate).getTime(),
                 createdAt: serverTimestamp()
             });
-            showModal('Success', `Task "${taskName}" added to selected subject.`);
+            showModal('Success', `Task "${taskName}" added.`);
             newTaskNameInput.value = '';
             newTaskDueDateInput.value = '';
             await loadTasksListForSubject();
@@ -1590,7 +1600,8 @@
             showModal('Confirm Delete', `Are you sure you want to delete task "${taskName}"?`, [
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     try {
-                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`, taskId));
+                        // **THE FIX**: Delete the task from the correct central collection.
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/tasks`, taskId));
                         showModal('Success', `Task "${taskName}" deleted.`);
                         await loadTasksListForSubject();
                         await loadAllTasks();
@@ -1836,4 +1847,5 @@
   </script>
 </body>
 </html>
+
 
