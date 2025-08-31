@@ -191,6 +191,7 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
         #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
+        #modalMessage { word-break: break-all; } /* Ensure long links wrap */
         .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
@@ -655,10 +656,6 @@
 
         async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) {
             try {
-                // This is a more efficient query using collectionGroup.
-                // IMPORTANT: This requires a Firestore index. Go to Firestore > Indexes > Composite Indexes
-                // Create an index for the 'submissions' collection group:
-                // Field 1: assignmentId (Ascending)
                 const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
                 const querySnapshot = await getDocs(submissionsQuery);
 
@@ -668,7 +665,6 @@
                 }
 
                 let submissionsHtml = '<h4>Submissions</h4>';
-                // Fetch all user profiles once to avoid multiple reads inside a loop
                 const userProfiles = new Map();
                 const usersSnapshot = await getDocs(collection(db, `artifacts/${appId}/users`));
                 for(const userDoc of usersSnapshot.docs) {
@@ -710,6 +706,17 @@
 
             } catch (error) {
                  console.error("Error loading submissions: ", error);
+                 // NEW: Check for the specific index-missing error
+                 if (error.message.includes("indexes")) {
+                     const urlMatch = error.message.match(/(https?:\/\/[^\s]+)/);
+                     if (urlMatch) {
+                         const indexCreationUrl = urlMatch[0];
+                         container.innerHTML = `<p class="error-message">A database index is required. Please open your browser's developer console (F12), find the full error message, and click the link to create the index.</p>`;
+                         console.error(`FIREBASE INDEX REQUIRED. Please click this link to create it: ${indexCreationUrl}`);
+                         showModal("Action Required", `A database index is required. Please open your browser's developer console (F12 or Ctrl+Shift+I), find the error message starting with "FIREBASE INDEX REQUIRED", and click the link to create it.`);
+                         return;
+                     }
+                 }
                 container.innerHTML = `<p class="error-message">Failed to load submissions: ${error.message}. An index may be required in Firestore.</p>`;
             }
         }
@@ -719,7 +726,6 @@
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     try {
                         const batch = writeBatch(db);
-                        
                         const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
                         const subsSnapshot = await getDocs(submissionsQuery);
 
@@ -740,8 +746,18 @@
                         showModal('Success', 'Assignment and all submissions deleted.');
                         await loadTeacherAssignments();
                     } catch (error) {
-                        console.error("Deletion Error:", error.message);
-                        showModal('Error', `Could not delete assignment: Missing or insufficient permissions. Please ensure the required Firestore index for 'submissions' is created.`);
+                        console.error("Deletion Error:", error);
+                        // NEW: Check for the specific index-missing error and provide the link
+                        if (error.message.includes("indexes")) {
+                            const urlMatch = error.message.match(/(https?:\/\/[^\s]+)/);
+                            if (urlMatch) {
+                                const indexCreationUrl = urlMatch[0];
+                                console.error(`FIREBASE INDEX REQUIRED. Please click this link to create it: ${indexCreationUrl}`);
+                                showModal("Action Required: Index Needed", `The operation failed because a database index is required. Please open your browser's developer console (F12), find the full error message, and click the link to create the necessary index. The link will look like: <br><a href="${indexCreationUrl}" target="_blank">${indexCreationUrl}</a>`);
+                                return;
+                            }
+                        }
+                        showModal('Error', `Could not delete assignment: ${error.message}. Please ensure the required Firestore index for 'submissions' is created.`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
