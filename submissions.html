@@ -6,7 +6,7 @@
     <title>AI Marker - Submissions</title>
     <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- Custom styles from index (8).html -->
+    <!-- Custom styles -->
     <style>
         /* --- MODERN BLACK & WHITE THEME --- */
         :root {
@@ -156,7 +156,7 @@
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
-            max-width: 1200px;
+            max-width: 900px; /* Adjusted max-width for better readability */
             margin: 0 auto;
         }
 
@@ -165,6 +165,7 @@
         input[type="text"], input[type="date"], textarea, select {
             width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); 
             color: var(--text-primary); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem;
+            font-size: 1rem;
         }
         textarea { resize: vertical; min-height: 120px; }
         input:focus, textarea:focus, select:focus { 
@@ -203,30 +204,6 @@
         footer a:hover { text-decoration: underline; color: var(--text-primary); }
 
         /* --- HOMEWORK SUBMISSION SPECIFIC STYLES --- */
-        .submission-main-container {
-            display: flex;
-            flex-direction: row; /* Default to row for desktop */
-            width: 100%;
-            gap: 2rem;
-            align-items: flex-start;
-        }
-
-        .submission-sidebar {
-            width: 320px; /* Fixed width for the sidebar */
-            flex-shrink: 0;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            height: fit-content; /* Adjust height to content */
-            position: sticky; /* Keep sidebar visible when scrolling main content */
-            top: 100px; /* Adjust based on header height */
-        }
-
-        .submission-content {
-            flex-grow: 1; /* Takes remaining space */
-        }
-
         .assignment-card {
             background-color: var(--bg-secondary); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
@@ -251,14 +228,10 @@
             border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
         }
         .student-submission-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .my-submissions-container { margin-top: 2rem; }
+        .my-submissions-container { margin-top: 2.5rem; }
         .assignment-list-container { margin-top: 2.5rem; }
 
         /* --- RESPONSIVENESS --- */
-        @media (max-width: 992px) {
-             .submission-main-container { flex-direction: column; }
-             .submission-sidebar { width: 100%; position: static; }
-        }
         @media (max-width: 768px) {
             #authWrapper { flex-direction: column; position: static; height: auto; }
             .login-left-panel, .login-right-panel { width: 100%; }
@@ -387,7 +360,6 @@
             db = getFirestore(app);
             auth = getAuth(app);
             storage = getStorage(app);
-            console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
             showModal('Firebase Error', `Failed to initialize Firebase. Please check your configuration. Error: ${error.message}`);
@@ -483,7 +455,7 @@
         // --- UI & NAVIGATION ---
         function showSubmissionSection() {
             const section = document.getElementById('submissionSection');
-            section.style.display = 'block'; // Changed to block for single column layout
+            section.style.display = 'block';
             setTimeout(() => section.style.opacity = '1', 10);
             renderSubmissionSection();
         }
@@ -542,14 +514,7 @@
             if (currentUserRole === 'teacher') {
                 await renderTeacherSubmissionView(submissionSection);
             } else if (currentUserRole === 'student') {
-                 submissionSection.innerHTML = `
-                    <div class="submission-main-container">
-                        <div class="submission-sidebar" id="submissionSidebar"></div>
-                        <div class="submission-content" id="submissionContent"></div>
-                    </div>`;
-                const content = document.getElementById('submissionContent');
-                const sidebar = document.getElementById('submissionSidebar');
-                await renderStudentSubmissionView(content, sidebar);
+                await renderStudentSubmissionView(submissionSection);
             } else {
                 submissionSection.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
             }
@@ -606,11 +571,10 @@
             if (!subject || !title) return showModal('Input Error', 'Subject and Title are required.');
 
             try {
-                // Ensure the subject document exists so it can be queried.
+                // This ensures a document for the subject exists, which acts as a container.
                 const subjectDocRef = doc(db, `artifacts/${appId}/public/data/assignments`, subject);
                 await setDoc(subjectDocRef, { name: subject, updatedAt: Date.now() }, { merge: true });
 
-                // Create the assignment in the subcollection.
                 const assignmentsRef = collection(db, getPath('assignments', [subject]));
                 await addDoc(assignmentsRef, {
                     subjectName: subject,
@@ -631,8 +595,7 @@
             const listContainer = document.getElementById('teacherAssignmentsList');
             const loadingIndicator = document.getElementById('assignmentsLoading');
             loadingIndicator.style.display = 'block';
-            listContainer.innerHTML = '';
-
+            
             try {
                 const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
                 const subjectsSnapshot = await getDocs(subjectsRef);
@@ -647,6 +610,7 @@
                     });
                 }
                 
+                listContainer.innerHTML = ''; // Clear previous content to prevent duplication
                 if (allAssignments.length === 0) {
                      listContainer.innerHTML = '<p>No assignments created yet.</p>';
                 } else {
@@ -670,7 +634,7 @@
                 }
             } catch (error) {
                 console.error("Error loading teacher assignments:", error);
-                listContainer.innerHTML = `<p>No assignments created yet.</p>`;
+                listContainer.innerHTML = `<p class="error-message">Could not load assignments. Please try again.</p>`;
             } finally {
                 loadingIndicator.style.display = 'none';
                 listContainer.querySelectorAll('.view-submissions-btn').forEach(btn => btn.addEventListener('click', (e) => toggleSubmissionList(e.target.dataset.assignmentId, e.target.dataset.subjectId)));
@@ -794,41 +758,43 @@
             ]);
         }
 
-        async function renderStudentSubmissionView(contentContainer, sidebarContainer) {
-            sidebarContainer.innerHTML = `
-                <div class="form-container">
-                    <h3>Submit Homework</h3>
-                    <form id="submitHomeworkForm">
-                        <div style="margin-bottom: 1rem;">
-                            <label for="studentSubjectFilter">Subject</label>
-                            <select id="studentSubjectFilter" required><option value="">-- Select Subject --</option></select>
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label for="studentAssignmentFilter">Assignment</label>
-                            <select id="studentAssignmentFilter" required disabled><option value="">-- Select Assignment --</option></select>
-                        </div>
-                        <div id="assignmentDetails" style="margin-bottom: 1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: none;"></div>
+        async function renderStudentSubmissionView(container) {
+            container.innerHTML = `
+                <div id="student-submission-content">
+                    <h2 class="section-title">Submit Your Homework</h2>
+                    <div class="form-container">
+                        <form id="submitHomeworkForm">
+                             <div class="form-grid">
+                                <div>
+                                    <label for="studentSubjectFilter">Subject</label>
+                                    <select id="studentSubjectFilter" required><option value="">-- Select Subject --</option></select>
+                                </div>
+                                <div>
+                                    <label for="studentAssignmentFilter">Assignment</label>
+                                    <select id="studentAssignmentFilter" required disabled><option value="">-- Select Assignment --</option></select>
+                                </div>
+                            </div>
+                            <div id="assignmentDetails" style="margin-bottom: 1.5rem; margin-top: -1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: none; background-color: var(--bg-primary);"></div>
 
-                        <label>Upload File or Type Answer</label>
-                        <div id="homeworkDropZone" class="drop-zone">
-                            <span>Drag & Drop File Here</span>
-                            <input type="file" id="homeworkFile" accept="image/*,application/pdf" hidden>
-                        </div>
-                        <span id="homeworkFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                        
-                        <textarea id="homeworkTextAnswer" placeholder="Or type your answer here..." style="margin-top:1rem;"></textarea>
-                        
-                        <p id="homeworkSubmissionError" class="error-message"></p>
-                        <button type="submit" class="btn-primary">Submit</button>
-                    </form>
-                </div>
-            `;
+                            <label>Upload File or Type Answer</label>
+                            <div id="homeworkDropZone" class="drop-zone">
+                                <span>Drag & Drop File Here</span>
+                                <input type="file" id="homeworkFile" accept="image/*,application/pdf" hidden>
+                            </div>
+                            <span id="homeworkFileName" style="display: block; text-align: center; margin-top: -1rem; margin-bottom: 1rem; color: var(--text-secondary);">No file chosen</span>
+                            
+                            <textarea id="homeworkTextAnswer" placeholder="Or type your answer here..." style="margin-top:1rem;"></textarea>
+                            
+                            <p id="homeworkSubmissionError" class="error-message"></p>
+                            <button type="submit" class="btn-primary">Submit Homework</button>
+                        </form>
+                    </div>
 
-            contentContainer.innerHTML = `
-                <div class="my-submissions-container">
-                    <h2 class="section-title">My Past Submissions</h2>
-                    <p id="mySubmissionsLoading" class="loading-indicator"></p>
-                    <div id="mySubmissionsList"></div>
+                    <div class="my-submissions-container">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">My Past Submissions</h3>
+                        <p id="mySubmissionsLoading" class="loading-indicator"></p>
+                        <div id="mySubmissionsList"></div>
+                    </div>
                 </div>`;
             
             const subjectFilter = document.getElementById('studentSubjectFilter');
@@ -937,13 +903,14 @@
                 showModal('Success', 'Homework submitted!');
                 e.target.reset();
                 document.getElementById('homeworkFileName').textContent = 'No file chosen';
+                document.getElementById('assignmentDetails').style.display = 'none';
                 await loadMySubmissions();
 
             } catch(error) {
                 errorEl.textContent = `Submission failed: ${error.message}`;
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit';
+                submitBtn.textContent = 'Submit Homework';
             }
         }
 
@@ -951,13 +918,13 @@
             const listContainer = document.getElementById('mySubmissionsList');
             const loadingIndicator = document.getElementById('mySubmissionsLoading');
             loadingIndicator.style.display = 'block';
-            listContainer.innerHTML = '';
             
             try {
                 const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
                 const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
                 const snapshot = await getDocs(q);
-
+                
+                listContainer.innerHTML = ''; // Clear to prevent duplicates
                 if (snapshot.empty) {
                     listContainer.innerHTML = '<p>You have not submitted any homework yet.</p>';
                 } else {
