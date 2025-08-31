@@ -1,1757 +1,795 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Marker</title>
-    <!-- PDF.js library for rendering PDFs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <!-- Custom styles -->
-    <style>
-        /* --- MODERN BLACK & WHITE THEME --- */
-        :root {
-            --bg-primary: #0a0a0a; /* Near black for main background */
-            --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
-            --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
-            --text-primary: #f5f5f5; /* Off-white for primary text */
-            --text-secondary: #a3a3a3; /* Muted gray for secondary text */
-            --accent-primary: #ffffff; /* White for key actions and highlights */
-            --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
-            --border-color: #333333; /* Subtle border color */
-            --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Marker — Submissions</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* --- MODERN BLACK & WHITE THEME (Adapted from index (8).html) --- */
+:root {
+    --bg-primary: #0a0a0a; /* Near black for main background */
+    --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
+    --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
+    --text-primary: #f5f5f5; /* Off-white for primary text */
+    --text-secondary: #a3a3a3; /* Muted gray for secondary text */
+    --accent-primary: #ffffff; /* White for key actions and highlights */
+    --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
+    --border-color: #333333; /* Subtle border color */
+    --focus-ring-color: rgba(245, 245, 245, 0.5);
+}
 
-            /* Finder Window Specific Variables */
-            --finder-bg-primary: #1c1c1c;
-            --finder-bg-secondary: #0a0a0a;
-            --finder-text-primary: #f5f5f5;
-            --finder-text-secondary: #a3a3a3;
-            --finder-border-color: #333333;
-            --finder-titlebar-bg: #2a2a2a;
-            --finder-hover-bg: #333333;
-            --finder-active-bg: var(--accent-primary);
-            --finder-active-text: #0a0a0a;
-        }
-        
-        /* --- LIGHT THEME OVERRIDES --- */
-        body.light-theme {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f5;
-            --bg-tertiary: #e5e5e5;
-            --text-primary: #0a0a0a;
-            --text-secondary: #737373;
-            --accent-primary: #0a0a0a;
-            --border-color: #d4d4d4;
-            --focus-ring-color: rgba(10, 10, 10, 0.5);
+body.light-theme {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e5e5e5;
+    --text-primary: #0a0a0a;
+    --text-secondary: #737373;
+    --accent-primary: #0a0a0a;
+    --border-color: #d4d4d4;
+    --focus-ring-color: rgba(10, 10, 10, 0.5);
+}
 
-            /* Finder Window Light Theme */
-            --finder-bg-primary: #ffffff;
-            --finder-bg-secondary: #f5f5f5;
-            --finder-text-primary: #0a0a0a;
-            --finder-text-secondary: #737373;
-            --finder-border-color: #d4d4d4;
-            --finder-titlebar-bg: #e5e5e5;
-            --finder-hover-bg: #e5e5e5;
-            --finder-active-bg: var(--accent-primary);
-            --finder-active-text: #ffffff;
-        }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg-primary); color:var(--text-primary); transition: background-color 0.3s, color 0.3s;}
 
+/* --- LOGIN PAGE STYLES (From index (8).html) --- */
+#authWrapper {
+    display: none; /* Initially hidden */
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1001;
+    animation: fadeIn .5s ease-in-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+.login-left-panel,
+.login-right-panel {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
 
-        body {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
-        }
+.login-left-panel {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    flex-direction: column;
+    text-align: center;
+}
 
-        button,
-        input,
-        textarea,
-        select {
-            transition: all .2s ease-in-out;
-            font-family: inherit;
-        }
+.login-left-panel h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+}
 
-        button:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
+.login-left-panel p {
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.5;
+    margin-bottom: .5rem;
+    color: var(--text-secondary);
+    max-width: 450px;
+}
 
-        /* Keyframe animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+.login-right-panel {
+    background: var(--bg-secondary);
+    flex-direction: column;
+}
 
-        @keyframes slideInUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* --- LOGIN PAGE --- */
-        #authWrapper {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            z-index: 1001;
-        }
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background-color: var(--bg-primary);
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
 
-        .login-left-panel,
-        .login-right-panel {
-            width: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
+.login-card h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.helper{font-size:14px;color:var(--text-secondary); margin-bottom: 1.5rem; text-align: center;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid var(--border-color);border-radius:8px;padding:.75rem;cursor:pointer;background:var(--bg-secondary);color:var(--text-primary);font-size:1rem;font-weight:500;margin-bottom:1rem; width: 100%; transition: all .2s;}
+.google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
 
-        .login-left-panel {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            flex-direction: column;
-            text-align: center;
-        }
+/* --- HEADER --- */
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 24px;background:var(--bg-primary);border-bottom:1px solid var(--border-color)}
+header .logo-container h1{font-size:22px;margin:0; font-weight: 700;}
+header .logo-container p{margin:0;color:var(--text-secondary);font-size:12px}
+.header-actions{display:flex;gap:.5rem;align-items:center}
+.tab{background:transparent;color:var(--text-secondary);border:none;border-radius:8px;padding:8px 16px;cursor:pointer; font-weight: 500; font-size: 14px; text-decoration: none; transition: all .2s;}
+.tab:hover{background:var(--bg-secondary);color:var(--text-primary)}
+.tab.active{background:var(--bg-secondary);color:var(--accent-primary);font-weight:600}
+.logout-btn{background:none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; transition: all .2s;}
+.logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
 
-        .login-left-panel h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 1rem;
-        }
+/* --- GENERAL LAYOUT & COMPONENTS --- */
+button, input, select, textarea { font-family: inherit; transition: all .2s ease-in-out; }
+button:disabled{opacity:.6;cursor:not-allowed}
+.btn-primary{background:var(--accent-primary);color:var(--bg-primary);border:none;padding:10px 16px;border-radius:8px;cursor:pointer; font-weight: 600; font-size: 14px;}
+body.light-theme .btn-primary { color: var(--bg-primary); }
+.btn-primary:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+.btn-secondary{background:transparent;color:var(--text-primary);border:1px solid var(--border-color);padding:10px 16px;border-radius:8px;cursor:pointer; font-weight: 500;}
 
-        .login-left-panel p {
-            font-size: 1.25rem;
-            font-weight: 400;
-            line-height: 1.5;
-            margin-bottom: .5rem;
-            color: var(--text-secondary);
-        }
+main{display:flex;gap:24px;max-width:1200px;margin:32px auto;padding:0 24px}
+.sidebar{width:280px;flex-shrink:0;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:24px;height:fit-content;position:sticky;top:88px}
+.content{flex:1;min-width:0}
 
-        .login-right-panel {
-            background: var(--bg-secondary);
-            flex-direction: column;
-        }
-        
-        #authContainer {
-            width: 100%;
-            max-width: 380px;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            background-color: var(--bg-primary);
-            padding: 2.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
+.card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:24px;margin-bottom:24px}
+.section-title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0 0 16px}
+.label{display:block;font-size:12px;font-weight: 500; color:var(--text-secondary);margin:12px 0 8px; text-transform: uppercase; letter-spacing: .5px;}
+.input, select, textarea{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-size: 1rem;}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
+.row{display:flex;gap:12px}
+.row > *{flex:1}
 
-        #authContainer h2 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-            text-align: center;
-        }
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.tile{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px; transition: all .2s;}
+.tile:hover { transform: translateY(-4px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.tile .muted{color:var(--text-secondary);font-size:13px; line-height: 1.5;}
+.badge{border:1px solid var(--border-color);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--text-secondary);width:max-content; font-weight: 500;}
 
-        .google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: .75rem;
-            cursor: pointer;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
-        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
-        .google-btn img { height: 20px; }
-        
-        #accessCodeInput {
-             background-color: var(--bg-secondary);
-             border: 1px solid var(--border-color);
-             color: var(--text-primary);
-             padding: 12px;
-             border-radius: 8px;
-             width: 100%;
-             margin-bottom: 1rem;
-             text-align: center;
-             font-size: 1rem;
-        }
-        #accessCodeInput:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px var(--focus-ring-color);
-        }
+/* --- MODALS --- */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px; z-index: 1002;}
+.modal .dialog{width:min(500px,96vw);background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:24px;animation: slideInUp .3s ease-out both;}
+@keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; }}
+.modal .dialog header{position:static;height:auto;padding:0;background:transparent;border:none;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal .dialog header h3 { margin: 0; font-size: 20px; font-weight: 600;}
+.close-button{background:transparent;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer; padding: 0;}
+.modal .dialog .footer{display:flex;gap:8px;justify-content:flex-end;margin-top:24px}
 
-        .btn-primary {
-             background-color: var(--accent-primary);
-             color: var(--bg-primary);
-             padding: .75rem 1.5rem;
-             border-radius: 8px;
-             border: none;
-             cursor: pointer;
-             font-weight: 600;
-             font-size: 1rem;
-        }
-        
-        body.light-theme .btn-primary {
-            color: var(--bg-primary);
-        }
+/* --- PROGRESS BAR --- */
+#progressWrapper { display: none; margin-top: 16px; }
+#uploadProgress {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    border: none;
+    background-color: var(--bg-tertiary);
+}
+#uploadProgress::-webkit-progress-bar { background-color: var(--bg-tertiary); border-radius: 4px; }
+#uploadProgress::-webkit-progress-value { background-color: var(--accent-primary); border-radius: 4px; transition: width 0.3s ease; }
+#uploadProgress::-moz-progress-bar { background-color: var(--accent-primary); border-radius: 4px; }
+.progress-text { font-size: 12px; color: var(--text-secondary); margin-top: 4px; text-align: right; }
 
-        .btn-primary:hover {
-             opacity: 0.85;
-             transform: translateY(-1px);
-        }
-        
-        #appSection {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-            background-color: var(--bg-primary);
-            animation: fadeIn .6s ease-out both;
-        }
-        
-        /* --- HEADER --- */
-        header {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            height: 64px;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .logo-container { display: flex; align-items: center; gap: 1rem; }
-        .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
-        .logo-container p { font-weight: 400; color: var(--text-secondary); }
-        
-        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-
-        /* Modernized Header Buttons */
-        .header-actions .tab {
-            padding: 8px 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: .2s;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            font-weight: 500;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-        
-        .header-actions .tab:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-        
-        .header-actions .tab.active {
-            background: var(--bg-secondary);
-            color: var(--accent-primary);
-            font-weight: 600;
-        }
-
-        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-        #userDisplayName { font-weight: 500; cursor: pointer; }
-        .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
-        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
-        
-        #switchRoleButton {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            font-weight: 600;
-        }
-        #switchRoleButton:hover {
-            background-color: var(--bg-tertiary);
-            border-color: var(--text-secondary);
-        }
-
-        /* --- DROPDOWN MENU --- */
-        .dropdown-menu {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-menu-content {
-            display: none;
-            position: absolute;
-            top: 110%; /* Adjusted to be clearly below the button */
-            left: 0;
-            background-color: var(--bg-secondary);
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-            z-index: 10;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 4px;
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        .dropdown-menu-content button {
-            color: var(--text-secondary);
-            padding: 8px 12px;
-            text-decoration: none;
-            display: block;
-            background: none;
-            border: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-        
-        .dropdown-menu-content button:hover {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .dropdown-menu:hover .dropdown-menu-content {
-            display: block;
-        }
-
-        /* --- MAIN CONTENT --- */
-        main {
-            flex: 1;
-            display: flex;
-            overflow-y: auto;
-            padding: 32px;
-            gap: 32px;
-            justify-content: center; /* Center content horizontally */
-        }
-        
-        #homeSection, #gradingSection, #chatSection, #studentManagementSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection, #submissionSection {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-            width: 100%; /* Take full width of main */
-            max-width: 900px; /* Max width for content readability */
-            margin: 0 auto; /* Center content within main */
-        }
-        
-        #gradingSection, #chatSection, #studentManagementSection {
-            max-width: 900px; /* Consistent max-width for these sections */
-            margin: 0 auto;
-        }
-
-        /* --- FORMS --- */
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"] {
-            width: 100%; 
-            background-color: var(--bg-secondary); 
-            border: 1px solid var(--border-color); 
-            color: var(--text-primary);
-            padding: 12px; 
-            border-radius: 8px; 
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
-        textarea { resize: vertical; min-height: 120px; }
-        input:focus, textarea:focus, select:focus { 
-            outline: none; 
-            border-color: var(--accent-primary); 
-            box-shadow: 0 0 0 3px var(--focus-ring-color); 
-        }
-        
-        .drop-zone { 
-            border: 2px dashed var(--border-color); 
-            border-radius: 8px; 
-            min-height: 140px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            color: var(--text-secondary); 
-            font-size: 1rem; 
-            margin-bottom: 1.5rem; 
-            cursor: pointer; 
-            word-wrap: break-word; 
-            padding: 1rem; 
-            text-align: center; 
-        }
-        .drop-zone.highlight { 
-            border-color: var(--accent-primary); 
-            background: rgba(245, 245, 245, .05); 
-        }
-        
-        body.light-theme .drop-zone.highlight {
-            background: rgba(10, 10, 10, .05);
-        }
-
-        .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
-        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
-
-        #resultContainer { margin-top: 1.5rem; padding: 1.5rem; border-radius: 8px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); min-height: 100px; white-space: pre-wrap; }
-        #pastSubmissions { margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .submission-card { background-color: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
-
-        /* --- CHAT --- */
-        #chatSection { display: flex; flex-direction: column; gap: 1rem; }
-        #chatDisplay { flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .chat-message { max-width: 80%; padding: 12px 18px; border-radius: 20px; line-height: 1.5; word-wrap: break-word; }
-        .chat-message.user { background-color: var(--accent-primary); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 6px; }
-        body.light-theme .chat-message.user { color: var(--bg-primary); }
-        .chat-message.gemini { background-color: var(--bg-secondary); align-self: flex-start; border-bottom-left-radius: 6px; }
-        .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; }
-        #chatInput { flex: 1; }
-        #sendChatButton { background: var(--accent-primary); color: var(--bg-primary); }
-        body.light-theme #sendChatButton { color: var(--bg-primary); }
-        #sendChatButton:hover { opacity: 0.85; }
-        
-        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
-
-        /* --- UNIVERSAL STYLES --- */
-        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
-        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-
-        /* --- STUDENT MANAGEMENT --- */
-        #studentManagementSection { display: flex; flex-direction: column; gap: 1.5rem; }
-        .student-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; position: relative;}
-        .student-card h3 { font-size: 1.25rem; margin-bottom: 1rem; }
-        .student-info p { margin-bottom: 0.5rem; color: var(--text-secondary); }
-        .student-info p strong { color: var(--text-primary); }
-        .purchase-history { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
-        .purchase-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
-        .purchase-item:last-child { border-bottom: none; }
-        .delete-student-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: var(--accent-red);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 5px;
-            border-radius: 50%;
-        }
-        .delete-student-btn:hover {
-            background-color: rgba(239, 68, 68, 0.1); /* Light red hover */
-        }
-
-
-        /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
-        .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .material-card-thumbnail { position: relative; cursor: pointer; }
-        .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
-        .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-        .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
-        
-        /* --- TEACHER CONTENT MANAGEMENT --- */
-        .content-item { 
-            padding: 1rem; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            margin-bottom: 1rem; 
-            background: var(--bg-primary); 
-            transition: background-color 0.2s ease-in-out;
-        }
-        .content-item.drag-over {
-            background-color: rgba(245, 245, 245, 0.1);
-            border-color: var(--accent-primary);
-        }
-        body.light-theme .content-item.drag-over {
-            background-color: rgba(10, 10, 10, 0.1);
-        }
-
-        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
-        .content-header h3, .content-header h4 { margin: 0; }
-        .item-actions button { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; }
-        
-        .nested-container { 
-            padding-left: 1.5rem; 
-            margin-top: 0.5rem;
-            border-left: 2px solid var(--border-color); 
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            max-height: 0;
-        }
-        .nested-container.expanded { max-height: 1000px; } /* Sufficiently large to show content */
-
-        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; cursor: grab; }
-        .sub-item:hover { background-color: var(--bg-tertiary); }
-        .sub-item a { color: var(--text-primary); text-decoration: none; }
-        .sub-item a:hover { text-decoration: underline; }
-
-        .collapse-arrow {
-            margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0;
-            border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary);
-        }
-        .collapse-arrow.rotated { transform: rotate(90deg); }
-
-
-        /* --- VIDEO & HERO --- */
-        .video-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px 8px 0 0; }
-        .video-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-        .play-button-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 15px rgba(0, 0, 0, 0.5); pointer-events: none; transition: all 0.2s ease; }
-        .material-card-thumbnail:hover .play-button-overlay { color: #fff; transform: translate(-50%, -50%) scale(1.1); }
-
-        .hero { display: flex; align-items: center; justify-content: space-between; padding: 2rem 1.5rem; }
-        .hero-text { max-width: 50%; opacity: 0; animation: slideInUp 1s ease-out forwards; }
-        .hero-text h2 { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
-        .hero-text span { display: block; font-size: 1.5rem; font-weight: normal; margin-top: 0.5rem; color: var(--text-secondary); }
-        .hero-image { max-width: 40%; opacity: 0; animation: slideInUp 1s 0.2s ease-out forwards; }
-        .hero-image img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-
-        .buttons { margin-top: 1.5rem; display: flex; gap: 1rem; }
-        .buttons a { padding: 0.75rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; transition: background 0.2s, color 0.2s; color: var(--text-primary); text-decoration: none; }
-        .buttons a:hover { background: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
-        body.light-theme .buttons a:hover { color: var(--bg-primary); }
-
-        /* --- E-COMMERCE --- */
-        .store-layout { display: flex; gap: 24px; width: 100%; }
-        .product-grid { flex-grow: 1; }
-        .shopping-cart { width: 320px; flex-shrink: 0; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; height: fit-content; }
-        .shopping-cart h3 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        #cart-items { display: flex; flex-direction: column; gap: 0.75rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-        .remove-from-cart-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; margin-left: 0.5rem; }
-        .remove-from-cart-btn:hover { color: var(--accent-red); }
-        #cart-summary { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; }
-        #checkout-btn { width: 100%; margin-top: 1rem; }
-        .product-card { background-color: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
-        .product-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; }
-        .add-to-cart-btn, .download-btn { width: 100%; }
-        .download-btn { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
-        .download-btn:hover { background-color: var(--bg-tertiary); }
-
-        /* --- MODALS --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
-        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
-        .close-button:hover { color: var(--text-primary); }
-        #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-
-        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
-        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
-        #pdfControls button { background-color: var(--bg-tertiary); color: var(--text-primary); }
-        #pdfControls button:hover:not(:disabled) { background-color: #444; }
-
-        /* --- FOOTER --- */
-        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
-        footer a { color: var(--text-secondary); text-decoration: none; pointer-events: all;}
-        footer a:hover { text-decoration: underline; color: var(--text-primary); }
-
-        /* --- FINDER WINDOW --- */
-        .finder-window-wrapper { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; height: 90vh; max-width: 1200px; max-height: 800px; border: 1px solid var(--finder-border-color); border-radius: 12px; background: var(--finder-bg-primary); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: all 0.3s ease; z-index: 100; resize: both; min-width: 300px; min-height: 200px; color: var(--finder-text-primary); }
-        .finder-window-wrapper.fullscreen { top: 0 !important; left: 0 !important; transform: none !important; width: 100vw !important; height: 100vh !important; border-radius: 0 !important; }
-        .finder-titlebar { background: var(--finder-titlebar-bg); height: 32px; display: flex; align-items: center; padding: 0 10px; cursor: grab; flex-shrink: 0; border-bottom: 1px solid var(--finder-border-color); justify-content: flex-start; }
-        .finder-titlebar .buttons { display: flex; gap: 8px; }
-        .finder-circle { width: 12px; height: 12px; border-radius: 50%; }
-        .finder-circle.close { background: #ff5f57; }
-        .finder-circle.min { background: #ffbd2e; }
-        .finder-circle.max { background: #28c840; cursor: pointer; }
-        .finder-content { flex: 1; display: flex; overflow: hidden; }
-        .finder-sidebar { width: 220px; min-width: 150px; border-right: 1px solid var(--finder-border-color); background: var(--finder-bg-secondary); padding: 10px 0; overflow-y: auto; flex-shrink: 0; }
-        .finder-sidebar-item { padding: 8px 20px; font-size: 14px; color: var(--finder-text-primary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .finder-sidebar-item:hover { background: var(--finder-hover-bg); }
-        .finder-sidebar-item.active { background: var(--finder-active-bg); color: var(--finder-active-text); font-weight: 600; }
-        .finder-file-list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--finder-bg-primary); }
-        .finder-file-list .columns, .finder-file-list .row { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr; padding: 10px 15px; border-bottom: 1px solid var(--finder-border-color); align-items: center; }
-        .finder-file-list .columns { background: var(--finder-bg-secondary); font-size: 12px; color: var(--finder-text-secondary); font-weight: 600; text-transform: uppercase; }
-        .finder-file-list .row { font-size: 14px; color: var(--finder-text-primary); cursor: pointer; }
-        .finder-file-list .row:hover { background: var(--finder-hover-bg); }
-        .finder-file-list .row.folder { font-weight: bold; color: var(--text-primary); }
-        
-        /* --- Styles from submissions (1).html --- */
-        #submissionSection .submission-container {
-            display: flex;
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        #submissionSection .sidebar {
-            width: 280px;
-            flex-shrink: 0;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            height: fit-content;
-            position: sticky;
-            top: 88px;
-        }
-        #submissionSection .content { flex: 1; min-width: 0; }
-        #submissionSection .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-        #submissionSection .card h3 { margin: 0 0 12px; }
-        #submissionSection .section-title { font-size: 22px; font-weight: 700; letter-spacing: -.3px; margin: 0 0 12px; }
-        #submissionSection .label { display: block; font-size: 12px; color: var(--text-secondary); margin: 10px 0 6px; }
-        #submissionSection .input, #submissionSection select, #submissionSection textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); }
-        #submissionSection .row { display: flex; gap: 12px; }
-        #submissionSection .row > * { flex: 1; }
-        #submissionSection .helper { font-size: 12px; color: var(--text-secondary); }
-        #submissionSection .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-        #submissionSection .tile { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-        #submissionSection .tile .muted { color: var(--text-secondary); font-size: 12px; }
-        #submissionSection .badge { border: 1px solid var(--border-color); border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--text-secondary); width: max-content; }
-        #submissionSection .modal .dialog { width: min(720px, 96vw); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; }
-        #submissionSection .modal .dialog header { position: static; height: auto; padding: 0; background: transparent; border: none; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        #submissionSection .modal .dialog .footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
-        #submissionSection .preview { border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px; min-height: 120px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
-
-        /* --- RESPONSIVENESS --- */
-        @media (max-width: 992px) {
-            .store-layout { flex-direction: column; }
-            .shopping-cart { width: 100%; position: sticky; bottom: 0; border-radius: 8px 8px 0 0; }
-        }
-        @media (max-width: 900px) {
-             #submissionSection .submission-container {flex-direction:column}
-             #submissionSection .sidebar{position:static;width:auto}
-        }
-        @media (max-width: 768px) {
-            #authWrapper { flex-direction: column; position: static; height: auto; }
-            .login-left-panel, .login-right-panel { width: 100%; }
-            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
-            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
-            main { flex-direction: column; padding: 16px; }
-            .hero { flex-direction: column-reverse; text-align: center; }
-            .hero-text, .hero-image { max-width: 100%; }
-            .buttons { justify-content: center; }
-            .finder-window-wrapper { display: none !important; }
-        }
-    </style>
+@media (max-width: 900px){ main{flex-direction:column} .sidebar{position:static;width:auto} }
+@media (max-width: 768px) {
+    #authWrapper { flex-direction: column; }
+    .login-left-panel, .login-right-panel { width: 100%; height: 50%; }
+    .login-left-panel h1 { font-size: 2.5rem; }
+    .login-left-panel p { font-size: 1rem; }
+}
+</style>
 </head>
 <body>
-
-    <div id="authWrapper" style="display: none;">
-        <div class="login-left-panel">
-            <h1>AI Marker</h1>
-            <p>Mark with AI, learn better.</p>
-        </div>
-        <div class="login-right-panel">
-            <div id="authContainer">
-                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
-            </div>
-        </div>
+  <!-- Login Screen -->
+  <div id="authWrapper">
+    <div class="login-left-panel">
+        <h1>Submissions</h1>
+        <p>Your dedication today is an investment in your future. Let's get this done!</p>
     </div>
-
-    <div id="appSection" style="display: none;">
-        <header>
-            <div class="logo-container">
-                <h1>AI Marker</h1>
-                <p>Operated by Darren Ng</p>
+    <div class="login-right-panel">
+        <div class="login-card">
+            <div id="signInContainer">
+                <h2>Sign In</h2>
+                <p class="helper">Use your school Google account to continue.</p>
+                <button id="googleSignInButton" class="google-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18"/>
+                    <span>Sign in with Google</span>
+                </button>
+                <p id="authError" class="helper" style="color:var(--accent-red)"></p>
             </div>
-            <div class="header-actions">
-                <button id="toggleHomeButton" class="tab active">Home</button>
-                
-                <div class="dropdown-menu">
-                    <button class="tab" id="workWithAIButton">Work with AI</button>
-                    <div class="dropdown-menu-content">
-                        <button id="toggleGradingButton" class="tab">Exam Grader</button>
-                        <button id="toggleChatButton" class="tab">Chat with Gemini</button>
-                    </div>
-                </div>
-
-                <div class="dropdown-menu">
-                    <button class="tab" id="materialsButton">Materials</button>
-                    <div class="dropdown-menu-content">
-                        <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
-                        <button id="togglePastPapersButton" class="tab">Past Papers</button>
-                        <button id="toggleExercisesButton" class="tab">Exercises for Sale</button>
-                    </div>
-                </div>
-
-                <button id="toggleSubmissionsButton" class="tab" style="display: none;">Submissions</button>
-                <button id="manageStudentsButton" class="tab" style="display: none;">Manage Students</button>
-                <button id="toggleProfileButton" class="tab">Profile</button>
-                <button id="themeToggleButton" class="tab">Theme</button>
-                <div class="user-info">
-                     <span id="userDisplayName"></span>
-                     <button id="switchRoleButton">Switch Role</button>
-                     <button id="logoutButton" class="logout-btn">Log Out</button>
-                </div>
+            <div id="codeEntryContainer" style="display:none">
+                <h2>Enter Access Code</h2>
+                <p class="helper">Enter the code provided by your teacher or administrator.</p>
+                <input id="accessCodeInput" class="input" placeholder="Teacher or Student code" style="text-align: center;"/>
+                <button id="submitCodeButton" class="btn-primary" style="width:100%;margin-top:8px">Submit Code</button>
+                <p id="codeError" class="helper" style="color:var(--accent-red); margin-top: 8px;"></p>
             </div>
-        </header>
-        
-        <main>
-            <!-- Home Section -->
-            <div id="homeSection" style="display: block; opacity: 1;">
-                <section class="hero">
-                    <div class="hero-text">
-                        <h2>Hi <span id="homeUserNamePlaceholder"></span>, how are you today?</h2>
-                        <span>to fight DSE</span>
-                        <div class="buttons">
-                            <a href="#tutorial" id="homeTutorialLink">Tutorial Video</a>
-                            <a href="#grader" id="homeGraderLink">Exam Grader</a>
-                            <a href="#chat" id="homeChatLink">Chat with AI</a>
-                        </div>
-                    </div>
-                    <div class="hero-image">
-                        <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png" alt="Darren Ng demonstrating AI Marker">
-                    </div>
-                </section>
-            </div>
-
-            <!-- Grading Section -->
-            <div id="gradingSection">
-                <h2 class="section-title">Exam Grader</h2>
-                <div class="mb-4">
-                    <label>Upload Student's Work (Image or PDF):</label>
-                    <div id="studentDropZone" class="drop-zone">
-                        <span>Drag & Drop Student's Work Here or click to select</span>
-                        <input type="file" id="studentAnswerFile" accept="image/*,application/pdf" hidden>
-                    </div>
-                     <span id="studentFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                    <img id="studentFilePreview" class="file-preview mx-auto" style="display: none;" alt="Student Work Preview">
-                    <label for="studentAnswer">Or type Student's Answer:</label>
-                    <textarea id="studentAnswer" placeholder="Enter student's answer here..."></textarea>
-                    <p id="studentAnswerError" class="error-message"></p>
-                </div>
-
-                <div class="mb-6">
-                    <label>Upload Answer Key (Image or PDF):</label>
-                    <div id="answerKeyDropZone" class="drop-zone">
-                        <span>Drag & Drop Answer Key Here or click to select</span>
-                         <input type="file" id="answerKeyFile" accept="image/*,application/pdf" hidden>
-                    </div>
-                    <span id="answerKeyFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                    <img id="answerKeyFilePreview" class="file-preview mx-auto" style="display: none;" alt="Answer Key Preview">
-                    <label for="answerKey">Or type Answer Key:</label>
-                    <textarea id="answerKey" placeholder="Enter the correct answer key here..."></textarea>
-                    <p id="answerKeyError" class="error-message"></p>
-                </div>
-
-                <button id="gradeButton" class="btn-primary">Grade Work</button>
-                <p id="gradingLoadingIndicator" class="loading-indicator"></p>
-                <div id="resultContainer">
-                    <h2>Grading Results:</h2>
-                    <p id="gradeResult">Your grading results will appear here.</p>
-                </div>
-
-                <div style="margin-top: 2rem;">
-                    <h2>Past Submissions:</h2>
-                    <div id="pastSubmissions">
-                        <p id="noSubmissions">No past submissions found.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat Section -->
-            <div id="chatSection">
-                <h2 class="section-title">Chat with AI</h2>
-                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <label>AI Source:</label>
-                    <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
-                    <label for="aiSourceGemini">Gemini API (Cloud)</label>
-                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
-                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
-                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
-                    <label for="aiSourceLocal">Local AI (Experimental)</label>
-                    <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
-                </div>
-                <div id="chatDisplay">
-                    <!-- Chat messages will be appended here -->
-                </div>
-                <div class="chat-input-wrapper">
-                    <input type="text" id="chatInput" placeholder="Type a message…">
-                    <button id="sendChatButton" class="btn-primary">Send</button>
-                </div>
-                 <p id="chatLoadingIndicator" class="loading-indicator"></p>
-            </div>
-
-            <!-- Submission Section (New) -->
-            <section id="submissionSection">
-                 <div class="submission-container">
-                    <!-- Left: Teacher builder + Filters -->
-                    <aside class="sidebar">
-                        <h3 class="section-title">Setup Tasks</h3>
-                        <p class="helper" id="roleNote">Only teachers can create or edit.</p>
-                        <label class="label">Subject</label>
-                        <div class="row">
-                        <select id="subjectSelect"></select>
-                        <button id="addSubjectBtn" class="btn-secondary" title="Create Subject">＋</button>
-                        </div>
-                        <label class="label">Topic</label>
-                        <div class="row">
-                        <select id="topicSelect" disabled></select>
-                        <button id="addTopicBtn" class="btn-secondary" title="Create Topic">＋</button>
-                        </div>
-                        <button id="addTaskBtn" class="btn-primary" style="width:100%;margin-top:8px" disabled>Create Task</button>
-                        <hr style="border:none;border-top:1px solid var(--border-color);margin:16px 0">
-                        <h3 class="section-title">For Students</h3>
-                        <p class="helper">Pick a subject & topic to submit.</p>
-                        <div class="row">
-                        <select id="studentSubjectFilter"></select>
-                        <select id="studentTopicFilter" disabled></select>
-                        </div>
-                    </aside>
-
-                    <!-- Right: Task list + Submission + Dashboards -->
-                    <section class="content">
-                        <div class="card">
-                        <h3 class="section-title">Open Tasks</h3>
-                        <div id="taskList" class="list"></div>
-                        </div>
-
-                        <div class="card">
-                        <h3 class="section-title">My Submissions</h3>
-                        <div id="mySubmissions" class="list"></div>
-                        </div>
-
-                        <div class="card" id="teacherDashboard" style="display:none">
-                        <h3 class="section-title">Teacher Dashboard — Submissions</h3>
-                        <div class="row">
-                            <select id="tdSubject"></select>
-                            <select id="tdTopic" disabled></select>
-                            <select id="tdTask" disabled></select>
-                        </div>
-                        <div id="submissionsList" style="margin-top:12px"></div>
-                        </div>
-                    </section>
-                </div>
-            </section>
-
-            <!-- Student Management Section -->
-            <div id="studentManagementSection">
-                <h2 class="section-title">Student Dashboard</h2>
-                <p id="studentManagementLoading" class="loading-indicator"></p>
-                <div id="authorizedStudentsList">
-                    <!-- Student cards will be injected here by JS -->
-                </div>
-            </div>
-
-            <!-- Generic Material Section Template -->
-            <div id="tutorialSection"></div>
-            <div id="pastPapersSection"></div>
-            <div id="exerciseSection"></div>
-            
-            <!-- Profile Section -->
-            <div id="profileSection">
-                <h2 class="section-title">Edit Your Profile</h2>
-                <form id="profileForm" class="form-container">
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileName">Display Name</label>
-                        <input type="text" id="profileName" name="name" required>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileAge">Age</label>
-                        <input type="number" id="profileAge" name="age">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileGrade">Year/Grade</label>
-                        <input type="text" id="profileGrade" name="grade">
-                    </div>
-                     <div style="margin-bottom: 1rem;">
-                        <label for="profileSchool">School</label>
-                        <input type="text" id="profileSchool" name="school">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileElectives">Elective Subjects</label>
-                        <textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science, Art"></textarea>
-                    </div>
-                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
-                </form>
-            </div>
-
-            <!-- Finder Style Materials Section (Desktop Only) -->
-            <div id="finderMaterialsSection" class="finder-window-wrapper">
-                <div class="finder-titlebar" id="finderDragBar">
-                    <div class="buttons">
-                        <div class="finder-circle close"></div>
-                        <div class="finder-circle min"></div>
-                        <div class="finder-circle max" id="finderFullscreenToggle"></div>
-                    </div>
-                    <span style="margin-left: 10px; font-weight: bold;">Materials</span>
-                </div>
-
-                <div class="finder-content">
-                    <aside class="finder-sidebar" id="finderSidebar">
-                        <!-- Level 1 items (Subjects) will be loaded here -->
-                    </aside>
-                    <section class="finder-file-list">
-                        <div class="columns">
-                            <div>Name</div><div>Size</div><div>Kind</div><div>Date Added</div>
-                        </div>
-                        <div id="finderFileListContent">
-                            <p style="text-align:center; padding:20px; color:var(--finder-text-secondary);">Select a subject from the sidebar.</p>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="finder-footer">Contact: darren_0625@mc-zero.com | © 2025 Darren Ng</div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- Minimized Windows Bar -->
-    <div id="minimizedWindowsBar">
-        <!-- Minimized tabs will be appended here -->
-    </div>
-
-    <footer>
-        <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
-    </footer>
-
-    <!-- Universal Modal -->
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <div id="modalMessage"></div>
-            <div id="modalButtons"></div>
         </div>
     </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" style="display:none">
+    <header>
+      <div class="logo-container">
+        <h1>AI Marker</h1>
+        <p>Operated by Darren Ng</p>
+      </div>
+      <div class="header-actions">
+        <a href="index (8).html" class="tab">Home</a>
+        <button id="themeToggleButton" class="tab">Theme</button>
+        <span id="userDisplayName" class="helper" style="margin-bottom: 0;"></span>
+        <button id="switchRoleButton" class="tab">Switch Role</button>
+        <button id="logoutButton" class="logout-btn">Log Out</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Left: Teacher builder + Student Filters -->
+      <aside class="sidebar">
+        <h3 class="section-title">Setup Tasks</h3>
+        <p class="helper" id="roleNote" style="text-align: left; margin-bottom: 1rem;">Only teachers can create or edit.</p>
+        <label class="label">Subject</label>
+        <div class="row">
+          <select id="subjectSelect" class="input"></select>
+          <button id="addSubjectBtn" class="btn-secondary" title="Create Subject">＋</button>
+        </div>
+        <label class="label">Topic</label>
+        <div class="row">
+          <select id="topicSelect" class="input" disabled></select>
+          <button id="addTopicBtn" class="btn-secondary" title="Create Topic">＋</button>
+        </div>
+        <button id="addTaskBtn" class="btn-primary" style="width:100%;margin-top:16px" disabled>Create Task</button>
+        <hr style="border:none;border-top:1px solid var(--border-color);margin:24px 0">
+        <h3 class="section-title">Find Tasks</h3>
+        <p class="helper" style="text-align: left; margin-bottom: 1rem;">Pick a subject & topic to view tasks and submit your work.</p>
+        <label class="label">Filter by Subject</label>
+        <select id="studentSubjectFilter" class="input"></select>
+        <label class="label">Filter by Topic</label>
+        <select id="studentTopicFilter" class="input" disabled></select>
+      </aside>
+
+      <!-- Right: Task list + Submission + Dashboards -->
+      <section class="content">
+        <div class="card">
+          <h3 class="section-title">Open Tasks</h3>
+          <div id="taskList" class="list"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">My Submissions</h3>
+          <div id="mySubmissions" class="list"></div>
+        </div>
+
+        <div class="card" id="teacherDashboard" style="display:none">
+          <h3 class="section-title">Teacher Dashboard — Submissions</h3>
+          <div class="row">
+            <select id="tdSubject" class="input"></select>
+            <select id="tdTopic" class="input" disabled></select>
+            <select id="tdTask" class="input" disabled></select>
+          </div>
+          <div id="submissionsList" style="margin-top:12px"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="subjectModal" class="modal"><div class="dialog">
+    <header><h3>Create Subject</h3><button class="close-button" data-close>×</button></header>
+    <label class="label">Subject name</label>
+    <input id="subjectName" class="input" placeholder="e.g., Mathematics"/>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveSubject" class="btn-primary">Save</button>
+    </div>
+  </div></div>
+
+  <div id="topicModal" class="modal"><div class="dialog">
+    <header><h3>Create Topic</h3><button class="close-button" data-close>×</button></header>
+    <p class="helper" id="topicModalSubject" style="text-align: left; margin-bottom: 1rem;"></p>
+    <label class="label">Topic name</label>
+    <input id="topicName" class="input" placeholder="e.g., Algebra"/>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveTopic" class="btn-primary">Save</button>
+    </div>
+  </div></div>
+
+  <div id="taskModal" class="modal"><div class="dialog">
+    <header><h3 id="taskModalTitle">Create Task</h3><button class="close-button" data-close>×</button></header>
+    <div class="row"><input id="taskTitle" class="input" placeholder="Task title"><input id="taskDue" class="input" type="date"></div>
+    <label class="label">Description</label>
+    <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveTask" class="btn-primary">Save</button>
+    </div>
+  </div></div>
+
+  <div id="submitModal" class="modal"><div class="dialog">
+    <header><h3 id="submitModalTitle">Submit Homework</h3><button class="close-button" data-close>×</button></header>
+    <div id="submitTaskMeta" class="helper" style="text-align: left; margin-bottom: 1rem;"></div>
+    <label class="label">Upload file (PDF/Image)</label>
+    <input id="submissionFile" type="file" accept="application/pdf,image/*" class="input"/>
+    <label class="label">or Paste an External Link</label>
+    <input id="submissionLink" class="input" placeholder="https://..."/>
+    <label class="label">Optional Text Answer</label>
+    <textarea id="submissionText" class="input" rows="4" placeholder="Paste your answer here (optional)"></textarea>
     
-    <!-- Modals for adding content -->
-    <div id="addVideoModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Tutorial Video</h3>
-             <form id="addVideoForm">
-                <input type="hidden" id="videoParentId1">
-                <input type="hidden" id="videoParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialLink">YouTube Link or Embed Code</label>
-                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
-                     <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="tutorialTitle">Video Title</label>
-                     <input type="text" id="tutorialTitle" required>
-                 </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Video</button>
-                 </div>
-             </form>
-        </div>
+    <!-- Upload Progress Bar -->
+    <div id="progressWrapper">
+      <progress id="uploadProgress" value="0" max="100"></progress>
+      <p id="progressText" class="progress-text">0%</p>
     </div>
 
-    <div id="addPastPaperModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Past Paper</h3>
-             <form id="addPastPaperForm">
-                <input type="hidden" id="paperParentId1">
-                <input type="hidden" id="paperParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="pastPaperName">Paper Name / Title</label>
-                     <input type="text" id="pastPaperName" required placeholder="e.g., Paper 1 Section A">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="pastPaperDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="pastPaperFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="pastPaperFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="pastPaperLink">Paste External Link (for large files)</label>
-                    <input type="url" id="pastPaperLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Paper</button>
-                 </div>
-             </form>
-        </div>
+    <p id="submitError" class="helper" style="color:var(--accent-red); text-align: left; display: none;"></p>
+
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="sendSubmission" class="btn-primary">Submit</button>
     </div>
+  </div></div>
 
-    <!-- New Modal for Editing Past Papers -->
-    <div id="editPastPaperModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3>Edit Past Paper</h3>
-            <form id="editPastPaperForm">
-                <input type="hidden" id="editPaperId">
-                <input type="hidden" id="editPaperParentId1">
-                <input type="hidden" id="editPaperParentId2">
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperName">Paper Name / Title</label>
-                    <input type="text" id="editPastPaperName" required>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label for="editPastPaperLink">Download Link</label>
-                    <input type="url" id="editPastPaperLink" required>
-                </div>
-                <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                    <button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
+  <div id="previewModal" class="modal"><div class="dialog" style="width: min(720px, 96vw);">
+    <header><h3 id="previewTitle">Preview</h3><button class="close-button" data-close>×</button></header>
+    <div class="preview" id="previewBody" style="background: var(--bg-primary); border-radius: 8px; padding: 16px; min-height: 120px; color: var(--text-secondary); white-space: pre-wrap; max-height: 60vh; overflow-y: auto;">No preview</div>
+    <div class="footer"><button class="btn-secondary" data-close>Close</button></div>
+  </div></div>
 
-    <div id="addExerciseModal" class="modal">
-        <div class="modal-content">
-             <span class="close-button">&times;</span>
-             <h3>Add New Exercise</h3>
-             <form id="addExerciseForm">
-                <input type="hidden" id="exerciseParentId1">
-                <input type="hidden" id="exerciseParentId2">
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exerciseName">Exercise Name / Title</label>
-                     <input type="text" id="exerciseName" required placeholder="e.g., Chapter 1 MCQs">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                     <label for="exercisePrice">Price (USD)</label>
-                     <input type="number" id="exercisePrice" required placeholder="e.g., 10.00" step="0.01" min="0">
-                 </div>
-                 <div style="margin-bottom: 1rem;">
-                    <label>Upload File (PDF only)</label>
-                    <div id="exerciseDropZone" class="drop-zone">
-                        <span>Drag & Drop PDF Here or click to select</span>
-                        <input type="file" id="exerciseFile" accept="application/pdf" hidden>
-                    </div>
-                    <span id="exerciseFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
-                </div>
-                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
-                <div style="margin-bottom: 1rem;">
-                    <label for="exerciseLink">Paste External Link (for large files)</label>
-                    <input type="url" id="exerciseLink" placeholder="https://example.com/document.pdf">
-                </div>
-                 <div class="modal-form-buttons">
-                    <button type="submit" class="btn-primary">Add Exercise</button>
-                 </div>
-             </form>
-        </div>
-    </div>
+  <div id="notificationModal" class="modal"><div class="dialog">
+      <header><h3 id="notificationTitle">Notification</h3><button class="close-button" data-close>×</button></header>
+      <p id="notificationMessage" style="color: var(--text-primary); line-height: 1.6;"></p>
+      <div class="footer"><button class="btn-primary" data-close>OK</button></div>
+  </div></div>
 
-    <!-- Video Preview Modal -->
-    <div id="videoPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="videoPreviewTitle"></h3>
-            <div id="videoPreviewContent"></div>
-        </div>
-    </div>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-    <!-- PDF Preview Modal -->
-    <div id="pdfPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="pdfPreviewTitle"></h3>
-            <div id="pdfCanvasContainer">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-            <div id="pdfControls">
-                <button id="prevPdfPage">Previous</button>
-                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
-                <button id="nextPdfPage">Next</button>
-            </div>
-        </div>
-    </div>
+    // --- Firebase Configuration (from index (8)) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
+      authDomain: "ai-grading-9bb30.firebaseapp.com",
+      projectId: "ai-grading-9bb30",
+      storageBucket: "ai-grading-9bb30.appspot.com",
+      messagingSenderId: "298162112230",
+      appId: "1:298162112230:web:529d3f95536991be685d27",
+      measurementId: "G-CHKLKSM17S"
+    };
+    const TEACHER_CODE = "Derren0625";
+    const STUDENT_CODE = "STUDENT456";
+    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
 
-    <!-- Submission Modals -->
-    <div id="subjectModal" class="modal"><div class="dialog">
-        <header><h3>Create Subject</h3><button class="close-button" data-close>×</button></header>
-        <label class="label">Subject name</label>
-        <input id="subjectName" class="input" placeholder="e.g., Mathematics"/>
-        <div class="footer">
-        <button class="btn-secondary" data-close>Cancel</button>
-        <button id="saveSubject" class="btn-primary">Save</button>
-        </div>
-    </div></div>
+    // Init
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
 
-    <div id="topicModal" class="modal"><div class="dialog">
-        <header><h3>Create Topic</h3><button class="close-button" data-close>×</button></header>
-        <p class="helper" id="topicModalSubject"></p>
-        <label class="label">Topic name</label>
-        <input id="topicName" class="input" placeholder="e.g., Algebra"/>
-        <div class="footer">
-        <button class="btn-secondary" data-close>Cancel</button>
-        <button id="saveTopic" class="btn-primary">Save</button>
-        </div>
-    </div></div>
+    // UI helpers
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const modals = $$('.modal');
+    modals.forEach(m=> m.addEventListener('click', (e)=>{ if(e.target===m || e.target.closest('[data-close]')){ m.style.display='none'; }}));
+    const open = (m)=> m.style.display='flex';
+    const showNotification = (title, message) => {
+        $('#notificationTitle').textContent = title;
+        $('#notificationMessage').textContent = message;
+        open($('#notificationModal'));
+    };
 
-    <div id="taskModal" class="modal"><div class="dialog">
-        <header><h3 id="taskModalTitle">Create Task</h3><button class="close-button" data-close>×</button></header>
-        <div class="row"><input id="taskTitle" class="input" placeholder="Task title"><input id="taskDue" class="input" type="date"></div>
-        <label class="label">Description</label>
-        <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
-        <div class="footer">
-        <button class="btn-secondary" data-close>Cancel</button>
-        <button id="saveTask" class="btn-primary">Save</button>
-        </div>
-    </div></div>
+    // Theme
+    const themeToggleButton = $('#themeToggleButton');
+    const applyTheme = (t)=> document.body.classList.toggle('light-theme', t==='light');
+    const loadTheme = ()=> { const t=localStorage.getItem('ai-marker-theme')||'dark'; applyTheme(t); };
+    loadTheme(); themeToggleButton?.addEventListener('click', ()=>{ const t=document.body.classList.contains('light-theme')?'dark':'light'; localStorage.setItem('ai-marker-theme', t); applyTheme(t); });
 
-    <div id="submitModal" class="modal"><div class="dialog">
-        <header><h3 id="submitModalTitle">Submit Homework</h3><button class="close-button" data-close>×</button></header>
-        <div id="submitTaskMeta" class="helper" style="margin-bottom:8px"></div>
-        <label class="label">Upload file (PDF/Image) or paste an external link</label>
-        <input id="submissionFile" type="file" accept="application/pdf,image/*" class="input"/>
-        <label class="label">or Link</label>
-        <input id="submissionLink" class="input" placeholder="https://..."/>
-        <label class="label">Optional Text Answer</label>
-        <textarea id="submissionText" class="input" rows="4" placeholder="Paste your answer here (optional)"></textarea>
-        <div class="footer">
-        <button class="btn-secondary" data-close>Cancel</button>
-        <button id="sendSubmission" class="btn-primary">Submit</button>
-        </div>
-    </div></div>
+    // State
+    let currentUser = null; let currentRole = null; let currentProfileRef = null;
+    let selectedSubjectId = null; let selectedTopicId = null; let editingTaskId = null; let submittingTaskCtx = null;
 
-    <div id="previewSubmissionModal" class="modal"><div class="dialog">
-        <header><h3 id="previewTitle">Preview</h3><button class="close-button" data-close>×</button></header>
-        <div class="preview" id="previewBody">No preview</div>
-        <div class="footer"><button class="btn-secondary" data-close>Close</button></div>
-    </div></div>
+    // Firestore Paths
+    const subjectsCol = () => collection(db, `artifacts/${appId}/public/data/subjects`);
+    const topicsCol   = (subjectId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics`);
+    const tasksCol    = (subjectId, topicId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics/${topicId}/tasks`);
+    const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`);
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+    // Auth UI elements
+    const authWrapper = $('#authWrapper');
+    const appRoot = $('#app');
+    const googleBtn = $('#googleSignInButton');
+    const signInContainer = $('#signInContainer');
+    const codeEntryContainer = $('#codeEntryContainer');
+    const codeInput = $('#accessCodeInput');
+    const codeSubmit = $('#submitCodeButton');
+    const codeError = $('#codeError');
+    const userNameSpan = $('#userDisplayName');
 
-        // --- IMPORTANT CONFIGURATION ---
-        const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/14A28t1kAfr2gnx04L0ZW0n"; 
-
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
-          authDomain: "ai-grading-9bb30.firebaseapp.com",
-          projectId: "ai-grading-9bb30",
-          storageBucket: "ai-grading-9bb30.appspot.com",
-          messagingSenderId: "298162112230",
-          appId: "1:298162112230:web:529d3f95536991be685d27",
-          measurementId: "G-CHKLKSM17S"
-        };
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/";
-        const DEEPSEEK_WORKER_URL = "https://your-deepseek-proxy-worker.yourdomain.workers.dev/"; 
-        const TEACHER_CODE = "Derren0625";
-        const STUDENT_CODE = "STUDENT456";
-
-        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-        let app, db, auth, storage;
-        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let geminiChatHistory = []; 
-        let shoppingCart = [];
-        let appliedPromoCode = null;
-        let currentAiSource = 'gemini-api';
-
-        // --- AUTH & INITIALIZATION ---
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
-
-        const googleSignInTemplate = `
-            <h2>Sign In</h2>
-            <button id="googleSignInButton" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-                <span>Sign in with Google</span>
-            </button>
-            <p id="authError" class="error-message"></p>
-        `;
-
-        const codeEntryTemplate = `
-            <h2>Enter Access Code</h2>
-            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
-            <input type="text" id="accessCodeInput" placeholder="Enter code here">
-            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-            <p id="codeError" class="error-message"></p>
-        `;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            storage = getStorage(app);
-            console.log("Firebase initialized successfully.");
-        } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                currentUserEmail = user.email;
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                try {
-                    const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                        const profileData = userProfileDoc.data();
-                        currentUserRole = profileData.role;
-                        currentUserName = profileData.name || user.displayName;
-                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                        showApp();
-                    } else {
-                        currentUserName = user.displayName;
-                        currentUserRole = null; // Unassigned until code is entered
-                        showCodeEntry();
-                    }
-                } catch (e) {
-                     console.error("Error checking user profile:", e);
-                     showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     showLogin();
-                }
-            } else {
-                currentUserId = null;
-                currentUserRole = null;
-                currentUserName = null;
-                showLogin();
-            }
-        });
-
-        function showLogin() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
-            authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        }
-
-        function showCodeEntry() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
-            authContainer.innerHTML = codeEntryTemplate;
-            document.getElementById('submitCodeButton')?.addEventListener('click', () => handleSubmitCode());
-            document.getElementById('accessCodeInput')?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleSubmitCode(); }
-            });
-            document.getElementById('accessCodeInput')?.focus();
-        }
-
-        async function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole || 'unassigned'})`;
-            document.getElementById('manageStudentsButton').style.display = currentUserRole === 'teacher' ? 'block' : 'none';
-            document.getElementById('toggleSubmissionsButton').style.display = 'block';
-            
-            const homeNameSpan = document.getElementById('homeUserNamePlaceholder');
-            if (homeNameSpan) homeNameSpan.textContent = currentUserName || 'there';
-
-            initializeAllMaterialSections();
-            await checkForSuccessfulPurchase();
-
-            if(!currentUserRole) {
-                showCodeEntry();
-            } else {
-                showSection('homeSection');
-                initializeSubmissionPage();
-            }
-             if(currentUserRole === 'teacher') {
-                loadAuthorizedStudents();
-            }
-        }
-
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
-            try { 
-                await signInWithPopup(auth, provider); 
-            } catch (error) { 
-                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-                console.error("Google Sign-In Error:", error);
-            }
-        }
-
-        async function handleSubmitCode() {
-            const codeInput = document.getElementById('accessCodeInput');
-            const code = (codeInput.value || '').trim();
-            const codeError = document.getElementById('codeError');
-            if(codeError) codeError.textContent = '';
-            
-            const role = (code === TEACHER_CODE) ? 'teacher' : (code === STUDENT_CODE ? 'student' : null);
-            if (!role) {
-                if(codeError) codeError.textContent = 'Invalid access code.';
-                return;
-            }
-            
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                currentUserRole = role;
-                showApp();
-            } catch (error) {
-                if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
-            }
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-        document.getElementById('switchRoleButton').addEventListener('click', showCodeEntry);
-
-        // --- NAVIGATION & UI ---
-        // (Existing navigation code from index.html is kept here)
-        let currentMaterialViewMode = 'card';
-        function showSection(sectionIdToShow) {
-            const sections = ['homeSection', 'gradingSection', 'chatSection', 'studentManagementSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection', 'submissionSection'];
-            const buttons = {
-                toggleHomeButton: 'homeSection',
-                workWithAIButton: ['gradingSection', 'chatSection'],
-                materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
-                toggleSubmissionsButton: 'submissionSection',
-                manageStudentsButton: 'studentManagementSection',
-                toggleProfileButton: 'profileSection'
-            };
-            
-            document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
-            let activeButtonId = Object.keys(buttons).find(btnId => Array.isArray(buttons[btnId]) ? buttons[btnId].includes(sectionIdToShow) : buttons[btnId] === sectionIdToShow);
-            if (activeButtonId) document.getElementById(activeButtonId)?.classList.add('active');
-
-            sections.forEach(id => {
-                const section = document.getElementById(id);
-                if (section) {
-                    const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? 'block' : 'none';
-                    setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
-                }
-            });
-
-            const finderSection = document.getElementById('finderMaterialsSection');
-            const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(sectionIdToShow);
-            if (isMaterialSection && window.innerWidth >= 769) {
-                finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
-                document.getElementById(sectionIdToShow).style.display = currentMaterialViewMode === 'finder' ? 'none' : 'block';
-            } else {
-                finderSection.style.display = 'none';
-            }
-
-            if (sectionIdToShow === 'profileSection') loadProfileData();
-            if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') loadPromoCodesForTeacher();
-            if (sectionIdToShow === 'chatSection') loadChatHistory();
-            if (sectionIdToShow === 'studentManagementSection' && currentUserRole === 'teacher') loadAuthorizedStudents();
-            if (sectionIdToShow === 'submissionSection') initializeSubmissionPage();
-        }
-
-        function setupSectionToggle() {
-            document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
-            document.getElementById('toggleGradingButton')?.addEventListener('click', () => showSection('gradingSection'));
-            document.getElementById('toggleChatButton')?.addEventListener('click', () => showSection('chatSection'));
-            document.getElementById('manageStudentsButton')?.addEventListener('click', () => showSection('studentManagementSection'));
-            document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
-            document.getElementById('toggleSubmissionsButton')?.addEventListener('click', () => showSection('submissionSection')); 
-            
-            document.getElementById('toggleTutorialButton')?.addEventListener('click', () => { showSection('tutorialSection'); if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('tutorials'); else renderStudentItems('tutorials'); });
-            document.getElementById('togglePastPapersButton')?.addEventListener('click', () => { showSection('pastPapersSection'); if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('pastPapers'); else renderStudentItems('pastPapers'); });
-            document.getElementById('toggleExercisesButton')?.addEventListener('click', () => { showSection('exerciseSection'); if (window.innerWidth >= 769 && currentMaterialViewMode === 'finder') showFinderView('exercises'); else renderStudentItems('exercises'); });
-            
-            document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
-        }
-        setupSectionToggle();
-        
-        // --- PROFILE MANAGEMENT ---
-        // (Existing profile code from index.html is kept here)
-        document.getElementById('profileForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUserId) { showModal('Error', 'You must be logged in to save your profile.'); return; }
-            
-            const formData = new FormData(e.target);
-            const profileData = Object.fromEntries(formData.entries());
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            try {
-                await setDoc(userProfileRef, profileData, { merge: true });
-                currentUserName = profileData.name;
-                document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-                showModal('Success', 'Your profile has been updated!');
-            } catch (error) {
-                showModal('Error', `Could not save profile: ${error.message}`);
-            }
-        });
-
-        async function loadProfileData() {
-            if (!currentUserId) return;
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            const docSnap = await getDoc(userProfileRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('profileName').value = data.name || '';
-                document.getElementById('profileAge').value = data.age || '';
-                document.getElementById('profileGrade').value = data.grade || '';
-                document.getElementById('profileSchool').value = data.school || '';
-                document.getElementById('profileElectives').value = data.electives || '';
-            }
-        }
-        
-        // --- MATERIALS & E-COMMERCE LOGIC ---
-        // (Existing code from index.html is kept here)
-        const materialsConfig = {
-            tutorials: { sectionId: 'tutorialSection', collectionName: 'tutorials', title: 'Tutorial Videos', level1: 'Subject', level2: 'Topic', level3: 'Video', modalId: 'addVideoModal', isPaid: false },
-            pastPapers: { sectionId: 'pastPapersSection', collectionName: 'pastPapers', title: 'Past Papers', level1: 'Subject', level2: 'Year', level3: 'Paper', modalId: 'addPastPaperModal', editModalId: 'editPastPaperModal', isPaid: false },
-            exercises: { sectionId: 'exerciseSection', collectionName: 'exercises', title: 'Exercises for Sale', level1: 'Subject', level2: 'Topic', level3: 'Exercise', modalId: 'addExerciseModal', isPaid: true }
-        };
-        // ... (All existing functions for materials, e-commerce, finder, etc. are preserved but omitted here for brevity)
-        // ... The full script contains them.
-        function getPath(type, ids = []) {
-            const config = materialsConfig[type];
-            if (!config) return null; // Or handle error
-            const collection = config.collectionName;
-            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
-            if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
-            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
-            if (ids[2]) pathParts.push(ids[2]);
-            return pathParts.join('/');
-        }
-        // NOTE: All the other functions for materials are assumed to be here, just hidden for brevity.
-
-
-        // --- NEW SUBMISSION LOGIC FROM submissions (1).html ---
-        let selectedSubjectId = null; 
-        let selectedTopicId = null; 
-        let editingTaskId = null; 
-        let submittingTaskCtx = null;
-
-        // Paths for submissions
-        const subjectsCol = () => collection(db, `artifacts/${appId}/public/data/subjects`);
-        const topicsCol   = (subjectId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics`);
-        const tasksCol    = (subjectId, topicId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics/${topicId}/tasks`);
-        const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`);
-
-        function canTeach(){ return currentUserRole === 'teacher'; }
-
-        // Populate selects
-        async function loadSubjects(selectEl){
-            selectEl.innerHTML = '<option value="">— Select Subject —</option>';
-            const qSnap = await getDocs(query(subjectsCol(), orderBy('name','asc'))).catch(()=>({docs:[]}));
-            qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
-        }
-        async function loadTopics(subjectId, selectEl){
-            selectEl.innerHTML = '<option value="">— Select Topic —</option>';
-            if(!subjectId){ selectEl.disabled = true; return; }
-            const qSnap = await getDocs(query(topicsCol(subjectId), orderBy('name','asc'))).catch(()=>({docs:[]}));
-            qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
-            selectEl.disabled = false;
-        }
-
-        // Task modal logic
-        function openTaskModal(task){
-            if(!canTeach()){ showModal('Permissions Error', 'Only teachers can create tasks.'); return; }
-            if(!selectedSubjectId || !selectedTopicId){ showModal('Selection Error', 'Please select a subject and topic first.'); return; }
-            editingTaskId = task?.id || null;
-            document.getElementById('taskModalTitle').textContent = editingTaskId ? 'Edit Task' : 'Create Task';
-            document.getElementById('taskTitle').value = task?.title || '';
-            document.getElementById('taskDesc').value = task?.description || '';
-            const d = task?.dueDate ? new Date(task.dueDate) : null;
-            document.getElementById('taskDue').value = d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : '';
-            open(document.getElementById('taskModal'));
-        }
-
-        // Render tasks for students
-        async function renderTasksForFilters(){
-            const container = document.getElementById('taskList'); 
-            container.innerHTML='';
-            const subj = document.getElementById('studentSubjectFilter').value; 
-            const top = document.getElementById('studentTopicFilter').value; 
-            if(!subj || !top){ container.innerHTML='<p class="helper">Pick a subject & topic to see tasks.</p>'; return; }
-            
-            const qSnap = await getDocs(query(tasksCol(subj, top), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
-            if(qSnap.docs.length === 0){ container.innerHTML='<p class="helper">No tasks yet for this topic.</p>'; return; }
-            
-            qSnap.docs.forEach(d=>{
-                const t = d.data(); 
-                t.id = d.id;
-                const dueTxt = t.dueDate? new Date(t.dueDate).toLocaleDateString() : '—';
-                const tile = document.createElement('div'); 
-                tile.className='tile';
-                tile.innerHTML = `
-                <div class="badge">Due: ${dueTxt}</div>
-                <strong>${t.title}</strong>
-                <div class="muted">${(t.description||'').substring(0,160)}</div>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <button class="btn-primary" data-act="submit">Submit</button>
-                    ${canTeach()? '<button class="btn-secondary" data-act="edit">Edit</button><button class="logout-btn" data-act="delete">Delete</button>' : ''}
-                </div>`;
-                tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
-                if(canTeach()){
-                    tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> {
-                        // Need to set selectedSubjectId and selectedTopicId before opening modal for editing
-                        document.getElementById('subjectSelect').value = subj;
-                        selectedSubjectId = subj;
-                        loadTopics(subj, document.getElementById('topicSelect')).then(() => {
-                            document.getElementById('topicSelect').value = top;
-                            selectedTopicId = top;
-                            openTaskModal(t);
-                        });
-                    });
-                    tile.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-                        if(!confirm('Delete this task?')) return; 
-                        await deleteDoc(doc(db, tasksCol(subj, top).path, d.id)); 
-                        renderTasksForFilters(); 
-                        loadTasksForTD();
-                    });
-                }
-                container.appendChild(tile);
-            });
-        }
-
-        function openSubmission(task, subjectId, topicId){
-            submittingTaskCtx = { task, subjectId, topicId };
-            document.getElementById('submitModalTitle').textContent = `Submit: ${task.title}`;
-            const dueTxt = task.dueDate ? new Date(task.dueDate).toLocaleString() : '—';
-            document.getElementById('submitTaskMeta').textContent = `Subject: ${document.getElementById('studentSubjectFilter').selectedOptions[0]?.textContent || ''} • Topic: ${document.getElementById('studentTopicFilter').selectedOptions[0]?.textContent || ''} • Due: ${dueTxt}`;
-            document.getElementById('submissionFile').value = ''; 
-            document.getElementById('submissionLink').value='';
-            document.getElementById('submissionText').value='';
-            open(document.getElementById('submitModal'));
-        }
-
-        async function renderMySubmissions(){
-            const list = document.getElementById('mySubmissions'); 
-            list.innerHTML='';
-            if(!currentUserId) return;
-            const snap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
-            if(snap.docs.length===0){ list.innerHTML = '<p class="helper">No submissions yet.</p>'; return; }
-            snap.docs.forEach(d=>{
-                const s = d.data();
-                const card = document.createElement('div'); 
-                card.className='tile';
-                card.innerHTML = `
-                <strong>${s.assignmentTitle}</strong>
-                <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
-                ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open File/Link</a>`: ''}
-                ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <button class="logout-btn" data-act="delete">Delete</button>
-                </div>`;
-                card.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-                if(!confirm('Delete this submission?')) return;
-                if(s.filePath){ try{ await deleteObject(ref(storage, s.filePath)); }catch(_){} }
-                await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/submissions`, d.id));
-                renderMySubmissions();
-                });
-                if(s.textAnswer){ card.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ document.getElementById('previewTitle').textContent=s.assignmentTitle; document.getElementById('previewBody').textContent=s.textAnswer; open(document.getElementById('previewSubmissionModal')); }); }
-                list.appendChild(card);
-            });
-        }
-
-        // Teacher dashboard logic
-        async function loadTasksForTD(){
-            const tdTask = document.getElementById('tdTask');
-            tdTask.innerHTML = '<option value="">— Task —</option>';
-            const subjectId = document.getElementById('tdSubject').value;
-            const topicId = document.getElementById('tdTopic').value;
-
-            if(!subjectId || !topicId){ tdTask.disabled=true; return; }
-            const snap = await getDocs(query(tasksCol(subjectId, topicId), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
-            snap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().title; tdTask.appendChild(opt); });
-            tdTask.disabled = false; 
-            loadSubmissionsForTD();
-        }
-
-        async function loadSubmissionsForTD(){
-            const container = document.getElementById('submissionsList'); container.innerHTML='';
-            const subjectId = document.getElementById('tdSubject').value;
-            const topicId = document.getElementById('tdTopic').value;
-            const taskId = document.getElementById('tdTask').value;
-            if(!subjectId || !topicId || !taskId){ return; }
-
-            const q = query(allSubsCol(), where("taskId", "==", taskId));
-            const snap = await getDocs(q).catch((e)=>{
-                console.error("Error fetching submissions:", e);
-                container.innerHTML = `<p class="error-message">Could not load submissions. A database index might be required.</p>`;
-                return {docs:[]};
-            });
-            
-            const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-            if(items.length===0){ container.innerHTML = '<p class="helper">No submissions for this task yet.</p>'; return; }
-            
-            items.forEach(s=>{
-                const row = document.createElement('div'); row.className='card';
-                row.innerHTML = `
-                <div class="row" style="align-items:center">
-                    <div style="flex:2">
-                    <strong>${s.studentName}</strong>
-                    <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
-                    ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open File/Link</a>`: ''}
-                    ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
-                    </div>
-                    <div style="flex:1">
-                    <label class="label">Status</label>
-                    <select data-field="status" class="input">
-                        ${['submitted','reviewing','graded'].map(v=>`<option value="${v}" ${s.status===v?'selected':''}>${v}</option>`).join('')}
-                    </select>
-                    </div>
-                    <div style="flex:1">
-                    <label class="label">Score</label>
-                    <input data-field="score" class="input" type="number" step="1" min="0" max="100" value="${s.score??''}"/>
-                    </div>
-                </div>
-                <label class="label">Feedback</label>
-                <textarea data-field="feedback" class="input" rows="2">${s.feedback||''}</textarea>
-                <div class="footer" style="justify-content:flex-start; margin-top: 1rem;">
-                    <button class="btn-primary" data-act="save">Save</button>
-                    <button class="logout-btn" data-act="delete">Delete (log)</button>
-                </div>`;
-                if(s.textAnswer){ row.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ document.getElementById('previewTitle').textContent=`${s.studentName} — Text`; document.getElementById('previewBody').textContent=s.textAnswer; open(document.getElementById('previewSubmissionModal')); }); }
-                row.querySelector('[data-act="save"]').addEventListener('click', async ()=>{
-                    await updateDoc(doc(db, allSubsCol().path, s.id), {
-                        status: row.querySelector('[data-field="status"]').value,
-                        score: row.querySelector('[data-field="score"]').value || null,
-                        feedback: row.querySelector('[data-field="feedback"]').value
-                    });
-                    showModal('Saved', 'Feedback and score have been saved.');
-                });
-                row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-                    if(!confirm('Delete this log entry?')) return; 
-                    await deleteDoc(doc(db, allSubsCol().path, s.id)); 
-                    loadSubmissionsForTD();
-                });
-                container.appendChild(row);
-            });
-        }
-
-        // This function wires up the submission page logic
-        function initializeSubmissionPage() {
-            // UI helpers from submissions(1).html
-            const $ = (sel, root=document) => root.querySelector(sel);
-            const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-            $$('#submissionSection .modal, #subjectModal, #topicModal, #taskModal, #submitModal, #previewSubmissionModal').forEach(m => m.addEventListener('click', (e) => { 
-                if (e.target === m || e.target.closest('[data-close]')) { 
-                    m.style.display = 'none'; 
-                }
-            }));
-            const open = (m) => m.style.display='flex';
-            
-            // Re-select elements within the submission section
-            const subjectSelect = $('#subjectSelect');
-            const topicSelect = $('#topicSelect');
-            const addSubjectBtn = $('#addSubjectBtn');
-            const addTopicBtn = $('#addTopicBtn');
-            const addTaskBtn = $('#addTaskBtn');
-            const sFilter = $('#studentSubjectFilter');
-            const tFilter = $('#studentTopicFilter');
-            const tdSubject = $('#tdSubject');
-            const tdTopic = $('#tdTopic');
-            const tdTask = $('#tdTask');
-
-            // Event listeners
-            addSubjectBtn.addEventListener('click', ()=>{ if(!canTeach()) return; $('#subjectName').value=''; open($('#subjectModal')); });
-            addTopicBtn.addEventListener('click', ()=>{ if(!canTeach()) return; if(!selectedSubjectId) return showModal('Error', 'Pick a subject first'); $('#topicName').value=''; $('#topicModalSubject').textContent = `Under: ${subjectSelect.options[subjectSelect.selectedIndex]?.textContent||''}`; open($('#topicModal')); });
-            addTaskBtn.addEventListener('click', ()=> openTaskModal());
-
-            $('#saveSubject').addEventListener('click', async ()=>{
-                const name = ($('#subjectName').value||'').trim(); if(!name) return;
-                await addDoc(subjectsCol(), { name, createdAt: Date.now() });
-                $('#subjectModal').style.display='none'; await Promise.all([loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)]);
-            });
-
-            $('#saveTopic').addEventListener('click', async ()=>{
-                const name = ($('#topicName').value||'').trim(); if(!name || !selectedSubjectId) return;
-                await addDoc(topicsCol(selectedSubjectId), { name, createdAt: Date.now() });
-                $('#topicModal').style.display='none'; await Promise.all([loadTopics(selectedSubjectId, topicSelect), loadTopics(selectedSubjectId, tFilter), loadTopics(selectedSubjectId, tdTopic)]);
-            });
-
-            $('#saveTask').addEventListener('click', async ()=>{
-                const title = ($('#taskTitle').value||'').trim(); if(!title) return;
-                const description = ($('#taskDesc').value||'').trim();
-                const due = ($('#taskDue').value||'').trim();
-                const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
-                const payload = { title, description, dueDate: dueMs, createdAt: Date.now() };
-                if(editingTaskId){ await updateDoc(doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTaskId), payload); }
-                else { await addDoc(tasksCol(selectedSubjectId, selectedTopicId), payload); }
-                $('#taskModal').style.display='none'; renderTasksForFilters(); loadTasksForTD();
-            });
-
-             $('#sendSubmission').addEventListener('click', async ()=>{
-                if(!submittingTaskCtx || !currentUserId) return;
-                const file = $('#submissionFile').files[0] || null;
-                const link = ($('#submissionLink').value||'').trim();
-                const text = ($('#submissionText').value||'').trim();
-                if(!file && !link && !text){ showModal('Input Error', 'Attach a file, link, or enter text.'); return; }
-                
-                let filePath = '', fileLink = '';
-                if(file){
-                    const path = `submissions/${currentUserId}/${Date.now()}_${file.name}`;
-                    const r = await uploadBytes(ref(storage, path), file);
-                    fileLink = await getDownloadURL(r.ref); filePath = path;
-                }
-                const payloadUser = {
-                    assignmentTitle: submittingTaskCtx.task.title,
-                    subjectId: submittingTaskCtx.subjectId,
-                    topicId: submittingTaskCtx.topicId,
-                    taskId: submittingTaskCtx.task.id,
-                    submittedAt: Date.now(),
-                    fileLink: fileLink || (link||''),
-                    fileName: file? file.name : (link? 'External Link' : ''),
-                    filePath: filePath,
-                    textAnswer: text||''
-                };
-                
-                const userSubRef = await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`), payloadUser);
-                await addDoc(allSubsCol(), {
-                    ...payloadUser,
-                    submissionId: userSubRef.id,
-                    studentId: currentUserId,
-                    studentName: currentUserName || currentUserEmail || 'Student',
-                    status: 'submitted',
-                    score: null,
-                    feedback: '',
-                    createdAt: serverTimestamp()
-                });
-                $('#submitModal').style.display='none';
-                renderMySubmissions();
-                showModal('Success','Submitted!');
-            });
-
-            // Select changes
-            subjectSelect.addEventListener('change', async (e)=>{ selectedSubjectId = e.target.value||null; await loadTopics(selectedSubjectId, topicSelect); topicSelect.disabled=!selectedSubjectId; addTaskBtn.disabled = true; });
-            topicSelect.addEventListener('change', (e)=>{ selectedTopicId = e.target.value||null; addTaskBtn.disabled = !selectedTopicId; });
-            sFilter.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tFilter); tFilter.disabled = !e.target.value; renderTasksForFilters(); });
-            tFilter.addEventListener('change', ()=> renderTasksForFilters());
-            tdSubject.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tdTopic); tdTopic.disabled = !e.target.value; tdTask.disabled = true; $('#submissionsList').innerHTML=''; });
-            tdTopic.addEventListener('change', ()=>{ tdTask.disabled = !tdTopic.value; loadTasksForTD(); });
-            tdTask.addEventListener('change', ()=> loadSubmissionsForTD());
-
-            // Initial render
-            $('#teacherDashboard').style.display = canTeach()? 'block':'none';
-            $('#roleNote').textContent = canTeach()? 'You are a teacher.' : 'Only teachers can create or edit.';
-            Promise.all([
-                loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)
-            ]).then(()=>{
-                renderTasksForFilters();
-            });
-            renderMySubmissions();
-        }
-
-        // --- All other existing functions from index.html ---
-        // (grading, chat, student management, etc. are preserved but omitted for brevity)
-        // ... The full script contains them.
-    
-    </script>
-  
-    <script>
-    // Show the login wrapper when the page has fully loaded
-    window.addEventListener('load', function() {
-        const authWrapper = document.getElementById('authWrapper');
-        if (authWrapper) {
-            authWrapper.style.opacity = '1';
-        }
+    googleBtn.addEventListener('click', async ()=>{
+      try{
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      }catch(e){ $('#authError').textContent = e.message; }
     });
-    </script>
+
+    codeSubmit.addEventListener('click', () => handleSubmitCode());
+    codeInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); handleSubmitCode(); }});
+
+    async function handleSubmitCode(){
+      codeError.textContent=''; const code=(codeInput.value||'').trim();
+      if(!code) { codeError.textContent='Please enter a code.'; return; }
+      const role = (code===TEACHER_CODE) ? 'teacher' : (code===STUDENT_CODE ? 'student' : null);
+      if(!role){ codeError.textContent='The code you entered is invalid.'; return; }
+      if(!currentUser){ codeError.textContent='You need to sign in first.'; return; }
+      try{
+        await setDoc(currentProfileRef, { role, name: currentUser.displayName || '', email: currentUser.email || '', updatedAt: Date.now() }, { merge:true });
+        currentRole = role; renderAfterAuth();
+      }catch(e){ codeError.textContent = e.message; }
+    }
+
+    $('#logoutButton').addEventListener('click', ()=> signOut(auth));
+    $('#switchRoleButton').addEventListener('click', ()=>{
+        authWrapper.style.display = 'flex';
+        appRoot.style.display = 'none';
+        signInContainer.style.display = 'none';
+        codeEntryContainer.style.display = 'block';
+        codeInput.focus();
+    });
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        currentUser = user; currentProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+        const snap = await getDoc(currentProfileRef);
+        
+        if(snap.exists() && snap.data().role){
+            currentRole = snap.data().role;
+            renderAfterAuth();
+        } else {
+            authWrapper.style.display = 'flex';
+            appRoot.style.display = 'none';
+            signInContainer.style.display = 'none';
+            codeEntryContainer.style.display = 'block';
+        }
+      }else{
+        currentUser=null; currentRole=null;
+        authWrapper.style.display = 'flex';
+        appRoot.style.display = 'none';
+        signInContainer.style.display = 'block';
+        codeEntryContainer.style.display = 'none';
+      }
+    });
+
+    function canTeach(){ return currentRole==='teacher'; }
+
+    async function loadSubjects(selectEl){
+      selectEl.innerHTML = '<option value="">— Select Subject —</option>';
+      const qSnap = await getDocs(query(subjectsCol(), orderBy('name','asc'))).catch(()=>({docs:[]}));
+      qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
+    }
+    async function loadTopics(subjectId, selectEl){
+      selectEl.innerHTML = '<option value="">— Select Topic —</option>';
+      selectEl.disabled = true;
+      if(!subjectId) return;
+      const qSnap = await getDocs(query(topicsCol(subjectId), orderBy('name','asc'))).catch(()=>({docs:[]}));
+      qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
+      selectEl.disabled = false;
+    }
+
+    const subjectSelect = $('#subjectSelect');
+    const topicSelect = $('#topicSelect');
+    const addSubjectBtn = $('#addSubjectBtn');
+    const addTopicBtn = $('#addTopicBtn');
+    const addTaskBtn = $('#addTaskBtn');
+    const sFilter = $('#studentSubjectFilter');
+    const tFilter = $('#studentTopicFilter');
+    const tdSubject = $('#tdSubject');
+    const tdTopic = $('#tdTopic');
+    const tdTask = $('#tdTask');
+
+    addSubjectBtn.addEventListener('click', ()=>{ if(!canTeach()) return showNotification('Permission Denied', 'Only teachers can perform this action.'); $('#subjectName').value=''; open($('#subjectModal')); });
+    addTopicBtn.addEventListener('click', ()=>{ if(!canTeach()) return showNotification('Permission Denied', 'Only teachers can perform this action.'); if(!selectedSubjectId) return showNotification('Incomplete Selection', 'Please pick a subject first.'); $('#topicName').value=''; $('#topicModalSubject').textContent = `Under: ${subjectSelect.options[subjectSelect.selectedIndex]?.textContent||''}`; open($('#topicModal')); });
+    addTaskBtn.addEventListener('click', ()=> openTaskModal());
+
+    $('#saveSubject').addEventListener('click', async ()=>{
+      const name = ($('#subjectName').value||'').trim(); if(!name) return;
+      await addDoc(subjectsCol(), { name, createdAt: Date.now() });
+      $('#subjectModal').style.display='none'; await Promise.all([loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)]);
+    });
+
+    $('#saveTopic').addEventListener('click', async ()=>{
+      const name = ($('#topicName').value||'').trim(); if(!name || !selectedSubjectId) return;
+      await addDoc(topicsCol(selectedSubjectId), { name, createdAt: Date.now() });
+      $('#topicModal').style.display='none'; await Promise.all([loadTopics(selectedSubjectId, topicSelect), loadTopics(selectedSubjectId, tFilter), loadTopics(selectedSubjectId, tdTopic)]);
+    });
+
+    function openTaskModal(task){
+      if(!canTeach()){ showNotification('Permission Denied', 'Only teachers can perform this action.'); return; }
+      if(!selectedSubjectId || !selectedTopicId){ showNotification('Incomplete Selection', 'Please pick a subject and topic first.'); return; }
+      editingTaskId = task?.id || null;
+      $('#taskModalTitle').textContent = editingTaskId? 'Edit Task' : 'Create Task';
+      $('#taskTitle').value = task?.title || '';
+      $('#taskDesc').value = task?.description || '';
+      const d = task?.dueDate ? new Date(task.dueDate) : null;
+      $('#taskDue').value = d? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : '';
+      open($('#taskModal'));
+    }
+
+    $('#saveTask').addEventListener('click', async ()=>{
+      const title = ($('#taskTitle').value||'').trim(); if(!title) return;
+      const description = ($('#taskDesc').value||'').trim();
+      const due = ($('#taskDue').value||'').trim();
+      const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
+      const payload = { title, description, dueDate: dueMs, createdAt: serverTimestamp() };
+      if(editingTaskId){ await updateDoc(doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTaskId), payload); }
+      else { await addDoc(tasksCol(selectedSubjectId, selectedTopicId), payload); }
+      $('#taskModal').style.display='none'; renderTasksForFilters(); loadTasksForTD();
+    });
+
+    subjectSelect.addEventListener('change', async (e)=>{ selectedSubjectId = e.target.value||null; await loadTopics(selectedSubjectId, topicSelect); addTaskBtn.disabled = true; });
+    topicSelect.addEventListener('change', (e)=>{ selectedTopicId = e.target.value||null; addTaskBtn.disabled = !selectedTopicId; });
+    sFilter.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tFilter); renderTasksForFilters(); });
+    tFilter.addEventListener('change', ()=> renderTasksForFilters());
+    tdSubject.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tdTopic); tdTask.disabled = true; $('#submissionsList').innerHTML=''; });
+    tdTopic.addEventListener('change', ()=>{ tdTask.disabled = !tdTopic.value; loadTasksForTD(); });
+    tdTask.addEventListener('change', ()=> loadSubmissionsForTD());
+
+    async function renderTasksForFilters(){
+      const container = $('#taskList'); container.innerHTML='';
+      const subj = sFilter.value; const top = tFilter.value; if(!subj || !top){ container.innerHTML='<p class="helper">Pick a subject & topic to see tasks.</p>'; return; }
+      const qSnap = await getDocs(query(tasksCol(subj, top), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      if(qSnap.docs.length===0){ container.innerHTML='<p class="helper">No tasks found for this topic.</p>'; return; }
+      qSnap.docs.forEach(d=>{
+        const t = d.data(); t.id = d.id;
+        const dueTxt = t.dueDate? new Date(t.dueDate).toLocaleDateString() : 'No due date';
+        const tile = document.createElement('div'); tile.className='tile';
+        tile.innerHTML = `
+          <div class="badge">Due: ${dueTxt}</div>
+          <strong style="font-size: 16px;">${t.title}</strong>
+          <div class="muted">${(t.description||'').substring(0,160)}</div>
+          <div style="display:flex;gap:8px;margin-top:auto; padding-top: 12px;">
+            <button class="btn-primary" data-act="submit">Submit Work</button>
+            ${canTeach()? '<button class="btn-secondary" data-act="edit">Edit</button><button class="logout-btn" data-act="delete">Delete</button>' : ''}
+          </div>`;
+        tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
+        if(canTeach()){
+          tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> openTaskModal(t));
+          tile.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+             if (window.confirm('Are you sure you want to delete this task? This cannot be undone.')) {
+                await deleteDoc(doc(db, tasksCol(subj, top).path, d.id));
+                renderTasksForFilters();
+                loadTasksForTD();
+             }
+          });
+        }
+        container.appendChild(tile);
+      });
+    }
+
+    function openSubmission(task, subjectId, topicId){
+      submittingTaskCtx = { task, subjectId, topicId };
+      $('#submitModalTitle').textContent = `Submit: ${task.title}`;
+      const dueTxt = task.dueDate? new Date(task.dueDate).toLocaleString() : '—';
+      $('#submitTaskMeta').textContent = `Subject: ${sFilter.selectedOptions[0]?.textContent || ''} • Topic: ${tFilter.selectedOptions[0]?.textContent || ''} • Due: ${dueTxt}`;
+      $('#submissionFile').value = ''; $('#submissionLink').value=''; $('#submissionText').value='';
+      $('#progressWrapper').style.display = 'none';
+      $('#uploadProgress').value = 0;
+      $('#progressText').textContent = '0%';
+      $('#submitError').style.display = 'none';
+      open($('#submitModal'));
+    }
+    
+    // --- REBUILT SUBMISSION FUNCTION WITH PROGRESS ---
+    const submitBtn = $('#sendSubmission');
+    submitBtn.addEventListener('click', () => handleSubmission());
+
+    function handleSubmission() {
+        if (!submittingTaskCtx || !currentUser) return;
+        const file = $('#submissionFile').files[0] || null;
+        const link = ($('#submissionLink').value || '').trim();
+        const text = ($('#submissionText').value || '').trim();
+        const errorEl = $('#submitError');
+
+        if (!file && !link && !text) {
+            errorEl.textContent = 'You must attach a file, provide a link, or enter a text answer.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        errorEl.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+
+        if (file) {
+            uploadFileAndSave(file, link, text);
+        } else {
+            saveSubmissionData({ fileLink: (link || ''), filePath: '', fileName: (link ? 'External Link' : ''), textAnswer: text });
+        }
+    }
+
+    function uploadFileAndSave(file, link, text) {
+        const progressWrapper = $('#progressWrapper');
+        const progressBar = $('#uploadProgress');
+        const progressText = $('#progressText');
+        progressWrapper.style.display = 'block';
+
+        const path = `submissions/${currentUser.uid}/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, path);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressBar.value = progress;
+                progressText.textContent = `${Math.round(progress)}%`;
+                submitBtn.textContent = 'Uploading...';
+            },
+            (error) => {
+                console.error('Upload failed:', error);
+                const errorEl = $('#submitError');
+                errorEl.textContent = `Upload failed: ${error.message}. Please try again.`;
+                errorEl.style.display = 'block';
+                resetSubmitButton();
+            },
+            () => {
+                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                    saveSubmissionData({
+                        fileLink: downloadURL,
+                        filePath: path,
+                        fileName: file.name,
+                        textAnswer: text
+                    });
+                });
+            }
+        );
+    }
+    
+    async function saveSubmissionData(payload) {
+        const fullPayload = {
+            assignmentTitle: submittingTaskCtx.task.title,
+            subjectId: submittingTaskCtx.subjectId,
+            topicId: submittingTaskCtx.topicId,
+            taskId: submittingTaskCtx.task.id,
+            submittedAt: Date.now(),
+            ...payload
+        };
+        
+        try {
+            // Write to user's private submissions
+            const userSubRef = await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), fullPayload);
+            
+            // Write to central log
+            await addDoc(allSubsCol(), {
+                ...fullPayload,
+                submissionId: userSubRef.id,
+                studentId: currentUser.uid,
+                studentName: currentUser.displayName || currentUser.email || 'Student',
+                status: 'submitted',
+                score: null,
+                feedback: '',
+                createdAt: serverTimestamp()
+            });
+
+            $('#submitModal').style.display = 'none';
+            showNotification('Success!', 'Your work has been submitted.');
+            renderMySubmissions();
+        } catch(e) {
+            console.error("Firestore save error:", e);
+            const errorEl = $('#submitError');
+            errorEl.textContent = `Could not save submission: ${e.message}. Please try again.`;
+            errorEl.style.display = 'block';
+        } finally {
+            resetSubmitButton();
+        }
+    }
+    
+    function resetSubmitButton() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+    }
+
+
+    async function renderMySubmissions(){
+      const list = $('#mySubmissions'); list.innerHTML='';
+      if(!currentUser) return;
+      const snap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
+      if(snap.docs.length===0){ list.innerHTML = '<p class="helper">You haven\'t submitted any work yet.</p>'; return; }
+      snap.docs.forEach(d=>{
+        const s = d.data();
+        const card = document.createElement('div'); card.className='tile';
+        card.innerHTML = `
+          <strong>${s.assignmentTitle}</strong>
+          <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
+          ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank" style="width: 100%; text-align:center;">Open File/Link</a>`: ''}
+          ${s.textAnswer? `<button class="btn-secondary" data-act="view-text" style="width: 100%;">View Text</button>`: ''}
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="logout-btn" data-act="delete" style="width: 100%;">Delete</button>
+          </div>`;
+        card.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+          if(window.confirm('Are you sure you want to delete this submission?')){
+            if(s.filePath){ try{ await deleteObject(ref(storage, s.filePath)); }catch(_){} }
+            await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`, d.id));
+            renderMySubmissions();
+          }
+        });
+        if(s.textAnswer){ card.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=s.assignmentTitle; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
+        list.appendChild(card);
+      });
+    }
+
+    async function loadTasksForTD(){
+      tdTask.innerHTML = '<option value="">— Task —</option>';
+      tdTask.disabled=true;
+      if(!tdSubject.value || !tdTopic.value) return;
+      const snap = await getDocs(query(tasksCol(tdSubject.value, tdTopic.value), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      snap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().title; tdTask.appendChild(opt); });
+      tdTask.disabled = false; loadSubmissionsForTD();
+    }
+
+    async function loadSubmissionsForTD(){
+      const container = $('#submissionsList'); container.innerHTML='';
+      if(!tdSubject.value || !tdTopic.value || !tdTask.value) return;
+      const snap = await getDocs(query(allSubsCol(), where('taskId', '==', tdTask.value), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      if(snap.docs.length===0){ container.innerHTML = '<p class="helper">No submissions for this task yet.</p>'; return; }
+      snap.docs.forEach(d=>{
+        const s = { id:d.id, ...d.data() };
+        const row = document.createElement('div'); row.className='card';
+        row.innerHTML = `
+          <div class="row" style="align-items:center; gap: 16px;">
+            <div style="flex:2">
+              <strong>${s.studentName}</strong>
+              <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
+              ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open</a>`: ''}
+              ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">Text</button>`: ''}
+            </div>
+            <div style="flex:1">
+              <label class="label">Status</label>
+              <select data-field="status" class="input">${['submitted','reviewing','graded'].map(v=>`<option value="${v}" ${s.status===v?'selected':''}>${v}</option>`).join('')}</select>
+            </div>
+            <div style="flex:1">
+              <label class="label">Score</label>
+              <input data-field="score" class="input" type="number" step="1" min="0" max="100" value="${s.score??''}"/>
+            </div>
+          </div>
+          <label class="label">Feedback</label>
+          <textarea data-field="feedback" class="input" rows="2">${s.feedback||''}</textarea>
+          <div class="footer" style="justify-content:flex-start">
+            <button class="btn-primary" data-act="save">Save</button>
+            <button class="logout-btn" data-act="delete">Delete Log</button>
+          </div>`;
+        if(s.textAnswer){ row.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=`${s.studentName} — Text`; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
+        row.querySelector('[data-act="save"]').addEventListener('click', async ()=>{
+          await updateDoc(doc(db, allSubsCol().path, s.id), { status: row.querySelector('[data-field="status"]').value, score: Number(row.querySelector('[data-field="score"]').value) || null, feedback: row.querySelector('[data-field="feedback"]').value });
+          showNotification('Saved', 'Feedback and score have been updated.');
+        });
+        row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+          if(window.confirm('Delete this log entry? This does not delete the student\'s original file.')) {
+            await deleteDoc(doc(db, allSubsCol().path, s.id));
+            loadSubmissionsForTD();
+          }
+        });
+        container.appendChild(row);
+      });
+    }
+
+    function renderAfterAuth(){
+      authWrapper.style.display='none';
+      appRoot.style.display='block';
+      userNameSpan.textContent = `${currentUser.displayName||currentUser.email} (${currentRole})`;
+      $('#teacherDashboard').style.display = canTeach()? 'block':'none';
+      $('#roleNote').textContent = canTeach()? 'You are in Teacher Mode.' : 'You are in Student Mode.';
+      
+      Promise.all([
+        loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)
+      ]).then(()=>{
+        if(subjectSelect.value){ loadTopics(subjectSelect.value, topicSelect); }
+        if(sFilter.value){ loadTopics(sFilter.value, tFilter); }
+        if(tdSubject.value){ loadTopics(tdSubject.value, tdTopic); }
+      });
+      renderMySubmissions();
+      renderTasksForFilters();
+    }
+  </script>
 </body>
 </html>
 
