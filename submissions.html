@@ -720,34 +720,28 @@
                     try {
                         const batch = writeBatch(db);
                         
-                        // FIX: Use a collectionGroup query to efficiently find all submissions to delete
-                        // This requires the Firestore index mentioned in the comments.
                         const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
                         const subsSnapshot = await getDocs(submissionsQuery);
 
                         for(const subDoc of subsSnapshot.docs){
                             const subData = subDoc.data();
-                            // Delete associated file from Storage if it exists
                             if(subData.filePath) {
                                 const fileRef = ref(storage, subData.filePath);
                                 await deleteObject(fileRef).catch(e => console.warn("Could not delete submission file from storage:", e.message));
                             }
-                            // Add the submission document deletion to the batch
                             batch.delete(subDoc.ref);
                         }
                         
-                        // Add the assignment document deletion to the batch
                         const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
                         batch.delete(assignmentDocRef);
                         
-                        // Commit all deletions at once
                         await batch.commit();
 
                         showModal('Success', 'Assignment and all submissions deleted.');
-                        await loadTeacherAssignments(); // Refresh the view
+                        await loadTeacherAssignments();
                     } catch (error) {
-                        console.error("Deletion Error:", error);
-                        showModal('Error', `Could not delete assignment: ${error.message}. Please ensure the required Firestore index for 'submissions' is created.`);
+                        console.error("Deletion Error:", error.message);
+                        showModal('Error', `Could not delete assignment: Missing or insufficient permissions. Please ensure the required Firestore index for 'submissions' is created.`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
