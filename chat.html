@@ -297,6 +297,10 @@
                     <label for="aiSourceGemini">AI Source:</label>
                     <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
                     <label for="aiSourceGemini">Gemini API (Cloud)</label>
+                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
+                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
+                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
+                    <label for="aiSourceLocal">Local AI (Experimental)</label>
                     <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
                 </div>
                 <div id="chatDisplay">
@@ -339,286 +343,342 @@
         };
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // A single proxy URL that handles both Gemini and DeepSeek API calls.
+        const PROXY_WORKER_URL = "https://us-central1-hardy-abode-420101.cloudfunctions.net/gemini-proxy"; 
 
         let app, db, auth;
         let currentUserId = null, currentUserName = null;
         let geminiChatHistory = []; 
-
-        // --- AUTH & INITIALIZATION ---
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
-
-        const googleSignInTemplate = `
-            <h2>Sign In to Chat</h2>
-            <button id="googleSignInButton" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-                <span>Sign in with Google</span>
-            </button>
-            <p id="authError" class="error-message"></p>
-        `;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            console.log("Firebase initialized successfully.");
-        } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                currentUserName = user.displayName;
-                // Silently create a basic profile or update last login, useful for tracking
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { name: currentUserName, email: user.email, lastLogin: Date.now() }, { merge: true });
-                showApp();
-            } else {
-                currentUserId = null;
-                currentUserName = null;
-                showLogin();
-            }
-        });
-
-        function showLogin() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
-            authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        }
-
-        async function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = currentUserName || 'User';
-            await loadChatHistory();
-        }
-
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
-            try { 
-                await signInWithPopup(auth, provider); 
-            } catch (error) { 
-                const authError = document.getElementById('authError');
-                if (authError) authError.textContent = `Sign-in failed. Error: ${error.message}`;
-                console.error("Google Sign-In Error:", error);
-            }
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        let currentAiSource = 'gemini-api';
         
-        // --- CHAT FUNCTIONALITY ---
-        const chatInput = document.getElementById('chatInput');
-        const sendChatButton = document.getElementById('sendChatButton');
-        const chatDisplay = document.getElementById('chatDisplay');
-        const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
-        const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
+        // This function will be called once the entire page is loaded.
+        window.onload = function() {
+            // --- AUTH & INITIALIZATION ---
+            // We now get the DOM elements inside this onload function
+            // to ensure they are available.
+            const authWrapper = document.getElementById('authWrapper');
+            const appSection = document.getElementById('appSection');
+            const authContainer = document.getElementById('authContainer');
 
-        async function handleSendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
+            const googleSignInTemplate = `
+                <h2>Sign In to Chat</h2>
+                <button id="googleSignInButton" class="google-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
+                    <span>Sign in with Google</span>
+                </button>
+                <p id="authError" class="error-message"></p>
+            `;
 
-            appendChatMessage(message, 'user');
-            chatInput.value = '';
-            chatLoadingIndicator.textContent = 'AI is typing...';
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                console.log("Firebase initialized successfully.");
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    currentUserName = user.displayName;
+                    // Silently create a basic profile or update last login, useful for tracking
+                    const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                    await setDoc(userProfileRef, { name: currentUserName, email: user.email, lastLogin: Date.now() }, { merge: true });
+                    showApp();
+                } else {
+                    currentUserId = null;
+                    currentUserName = null;
+                    showLogin();
+                }
+            });
+
+            function showLogin() {
+                appSection.style.display = 'none';
+                authWrapper.style.display = 'flex';
+                authWrapper.style.opacity = '1';
+                authContainer.innerHTML = googleSignInTemplate;
+                document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
+            }
+
+            async function showApp() {
+                authWrapper.style.display = 'none';
+                appSection.style.display = 'flex';
+                document.getElementById('userDisplayName').textContent = currentUserName || 'User';
+                await loadChatHistory();
+            }
+
+            async function handleGoogleSignIn() {
+                const provider = new GoogleAuthProvider();
+                try { 
+                    await signInWithPopup(auth, provider); 
+                } catch (error) { 
+                    const authError = document.getElementById('authError');
+                    if (authError) authError.textContent = `Sign-in failed. Error: ${error.message}`;
+                    console.error("Google Sign-In Error:", error);
+                }
+            }
+
+            document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
             
-            // NOTE: Replace this with your own Google Cloud Function URL
-            const cloudFunctionUrl = `https://us-central1-hardy-abode-420101.cloudfunctions.net/gemini-proxy`; 
+            // --- CHAT FUNCTIONALITY ---
+            const chatInput = document.getElementById('chatInput');
+            const sendChatButton = document.getElementById('sendChatButton');
+            const chatDisplay = document.getElementById('chatDisplay');
+            const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
+            const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
 
-            // Sending the message to the Cloud Function proxy
-            const payload = {
-                message: message,
-                // You can add more data here if needed by your function
-            };
+            document.getElementById('aiSourceGemini').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'gemini-api'; });
+            document.getElementById('aiSourceDeepSeek').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'deepseek-api'; });
+            document.getElementById('aiSourceLocal').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'local-ai'; });
 
-            try {
-                const response = await fetch(cloudFunctionUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+            async function handleSendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Cloud Function error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
-                }
+                appendChatMessage(message, 'user');
+                chatInput.value = '';
+                chatLoadingIndicator.textContent = 'AI is typing...';
 
-                const result = await response.json();
-                
-                if (result.response) {
-                    const aiResponse = result.response;
-                    appendChatMessage(aiResponse, 'gemini');
-                    geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                    await saveChatHistory();
-                } else {
-                    appendChatMessage("Sorry, I received an unexpected response from the AI.", 'gemini');
-                }
-            } catch (error) {
-                console.error("Error sending message to Gemini:", error);
-                appendChatMessage(`Error: ${error.message}`, 'gemini');
-            } finally {
-                chatLoadingIndicator.textContent = '';
-            }
-        }
+                if (currentAiSource === 'gemini-api') {
+                    geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
 
-        function appendChatMessage(text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.className = `chat-message ${sender}`;
-            messageElement.textContent = text;
-            chatDisplay.appendChild(messageElement);
-            chatDisplay.scrollTop = chatDisplay.scrollHeight;
-        }
+                    const payload = {
+                        api: 'gemini',
+                        message: message
+                    };
+                    
+                    try {
+                        const response = await fetch(PROXY_WORKER_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
 
-        sendChatButton.addEventListener('click', handleSendMessage);
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSendMessage();
-            }
-        });
-
-        // --- PERSISTENT CHAT HISTORY (FIRESTORE) ---
-        const CHAT_HISTORY_DOC_PATH = (userId) => `artifacts/${appId}/users/${userId}/chatHistory/data`;
-
-        async function loadChatHistory() {
-            if (!currentUserId) {
-                initializeDefaultChatHistory();
-                return;
-            }
-
-            chatDisplay.innerHTML = '';
-            chatLoadingIndicator.textContent = 'Loading chat history...';
-
-            try {
-                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                const docSnap = await getDoc(chatDocRef);
-
-                if (docSnap.exists() && docSnap.data().history) {
-                    geminiChatHistory = docSnap.data().history;
-                    geminiChatHistory.forEach(msg => {
-                        if (msg.role === "user" || msg.role === "model") {
-                            appendChatMessage(msg.parts[0].text, msg.role === "user" ? "user" : "gemini");
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(`API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
                         }
-                    });
-                } else {
-                    initializeDefaultChatHistory();
+
+                        const result = await response.json();
+                        
+                        if (result.response) {
+                            const aiResponse = result.response;
+                            appendChatMessage(aiResponse, 'gemini');
+                            geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                            await saveChatHistory();
+                        } else {
+                            appendChatMessage("Sorry, I received an unexpected response from the AI.", 'gemini');
+                        }
+                    } catch (error) {
+                        console.error("Error sending message to Gemini:", error);
+                        appendChatMessage(`Error: ${error.message}`, 'gemini');
+                    } finally {
+                        chatLoadingIndicator.textContent = '';
+                    }
+
+                } else if (currentAiSource === 'deepseek-api') {
+                    const deepseekPayload = {
+                        api: 'deepseek',
+                        message: message
+                    };
+                    
+                    try {
+                        const response = await fetch(PROXY_WORKER_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(deepseekPayload)
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(`API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                        }
+
+                        const result = await response.json();
+                        if (result.response) {
+                            const aiResponse = result.response;
+                            appendChatMessage(aiResponse, 'gemini'); // Use gemini class for styling
+                        } else {
+                            appendChatMessage("Sorry, I received an unexpected response from DeepSeek AI.", 'gemini');
+                        }
+                    } catch (error) {
+                        console.error("Error sending message to DeepSeek:", error);
+                        appendChatMessage(`Error with DeepSeek AI: ${error.message}`, 'gemini');
+                    } finally {
+                        chatLoadingIndicator.textContent = '';
+                    }
+
+                } else if (currentAiSource === 'local-ai') {
+                    const responses = {
+                        "hello": "Hello there! I'm the local AI. I can only provide very basic responses. Please switch to a cloud AI option for advanced help.",
+                        "hi": "Hello there! I'm the local AI. I can only provide very basic responses. Please switch to a cloud AI option for advanced help.",
+                        "math": "As a local AI, I don't have the advanced processing power for complex math problems. Please use a cloud AI option for that!",
+                        "equation": "As a local AI, I don't have the advanced processing power for complex math problems. Please use a cloud AI option for that!",
+                        "thank you": "You're welcome! Happy to assist in simple ways.",
+                        "thanks": "You're welcome! Happy to assist in simple ways."
+                    };
+                    const lowerCaseMessage = message.toLowerCase();
+                    let localAiResponse = "I'm the experimental local AI. I can only provide very basic responses. 真係聽唔明，上面轉左online LLM AI幫到你幫緊你，唔好問我🙅唔知你up mud，sorry😀☺️";
+
+                    for (const key in responses) {
+                        if (lowerCaseMessage.includes(key)) {
+                            localAiResponse = responses[key];
+                            break;
+                        }
+                    }
+                    
+                    setTimeout(() => { // Simulate processing
+                        appendChatMessage(localAiResponse, 'gemini');
+                        chatLoadingIndicator.textContent = '';
+                    }, 500);
                 }
-            } catch (error) {
-                console.error("Error loading chat history:", error);
-                showModal('Chat History Error', `Could not load chat history: ${error.message}`);
-                initializeDefaultChatHistory();
-            } finally {
-                chatLoadingIndicator.textContent = '';
+            }
+
+            function appendChatMessage(text, sender) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `chat-message ${sender}`;
+                messageElement.textContent = text;
+                chatDisplay.appendChild(messageElement);
                 chatDisplay.scrollTop = chatDisplay.scrollHeight;
             }
-        }
 
-        async function saveChatHistory() {
-            if (!currentUserId) return;
-            try {
-                const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                await setDoc(chatDocRef, { history: geminiChatHistory }, { merge: true });
-            } catch (error) {
-                console.error("Error saving chat history:", error);
-                showModal('Chat Save Error', `Could not save chat history: ${error.message}`);
-            }
-        }
+            sendChatButton.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
 
-        function initializeDefaultChatHistory() {
-            geminiChatHistory = [
-                { role: "user", parts: [{text: "You are an AI assistant."}]}, 
-                { role: "model", parts: [{text: "Hello! How can I assist you today?"}]}
-            ];
-            chatDisplay.innerHTML = '';
-            appendChatMessage("Hello! How can I help you today?", 'gemini');
-        }
+            // --- PERSISTENT CHAT HISTORY (FIRESTORE) ---
+            const CHAT_HISTORY_DOC_PATH = (userId) => `artifacts/${appId}/users/${userId}/chatHistory/data`;
 
-        async function clearChatHistory() {
-            showModal('Confirm Clear History', 'Are you sure you want to clear your chat history? This action cannot be undone.', [
-                { text: 'Clear', className: 'btn-primary', onClick: async () => {
-                    if (!currentUserId) return;
-                    try {
-                        const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
-                        await deleteDoc(chatDocRef);
+            async function loadChatHistory() {
+                if (!currentUserId) {
+                    initializeDefaultChatHistory();
+                    return;
+                }
+
+                chatDisplay.innerHTML = '';
+                chatLoadingIndicator.textContent = 'Loading chat history...';
+
+                try {
+                    const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                    const docSnap = await getDoc(chatDocRef);
+
+                    if (docSnap.exists() && docSnap.data().history) {
+                        geminiChatHistory = docSnap.data().history;
+                        geminiChatHistory.forEach(msg => {
+                            if (msg.role === "user" || msg.role === "model") {
+                                appendChatMessage(msg.parts[0].text, msg.role === "user" ? "user" : "gemini");
+                            }
+                        });
+                    } else {
                         initializeDefaultChatHistory();
-                        showModal('Success', 'Chat history cleared.');
-                    } catch (error) {
-                        console.error("Error clearing chat history:", error);
-                        showModal('Error', `Could not clear chat history: ${error.message}`);
                     }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-
-        clearChatMemoryButton.addEventListener('click', clearChatHistory);
-        
-        // --- UI & MODALS ---
-        function showModal(title, message, buttons = []) {
-            const messageModal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = message;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = '';
-
-            if (buttons.length === 0) {
-                 const okButton = document.createElement('button');
-                 okButton.textContent = 'OK';
-                 okButton.className = 'btn-primary';
-                 okButton.onclick = () => { messageModal.style.display = 'none'; };
-                 modalButtons.appendChild(okButton);
-            } else {
-                 buttons.forEach(btnConfig => {
-                    const button = document.createElement('button');
-                    button.textContent = btnConfig.text;
-                    button.className = btnConfig.className;
-                    button.onclick = () => { 
-                        messageModal.style.display = 'none';
-                        if (btnConfig.onClick) btnConfig.onClick();
-                    };
-                    modalButtons.appendChild(button);
-                });
+                } catch (error) {
+                    console.error("Error loading chat history:", error);
+                    showModal('Chat History Error', `Could not load chat history: ${error.message}`);
+                    initializeDefaultChatHistory();
+                } finally {
+                    chatLoadingIndicator.textContent = '';
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                }
             }
-            messageModal.style.display = 'flex';
-        }
-        
-        document.querySelectorAll('.modal .close-button').forEach(btn => {
-            btn.onclick = () => { btn.closest('.modal').style.display = 'none'; };
-        });
 
-        // --- THEME TOGGLE ---
-        const themeToggleButton = document.getElementById('themeToggleButton');
-        function applyTheme(theme) { 
-            document.body.classList.toggle('light-theme', theme === 'light'); 
-        }
-        function loadTheme() { 
-            const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
-            applyTheme(savedTheme); 
-        }
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-
-        // --- INITIAL LOAD ---
-        loadTheme();
-    </script>
-
-    <script>
-        // Show the login wrapper when the page has fully loaded
-        window.addEventListener('load', function() {
-            const authWrapper = document.getElementById('authWrapper');
-            if (authWrapper) {
-                // The onAuthStateChanged will handle hiding this, 
-                // but we ensure it's visible on first load.
-                authWrapper.style.opacity = '1';
+            async function saveChatHistory() {
+                if (!currentUserId) return;
+                try {
+                    const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                    await setDoc(chatDocRef, { history: geminiChatHistory }, { merge: true });
+                } catch (error) {
+                    console.error("Error saving chat history:", error);
+                    showModal('Chat Save Error', `Could not save chat history: ${error.message}`);
+                }
             }
-        });
+
+            function initializeDefaultChatHistory() {
+                geminiChatHistory = [
+                    { role: "user", parts: [{text: "You are an AI assistant."}]}, 
+                    { role: "model", parts: [{text: "Hello! How can I assist you today?"}]}
+                ];
+                chatDisplay.innerHTML = '';
+                appendChatMessage("Hello! How can I help you today?", 'gemini');
+            }
+
+            async function clearChatHistory() {
+                showModal('Confirm Clear History', 'Are you sure you want to clear your chat history? This action cannot be undone.', [
+                    { text: 'Clear', className: 'btn-primary', onClick: async () => {
+                        if (!currentUserId) return;
+                        try {
+                            const chatDocRef = doc(db, CHAT_HISTORY_DOC_PATH(currentUserId));
+                            await deleteDoc(chatDocRef);
+                            initializeDefaultChatHistory();
+                            showModal('Success', 'Chat history cleared.');
+                        } catch (error) {
+                            console.error("Error clearing chat history:", error);
+                            showModal('Error', `Could not clear chat history: ${error.message}`);
+                        }
+                    }},
+                    { text: 'Cancel', className: 'logout-btn' }
+                ]);
+            }
+
+            clearChatMemoryButton.addEventListener('click', clearChatHistory);
+            
+            // --- UI & MODALS ---
+            function showModal(title, message, buttons = []) {
+                const messageModal = document.getElementById('messageModal');
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalMessage').innerHTML = message;
+                const modalButtons = document.getElementById('modalButtons');
+                modalButtons.innerHTML = '';
+
+                if (buttons.length === 0) {
+                        const okButton = document.createElement('button');
+                        okButton.textContent = 'OK';
+                        okButton.className = 'btn-primary';
+                        okButton.onclick = () => { messageModal.style.display = 'none'; };
+                        modalButtons.appendChild(okButton);
+                } else {
+                        buttons.forEach(btnConfig => {
+                        const button = document.createElement('button');
+                        button.textContent = btnConfig.text;
+                        button.className = btnConfig.className;
+                        button.onclick = () => { 
+                            messageModal.style.display = 'none';
+                            if (btnConfig.onClick) btnConfig.onClick();
+                        };
+                        modalButtons.appendChild(button);
+                    });
+                }
+                messageModal.style.display = 'flex';
+            }
+            
+            document.querySelectorAll('.modal .close-button').forEach(btn => {
+                btn.onclick = () => { btn.closest('.modal').style.display = 'none'; };
+            });
+
+            // --- THEME TOGGLE ---
+            const themeToggleButton = document.getElementById('themeToggleButton');
+            function applyTheme(theme) { 
+                document.body.classList.toggle('light-theme', theme === 'light'); 
+            }
+            function loadTheme() { 
+                const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
+                applyTheme(savedTheme); 
+            }
+            themeToggleButton.addEventListener('click', () => {
+                const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('ai-marker-theme', newTheme);
+            });
+
+            // --- INITIAL LOAD ---
+            loadTheme();
+        }
     </script>
 </body>
 </html>
