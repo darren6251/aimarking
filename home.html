@@ -68,6 +68,7 @@
         flex-direction: column;
         min-height: 100vh;
         transition: background-color 0.3s, color 0.3s;
+        padding-bottom: 80px; /* Add padding to prevent content from being hidden by the new footer bar */
     }
 
     button,
@@ -397,14 +398,6 @@
         color: var(--accent-primary);
     }
 
-    /* Removed the separate span and integrated its content into h2 for a single line */
-    /* .hero-text span {
-        font-size: 1.5rem;
-        color: var(--text-secondary);
-        display: block;
-        margin-bottom: 2rem;
-    } */
-
     .hero-text .buttons {
         display: flex;
         gap: 1rem;
@@ -489,10 +482,6 @@
         .hero-text h2 {
             font-size: 2.2rem;
         }
-        /* Removed the separate span and integrated its content into h2 for a single line */
-        /* .hero-text span {
-            font-size: 1.2rem;
-        } */
         .hero-text .buttons {
             flex-direction: column;
         }
@@ -518,6 +507,59 @@
     footer a:hover { 
         text-decoration: underline; 
         color: var(--text-primary); 
+    }
+    
+    /* --- Time and Countdown Bar --- */
+    .time-countdown-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        z-index: 1002;
+    }
+    .time-display, .countdown-display {
+        font-size: 2rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: var(--text-primary);
+    }
+    .countdown-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    #teacher-controls {
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 0.5rem;
+    }
+    #countdown-datetime {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 8px;
+        border-radius: 6px;
+    }
+    #set-countdown-btn {
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #set-countdown-btn:hover {
+        opacity: 0.85;
+    }
+    body.light-theme #set-countdown-btn {
+        color: var(--bg-primary);
     }
 
   </style>
@@ -570,7 +612,6 @@
           <span id="userDisplayName">Guest</span>
           <button id="switchRoleButton">Switch Role</button>
           <button id="logoutButton" class="logout-btn">Logout</button>
-          <!-- <button id="themeToggleButton" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">💡</button> -->
         </div>
       </div>
     </header>
@@ -585,7 +626,7 @@
               <a href="materials.html?folder=tutorials" id="homeTutorialLink">Tutorial Video</a>
               <a href="grading.html" id="homeGraderLink">Exam Grader</a>
               <a href="chat.html" id="homeChatLink">Chat with AI</a>
-              <a href="submissions.html" id="homeSubmissionsLink" class="btn-primary">Submissions</a> <!-- Added direct link to submissions -->
+              <a href="submissions.html" id="homeSubmissionsLink" class="btn-primary">Submissions</a>
             </div>
           </div>
           <div class="hero-image">
@@ -598,6 +639,18 @@
     <footer>
       <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
     </footer>
+  </div>
+
+  <!-- Time and Countdown Bar -->
+  <div class="time-countdown-bar">
+    <div id="currentTime" class="time-display">00:00:00</div>
+    <div class="countdown-container">
+      <div id="countdown" class="countdown-display">--:--:--:--</div>
+      <div id="teacher-controls">
+        <input type="datetime-local" id="countdown-datetime">
+        <button id="set-countdown-btn">Set</button>
+      </div>
+    </div>
   </div>
 
   <!-- Universal Modal -->
@@ -641,16 +694,16 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // --- IMPORTANT CONFIGURATION ---
     const TEACHER_CODE = "Derren0625"; // Example teacher code
     const STUDENT_CODE = "STUDENT456"; // Example student code
 
-    // Firebase Configuration (Replace with your actual Firebase config)
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Placeholder API Key
+      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
       projectId: "ai-grading-9bb30",
       storageBucket: "ai-grading-9bb30.appspot.com",
@@ -661,17 +714,16 @@
     
     // Canvas provided global variables
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    // const CLOUDFLARE_WORKER_URL = "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/"; // Not used in this specific page but kept for context if needed
 
     let app, db, auth, storage;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
+    let countdownInterval;
 
     // --- AUTH & INITIALIZATION ---
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
     const userDisplayNameSpan = document.getElementById('userDisplayName');
-
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -705,7 +757,6 @@
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
-            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
                 const userProfileDoc = await getDoc(userProfileRef);
@@ -713,7 +764,6 @@
                     const profileData = userProfileDoc.data();
                     currentUserRole = profileData.role;
                     currentUserName = profileData.name || user.displayName;
-                    // Update last login time
                     await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                     showApp();
                 } else {
@@ -763,8 +813,16 @@
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-        document.getElementById('homeUserNamePlaceholder').textContent = currentUserName; // Update home page specific placeholder
-        // Load initial home page content/data after showing the app.
+        document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
+        
+        // Show teacher controls for countdown if applicable
+        if (currentUserRole === 'teacher') {
+            document.getElementById('teacher-controls').style.display = 'flex';
+        }
+
+        // Start clocks and listen for countdown changes
+        startClocks();
+        listenForCountdownChanges();
     }
 
     async function handleGoogleSignIn() {
@@ -791,7 +849,6 @@
         }
         
         try {
-            // Corrected path for user profile: collection/document/collection/document/collection
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
             currentUserRole = roleToSet;
@@ -840,12 +897,11 @@
             }
 
             try {
-                // Corrected path for user profile: collection/document/collection/document/collection
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await updateDoc(userProfileRef, { name: newName });
                 currentUserName = newName;
                 userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-                document.getElementById('homeUserNamePlaceholder').textContent = currentUserName; // Update home page specific placeholder
+                document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
                 profileEditModal.style.display = 'none';
                 showModal('Success', 'Profile updated successfully!');
             } catch (error) {
@@ -866,6 +922,81 @@
         cancelProfileButton.addEventListener('click', cancelHandler);
         document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
     });
+
+    // --- TIME AND COUNTDOWN LOGIC ---
+    function startClocks() {
+        // Current Time
+        const currentTimeEl = document.getElementById('currentTime');
+        setInterval(() => {
+            const now = new Date();
+            currentTimeEl.textContent = now.toLocaleTimeString('en-GB');
+        }, 1000);
+    }
+
+    function updateCountdown(targetDate) {
+        const countdownEl = document.getElementById('countdown');
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        if (!targetDate) {
+            countdownEl.textContent = "No Event";
+            return;
+        }
+
+        countdownInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                countdownEl.textContent = "EXPIRED";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            countdownEl.textContent = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    function listenForCountdownChanges() {
+        const countdownRef = doc(db, `artifacts/${appId}/public/settings/countdown`);
+        onSnapshot(countdownRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                const targetDate = data.target ? data.target.toDate() : null;
+                updateCountdown(targetDate);
+            } else {
+                updateCountdown(null);
+            }
+        });
+    }
+
+    document.getElementById('set-countdown-btn').addEventListener('click', async () => {
+        const datetimeInput = document.getElementById('countdown-datetime').value;
+        if (!datetimeInput) {
+            showModal('Error', 'Please select a date and time.');
+            return;
+        }
+
+        const targetDate = new Date(datetimeInput);
+        if (isNaN(targetDate)) {
+            showModal('Error', 'Invalid date and time format.');
+            return;
+        }
+
+        try {
+            const countdownRef = doc(db, `artifacts/${appId}/public/settings/countdown`);
+            await setDoc(countdownRef, { target: targetDate });
+            showModal('Success', 'Countdown target has been set!');
+        } catch (error) {
+            showModal('Error', `Could not set countdown: ${error.message}`);
+            console.error("Error setting countdown:", error);
+        }
+    });
+
 
     // --- MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
@@ -934,25 +1065,6 @@
         const modal = btn.closest('.modal');
         modal.style.display = 'none'; 
     });
-
-    // --- THEME TOGGLE ---
-    const themeToggleButton = document.getElementById('themeToggleButton');
-    function applyTheme(theme) { 
-        document.body.classList.toggle('light-theme', theme === 'light'); 
-    }
-    function loadTheme() { 
-        const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
-        applyTheme(savedTheme); 
-    }
-    if (themeToggleButton) { // Check if the button exists before adding listener
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-    }
-
-    loadTheme(); // Apply theme on load
   </script>
 </body>
 </html>
