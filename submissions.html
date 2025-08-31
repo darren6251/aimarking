@@ -1,1097 +1,568 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Marker - Submissions</title>
-    <!-- PDF.js library for rendering PDFs -->
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js)"></script>
-    <!-- Custom styles -->
-    <style>
-        /* --- MODERN BLACK & WHITE THEME --- */
-        :root {
-            --bg-primary: #0a0a0a; /* Near black for main background */
-            --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
-            --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
-            --text-primary: #f5f5f5; /* Off-white for primary text */
-            --text-secondary: #a3a3a3; /* Muted gray for secondary text */
-            --accent-primary: #ffffff; /* White for key actions and highlights */
-            --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
-            --border-color: #333333; /* Subtle border color */
-            --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
-        }
-        
-        /* --- LIGHT THEME OVERRIDES --- */
-        body.light-theme {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f5;
-            --bg-tertiary: #e5e5e5;
-            --text-primary: #0a0a0a;
-            --text-secondary: #737373;
-            --accent-primary: #0a0a0a;
-            --border-color: #d4d4d4;
-            --focus-ring-color: rgba(10, 10, 10, 0.5);
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Marker — Submissions</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-primary:#0b0f12; --bg-secondary:#141a1f; --bg-tertiary:#1b232b; --text-primary:#e6edf3; --text-secondary:#9aa7b2; --border-color:#2a3540; --accent-primary:#4f8cff; --accent-red:#ef4444;
+  --finder-bg:#0e1317; --finder-bg-secondary:#121920; --finder-border-color:#2a3540; --finder-text-primary:#e6edf3; --finder-text-secondary:#8b98a5; --finder-hover-bg:#18212a;
+}
+body.light-theme{ --bg-primary:#ffffff; --bg-secondary:#f6f7f9; --bg-tertiary:#eef1f5; --text-primary:#0b0f12; --text-secondary:#46505a; --border-color:#d8dee6; --accent-primary:#0b57d0; --accent-red:#d93025; --finder-bg:#ffffff; --finder-bg-secondary:#f7f9fc; --finder-border-color:#d8dee6; --finder-text-primary:#0b0f12; --finder-text-secondary:#5f6b76; --finder-hover-bg:#eef3f8; }
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg-primary); color:var(--text-primary)}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color)}
+header .logo-container h1{font-size:18px;margin:0}
+header .logo-container p{margin:0;color:var(--text-secondary);font-size:12px}
+.header-actions{display:flex;gap:.5rem;align-items:center}
+.tab{background:transparent;color:var(--text-primary);border:1px solid var(--border-color);border-radius:10px;padding:8px 12px;cursor:pointer}
+.tab.active{background:var(--accent-primary);color:var(--bg-primary);border-color:transparent}
+.logout-btn{background:transparent;border:1px solid var(--border-color);color:var(--accent-red);border-radius:10px;padding:8px 12px;cursor:pointer}
+.btn-primary{background:var(--accent-primary);border:none;color:var(--bg-primary);padding:8px 12px;border-radius:10px;cursor:pointer}
+.btn-secondary{background:transparent;color:var(--text-primary);border:1px solid var(--border-color);padding:8px 12px;border-radius:10px;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+main{display:flex;gap:24px;max-width:1200px;margin:24px auto;padding:0 16px}
+.sidebar{width:280px;flex-shrink:0;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;height:fit-content;position:sticky;top:88px}
+.content{flex:1;min-width:0}
+.card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h3{margin:0 0 12px}
+.section-title{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0 0 12px}
+.label{display:block;font-size:12px;color:var(--text-secondary);margin:10px 0 6px}
+.input, select, textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary)}
+.row{display:flex;gap:12px}
+.row > *{flex:1}
+.helper{font-size:12px;color:var(--text-secondary)}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.tile{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.tile .muted{color:var(--text-secondary);font-size:12px}
+.badge{border:1px solid var(--border-color);border-radius:999px;padding:2px 8px;font-size:11px;color:var(--text-secondary);width:max-content}
 
-        body {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
-        }
+/* Modals */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px}
+.modal .dialog{width:min(720px,96vw);background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:16px;padding:16px}
+.modal .dialog header{position:static;height:auto;padding:0;background:transparent;border:none;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.close-button{background:transparent;border:none;color:var(--text-secondary);font-size:22px;cursor:pointer}
+.modal .dialog .footer{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 
-        button, input, textarea, select {
-            transition: all .2s ease-in-out;
-            font-family: inherit;
-        }
-        button:disabled { opacity: .5; cursor: not-allowed; }
+/* Submission preview */
+.preview{border:1px dashed var(--border-color);border-radius:12px;padding:12px;min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary)}
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        /* --- LOGIN PAGE --- */
-        #authWrapper {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0; left: 0;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            z-index: 1001;
-        }
-        .login-left-panel, .login-right-panel {
-            width: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
-        .login-left-panel { background: var(--bg-primary); flex-direction: column; text-align: center; }
-        .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; }
-        .login-left-panel p { font-size: 1.25rem; color: var(--text-secondary); }
-        .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
-        #authContainer {
-            width: 100%;
-            max-width: 380px;
-            background-color: var(--bg-primary);
-            padding: 2.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        #authContainer h2 { font-size: 2rem; margin-bottom: 2rem; text-align: center; }
-        .google-btn {
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem;
-            cursor: pointer; background: var(--bg-secondary); color: var(--text-primary);
-            font-size: 1rem; font-weight: 500; margin-bottom: 1rem;
-        }
-        .google-btn:hover { background-color: var(--bg-tertiary); }
-        .google-btn img { height: 20px; }
-        #accessCodeInput {
-             background-color: var(--bg-secondary); border: 1px solid var(--border-color);
-             color: var(--text-primary); padding: 12px; border-radius: 8px; width: 100%;
-             margin-bottom: 1rem; text-align: center; font-size: 1rem;
-        }
-        #accessCodeInput:focus {
-            outline: none; border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px var(--focus-ring-color);
-        }
-        .btn-primary {
-             background-color: var(--accent-primary); color: var(--bg-primary);
-             padding: .75rem 1.5rem; border-radius: 8px; border: none;
-             cursor: pointer; font-weight: 600; font-size: 1rem;
-        }
-        body.light-theme .btn-primary { color: var(--bg-primary); }
-        .btn-primary:hover { opacity: 0.85; }
-        
-        #appSection {
-            display: none; flex-direction: column; height: 100vh;
-            background-color: var(--bg-primary); animation: fadeIn .6s ease-out both;
-        }
-        
-        /* --- HEADER --- */
-        header {
-            background: var(--bg-primary); color: var(--text-primary);
-            display: flex; align-items: center; padding: 0 24px;
-            height: 64px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
-        }
-        .logo-container { display: flex; align-items: center; gap: 1rem; }
-        .logo-container h1 { font-size: 1.5rem; }
-        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-        .header-actions .tab {
-            padding: 8px 16px; color: var(--text-secondary); text-decoration: none;
-            transition: .2s; border: none; border-radius: 8px; background: transparent;
-            font-weight: 500; cursor: pointer; font-size: 0.875rem;
-        }
-        .header-actions .tab:hover { background: var(--bg-secondary); color: var(--text-primary); }
-        .header-actions .tab.active {
-            background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600;
-        }
-        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-        .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
-        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
-        
-        /* --- MAIN CONTENT --- */
-        main {
-            flex: 1; display: flex; overflow-y: auto;
-            padding: 32px; justify-content: center;
-        }
-        
-        #submissionSection {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-        }
+/* Auth */
+#authWrapper{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.login-card{max-width:420px;width:100%;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:20px}
+.google-btn{display:flex;align-items:center;gap:8px;justify-content:center;border:1px solid var(--border-color);border-radius:10px;background:transparent;color:var(--text-primary);padding:10px 12px;cursor:pointer;width:100%}
 
-        /* --- FORMS --- */
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="date"], textarea, select {
-            width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); 
-            color: var(--text-primary); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
-        textarea { resize: vertical; min-height: 120px; }
-        input:focus, textarea:focus, select:focus { 
-            outline: none; border-color: var(--accent-primary); 
-            box-shadow: 0 0 0 3px var(--focus-ring-color); 
-        }
-        .drop-zone { 
-            border: 2px dashed var(--border-color); border-radius: 8px; min-height: 140px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-secondary); cursor: pointer; padding: 1rem; text-align: center;
-        }
-        .drop-zone.highlight { border-color: var(--accent-primary); }
-        .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
-        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
-        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
-        
-        /* --- UNIVERSAL STYLES --- */
-        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; width: 100%;}
-        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-        /* --- MODALS --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
-        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-        #modalMessage { word-break: break-all; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
-        .close-button:hover { color: var(--text-primary); }
-        #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
-        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
-
-        /* --- FOOTER --- */
-        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
-        footer a { color: var(--text-secondary); text-decoration: none; pointer-events: all;}
-        footer a:hover { text-decoration: underline; color: var(--text-primary); }
-
-        /* --- HOMEWORK SUBMISSION SPECIFIC STYLES --- */
-        .assignment-card {
-            background-color: var(--bg-secondary); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
-        }
-        .assignment-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
-        .assignment-card p { color: var(--text-secondary); margin-bottom: 0.5rem; }
-        .assignment-card .assignment-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
-        
-        #submissionsListContainer {
-            margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);
-        }
-        .assignment-submission-item {
-            display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color); align-items: flex-start;
-        }
-        .assignment-submission-item:last-child { border-bottom: none; }
-        .submission-detail { color: var(--text-secondary); font-size: 0.9rem; }
-        .submission-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-        .student-submission-card {
-            background-color: var(--bg-secondary); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
-        }
-        .student-submission-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .my-submissions-container { margin-top: 2.5rem; }
-        .assignment-list-container { margin-top: 2.5rem; }
-
-        /* --- RESPONSIVENESS --- */
-        @media (max-width: 768px) {
-            #authWrapper { flex-direction: column; position: static; height: auto; }
-            .login-left-panel, .login-right-panel { width: 100%; }
-            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
-            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
-            main { padding: 16px; }
-            .form-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+@media (max-width: 900px){ main{flex-direction:column} .sidebar{position:static;width:auto} }
+</style>
 </head>
 <body>
-
-    <!-- Authentication Wrapper -->
-    <div id="authWrapper" style="display: flex;">
-        <div class="login-left-panel">
-            <h1>AI Marker</h1>
-            <p>Your dedicated submission portal.</p>
-        </div>
-        <div class="login-right-panel">
-            <div id="authContainer">
-                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
-            </div>
-        </div>
+  <div id="authWrapper">
+    <div class="login-card">
+      <h2 style="margin:0 0 8px">Sign in</h2>
+      <p class="helper" style="margin-top:0">Use Google to continue.</p>
+      <button id="googleSignInButton" class="google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18"/>
+        <span>Sign in with Google</span>
+      </button>
+      <div id="codeEntry" style="margin-top:12px;display:none">
+        <label class="label">Enter Access Code</label>
+        <input id="accessCodeInput" class="input" placeholder="Teacher or Student code"/>
+        <button id="submitCodeButton" class="btn-primary" style="width:100%;margin-top:8px">Submit Code</button>
+        <p id="codeError" class="helper" style="color:var(--accent-red)"></p>
+      </div>
+      <p id="authError" class="helper" style="color:var(--accent-red)"></p>
     </div>
+  </div>
 
-    <!-- Main Application Section -->
-    <div id="appSection" style="display: none;">
-        <header>
-            <div class="logo-container">
-                <h1>AI Marker</h1>
-            </div>
-            <div class="header-actions">
-                <a href="./index.html" class="tab">Home</a>
-                <button id="toggleSubmissionsButton" class="tab active">Submissions</button>
-                <div class="user-info">
-                     <span id="userDisplayName"></span>
-                     <button id="logoutButton" class="logout-btn">Log Out</button>
-                </div>
-            </div>
-        </header>
-        
-        <main>
-            <!-- Submission Section -->
-            <div id="submissionSection">
-                <!-- Content will be rendered by JS based on user role -->
-            </div>
-        </main>
-    </div>
+  <div id="app" style="display:none">
+    <header>
+      <div class="logo-container">
+        <h1>AI Marker</h1>
+        <p>Operated by Darren Ng</p>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggleButton" class="tab">Theme</button>
+        <span id="userDisplayName" class="helper"></span>
+        <button id="switchRoleButton" class="tab">Switch Role</button>
+        <button id="logoutButton" class="logout-btn">Log Out</button>
+      </div>
+    </header>
 
-    <footer>
-        <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
-    </footer>
-
-    <!-- Universal Modal -->
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <div id="modalMessage"></div>
-            <div id="modalButtons"></div>
+    <main>
+      <!-- Left: Teacher builder + Filters -->
+      <aside class="sidebar">
+        <h3 class="section-title">Setup Tasks</h3>
+        <p class="helper" id="roleNote">Only teachers can create or edit.</p>
+        <label class="label">Subject</label>
+        <div class="row">
+          <select id="subjectSelect"></select>
+          <button id="addSubjectBtn" class="btn-secondary" title="Create Subject">＋</button>
         </div>
-    </div>
-    
-    <!-- PDF Preview Modal -->
-    <div id="pdfPreviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="pdfPreviewTitle"></h3>
-            <div id="pdfCanvasContainer">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
+        <label class="label">Topic</label>
+        <div class="row">
+          <select id="topicSelect" disabled></select>
+          <button id="addTopicBtn" class="btn-secondary" title="Create Topic">＋</button>
         </div>
+        <button id="addTaskBtn" class="btn-primary" style="width:100%;margin-top:8px" disabled>Create Task</button>
+        <hr style="border:none;border-top:1px solid var(--border-color);margin:16px 0">
+        <h3 class="section-title">For Students</h3>
+        <p class="helper">Pick a subject & topic to submit.</p>
+        <div class="row">
+          <select id="studentSubjectFilter"></select>
+          <select id="studentTopicFilter" disabled></select>
+        </div>
+      </aside>
+
+      <!-- Right: Task list + Submission + Dashboards -->
+      <section class="content">
+        <div class="card">
+          <h3 class="section-title">Open Tasks</h3>
+          <div id="taskList" class="list"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">My Submissions</h3>
+          <div id="mySubmissions" class="list"></div>
+        </div>
+
+        <div class="card" id="teacherDashboard" style="display:none">
+          <h3 class="section-title">Teacher Dashboard — Submissions</h3>
+          <div class="row">
+            <select id="tdSubject"></select>
+            <select id="tdTopic" disabled></select>
+            <select id="tdTask" disabled></select>
+          </div>
+          <div id="submissionsList" style="margin-top:12px"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="subjectModal" class="modal"><div class="dialog">
+    <header><h3>Create Subject</h3><button class="close-button" data-close>×</button></header>
+    <label class="label">Subject name</label>
+    <input id="subjectName" class="input" placeholder="e.g., Mathematics"/>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveSubject" class="btn-primary">Save</button>
     </div>
+  </div></div>
 
-    <!-- Firebase and Application Logic -->
-    <script type="module">
-        import { initializeApp } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js)";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js)";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js)";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "[https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js](https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js)";
+  <div id="topicModal" class="modal"><div class="dialog">
+    <header><h3>Create Topic</h3><button class="close-button" data-close>×</button></header>
+    <p class="helper" id="topicModalSubject"></p>
+    <label class="label">Topic name</label>
+    <input id="topicName" class="input" placeholder="e.g., Algebra"/>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveTopic" class="btn-primary">Save</button>
+    </div>
+  </div></div>
 
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
-          authDomain: "ai-grading-9bb30.firebaseapp.com",
-          projectId: "ai-grading-9bb30",
-          storageBucket: "ai-grading-9bb30.appspot.com",
-          messagingSenderId: "298162112230",
-          appId: "1:298162112230:web:529d3f95536991be685d27",
-          measurementId: "G-CHKLKSM17S"
-        };
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const TEACHER_CODE = "Derren0625";
-        const STUDENT_CODE = "STUDENT456";
+  <div id="taskModal" class="modal"><div class="dialog">
+    <header><h3 id="taskModalTitle">Create Task</h3><button class="close-button" data-close>×</button></header>
+    <div class="row"><input id="taskTitle" class="input" placeholder="Task title"><input id="taskDue" class="input" type="date"></div>
+    <label class="label">Description</label>
+    <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="saveTask" class="btn-primary">Save</button>
+    </div>
+  </div></div>
 
-        pdfjsLib.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js)';
+  <div id="submitModal" class="modal"><div class="dialog">
+    <header><h3 id="submitModalTitle">Submit Homework</h3><button class="close-button" data-close>×</button></header>
+    <div id="submitTaskMeta" class="helper" style="margin-bottom:8px"></div>
+    <label class="label">Upload file (PDF/Image) or paste an external link</label>
+    <input id="submissionFile" type="file" accept="application/pdf,image/*" class="input"/>
+    <label class="label">or Link</label>
+    <input id="submissionLink" class="input" placeholder="https://..."/>
+    <label class="label">Optional Text Answer</label>
+    <textarea id="submissionText" class="input" rows="4" placeholder="Paste your answer here (optional)"></textarea>
+    <div class="footer">
+      <button class="btn-secondary" data-close>Cancel</button>
+      <button id="sendSubmission" class="btn-primary">Submit</button>
+    </div>
+  </div></div>
 
-        let app, db, auth, storage;
-        let currentUserId = null, currentUserRole = null, currentUserName = null;
+  <div id="previewModal" class="modal"><div class="dialog">
+    <header><h3 id="previewTitle">Preview</h3><button class="close-button" data-close>×</button></header>
+    <div class="preview" id="previewBody">No preview</div>
+    <div class="footer"><button class="btn-secondary" data-close>Close</button></div>
+  </div></div>
 
-        // --- AUTH & INITIALIZATION ---
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
-        const googleSignInTemplate = `
-            <h2>Sign In</h2>
-            <button id="googleSignInButton" class="google-btn">
-                <img src="[https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg](https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg)" alt="Google icon">
-                <span>Sign in with Google</span>
-            </button>
-            <p id="authError" class="error-message"></p>
-        `;
+    // --- Firebase Configuration (from index (8)) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
+      authDomain: "ai-grading-9bb30.firebaseapp.com",
+      projectId: "ai-grading-9bb30",
+      storageBucket: "ai-grading-9bb30.appspot.com",
+      messagingSenderId: "298162112230",
+      appId: "1:298162112230:web:529d3f95536991be685d27",
+      measurementId: "G-CHKLKSM17S"
+    };
+    const TEACHER_CODE = "Derren0625"; // from index (8)
+    const STUDENT_CODE = "STUDENT456"; // from index (8)
+    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
 
-        const codeEntryTemplate = `
-            <h2>Enter Access Code</h2>
-            <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code to define your role.</p>
-            <input type="text" id="accessCodeInput" placeholder="Enter code here">
-            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button>
-            <p id="codeError" class="error-message"></p>
-        `;
+    // Init
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
 
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            storage = getStorage(app);
-        } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            showModal('Firebase Error', `Failed to initialize Firebase. Please check your configuration. Error: ${error.message}`);
+    // UI helpers
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const modals = $$('.modal');
+    modals.forEach(m=> m.addEventListener('click', (e)=>{ if(e.target===m || e.target.dataset.close!==undefined){ m.style.display='none'; }}));
+    const open = (m)=> m.style.display='flex';
+
+    // Theme
+    const themeToggleButton = $('#themeToggleButton');
+    const applyTheme = (t)=> document.body.classList.toggle('light-theme', t==='light');
+    const loadTheme = ()=> { const t=localStorage.getItem('ai-marker-theme')||'dark'; applyTheme(t); };
+    loadTheme(); themeToggleButton?.addEventListener('click', ()=>{ const t=document.body.classList.contains('light-theme')?'dark':'light'; localStorage.setItem('ai-marker-theme', t); applyTheme(t); });
+
+    // State
+    let currentUser = null; let currentRole = null; let currentProfileRef = null;
+    let selectedSubjectId = null; let selectedTopicId = null; let editingTaskId = null; let submittingTaskCtx = null;
+
+    // Paths (under public/data in your rules)
+    const subjectsCol = () => collection(db, `artifacts/${appId}/public/data/subjects`);
+    const topicsCol   = (subjectId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics`);
+    const tasksCol    = (subjectId, topicId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics/${topicId}/tasks`);
+
+    const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`); // central log
+
+    // Auth UI elements
+    const authWrapper = $('#authWrapper');
+    const appRoot = $('#app');
+    const googleBtn = $('#googleSignInButton');
+    const codeEntry = $('#codeEntry');
+    const codeInput = $('#accessCodeInput');
+    const codeSubmit = $('#submitCodeButton');
+    const codeError = $('#codeError');
+    const userNameSpan = $('#userDisplayName');
+
+    googleBtn.addEventListener('click', async ()=>{
+      try{
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      }catch(e){ $('#authError').textContent = e.message; }
+    });
+
+    codeSubmit.addEventListener('click', ()=> handleSubmitCode());
+    codeInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); handleSubmitCode(); }});
+
+    async function handleSubmitCode(){
+      codeError.textContent=''; const code=(codeInput.value||'').trim();
+      if(!code) { codeError.textContent='Enter a code.'; return; }
+      const role = (code===TEACHER_CODE) ? 'teacher' : (code===STUDENT_CODE ? 'student' : null);
+      if(!role){ codeError.textContent='Invalid code.'; return; }
+      if(!currentUser){ codeError.textContent='Sign in first.'; return; }
+      try{
+        await setDoc(currentProfileRef, { role, name: currentUser.displayName || '', email: currentUser.email || '', updatedAt: Date.now() }, { merge:true });
+        currentRole = role; renderAfterAuth();
+      }catch(e){ codeError.textContent = e.message; }
+    }
+
+    $('#logoutButton').addEventListener('click', ()=> signOut(auth));
+    $('#switchRoleButton').addEventListener('click', ()=>{ codeEntry.style.display='block'; codeInput.focus(); });
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        currentUser = user; currentProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+        // ensure profile
+        const snap = await getDoc(currentProfileRef);
+        if(snap.exists() && snap.data().role){ currentRole = snap.data().role; }
+        authWrapper.style.display='none'; appRoot.style.display='block';
+        userNameSpan.textContent = `${user.displayName||user.email} (${currentRole||'unassigned'})`;
+        if(!currentRole){ codeEntry.style.display='block'; }
+        renderAfterAuth();
+      }else{
+        currentUser=null; currentRole=null; authWrapper.style.display='flex'; appRoot.style.display='none'; codeEntry.style.display='none';
+      }
+    });
+
+    function canTeach(){ return currentRole==='teacher'; }
+
+    // Populate selects
+    async function loadSubjects(selectEl){
+      selectEl.innerHTML = '<option value="">— Select Subject —</option>';
+      const qSnap = await getDocs(query(subjectsCol(), orderBy('name','asc'))).catch(()=>({docs:[]}));
+      qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
+    }
+    async function loadTopics(subjectId, selectEl){
+      selectEl.innerHTML = '<option value="">— Select Topic —</option>';
+      if(!subjectId){ selectEl.disabled = true; return; }
+      const qSnap = await getDocs(query(topicsCol(subjectId), orderBy('name','asc'))).catch(()=>({docs:[]}));
+      qSnap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; selectEl.appendChild(opt); });
+      selectEl.disabled = false;
+    }
+
+    // Sidebar binds
+    const subjectSelect = $('#subjectSelect');
+    const topicSelect = $('#topicSelect');
+    const addSubjectBtn = $('#addSubjectBtn');
+    const addTopicBtn = $('#addTopicBtn');
+    const addTaskBtn = $('#addTaskBtn');
+
+    const sFilter = $('#studentSubjectFilter');
+    const tFilter = $('#studentTopicFilter');
+
+    // Teacher dashboard selects
+    const tdSubject = $('#tdSubject');
+    const tdTopic = $('#tdTopic');
+    const tdTask = $('#tdTask');
+
+    addSubjectBtn.addEventListener('click', ()=>{ if(!canTeach()) return alert('Teachers only'); $('#subjectName').value=''; open($('#subjectModal')); });
+    addTopicBtn.addEventListener('click', ()=>{ if(!canTeach()) return alert('Teachers only'); if(!selectedSubjectId) return alert('Pick a subject first'); $('#topicName').value=''; $('#topicModalSubject').textContent = `Under: ${subjectSelect.options[subjectSelect.selectedIndex]?.textContent||''}`; open($('#topicModal')); });
+    addTaskBtn.addEventListener('click', ()=> openTaskModal());
+
+    // Save Subject
+    $('#saveSubject').addEventListener('click', async ()=>{
+      const name = ($('#subjectName').value||'').trim(); if(!name) return;
+      await addDoc(subjectsCol(), { name, createdAt: Date.now() });
+      $('#subjectModal').style.display='none'; await Promise.all([loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)]);
+    });
+
+    // Save Topic
+    $('#saveTopic').addEventListener('click', async ()=>{
+      const name = ($('#topicName').value||'').trim(); if(!name || !selectedSubjectId) return;
+      await addDoc(topicsCol(selectedSubjectId), { name, createdAt: Date.now() });
+      $('#topicModal').style.display='none'; await Promise.all([loadTopics(selectedSubjectId, topicSelect), loadTopics(selectedSubjectId, tFilter), loadTopics(selectedSubjectId, tdTopic)]);
+    });
+
+    // Task modal
+    function openTaskModal(task){
+      if(!canTeach()){ alert('Teachers only'); return; }
+      if(!selectedSubjectId || !selectedTopicId){ alert('Pick subject & topic first'); return; }
+      editingTaskId = task?.id || null;
+      $('#taskModalTitle').textContent = editingTaskId? 'Edit Task' : 'Create Task';
+      $('#taskTitle').value = task?.title || '';
+      $('#taskDesc').value = task?.description || '';
+      const d = task?.dueDate ? new Date(task.dueDate) : null;
+      $('#taskDue').value = d? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : '';
+      open($('#taskModal'));
+    }
+
+    $('#saveTask').addEventListener('click', async ()=>{
+      const title = ($('#taskTitle').value||'').trim(); if(!title) return;
+      const description = ($('#taskDesc').value||'').trim();
+      const due = ($('#taskDue').value||'').trim();
+      const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
+      const payload = { title, description, dueDate: dueMs, createdAt: Date.now() };
+      if(editingTaskId){ await updateDoc(doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTaskId), payload); }
+      else { await addDoc(tasksCol(selectedSubjectId, selectedTopicId), payload); }
+      $('#taskModal').style.display='none'; renderTasksForFilters(); loadTasksForTD();
+    });
+
+    // Select changes
+    subjectSelect.addEventListener('change', async (e)=>{ selectedSubjectId = e.target.value||null; await loadTopics(selectedSubjectId, topicSelect); topicSelect.disabled=!selectedSubjectId; addTaskBtn.disabled = true; });
+    topicSelect.addEventListener('change', (e)=>{ selectedTopicId = e.target.value||null; addTaskBtn.disabled = !selectedTopicId; });
+
+    sFilter.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tFilter); tFilter.disabled = !e.target.value; renderTasksForFilters(); });
+    tFilter.addEventListener('change', ()=> renderTasksForFilters());
+
+    tdSubject.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tdTopic); tdTopic.disabled = !e.target.value; tdTask.disabled = true; $('#submissionsList').innerHTML=''; });
+    tdTopic.addEventListener('change', ()=>{ tdTask.disabled = !tdTopic.value; loadTasksForTD(); });
+    tdTask.addEventListener('change', ()=> loadSubmissionsForTD());
+
+    // Render tasks
+    async function renderTasksForFilters(){
+      const container = $('#taskList'); container.innerHTML='';
+      const subj = sFilter.value; const top = tFilter.value; if(!subj || !top){ container.innerHTML='<p class="helper">Pick a subject & topic.</p>'; return; }
+      const qSnap = await getDocs(query(tasksCol(subj, top), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      if(qSnap.docs.length===0){ container.innerHTML='<p class="helper">No tasks yet.</p>'; return; }
+      qSnap.docs.forEach(d=>{
+        const t = d.data(); t.id = d.id;
+        const dueTxt = t.dueDate? new Date(t.dueDate).toLocaleDateString() : '—';
+        const tile = document.createElement('div'); tile.className='tile';
+        tile.innerHTML = `
+          <div class="badge">Due: ${dueTxt}</div>
+          <strong>${t.title}</strong>
+          <div class="muted">${(t.description||'').substring(0,160)}</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn-primary" data-act="submit">Submit</button>
+            ${canTeach()? '<button class="btn-secondary" data-act="edit">Edit</button><button class="logout-btn" data-act="delete">Delete</button>' : ''}
+          </div>`;
+        tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
+        if(canTeach()){
+          tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> openTaskModal(t));
+          tile.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+            if(!confirm('Delete this task?')) return; await deleteDoc(doc(db, tasksCol(subj, top).path, d.id)); renderTasksForFilters(); loadTasksForTD();
+          });
         }
+        container.appendChild(tile);
+      });
+    }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                try {
-                    const userProfileDoc = await getDoc(userProfileRef);
-                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                        const profileData = userProfileDoc.data();
-                        currentUserRole = profileData.role;
-                        currentUserName = profileData.name || user.displayName;
-                        showApp();
-                    } else {
-                        currentUserName = user.displayName;
-                        currentUserRole = 'unassigned';
-                        showCodeEntry();
-                    }
-                } catch (e) {
-                     console.error("Error checking user profile:", e);
-                     showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                     showLogin();
-                }
-            } else {
-                currentUserId = null;
-                currentUserRole = null;
-                currentUserName = null;
-                showLogin();
-            }
+    function openSubmission(task, subjectId, topicId){
+      submittingTaskCtx = { task, subjectId, topicId };
+      $('#submitModalTitle').textContent = `Submit: ${task.title}`;
+      const dueTxt = task.dueDate? new Date(task.dueDate).toLocaleString() : '—';
+      $('#submitTaskMeta').textContent = `Subject: ${$('#studentSubjectFilter').selectedOptions[0]?.textContent || ''} • Topic: ${$('#studentTopicFilter').selectedOptions[0]?.textContent || ''} • Due: ${dueTxt}`;
+      $('#submissionFile').value = ''; $('#submissionLink').value=''; $('#submissionText').value='';
+      open($('#submitModal'));
+    }
+
+    $('#sendSubmission').addEventListener('click', async ()=>{
+      if(!submittingTaskCtx || !currentUser) return;
+      const file = $('#submissionFile').files[0] || null;
+      const link = ($('#submissionLink').value||'').trim();
+      const text = ($('#submissionText').value||'').trim();
+      if(!file && !link && !text){ alert('Attach a file, link, or enter text.'); return; }
+      // Upload file if provided
+      let filePath = '', fileLink = '';
+      if(file){
+        const path = `submissions/${currentUser.uid}/${Date.now()}_${file.name}`;
+        const r = await uploadBytes(ref(storage, path), file);
+        fileLink = await getDownloadURL(r.ref); filePath = path;
+      }
+      const payloadUser = {
+        assignmentTitle: submittingTaskCtx.task.title,
+        subjectId: submittingTaskCtx.subjectId,
+        topicId: submittingTaskCtx.topicId,
+        taskId: submittingTaskCtx.task.id,
+        submittedAt: Date.now(),
+        fileLink: fileLink || (link||''),
+        fileName: file? file.name : (link? 'External Link' : ''),
+        filePath: filePath,
+        textAnswer: text||''
+      };
+      // write to user's private submissions
+      const userSubRef = await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), payloadUser);
+      // write to central log (allowed for any signed-in user by your rules)
+      await addDoc(allSubsCol(), {
+        ...payloadUser,
+        submissionId: userSubRef.id,
+        studentId: currentUser.uid,
+        studentName: currentUser.displayName || currentUser.email || 'Student',
+        status: 'submitted',
+        score: null,
+        feedback: '',
+        createdAt: serverTimestamp()
+      });
+      $('#submitModal').style.display='none';
+      renderMySubmissions();
+      alert('Submitted!');
+    });
+
+    async function renderMySubmissions(){
+      const list = $('#mySubmissions'); list.innerHTML='';
+      if(!currentUser) return;
+      const snap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
+      if(snap.docs.length===0){ list.innerHTML = '<p class="helper">No submissions yet.</p>'; return; }
+      snap.docs.forEach(d=>{
+        const s = d.data();
+        const card = document.createElement('div'); card.className='tile';
+        card.innerHTML = `
+          <strong>${s.assignmentTitle}</strong>
+          <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
+          ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open File/Link</a>`: ''}
+          ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="logout-btn" data-act="delete">Delete</button>
+          </div>`;
+        card.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+          if(!confirm('Delete this submission?')) return;
+          if(s.filePath){ try{ await deleteObject(ref(storage, s.filePath)); }catch(_){} }
+          await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`, d.id));
+          // Optionally, teacher log remains or could be cleaned by teachers.
+          renderMySubmissions();
         });
+        if(s.textAnswer){ card.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=s.assignmentTitle; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
+        list.appendChild(card);
+      });
+    }
 
-        function showLogin() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authContainer.innerHTML = googleSignInTemplate;
-            document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        }
+    // Teacher dashboard — list submissions for a selected task
+    async function loadTasksForTD(){
+      tdTask.innerHTML = '<option value="">— Task —</option>';
+      if(!tdSubject.value || !tdTopic.value){ tdTask.disabled=true; return; }
+      const snap = await getDocs(query(tasksCol(tdSubject.value, tdTopic.value), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      snap.docs.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().title; tdTask.appendChild(opt); });
+      tdTask.disabled = false; loadSubmissionsForTD();
+    }
 
-        function showCodeEntry() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authContainer.innerHTML = codeEntryTemplate;
-            document.getElementById('submitCodeButton')?.addEventListener('click', handleSubmitCode);
-            document.getElementById('accessCodeInput')?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleSubmitCode();
-            });
-        }
-
-        function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            showSubmissionSection();
-        }
-
-        async function handleGoogleSignIn() {
-            const provider = new GoogleAuthProvider();
-            try { 
-                await signInWithPopup(auth, provider); 
-            } catch (error) { 
-                document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-            }
-        }
-
-        async function handleSubmitCode() {
-            const code = document.getElementById('accessCodeInput').value.trim();
-            const codeError = document.getElementById('codeError');
-            codeError.textContent = '';
-            
-            let roleToSet = null;
-            if (code === TEACHER_CODE) roleToSet = 'teacher';
-            else if (code === STUDENT_CODE) roleToSet = 'student';
-            else { 
-                codeError.textContent = 'Invalid access code.';
-                return; 
-            }
-            
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName }, { merge: true });
-                currentUserRole = roleToSet;
-                showApp();
-            } catch (error) {
-                codeError.textContent = `Could not set role. Error: ${error.message}`;
-            }
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-
-        // --- UI & NAVIGATION ---
-        function showSubmissionSection() {
-            const section = document.getElementById('submissionSection');
-            section.style.display = 'block';
-            setTimeout(() => section.style.opacity = '1', 10);
-            renderSubmissionSection();
-        }
-
-        // --- DRAG & DROP HELPER ---
-        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId, filePreviewId = null) {
-            const dropZone = document.getElementById(dropZoneId);
-            const fileInput = document.getElementById(fileInputId);
-            const fileNameDisplay = document.getElementById(fileNameDisplayId);
-            const filePreview = filePreviewId ? document.getElementById(filePreviewId) : null;
-
-            if (!dropZone || !fileInput || !fileNameDisplay) return;
-
-            dropZone.addEventListener('click', () => fileInput.click());
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, e => {e.preventDefault(); e.stopPropagation();}));
-            ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.add('highlight')));
-            ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.remove('highlight')));
-
-            dropZone.addEventListener('drop', e => {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.dispatchEvent(new Event('change'));
-            });
-
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    fileNameDisplay.textContent = file.name;
-                    if (filePreview && file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => { filePreview.src = e.target.result; filePreview.style.display = 'block'; };
-                        reader.readAsDataURL(file);
-                    } else {
-                        if(filePreview) filePreview.style.display = 'none';
-                    }
-                } else {
-                    fileNameDisplay.textContent = 'No file chosen';
-                    if(filePreview) {
-                        filePreview.style.display = 'none';
-                        filePreview.src = '';
-                    }
-                }
-            });
-        }
-        
-        // --- HOMEWORK SUBMISSION LOGIC ---
-        function getPath(type, ids = []) {
-            let pathParts = [`artifacts/${appId}/public/data/assignments`];
-            if (ids[0]) pathParts.push(ids[0], 'assignments');
-            if (ids[1]) pathParts.push(ids[1]);
-            return pathParts.join('/');
-        }
-        
-        async function renderSubmissionSection() {
-            const submissionSection = document.getElementById('submissionSection');
-            
-            if (currentUserRole === 'teacher') {
-                await renderTeacherSubmissionView(submissionSection);
-            } else if (currentUserRole === 'student') {
-                await renderStudentSubmissionView(submissionSection);
-            } else {
-                submissionSection.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
-            }
-        }
-
-        async function renderTeacherSubmissionView(container) {
-            container.innerHTML = `
-                <div id="teacher-submission-content">
-                    <h2 class="section-title">Assignment Management</h2>
-                    <div class="form-container">
-                        <h3>Create New Assignment</h3>
-                        <form id="createAssignmentForm">
-                            <div class="form-grid">
-                                <div>
-                                    <label for="newAssignmentSubject">Subject</label>
-                                    <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics">
-                                </div>
-                                <div>
-                                    <label for="newAssignmentTitle">Assignment Title</label>
-                                    <input type="text" id="newAssignmentTitle" required placeholder="e.g., Chapter 3 Homework">
-                                </div>
-                            </div>
-                            <div>
-                                <label for="newAssignmentDescription">Description</label>
-                                <textarea id="newAssignmentDescription" placeholder="Instructions for the assignment..."></textarea>
-                            </div>
-                            <div>
-                                <label for="newAssignmentDueDate">Due Date</label>
-                                <input type="date" id="newAssignmentDueDate">
-                            </div>
-                            <button type="submit" class="btn-primary">Create Assignment</button>
-                        </form>
-                    </div>
-
-                    <div class="assignment-list-container">
-                        <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Active Assignments</h3>
-                        <p id="assignmentsLoading" class="loading-indicator"></p>
-                        <div id="teacherAssignmentsList"></div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
-            await loadTeacherAssignments();
-        }
-
-        async function createAssignment(e) {
-            e.preventDefault();
-            const subject = document.getElementById('newAssignmentSubject').value.trim();
-            const title = document.getElementById('newAssignmentTitle').value.trim();
-            const description = document.getElementById('newAssignmentDescription').value.trim();
-            const dueDate = document.getElementById('newAssignmentDueDate').value;
-
-            if (!subject || !title) return showModal('Input Error', 'Subject and Title are required.');
-
-            try {
-                // This ensures a document for the subject exists, which acts as a container.
-                const subjectDocRef = doc(db, `artifacts/${appId}/public/data/assignments`, subject);
-                await setDoc(subjectDocRef, { name: subject, updatedAt: Date.now() }, { merge: true });
-
-                const assignmentsRef = collection(db, getPath('assignments', [subject]));
-                await addDoc(assignmentsRef, {
-                    subjectName: subject,
-                    title, description,
-                    dueDate: dueDate ? new Date(dueDate).getTime() : null,
-                    createdAt: Date.now()
-                });
-                showModal('Success', 'Assignment created!');
-                e.target.reset();
-                await loadTeacherAssignments();
-            } catch (error) {
-                console.error("Error creating assignment:", error);
-                showModal('Error', `Could not create assignment: ${error.message}`);
-            }
-        }
-
-        async function loadTeacherAssignments() {
-            const listContainer = document.getElementById('teacherAssignmentsList');
-            const loadingIndicator = document.getElementById('assignmentsLoading');
-            loadingIndicator.style.display = 'block';
-            
-            try {
-                const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
-                const subjectsSnapshot = await getDocs(subjectsRef);
-
-                let allAssignments = [];
-                for (const subjectDoc of subjectsSnapshot.docs) {
-                    const assignmentsRef = collection(db, getPath('assignments', [subjectDoc.id]));
-                    const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                    const assignmentsSnapshot = await getDocs(q);
-                    assignmentsSnapshot.forEach(doc => {
-                        allAssignments.push({ id: doc.id, subjectId: subjectDoc.id, ...doc.data() });
-                    });
-                }
-                
-                listContainer.innerHTML = ''; // Clear previous content to prevent duplication
-                if (allAssignments.length === 0) {
-                     listContainer.innerHTML = '<p>No assignments created yet.</p>';
-                } else {
-                    allAssignments.sort((a, b) => b.createdAt - a.createdAt);
-                    allAssignments.forEach(assignment => {
-                        const card = document.createElement('div');
-                        card.className = 'assignment-card';
-                        const dueDate = assignment.dueDate ? `Due: ${new Date(assignment.dueDate).toLocaleDateString()}` : 'No due date';
-                        card.innerHTML = `
-                            <h3>${assignment.subjectName}: ${assignment.title}</h3>
-                            <p>${assignment.description || 'No description.'}</p>
-                            <p>${dueDate}</p>
-                            <div class="assignment-actions">
-                                <button class="btn-primary view-submissions-btn" data-assignment-id="${assignment.id}" data-subject-id="${assignment.subjectId}">View Submissions</button>
-                                <button class="logout-btn delete-assignment-btn" data-assignment-id="${assignment.id}" data-subject-id="${assignment.subjectId}">Delete</button>
-                            </div>
-                            <div id="submissionsListContainer-${assignment.id}" style="display:none; margin-top:1.5rem;"></div>
-                        `;
-                        listContainer.appendChild(card);
-                    });
-                }
-            } catch (error) {
-                console.error("Error loading teacher assignments:", error);
-                listContainer.innerHTML = `<p class="error-message">Could not load assignments. Please try again.</p>`;
-            } finally {
-                loadingIndicator.style.display = 'none';
-                listContainer.querySelectorAll('.view-submissions-btn').forEach(btn => btn.addEventListener('click', (e) => toggleSubmissionList(e.target.dataset.assignmentId, e.target.dataset.subjectId)));
-                listContainer.querySelectorAll('.delete-assignment-btn').forEach(btn => btn.addEventListener('click', (e) => deleteAssignment(e.target.dataset.assignmentId, e.target.dataset.subjectId)));
-            }
-        }
-
-        async function toggleSubmissionList(assignmentId, subjectId) {
-            const container = document.getElementById(`submissionsListContainer-${assignmentId}`);
-            if (container.style.display === 'block') {
-                container.style.display = 'none';
-            } else {
-                container.style.display = 'block';
-                container.innerHTML = `<p class="loading-indicator">Loading submissions...</p>`;
-                await loadStudentSubmissionsForTeacher(assignmentId, subjectId, container);
-            }
-        }
-
-        async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) {
-            try {
-                const usersRef = collection(db, `artifacts/${appId}/users`);
-                const usersSnapshot = await getDocs(usersRef);
-                let allSubmissions = [];
-
-                for (const userDoc of usersSnapshot.docs) {
-                    const studentId = userDoc.id;
-                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
-                    const studentProfileSnap = await getDoc(studentProfileRef);
-                    const studentName = studentProfileSnap.exists() ? (studentProfileSnap.data().name || `Student ${studentId.substring(0,6)}`) : `Student ${studentId.substring(0,6)}`;
-
-                    const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
-                    const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
-                    const submissionsSnapshot = await getDocs(q);
-                    submissionsSnapshot.forEach(subDoc => {
-                        allSubmissions.push({ studentId, studentName, ...subDoc.data(), subId: subDoc.id });
-                    });
-                }
-
-                if (allSubmissions.length === 0) {
-                    container.innerHTML = '<h4>Submissions</h4><p>No submissions yet.</p>';
-                    return;
-                }
-
-                let submissionsHtml = '<h4>Submissions</h4>';
-                allSubmissions.sort((a, b) => b.submittedAt - a.submittedAt).forEach(sub => {
-                    const submittedAt = new Date(sub.submittedAt).toLocaleString();
-                    let previewContent;
-                    if (sub.fileLink) {
-                        previewContent = `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview File</button>`;
-                    } else {
-                        previewContent = `<button class="btn-primary preview-btn" data-type="submissionText" data-item='${JSON.stringify({name: sub.assignmentTitle, text: sub.textAnswer})}'>View Text</button>`;
-                    }
-                    submissionsHtml += `
-                        <div class="assignment-submission-item">
-                            <div>
-                                <strong>${studentName}</strong> <span class="submission-detail">(${submittedAt})</span>
-                            </div>
-                            <div class="submission-actions">
-                                ${previewContent}
-                                <button class="logout-btn delete-submission-btn" data-student-id="${sub.studentId}" data-submission-id="${sub.subId}" data-file-path="${sub.filePath || ''}" data-assignment-id="${assignmentId}" data-subject-id="${subjectId}">Delete</button>
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML = submissionsHtml;
-                container.querySelectorAll('.preview-btn').forEach(btn => btn.addEventListener('click', e => handlePreview(e.target.dataset.type, JSON.parse(e.target.dataset.item))));
-                container.querySelectorAll('.delete-submission-btn').forEach(btn => btn.addEventListener('click', e => deleteSubmission(e.target.dataset.studentId, e.target.dataset.submissionId, e.target.dataset.assignmentId, e.target.dataset.subjectId, e.target.dataset.filePath)));
-
-            } catch (error) {
-                 console.error("Error loading submissions: ", error);
-                container.innerHTML = `<p class="error-message">Failed to load submissions: ${error.message}. An index may be required in Firestore.</p>`;
-            }
-        }
-
-        async function deleteAssignment(assignmentId, subjectId) {
-             showModal('Confirm Deletion', `This will delete the assignment and ALL student submissions for it. This cannot be undone.`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    try {
-                        const batch = writeBatch(db);
-                        
-                        // NEW ROBUST DELETION LOGIC - NO INDEX REQUIRED
-                        // 1. Get all users
-                        const usersRef = collection(db, `artifacts/${appId}/users`);
-                        const usersSnapshot = await getDocs(usersRef);
-
-                        // 2. For each user, find and delete relevant submissions
-                        for(const userDoc of usersSnapshot.docs){
-                            const userId = userDoc.id;
-                            const userSubmissionsRef = collection(db, `artifacts/${appId}/users/${userId}/submissions`);
-                            const q = query(userSubmissionsRef, where('assignmentId', '==', assignmentId));
-                            const subsSnapshot = await getDocs(q);
-
-                            for(const subDoc of subsSnapshot.docs) {
-                                const subData = subDoc.data();
-                                if(subData.filePath) {
-                                    const fileRef = ref(storage, subData.filePath);
-                                    await deleteObject(fileRef).catch(e => console.warn("Could not delete submission file from storage:", e.message));
-                                }
-                                batch.delete(subDoc.ref);
-                            }
-                        }
-                        
-                        // 3. Delete the main assignment document
-                        const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
-                        batch.delete(assignmentDocRef);
-                        
-                        // 4. Commit all deletions at once
-                        await batch.commit();
-
-                        showModal('Success', 'Assignment and all submissions deleted.');
-                        await loadTeacherAssignments(); // Refresh the view
-                    } catch (error) {
-                        console.error("Deletion Error:", error);
-                        showModal('Error', `Could not delete assignment: ${error.message}.`);
-                    }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-
-        async function deleteSubmission(studentId, submissionId, assignmentId, subjectId, filePath) {
-             showModal('Confirm Deletion', `Are you sure you want to delete this student's submission?`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    try {
-                        if (filePath) await deleteObject(ref(storage, filePath)).catch(e => console.warn(e));
-                        await deleteDoc(doc(db, `artifacts/${appId}/users/${studentId}/submissions`, submissionId));
-                        showModal('Success', 'Submission deleted.');
-                        const container = document.getElementById(`submissionsListContainer-${assignmentId}`);
-                        if (container) await loadStudentSubmissionsForTeacher(assignmentId, subjectId, container);
-                    } catch (error) {
-                        showModal('Error', `Could not delete submission: ${error.message}`);
-                    }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-
-        async function renderStudentSubmissionView(container) {
-            container.innerHTML = `
-                <div id="student-submission-content">
-                    <h2 class="section-title">Submit Your Homework</h2>
-                    <div class="form-container">
-                        <form id="submitHomeworkForm">
-                             <div class="form-grid">
-                                <div>
-                                    <label for="studentSubjectFilter">Subject</label>
-                                    <select id="studentSubjectFilter" required><option value="">-- Select Subject --</option></select>
-                                </div>
-                                <div>
-                                    <label for="studentAssignmentFilter">Assignment</label>
-                                    <select id="studentAssignmentFilter" required disabled><option value="">-- Select Assignment --</option></select>
-                                </div>
-                            </div>
-                            <div id="assignmentDetails" style="margin-bottom: 1.5rem; margin-top: -1rem; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: none; background-color: var(--bg-primary);"></div>
-
-                            <label>Upload File or Type Answer</label>
-                            <div id="homeworkDropZone" class="drop-zone">
-                                <span>Drag & Drop File Here</span>
-                                <input type="file" id="homeworkFile" accept="image/*,application/pdf" hidden>
-                            </div>
-                            <span id="homeworkFileName" style="display: block; text-align: center; margin-top: -1rem; margin-bottom: 1rem; color: var(--text-secondary);">No file chosen</span>
-                            
-                            <textarea id="homeworkTextAnswer" placeholder="Or type your answer here..." style="margin-top:1rem;"></textarea>
-                            
-                            <p id="homeworkSubmissionError" class="error-message"></p>
-                            <button type="submit" class="btn-primary">Submit Homework</button>
-                        </form>
-                    </div>
-
-                    <div class="my-submissions-container">
-                        <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">My Past Submissions</h3>
-                        <p id="mySubmissionsLoading" class="loading-indicator"></p>
-                        <div id="mySubmissionsList"></div>
-                    </div>
-                </div>`;
-            
-            const subjectFilter = document.getElementById('studentSubjectFilter');
-            const assignmentFilter = document.getElementById('studentAssignmentFilter');
-            const assignmentDetails = document.getElementById('assignmentDetails');
-
-            await populateStudentSubjectDropdown(subjectFilter);
-            
-            subjectFilter.addEventListener('change', async () => {
-                const subjectId = subjectFilter.value;
-                assignmentFilter.innerHTML = `<option value="">-- Select Assignment --</option>`;
-                assignmentFilter.disabled = true;
-                assignmentDetails.style.display = 'none';
-                if (subjectId) {
-                    await populateStudentAssignmentDropdown(assignmentFilter, subjectId);
-                    assignmentFilter.disabled = false;
-                }
-            });
-
-            assignmentFilter.addEventListener('change', async () => {
-                const subjectId = subjectFilter.value;
-                const assignmentId = assignmentFilter.value;
-                if(subjectId && assignmentId){
-                    const assignmentDoc = await getDoc(doc(db, getPath('assignments', [subjectId]), assignmentId));
-                    if(assignmentDoc.exists()){
-                        const data = assignmentDoc.data();
-                        const dueDate = data.dueDate ? `Due: ${new Date(data.dueDate).toLocaleDateString()}` : 'No due date';
-                        assignmentDetails.innerHTML = `
-                            <p><strong>Description:</strong> ${data.description || 'N/A'}</p>
-                            <p><strong>${dueDate}</strong></p>
-                        `;
-                        assignmentDetails.style.display = 'block';
-                    }
-                } else {
-                    assignmentDetails.style.display = 'none';
-                }
-            });
-
-            document.getElementById('submitHomeworkForm').addEventListener('submit', submitHomework);
-            setupDropZone('homeworkDropZone', 'homeworkFile', 'homeworkFileName');
-            await loadMySubmissions();
-        }
-
-        async function populateStudentSubjectDropdown(selectEl) {
-            selectEl.innerHTML = `<option value="">-- Loading Subjects --</option>`;
-            try {
-                const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
-                const snapshot = await getDocs(subjectsRef);
-                selectEl.innerHTML = `<option value="">-- Select Subject --</option>`;
-                if(snapshot.empty) throw new Error("No subjects available.");
-                snapshot.forEach(doc => selectEl.add(new Option(doc.data().name, doc.id)));
-            } catch (error) {
-                selectEl.innerHTML = `<option value="">-- No Subjects --</option>`;
-            }
-        }
-
-        async function populateStudentAssignmentDropdown(selectEl, subjectId) {
-            selectEl.innerHTML = `<option value="">-- Loading Assignments --</option>`;
-            try {
-                const assignmentsRef = collection(db, getPath('assignments', [subjectId]));
-                const q = query(assignmentsRef, orderBy('createdAt', 'desc'));
-                const snapshot = await getDocs(q);
-                selectEl.innerHTML = `<option value="">-- Select Assignment --</option>`;
-                if(snapshot.empty) throw new Error("No assignments for this subject.");
-                snapshot.forEach(doc => selectEl.add(new Option(doc.data().title, doc.id)));
-            } catch (error) {
-                selectEl.innerHTML = `<option value="">-- No Assignments --</option>`;
-            }
-        }
-
-        function submitHomework(e) {
-            e.preventDefault();
-            const form = e.target;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const file = document.getElementById('homeworkFile').files[0];
-            const textAnswer = document.getElementById('homeworkTextAnswer').value.trim();
-            const errorEl = document.getElementById('homeworkSubmissionError');
-            errorEl.textContent = '';
-
-            const subjectId = document.getElementById('studentSubjectFilter').value;
-            const assignmentId = document.getElementById('studentAssignmentFilter').value;
-
-            if (!subjectId || !assignmentId) return errorEl.textContent = 'Please select a subject and assignment.';
-            if (!file && !textAnswer) return errorEl.textContent = 'Please upload a file or type an answer.';
-
-            submitBtn.disabled = true;
-            
-            if (file) {
-                const filePath = `submissions/${currentUserId}/${assignmentId}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, filePath);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        submitBtn.textContent = `Uploading... ${Math.round(progress)}%`;
-                    }, 
-                    (error) => {
-                        console.error("Upload failed:", error);
-                        errorEl.textContent = `Upload failed: ${error.message}`;
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Submit Homework';
-                    }, 
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        await saveSubmissionToFirestore({
-                            subjectId, assignmentId, fileLink: downloadURL,
-                            filePath, fileName: file.name, textAnswer: textAnswer // Pass text too
-                        }, form);
-                    }
-                );
-            } else {
-                 submitBtn.textContent = 'Submitting...';
-                 saveSubmissionToFirestore({subjectId, assignmentId, textAnswer}, form);
-            }
-        }
-
-        async function saveSubmissionToFirestore(submissionData, form) {
-            const {subjectId, assignmentId, fileLink = '', filePath = '', fileName = '', textAnswer = ''} = submissionData;
-            const errorEl = form.querySelector('#homeworkSubmissionError');
-            const submitBtn = form.querySelector('button[type="submit"]');
-
-            try {
-                const assignmentDoc = await getDoc(doc(db, getPath('assignments', [subjectId]), assignmentId));
-                const assignmentTitle = assignmentDoc.exists() ? assignmentDoc.data().title : 'Unknown Assignment';
-
-                const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
-                await addDoc(submissionsRef, {
-                    assignmentId, subjectId, assignmentTitle,
-                    fileLink, filePath, fileName, textAnswer,
-                    submittedAt: Date.now(),
-                    submittedBy: currentUserId
-                });
-                showModal('Success', 'Homework submitted!');
-                form.reset();
-                document.getElementById('homeworkFileName').textContent = 'No file chosen';
-                document.getElementById('assignmentDetails').style.display = 'none';
-                await loadMySubmissions();
-            } catch (error) {
-                 errorEl.textContent = `Submission failed: ${error.message}`;
-            } finally {
-                 submitBtn.disabled = false;
-                 submitBtn.textContent = 'Submit Homework';
-            }
-        }
-
-
-        async function loadMySubmissions() {
-            const listContainer = document.getElementById('mySubmissionsList');
-            const loadingIndicator = document.getElementById('mySubmissionsLoading');
-            loadingIndicator.style.display = 'block';
-            
-            try {
-                const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
-                const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
-                const snapshot = await getDocs(q);
-                
-                listContainer.innerHTML = ''; // Clear to prevent duplicates
-                if (snapshot.empty) {
-                    listContainer.innerHTML = '<p>You have not submitted any homework yet.</p>';
-                } else {
-                     snapshot.forEach(doc => {
-                        const sub = doc.data();
-                        const card = document.createElement('div');
-                        card.className = 'student-submission-card';
-                        const submittedAt = new Date(sub.submittedAt).toLocaleString();
-                        let content = sub.fileLink ? `<p>File: ${sub.fileName}</p>` : `<p>Text: ${sub.textAnswer.substring(0, 100)}...</p>`;
-                        let previewBtn = sub.fileLink
-                            ? `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview</button>`
-                            : `<button class="btn-primary preview-btn" data-type="submissionText" data-item='${JSON.stringify({name: sub.assignmentTitle, text: sub.textAnswer})}'>View Text</button>`;
-
-                        card.innerHTML = `
-                            <h4>${sub.assignmentTitle}</h4>
-                            <p>Submitted: ${submittedAt}</p>
-                            ${content}
-                            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                                ${previewBtn}
-                                <button class="logout-btn delete-my-submission-btn" data-submission-id="${doc.id}" data-file-path="${sub.filePath || ''}">Delete</button>
-                            </div>
-                        `;
-                        listContainer.appendChild(card);
-                    });
-                }
-            } catch (error) {
-                listContainer.innerHTML = `<p class="error-message">Could not load your submissions: ${error.message}</p>`;
-            } finally {
-                loadingIndicator.style.display = 'none';
-                listContainer.querySelectorAll('.preview-btn').forEach(btn => btn.addEventListener('click', e => handlePreview(e.target.dataset.type, JSON.parse(e.target.dataset.item))));
-                listContainer.querySelectorAll('.delete-my-submission-btn').forEach(btn => btn.addEventListener('click', e => deleteMySubmission(e.target.dataset.submissionId, e.target.dataset.filePath)));
-            }
-        }
-
-        async function deleteMySubmission(submissionId, filePath) {
-            showModal('Confirm Deletion', `Are you sure you want to delete this submission?`, [
-                { text: 'Delete', className: 'btn-primary', onClick: async () => {
-                    try {
-                        if (filePath) await deleteObject(ref(storage, filePath)).catch(e => console.warn(e));
-                        await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/submissions`, submissionId));
-                        showModal('Success', 'Submission deleted.');
-                        await loadMySubmissions();
-                    } catch (error) {
-                        showModal('Error', `Could not delete submission: ${error.message}`);
-                    }
-                }},
-                { text: 'Cancel', className: 'logout-btn' }
-            ]);
-        }
-        
-        // --- MODAL & PREVIEW ---
-        function showModal(title, message, buttons = []) {
-            const modal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = message;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = '';
-
-            if (buttons.length === 0) {
-                 const okBtn = document.createElement('button');
-                 okBtn.textContent = 'OK';
-                 okBtn.className = 'btn-primary';
-                 okBtn.onclick = () => { modal.style.display = 'none'; };
-                 modalButtons.appendChild(okBtn);
-            } else {
-                 buttons.forEach(btnConfig => {
-                    const button = document.createElement('button');
-                    button.textContent = btnConfig.text;
-                    button.className = btnConfig.className;
-                    button.onclick = () => { 
-                        modal.style.display = 'none';
-                        if (btnConfig.onClick) btnConfig.onClick();
-                    };
-                    modalButtons.appendChild(button);
-                });
-            }
-            modal.style.display = 'flex';
-        }
-
-        function handlePreview(type, item) {
-            if (type === 'submissionFile') {
-                 if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com')) {
-                    showPdfPreviewModal(item.name, item.link);
-                } else if (item.link.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-                    showModal(item.name, `<img src="${item.link}" class="file-preview mx-auto" alt="Preview"><br><a href="${item.link}" target="_blank" download class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:1rem;">Download</a>`);
-                } else {
-                    window.open(item.link, '_blank');
-                }
-            } else if (type === 'submissionText') {
-                showModal(item.name, `<div style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto; background: var(--bg-primary); padding: 1rem; border-radius: 8px;">${item.text}</div>`);
-            }
-        }
-        
-        async function showPdfPreviewModal(title, pdfUrl) {
-            document.getElementById('pdfPreviewTitle').textContent = title;
-            const modal = document.getElementById('pdfPreviewModal');
-            const canvas = document.getElementById('pdfCanvas');
-            const context = canvas.getContext('2d');
-            modal.style.display = 'flex';
-
-            try {
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(1); // Show first page
-                const viewport = page.getViewport({ scale: 1.5 });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-            } catch (error) {
-                console.error('Error loading PDF:', error);
-                showModal('PDF Load Error', `Failed to load PDF: ${error.message}`);
-                modal.style.display = 'none';
-            }
-        }
-
-        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
-            btn.closest('.modal').style.display = 'none'; 
+    async function loadSubmissionsForTD(){
+      const container = $('#submissionsList'); container.innerHTML='';
+      if(!tdSubject.value || !tdTopic.value || !tdTask.value){ return; }
+      // query central log and filter client-side by taskId (rules allow read to any signed-in user)
+      const snap = await getDocs(query(allSubsCol(), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      const items = snap.docs.map(d=>({ id:d.id, ...d.data() })).filter(x=> x.subjectId===tdSubject.value && x.topicId===tdTopic.value && x.taskId===tdTask.value);
+      if(items.length===0){ container.innerHTML = '<p class="helper">No submissions for this task yet.</p>'; return; }
+      items.forEach(s=>{
+        const row = document.createElement('div'); row.className='card';
+        row.innerHTML = `
+          <div class="row" style="align-items:center">
+            <div style="flex:2">
+              <strong>${s.studentName}</strong>
+              <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
+              ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open File/Link</a>`: ''}
+              ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
+            </div>
+            <div style="flex:1">
+              <label class="label">Status</label>
+              <select data-field="status" class="input">
+                ${['submitted','reviewing','graded'].map(v=>`<option value="${v}" ${s.status===v?'selected':''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div style="flex:1">
+              <label class="label">Score</label>
+              <input data-field="score" class="input" type="number" step="1" min="0" max="100" value="${s.score??''}"/>
+            </div>
+          </div>
+          <label class="label">Feedback</label>
+          <textarea data-field="feedback" class="input" rows="2">${s.feedback||''}</textarea>
+          <div class="footer" style="justify-content:flex-start">
+            <button class="btn-primary" data-act="save">Save</button>
+            <button class="logout-btn" data-act="delete">Delete (log)</button>
+          </div>`;
+        if(s.textAnswer){ row.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=`${s.studentName} — Text`; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
+        row.querySelector('[data-act="save"]').addEventListener('click', async ()=>{
+          await updateDoc(doc(db, allSubsCol().path, s.id), {
+            status: row.querySelector('[data-field="status"]').value,
+            score: row.querySelector('[data-field="score"]').value || null,
+            feedback: row.querySelector('[data-field="feedback"]').value
+          });
+          alert('Saved');
         });
-        
-        // --- INITIAL LOAD ---
-        window.addEventListener('load', () => {
-             document.getElementById('authWrapper').style.opacity = '1';
+        row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+          if(!confirm('Delete this log entry?')) return; await deleteDoc(doc(db, allSubsCol().path, s.id)); loadSubmissionsForTD();
         });
+        container.appendChild(row);
+      });
+    }
 
-    </script>
+    function renderAfterAuth(){
+      $('#teacherDashboard').style.display = canTeach()? 'block':'none';
+      $('#roleNote').textContent = canTeach()? 'You are a teacher.' : 'Only teachers can create or edit.';
+      // load selects
+      Promise.all([
+        loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)
+      ]).then(()=>{
+        // attempt stick to previous selection
+        if(subjectSelect.value){ loadTopics(subjectSelect.value, topicSelect); }
+        if(sFilter.value){ loadTopics(sFilter.value, tFilter); }
+        if(tdSubject.value){ loadTopics(tdSubject.value, tdTopic); }
+      });
+      renderMySubmissions();
+    }
+
+  </script>
 </body>
 </html>
-
