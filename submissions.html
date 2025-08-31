@@ -153,7 +153,6 @@
         }
         
         #submissionSection {
-            display: flex;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
@@ -185,6 +184,7 @@
         /* --- UNIVERSAL STYLES --- */
         .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; width: 100%;}
         .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
         /* --- MODALS --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
@@ -252,6 +252,7 @@
         }
         .student-submission-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
         .my-submissions-container { margin-top: 2rem; }
+        .assignment-list-container { margin-top: 2.5rem; }
 
         /* --- RESPONSIVENESS --- */
         @media (max-width: 992px) {
@@ -264,6 +265,7 @@
             header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
             .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
             main { padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -335,7 +337,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- Firebase Configuration ---
@@ -481,7 +483,7 @@
         // --- UI & NAVIGATION ---
         function showSubmissionSection() {
             const section = document.getElementById('submissionSection');
-            section.style.display = 'flex';
+            section.style.display = 'block'; // Changed to block for single column layout
             setTimeout(() => section.style.opacity = '1', 10);
             renderSubmissionSection();
         }
@@ -536,58 +538,60 @@
         
         async function renderSubmissionSection() {
             const submissionSection = document.getElementById('submissionSection');
-            submissionSection.innerHTML = `
-                <div class="submission-main-container">
-                    <div class="submission-sidebar" id="submissionSidebar"></div>
-                    <div class="submission-content" id="submissionContent"></div>
-                </div>`;
-
-            const submissionContent = document.getElementById('submissionContent');
-            const submissionSidebar = document.getElementById('submissionSidebar');
-
+            
             if (currentUserRole === 'teacher') {
-                await renderTeacherSubmissionView(submissionContent, submissionSidebar);
+                await renderTeacherSubmissionView(submissionSection);
             } else if (currentUserRole === 'student') {
-                await renderStudentSubmissionView(submissionContent, submissionSidebar);
+                 submissionSection.innerHTML = `
+                    <div class="submission-main-container">
+                        <div class="submission-sidebar" id="submissionSidebar"></div>
+                        <div class="submission-content" id="submissionContent"></div>
+                    </div>`;
+                const content = document.getElementById('submissionContent');
+                const sidebar = document.getElementById('submissionSidebar');
+                await renderStudentSubmissionView(content, sidebar);
             } else {
-                submissionContent.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
+                submissionSection.innerHTML = `<p class="error-message">You do not have permission to view this section.</p>`;
             }
         }
 
-        async function renderTeacherSubmissionView(contentContainer, sidebarContainer) {
-            sidebarContainer.innerHTML = `
-                <div class="form-container">
-                    <h3>Create New Assignment</h3>
-                    <form id="createAssignmentForm">
-                        <div style="margin-bottom: 1rem;">
-                            <label for="newAssignmentSubject">Subject</label>
-                            <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics">
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label for="newAssignmentTitle">Assignment Title</label>
-                            <input type="text" id="newAssignmentTitle" required placeholder="e.g., Chapter 3 Homework">
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label for="newAssignmentDescription">Description</label>
-                            <textarea id="newAssignmentDescription" placeholder="Instructions for the assignment..."></textarea>
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label for="newAssignmentDueDate">Due Date</label>
-                            <input type="date" id="newAssignmentDueDate">
-                        </div>
-                        <button type="submit" class="btn-primary">Create Assignment</button>
-                    </form>
+        async function renderTeacherSubmissionView(container) {
+            container.innerHTML = `
+                <div id="teacher-submission-content">
+                    <h2 class="section-title">Assignment Management</h2>
+                    <div class="form-container">
+                        <h3>Create New Assignment</h3>
+                        <form id="createAssignmentForm">
+                            <div class="form-grid">
+                                <div>
+                                    <label for="newAssignmentSubject">Subject</label>
+                                    <input type="text" id="newAssignmentSubject" required placeholder="e.g., Mathematics">
+                                </div>
+                                <div>
+                                    <label for="newAssignmentTitle">Assignment Title</label>
+                                    <input type="text" id="newAssignmentTitle" required placeholder="e.g., Chapter 3 Homework">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="newAssignmentDescription">Description</label>
+                                <textarea id="newAssignmentDescription" placeholder="Instructions for the assignment..."></textarea>
+                            </div>
+                            <div>
+                                <label for="newAssignmentDueDate">Due Date</label>
+                                <input type="date" id="newAssignmentDueDate">
+                            </div>
+                            <button type="submit" class="btn-primary">Create Assignment</button>
+                        </form>
+                    </div>
+
+                    <div class="assignment-list-container">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Active Assignments</h3>
+                        <p id="assignmentsLoading" class="loading-indicator"></p>
+                        <div id="teacherAssignmentsList"></div>
+                    </div>
                 </div>
             `;
             
-            contentContainer.innerHTML = `
-                <div class="assignment-list-container">
-                    <h2 class="section-title">Active Assignments</h2>
-                    <p id="assignmentsLoading" class="loading-indicator">Loading assignments...</p>
-                    <div id="teacherAssignmentsList"></div>
-                </div>
-            `;
-
             document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
             await loadTeacherAssignments();
         }
@@ -601,9 +605,13 @@
 
             if (!subject || !title) return showModal('Input Error', 'Subject and Title are required.');
 
-            // The path for an assignment is /assignments/{subjectName}/assignments/{assignmentId}
-            const assignmentsRef = collection(db, getPath('assignments', [subject]));
             try {
+                // Ensure the subject document exists so it can be queried.
+                const subjectDocRef = doc(db, `artifacts/${appId}/public/data/assignments`, subject);
+                await setDoc(subjectDocRef, { name: subject, updatedAt: Date.now() }, { merge: true });
+
+                // Create the assignment in the subcollection.
+                const assignmentsRef = collection(db, getPath('assignments', [subject]));
                 await addDoc(assignmentsRef, {
                     subjectName: subject,
                     title, description,
@@ -614,6 +622,7 @@
                 e.target.reset();
                 await loadTeacherAssignments();
             } catch (error) {
+                console.error("Error creating assignment:", error);
                 showModal('Error', `Could not create assignment: ${error.message}`);
             }
         }
@@ -627,7 +636,6 @@
             try {
                 const subjectsRef = collection(db, `artifacts/${appId}/public/data/assignments`);
                 const subjectsSnapshot = await getDocs(subjectsRef);
-                if (subjectsSnapshot.empty) throw new Error("No subjects found.");
 
                 let allAssignments = [];
                 for (const subjectDoc of subjectsSnapshot.docs) {
@@ -661,6 +669,7 @@
                     });
                 }
             } catch (error) {
+                console.error("Error loading teacher assignments:", error);
                 listContainer.innerHTML = `<p>No assignments created yet.</p>`;
             } finally {
                 loadingIndicator.style.display = 'none';
@@ -682,8 +691,6 @@
 
         async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) {
             try {
-                // Query all users, then for each user, query their submissions for the specific assignment.
-                // This is less efficient but necessary with the current security rules structure.
                 const usersRef = collection(db, `artifacts/${appId}/users`);
                 const usersSnapshot = await getDocs(usersRef);
                 let allSubmissions = [];
@@ -740,21 +747,26 @@
              showModal('Confirm Deletion', `This will delete the assignment and ALL student submissions for it. This cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     try {
-                        // First, delete all student submissions related to this assignment.
                         const usersRef = collection(db, `artifacts/${appId}/users`);
                         const usersSnapshot = await getDocs(usersRef);
+                        const batch = writeBatch(db);
+
                         for (const userDoc of usersSnapshot.docs) {
                             const submissionsRef = collection(db, `artifacts/${appId}/users/${userDoc.id}/submissions`);
                             const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
                             const subsSnapshot = await getDocs(q);
                             for(const subDoc of subsSnapshot.docs){
                                 const subData = subDoc.data();
-                                if(subData.filePath) await deleteObject(ref(storage, subData.filePath)).catch(e => console.warn(e));
-                                await deleteDoc(doc(db, `artifacts/${appId}/users/${userDoc.id}/submissions`, subDoc.id));
+                                if(subData.filePath) await deleteObject(ref(storage, subData.filePath)).catch(e => console.warn("Could not delete submission file from storage:", e.message));
+                                batch.delete(subDoc.ref);
                             }
                         }
-                        // Then, delete the assignment itself.
-                        await deleteDoc(doc(db, getPath('assignments', [subjectId]), assignmentId));
+                        
+                        const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
+                        batch.delete(assignmentDocRef);
+                        
+                        await batch.commit();
+
                         showModal('Success', 'Assignment and all submissions deleted.');
                         await loadTeacherAssignments();
                     } catch (error) {
@@ -772,8 +784,8 @@
                         if (filePath) await deleteObject(ref(storage, filePath)).catch(e => console.warn(e));
                         await deleteDoc(doc(db, `artifacts/${appId}/users/${studentId}/submissions`, submissionId));
                         showModal('Success', 'Submission deleted.');
-                        await toggleSubmissionList(assignmentId, subjectId); // Close and reopen to refresh
-                        await toggleSubmissionList(assignmentId, subjectId);
+                        const container = document.getElementById(`submissionsListContainer-${assignmentId}`);
+                        if (container) await loadStudentSubmissionsForTeacher(assignmentId, subjectId, container);
                     } catch (error) {
                         showModal('Error', `Could not delete submission: ${error.message}`);
                     }
@@ -867,7 +879,7 @@
                 const snapshot = await getDocs(subjectsRef);
                 selectEl.innerHTML = `<option value="">-- Select Subject --</option>`;
                 if(snapshot.empty) throw new Error("No subjects available.");
-                snapshot.forEach(doc => selectEl.add(new Option(doc.id, doc.id)));
+                snapshot.forEach(doc => selectEl.add(new Option(doc.data().name, doc.id)));
             } catch (error) {
                 selectEl.innerHTML = `<option value="">-- No Subjects --</option>`;
             }
@@ -948,30 +960,29 @@
 
                 if (snapshot.empty) {
                     listContainer.innerHTML = '<p>You have not submitted any homework yet.</p>';
-                    return;
+                } else {
+                     snapshot.forEach(doc => {
+                        const sub = doc.data();
+                        const card = document.createElement('div');
+                        card.className = 'student-submission-card';
+                        const submittedAt = new Date(sub.submittedAt).toLocaleString();
+                        let content = sub.fileLink ? `<p>File: ${sub.fileName}</p>` : `<p>Text: ${sub.textAnswer.substring(0, 100)}...</p>`;
+                        let previewBtn = sub.fileLink
+                            ? `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview</button>`
+                            : `<button class="btn-primary preview-btn" data-type="submissionText" data-item='${JSON.stringify({name: sub.assignmentTitle, text: sub.textAnswer})}'>View Text</button>`;
+
+                        card.innerHTML = `
+                            <h4>${sub.assignmentTitle}</h4>
+                            <p>Submitted: ${submittedAt}</p>
+                            ${content}
+                            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                                ${previewBtn}
+                                <button class="logout-btn delete-my-submission-btn" data-submission-id="${doc.id}" data-file-path="${sub.filePath || ''}">Delete</button>
+                            </div>
+                        `;
+                        listContainer.appendChild(card);
+                    });
                 }
-                snapshot.forEach(doc => {
-                    const sub = doc.data();
-                    const card = document.createElement('div');
-                    card.className = 'student-submission-card';
-                    const submittedAt = new Date(sub.submittedAt).toLocaleString();
-                    let content = sub.fileLink ? `<p>File: ${sub.fileName}</p>` : `<p>Text: ${sub.textAnswer.substring(0, 100)}...</p>`;
-                    let previewBtn = sub.fileLink
-                        ? `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview</button>`
-                        : `<button class="btn-primary preview-btn" data-type="submissionText" data-item='${JSON.stringify({name: sub.assignmentTitle, text: sub.textAnswer})}'>View Text</button>`;
-
-                    card.innerHTML = `
-                        <h4>${sub.assignmentTitle}</h4>
-                        <p>Submitted: ${submittedAt}</p>
-                        ${content}
-                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                            ${previewBtn}
-                            <button class="logout-btn delete-my-submission-btn" data-submission-id="${doc.id}" data-file-path="${sub.filePath || ''}">Delete</button>
-                        </div>
-                    `;
-                    listContainer.appendChild(card);
-                });
-
             } catch (error) {
                 listContainer.innerHTML = `<p class="error-message">Could not load your submissions: ${error.message}</p>`;
             } finally {
@@ -1074,3 +1085,4 @@
     </script>
 </body>
 </html>
+
