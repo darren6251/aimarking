@@ -1,775 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Marker - Chat with Gemini</title>
-
-  <!-- PDF.js library (not used directly here, but safe to keep consistent) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with Gemini</title>
   <style>
-    /* --- MODERN BLACK & WHITE THEME --- */
-    :root {
-        --bg-primary: #0a0a0a; /* Near black for main background */
-        --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
-        --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
-        --text-primary: #f5f5f5; /* Off-white for primary text */
-        --text-secondary: #a3a3a3; /* Muted gray for secondary text */
-        --accent-primary: #ffffff; /* White for key actions and highlights */
-        --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
-        --border-color: #333333; /* Subtle border color */
-        --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
-
-        /* Finder Window Specific Variables */
-        --finder-bg-primary: #1c1c1c;
-        --finder-bg-secondary: #0a0a0a;
-        --finder-text-primary: #f5f5f5;
-        --finder-text-secondary: #a3a3a3;
-        --finder-border-color: #333333;
-        --finder-titlebar-bg: #2a2a2a;
-        --finder-hover-bg: #333333;
-        --finder-active-bg: var(--accent-primary);
-        --finder-active-text: #0a0a0a;
-    }
-
-    /* --- LIGHT THEME OVERRIDES --- */
-    body.light-theme {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f5f5f5;
-        --bg-tertiary: #e5e5e5;
-        --text-primary: #0a0a0a;
-        --text-secondary: #737373;
-        --accent-primary: #0a0a0a;
-        --border-color: #d4d4d4;
-        --focus-ring-color: rgba(10, 10, 10, 0.5);
-
-        /* Finder Window Light Theme */
-        --finder-bg-primary: #ffffff;
-        --finder-bg-secondary: #f5f5f5;
-        --finder-text-primary: #0a0a0a;
-        --finder-text-secondary: #737373;
-        --finder-border-color: #d4d4d4;
-        --finder-titlebar-bg: #e5e5e5;
-        --finder-hover-bg: #e5e5e5;
-        --finder-active-bg: var(--accent-primary);
-        --finder-active-text: #ffffff;
-    }
-
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
     body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: var(--text-primary);
-        background-color: var(--bg-primary);
-        overflow-x: hidden;
-        scroll-behavior: smooth;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        transition: background-color 0.3s, color 0.3s;
+      font-family: "Inter", sans-serif;
+      background-color: #0a0a0a;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
     }
-
-    button,
-    input,
-    textarea,
-    select {
-        transition: all .2s ease-in-out;
-        font-family: inherit;
-    }
-
-    button:disabled {
-        opacity: .5;
-        cursor: not-allowed;
-    }
-
-    /* Keyframe animations */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes slideInUp {
-        from {
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-    
-    /* --- LOGIN PAGE --- */
     #authWrapper {
-        display: flex;
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        opacity: 0; /* Starts hidden, fades in with JS */
-        transition: opacity 0.5s ease-in-out;
-        z-index: 1001;
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background: #0a0a0a;
     }
-
-    .login-left-panel,
-    .login-right-panel {
-        width: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 2rem;
-    }
-
-    .login-left-panel {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .login-left-panel h1 {
-        font-size: 3.5rem;
-        font-weight: 700;
-        letter-spacing: -1px;
-        margin-bottom: 1rem;
-    }
-
-    .login-left-panel p {
-        font-size: 1.25rem;
-        font-weight: 400;
-        line-height: 1.5;
-        margin-bottom: .5rem;
-        color: var(--text-secondary);
-    }
-
-    .login-right-panel {
-        background: var(--bg-secondary);
-        flex-direction: column;
-    }
-    
     #authContainer {
-        width: 100%;
-        max-width: 380px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        background-color: var(--bg-primary);
-        padding: 2.5rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      width: 300px;
     }
-
-    #authContainer h2 {
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-
-    .google-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: .75rem;
-        cursor: pointer;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        font-size: 1rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-    .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
-    .google-btn img { height: 20px; }
-    
-    #accessCodeInput {
-         background-color: var(--bg-secondary);
-         border: 1px solid var(--border-color);
-         color: var(--text-primary);
-         padding: 12px;
-         border-radius: 8px;
-         width: 100%;
-         margin-bottom: 1rem;
-         text-align: center;
-         font-size: 1rem;
-    }
-    #accessCodeInput:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px var(--focus-ring-color);
-    }
-
-    .btn-primary {
-         background-color: var(--accent-primary);
-         color: var(--bg-primary);
-         padding: .75rem 1.5rem;
-         border-radius: 8px;
-         border: none;
-         cursor: pointer;
-         font-weight: 600;
-         font-size: 1rem;
-    }
-    
-    body.light-theme .btn-primary {
-        color: var(--bg-primary);
-    }
-
-    .btn-primary:hover {
-         opacity: 0.85;
-         transform: translateY(-1px);
-    }
-    
-    #appSection {
-        display: none; /* Hidden until authenticated */
-        flex-direction: column;
-        height: 100vh;
-        background-color: var(--bg-primary);
-        animation: fadeIn .6s ease-out both;
-    }
-        
-    /* --- HEADER --- */
     header {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        height: 64px;
-        border-bottom: 1px solid var(--border-color);
-        flex-shrink: 0;
+      background: #0a0a0a;
+      border-bottom: 1px solid #333;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
     }
-
-    .logo-container {
-        display: flex;
-        flex-direction: column;
-        line-height: 1.2;
-    }
-    .logo-container h1 {
-        font-size: 1.25rem;
-        font-weight: 700;
-    }
-    .logo-container p {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-
-    /* Navigation */
-    .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .header-actions .tab,
-    .header-actions .dropdown-menu > button {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        color: var(--text-secondary);
-        background: transparent;
-        border: none;
-        transition: background 0.2s, color 0.2s;
-    }
-
-    .header-actions .tab:hover,
-    .header-actions .dropdown-menu > button:hover {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-    }
-
-    .header-actions .tab.active,
-    .header-actions .dropdown-menu > button.active {
-        background: var(--bg-secondary);
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-
-    /* Dropdown Menu */
-    .dropdown-menu {
-        position: relative;
-    }
-
-    .dropdown-menu-content {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background-color: var(--bg-secondary);
-        min-width: 180px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-        border-radius: 8px;
-        overflow: hidden;
-        z-index: 20;
-    }
-
-    .dropdown-menu-content a, .dropdown-menu-content button {
-        display: block;
-        padding: 10px 14px;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: background 0.2s, color 0.2s;
-        background: none;
-        border: none;
-        width: 100%;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    .dropdown-menu-content a:hover, .dropdown-menu-content button:hover {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-    .dropdown-menu-content a.active {
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-
-
-    /* Show menu on hover */
-    .dropdown-menu:hover .dropdown-menu-content {
-        display: block;
-    }
-
-    .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-    #userDisplayName { font-weight: 500; cursor: pointer; }
-    .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
-    .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
-
-    #switchRoleButton {
-        background-color: var(--bg-secondary);
-        color: var(--text-primary);
-        padding: 6px 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        cursor: pointer;
-        font-weight: 600;
-    }
-    #switchRoleButton:hover {
-        background-color: var(--bg-tertiary);
-        border-color: var(--text-secondary);
-    }
-    
-    /* --- MAIN CONTENT (CHAT SPECIFIC) --- */
-    main {
-        flex: 1;
-        display: flex;
-        padding: 24px;
-        gap: 24px;
-        max-width: 1200px;
-        margin: 0 auto;
-        align-items: flex-start;
-        overflow-y: auto;
-    }
-
-    /* Sidebar for chat sessions */
-    aside.form-container {
-        width: 320px;
-        flex-shrink: 0;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        display: flex;
-        flex-direction: column;
-    }
-
-    aside.form-container h3 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-    }
-
-    #chatList {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        max-height: 60vh; /* Limit height for scrolling */
-        overflow-y: auto;
-        padding-right: 5px; /* For scrollbar spacing */
-    }
-
-    #chatList .header-actions.tab { /* Reusing a style from general header tabs */
-        justify-content: space-between;
-        width: 100%;
-        text-align: left;
-        display: flex;
-        padding: 10px 14px; /* Adjust padding for chat list items */
-        border: 1px solid transparent; /* default border */
-        color: var(--text-secondary);
-    }
-    #chatList .header-actions.tab:hover {
-        background: var(--bg-tertiary);
-        border-color: var(--border-color);
-    }
-    #chatList .header-actions.tab.active {
-        background: var(--accent-primary);
-        color: var(--bg-primary);
-        border-color: var(--accent-primary);
-        font-weight: 700;
-    }
-    #chatList .header-actions.tab.active span {
-        color: var(--bg-primary); /* Ensure text is visible on active */
-    }
-
-    #chatList .header-actions.tab span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 70%; /* Give some space for the last message snippet */
-    }
-    #chatList .header-actions.tab span:last-child {
-        opacity: .7;
-        font-size: .85em;
-        text-align: right;
-        max-width: 30%;
-    }
-
-
-    /* Chat Area */
     #chatSection {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        max-width: 800px;
-        width: 100%;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1rem;
+      gap: 1rem;
     }
-
-    #chatSection .form-container { /* Reusing form-container for consistency, but custom styling */
-        padding: 0;
-        border: none;
-        background: none;
-        box-shadow: none;
-        margin-bottom: 0;
-    }
-
-    #chatTitleInput {
-        flex-grow: 1;
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 1rem;
-    }
-    #chatTitleInput:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--focus-ring-color);
-    }
-
     #chatDisplay {
-        flex-grow: 1;
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        min-height: 400px;
-        max-height: 65vh; /* Limit height for scrolling */
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-
     .chat-message {
-        padding: 0.75rem 1rem;
-        border-radius: 18px;
-        max-width: 80%;
-        line-height: 1.4;
-        word-wrap: break-word;
+      max-width: 80%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.5;
+      word-wrap: break-word;
     }
-
     .chat-message.user {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        align-self: flex-end;
-        border-bottom-right-radius: 4px; /* More pointed corner */
+      background: #fff;
+      color: #0a0a0a;
+      align-self: flex-end;
+      border-bottom-right-radius: 6px;
     }
-
     .chat-message.gemini {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-        align-self: flex-start;
-        border-bottom-left-radius: 4px; /* More pointed corner */
+      background: #2a2a2a;
+      align-self: flex-start;
+      border-bottom-left-radius: 6px;
     }
-
     .chat-input-wrapper {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-        margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
     }
-
     #chatInput {
-        flex-grow: 1;
-        min-height: 50px;
-        max-height: 150px; /* Limit expansion */
-        resize: vertical;
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 1rem;
-        line-height: 1.5;
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #f5f5f5;
     }
-    #chatInput:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--focus-ring-color);
-    }
-
     #sendChatButton {
-        padding: 0.75rem 1.5rem;
-        white-space: nowrap;
+      background: #fff;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
     }
-    
-    /* Modals */
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
-    .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
-    #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
-    .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
-    .close-button:hover { color: var(--text-primary); }
-    #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-
-    #modalInput {
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 10px;
-        border-radius: 6px;
-        width: 100%;
-        margin-top: 10px;
+    #sendChatButton:hover {
+      opacity: 0.85;
     }
-    #modalInput:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--focus-ring-color);
+    .loading-indicator {
+      text-align: center;
+      padding: 1rem;
+      color: #a3a3a3;
     }
-
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        #authWrapper { flex-direction: column; position: static; height: auto; }
-        .login-left-panel, .login-right-panel { width: 100%; }
-        header {
-            flex-direction: column;
-            height: auto;
-            padding: 1rem;
-            align-items: flex-start;
-        }
-        .header-actions {
-            margin-left: 0;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        main {
-            flex-direction: column;
-            padding: 16px;
-        }
-        aside.form-container {
-            width: 100%;
-        }
-        #chatSection {
-            max-width: 100%;
-            padding: 1rem;
-        }
-        .chat-input-wrapper {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        #chatInput, #sendChatButton {
-            width: 100%;
-        }
-        .chat-message {
-            max-width: 90%; /* Allow messages to take more width */
-        }
-    }
-
-    /* --- FOOTER --- */
-    footer { 
-        text-align: right; 
-        padding: 10px 20px; 
-        color: var(--text-secondary); 
-        font-size: 0.875rem; 
-        z-index: 100; 
-        width: 100%; 
-        margin-top: auto;
-    }
-    footer a { 
-        color: var(--text-secondary); 
-        text-decoration: none; 
-    }
-    footer a:hover { 
-        text-decoration: underline; 
-        color: var(--text-primary); 
-    }
-
   </style>
 </head>
 <body>
-  <!-- Auth Wrapper -->
-  <div id="authWrapper" style="display: none;">
-    <div class="login-left-panel">
-      <h1>AI Marker</h1>
-      <p>Mark with AI, learn better.</p>
-    </div>
-    <div class="login-right-panel">
-      <div id="authContainer">
-         <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
-      </div>
+  <div id="authWrapper">
+    <div id="authContainer">
+      <h2>Sign In</h2>
+      <button id="googleSignInButton" style="padding: 0.75rem 1rem; border-radius: 8px; background: #fff; color:#0a0a0a; cursor:pointer; border:none; font-weight:bold;">Sign in with Google</button>
+      <p id="authError" style="color:#ef4444; margin-top:1rem;"></p>
     </div>
   </div>
 
-  <div id="appSection" style="display: none;">
-    <!-- HEADER -->
-    <header>
-      <div class="logo-container">
-        <h1>AI Marker</h1>
-        <p>Operated by Darren Ng</p>
-      </div>
+  <header>Chat with Gemini</header>
+  <section id="chatSection">
+    <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <label>AI Source:</label>
+      <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
+      <label for="aiSourceGemini">Gemini API (Cloud)</label>
+      <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
+      <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
+      <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
+      <label for="aiSourceLocal">Local AI (Experimental)</label>
+      <button id="clearChatMemoryButton" style="margin-left:auto; background:none; border:1px solid #333; color:#f5f5f5; border-radius:8px; padding:6px 12px; cursor:pointer;">Clear Chat Memory</button>
+    </div>
+    <div id="chatDisplay"></div>
+    <div class="chat-input-wrapper">
+      <input type="text" id="chatInput" placeholder="Type a message…">
+      <button id="sendChatButton">Send</button>
+    </div>
+    <p id="chatLoadingIndicator" class="loading-indicator"></p>
+  </section>
 
-      <div class="header-actions">
-        <a href="home.html" class="tab">Home</a>
-
-        <div class="dropdown-menu">
-          <button class="tab active">Work with AI ▾</button>
-          <div class="dropdown-menu-content">
-            <a href="grading.html" class="tab">Exam Grader</a>
-            <a href="chat.html" class="tab active">Chat with Gemini</a>
-            <a href="submissions.html" class="tab">Submissions</a>
-          </div>
-        </div>
-
-        <div class="dropdown-menu">
-          <button class="tab">Materials ▾</button>
-          <div class="dropdown-menu-content">
-            <a href="materials.html?folder=tutorials" class="tab">Tutorial Videos</a>
-            <a href="materials.html?folder=pastpapers" class="tab">Past Papers</a>
-            <a href="materials.html?folder=exercises" class="tab">Exercises for Sale</a>
-          </div>
-        </div>
-
-        <div class="user-info">
-          <span id="userDisplayName">Guest</span>
-          <button id="switchRoleButton">Switch Role</button>
-          <button id="logoutButton" class="logout-btn">Logout</button>
-          <!-- <button id="themeToggleButton" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">💡</button> -->
-        </div>
-      </div>
-    </header>
-
-    <!-- MAIN -->
-    <main>
-      <!-- Sidebar: chat sessions -->
-      <aside class="form-container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-          <h3 style="font-size:1.1rem;">My Chats</h3>
-          <button id="newChatBtn" class="btn-primary" style="padding:.4rem .8rem;">New</button>
-        </div>
-
-        <div id="chatList"></div>
-      </aside>
-
-      <!-- Chat area -->
-      <section id="chatSection">
-        <div style="display:flex;flex-direction:column;gap:.75rem;">
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <input id="chatTitleInput" type="text" placeholder="Chat title…" />
-            <button id="saveTitleBtn" class="btn-primary" style="white-space:nowrap;">Save title</button>
-            <button id="deleteChatBtn" class="logout-btn" title="Delete this chat">Delete</button>
-          </div>
-
-          <div id="chatDisplay"></div>
-
-          <div class="chat-input-wrapper">
-            <textarea id="chatInput" placeholder="Type a message… (Shift+Enter for newline)"></textarea>
-            <button id="sendChatButton" class="btn-primary">Send</button>
-          </div>
-        </div>
-      </section>
-    </main>
-    <!-- FOOTER -->
-    <footer>
-      <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
-    </footer>
-  </div>
-
-  <!-- Universal Modal -->
-  <div id="messageModal" class="modal">
-      <div class="modal-content">
-          <span class="close-button">&times;</span>
-          <h3 id="modalTitle"></h3>
-          <div id="modalMessage"></div>
-          <div id="modalButtons"></div>
-      </div>
-  </div>
-  
-  <!-- Profile Edit Modal -->
-  <div id="profileEditModal" class="modal">
-      <div class="modal-content">
-          <span class="close-button profile-close-button">&times;</span>
-          <h3 id="profileModalTitle">Edit Profile</h3>
-          <div id="profileModalMessage">
-            <div class="form-group">
-                <label for="editUserName">Display Name:</label>
-                <input type="text" id="editUserName" class="modal-input">
-            </div>
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="text" id="editUserEmail" class="modal-input" disabled>
-            </div>
-            <div class="form-group">
-                <label>Role:</label>
-                <input type="text" id="editUserRole" class="modal-input" disabled>
-            </div>
-          </div>
-          <div id="profileModalButtons" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
-             <button id="saveProfileButton" class="btn-primary">Save Changes</button>
-             <button id="cancelProfileButton" class="logout-btn">Cancel</button>
-          </div>
-      </div>
-  </div>
-
-
-  <!-- Firebase & App Script -->
   <script type="module">
-    // Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { 
-      getAuth, onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider
-    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, updateDoc,
-      serverTimestamp, orderBy, query, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // --- IMPORTANT CONFIGURATION ---
-    const TEACHER_CODE = "Derren0625"; // Example teacher code
-    const STUDENT_CODE = "STUDENT456"; // Example student code
-
-    // Firebase Configuration (Replace with your actual Firebase config)
     const firebaseConfig = {
-      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", // Placeholder API Key
+      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
       projectId: "ai-grading-9bb30",
       storageBucket: "ai-grading-9bb30.appspot.com",
@@ -777,549 +151,95 @@
       appId: "1:298162112230:web:529d3f95536991be685d27",
       measurementId: "G-CHKLKSM17S"
     };
-    // Fallback for CLOUDFLARE_WORKER_URL if not provided by the environment
-    const CLOUDFLARE_WORKER_URL = typeof __CLOUDFLARE_WORKER_URL !== 'undefined' ? __CLOUDFLARE_WORKER_URL : "https://ai-marker-gemini-proxy.darren-xie11.workers.dev/"; 
-    
-    // Canvas provided global variables
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-    let app, db, auth; // Removed storage as it's not used in chat.html
-    let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // --- AUTH & INITIALIZATION ---
     const authWrapper = document.getElementById('authWrapper');
-    const appSection = document.getElementById('appSection');
-    const authContainer = document.getElementById('authContainer');
-    const userDisplayNameSpan = document.getElementById('userDisplayName');
+    const chatSection = document.getElementById('chatSection');
 
+    let currentUserId = null;
+    let currentUserRole = null;
+    let currentUserName = null;
 
-    const googleSignInTemplate = `
-        <h2>Sign In</h2>
-        <button id="googleSignInButton" class="google-btn">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon">
-            <span>Sign in with Google</span>
-        </button>
-        <p id="authError" class="error-message"></p>
-    `;
-
-    const codeEntryTemplate = `
-        <h2>Enter Access Code</h2>
-        <p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
-        <input type="text" id="accessCodeInput" placeholder="Enter code here">
-        <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-        <p id="codeError" class="error-message"></p>
-    `;
-
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        console.log("Firebase initialized successfully.");
-    } catch (error) {
-        console.error("Error initializing Firebase:", error);
-        showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
-    }
+    const TEACHER_CODE = "Derren0625";
+    const STUDENT_CODE = "STUDENT456";
 
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUserId = user.uid;
-            currentUserEmail = user.email;
-            // Corrected path for user profile: collection/document/collection/document/collection (artifacts/{appId}/users/{userId}/profile/data)
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            try {
-                const userProfileDoc = await getDoc(userProfileRef);
-                if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                    const profileData = userProfileDoc.data();
-                    currentUserRole = profileData.role;
-                    currentUserName = profileData.name || user.displayName;
-                    // Update last login time
-                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                    showApp();
-                } else {
-                    currentUserName = user.displayName;
-                    currentUserRole = 'unassigned';
-                    showCodeEntry();
-                }
-            } catch (e) {
-                 console.error("Error checking user profile:", e);
-                 showModal('Profile Error', `Could not load user profile. Error: ${e.message}`);
-                 showLogin();
-            }
+      if (user) {
+        currentUserId = user.uid;
+        const userProfileRef = doc(db, `artifacts/default-app-id/users/${currentUserId}/profile/data`);
+        const profileDoc = await getDoc(userProfileRef);
+        if (profileDoc.exists() && profileDoc.data().role) {
+          currentUserRole = profileDoc.data().role;
+          currentUserName = profileDoc.data().name || user.displayName;
+          showChat();
         } else {
-            currentUserId = null;
-            currentUserRole = null;
-            currentUserName = null;
-            showLogin();
+          await setDoc(userProfileRef, { role: 'student', name: user.displayName, email: user.email, lastLogin: Date.now() }, { merge: true });
+          currentUserRole = 'student';
+          currentUserName = user.displayName;
+          showChat();
         }
+      } else {
+        showLogin();
+      }
     });
 
     function showLogin() {
-        appSection.style.display = 'none';
-        authWrapper.style.display = 'flex';
-        authWrapper.style.opacity = '1';
-        authContainer.innerHTML = googleSignInTemplate;
-        document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-    }
-
-    function showCodeEntry() {
-        appSection.style.display = 'none';
-        authWrapper.style.display = 'flex';
-        authWrapper.style.opacity = '1';
-        authContainer.innerHTML = codeEntryTemplate;
-        const submitCodeBtn = document.getElementById('submitCodeButton');
-        const accessCodeInput = document.getElementById('accessCodeInput');
-        submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
-        accessCodeInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSubmitCode();
-            }
-        });
-        accessCodeInput?.focus();
-    }
-
-    async function showApp() {
-        authWrapper.style.display = 'none';
-        appSection.style.display = 'flex';
-        userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-        // Initialize chat page specific content after showing the app.
-        initializeChatPageContent();
-    }
-
-    async function handleGoogleSignIn() {
+      authWrapper.style.display = 'flex';
+      chatSection.style.display = 'none';
+      document.getElementById('googleSignInButton').addEventListener('click', async () => {
         const provider = new GoogleAuthProvider();
-        try { 
-            await signInWithPopup(auth, provider); 
-        } catch (error) { 
-            document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-            console.error("Google Sign-In Error:", error);
-        }
-    }
-
-    async function handleSubmitCode(codeValue) {
-        const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
-        const codeError = document.getElementById('codeError');
-        if(codeError) codeError.textContent = '';
-        
-        let roleToSet = null;
-        if (code === TEACHER_CODE) roleToSet = 'teacher';
-        else if (code === STUDENT_CODE) roleToSet = 'student';
-        else { 
-            if(codeError) codeError.textContent = 'Invalid access code.';
-            return; 
-        }
-        
         try {
-            // Corrected path for user profile: collection/document/collection/document/collection
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-            currentUserRole = roleToSet;
-            showModal('Success', `Your role has been set to ${roleToSet}.`);
-            showApp();
-        } catch (error) {
-            if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
-            console.error("Submit Code Error:", error);
+          await signInWithPopup(auth, provider);
+        } catch (e) {
+          document.getElementById('authError').textContent = e.message;
         }
+      });
     }
 
-    document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+    function showChat() {
+      authWrapper.style.display = 'none';
+      chatSection.style.display = 'flex';
+    }
 
-    document.getElementById('switchRoleButton').addEventListener('click', () => {
-        showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
-            await handleSubmitCode(code);
-        });
-    });
-
-    // --- PROFILE EDITING ---
-    userDisplayNameSpan.addEventListener('click', async () => {
-        if (!currentUserId) {
-            showModal('Error', 'Please log in to edit your profile.');
-            return;
-        }
-
-        const profileEditModal = document.getElementById('profileEditModal');
-        const editUserNameInput = document.getElementById('editUserName');
-        const editUserEmailInput = document.getElementById('editUserEmail');
-        const editUserRoleInput = document.getElementById('editUserRole');
-        const saveProfileButton = document.getElementById('saveProfileButton');
-        const cancelProfileButton = document.getElementById('cancelProfileButton');
-
-        editUserNameInput.value = currentUserName || '';
-        editUserEmailInput.value = currentUserEmail || '';
-        editUserRoleInput.value = currentUserRole || '';
-
-        profileEditModal.style.display = 'flex';
-
-        const saveHandler = async () => {
-            const newName = editUserNameInput.value.trim();
-            if (!newName) {
-                editUserNameInput.style.border = '1px solid var(--accent-red)';
-                editUserNameInput.focus();
-                return;
-            }
-
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await updateDoc(userProfileRef, { name: newName });
-                currentUserName = newName;
-                userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
-                profileEditModal.style.display = 'none';
-                showModal('Success', 'Profile updated successfully!');
-            } catch (error) {
-                console.error("Error updating profile:", error);
-                showModal('Error', `Failed to update profile: ${error.message}`);
-            }
-            saveProfileButton.removeEventListener('click', saveHandler);
-            cancelProfileButton.removeEventListener('click', cancelHandler);
-        };
-
-        const cancelHandler = () => {
-            profileEditModal.style.display = 'none';
-            saveProfileButton.removeEventListener('click', saveHandler);
-            cancelProfileButton.removeEventListener('click', cancelHandler);
-        };
-
-        saveProfileButton.addEventListener('click', saveHandler);
-        cancelProfileButton.addEventListener('click', cancelHandler);
-        document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
-    });
-
-    // --- CHAT PAGE SPECIFIC LOGIC ---
-    // UI refs
-    const chatList = document.getElementById('chatList');
-    const newChatBtn = document.getElementById('newChatBtn');
-
+    let geminiChatHistory = [];
     const chatDisplay = document.getElementById('chatDisplay');
     const chatInput = document.getElementById('chatInput');
     const sendChatButton = document.getElementById('sendChatButton');
 
-    const chatTitleInput = document.getElementById('chatTitleInput');
-    const saveTitleBtn = document.getElementById('saveTitleBtn');
-    const deleteChatBtn = document.getElementById('deleteChatBtn');
-
-    // State
-    let currentUserFirebase = null; // Renamed to avoid conflict with global currentUser (auth.currentUser)
-    let currentChatId = null;
-    let currentHistory = []; // {role: 'user'|'model', text: '...'}
-
-    async function initializeChatPageContent() {
-        currentUserFirebase = auth.currentUser; // Get current user from global auth instance
-        await ensureAtLeastOneChat();
-        await loadChatList();
-        // If a chat is in URL (?chatId=...), open it; otherwise open the latest.
-        const url = new URL(window.location.href);
-        const cid = url.searchParams.get('chatId');
-        if (cid) {
-            await openChat(cid);
-        } else {
-            const first = chatList.querySelector('[data-id]');
-            if (first) await openChat(first.dataset.id);
-        }
-    }
-
-    // --- Firestore paths ---
-    const chatsCol = () => collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`);
-
-    // --- Chat CRUD ---
-    async function ensureAtLeastOneChat() {
-      const qSnap = await getDocs(query(chatsCol(), orderBy('updatedAt', 'desc')));
-      if (!qSnap.empty) return;
-      await createNewChat("New Chat");
-    }
-
-    async function createNewChat(title = "New Chat") {
-      const ref = await addDoc(chatsCol(), {
-        title,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        lastMessage: ""
-      });
-      // create a system “hello” message (optional)
-      await addMessage(ref.id, { role: 'model', text: "Hi! Ask me anything about DSE, grading, or study tips." });
-      return ref.id;
-    }
-
-    async function loadChatList() {
-      chatList.innerHTML = "";
-      const qSnap = await getDocs(query(chatsCol(), orderBy('updatedAt', 'desc')));
-      if (qSnap.empty) {
-        chatList.innerHTML = `<div class="submission-card"><em>No chats yet.</em></div>`;
-        return;
-      }
-      qSnap.forEach(docSnap => {
-        const d = docSnap.data();
-        const item = document.createElement('button');
-        item.type = "button";
-        item.dataset.id = docSnap.id;
-        item.className = "header-actions tab"; // reuse a neat pill style
-        item.style.justifyContent = "space-between";
-        item.style.width = "100%";
-        item.style.textAlign = "left";
-        item.style.display = "flex";
-        item.innerHTML = `
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.title || 'Untitled'}</span>
-          <span style="opacity:.7;font-size:.85em;">${(d.lastMessage||'').slice(0,18)}</span>
-        `;
-        item.addEventListener('click', () => openChat(docSnap.id));
-        chatList.appendChild(item);
-      });
-    }
-
-    async function openChat(chatId) {
-      currentChatId = chatId;
-      // mark active in sidebar
-      [...chatList.children].forEach(el => el.classList.remove('active'));
-      const activeBtn = chatList.querySelector(`[data-id="${chatId}"]`);
-      activeBtn?.classList.add('active');
-
-      // load messages
-      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId, 'messages');
-      const qSnap = await getDocs(query(msgsCol, orderBy('createdAt', 'asc')));
-
-      currentHistory = [];
-      chatDisplay.innerHTML = '';
-      if (qSnap.empty) {
-        chatDisplay.innerHTML = `<div class="loading-indicator" style="color:var(--text-secondary); text-align:center;">No messages yet. Say hi!</div>`;
-      } else {
-        qSnap.forEach(docSnap => {
-          const m = docSnap.data();
-          appendBubble(m.role === 'user' ? 'user' : 'gemini', m.text || '');
-          currentHistory.push({ role: m.role, text: m.text || '' });
-        });
-      }
-
-      // load chat title
-      const chatDoc = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId));
-      const cd = chatDoc.data();
-      chatTitleInput.value = cd?.title || 'Untitled';
-
-      // set URL param (nice for deep links)
-      const url = new URL(window.location.href);
-      url.searchParams.set('chatId', chatId);
-      window.history.replaceState({}, '', url.toString());
-
-      scrollToBottom();
-    }
-
-    // Save title
-    saveTitleBtn.addEventListener('click', async () => {
-      if (!currentChatId) return;
-      const title = chatTitleInput.value.trim() || 'Untitled';
-      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId), {
-        title,
-        updatedAt: serverTimestamp()
-      });
-      await loadChatList();
+    sendChatButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
     });
 
-    // Delete chat
-    deleteChatBtn.addEventListener('click', async () => {
-      if (!currentChatId) { showModal('No Chat Selected', 'Please select a chat to delete.'); return; }
-      showModal('Confirm Delete', 'Are you sure you want to delete this chat?', [
-          { text: 'Delete', className: 'logout-btn', onClick: async () => {
-              // delete messages then chat doc
-              const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId, 'messages');
-              const qSnap = await getDocs(msgsCol);
-              const deletions = qSnap.docs.map(d => deleteDoc(d.ref));
-              await Promise.all(deletions);
-              await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, currentChatId));
-              currentChatId = null;
-              await ensureAtLeastOneChat();
-              await loadChatList();
-              const first = chatList.querySelector('[data-id]');
-              if (first) openChat(first.dataset.id);
-          }},
-          { text: 'Cancel', className: 'btn-primary' }
-      ]);
-    });
-
-    // New chat
-    newChatBtn.addEventListener('click', async () => {
-      const id = await createNewChat("New Chat");
-      await loadChatList();
-      await openChat(id);
-    });
-
-    // --- Messages collection helpers ---
-    async function addMessage(chatId, { role, text }) {
-      const msgsCol = collection(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId, 'messages');
-      await addDoc(msgsCol, {
-        role, text,
-        createdAt: serverTimestamp()
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      appendMessage(message, 'user');
+      chatInput.value = '';
+      document.getElementById('chatLoadingIndicator').textContent = 'Gemini is thinking...';
+      const response = await fetch("https://ai-marker-gemini-proxy.darren-xie11.workers.dev/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...geminiChatHistory, { role: 'user', content: message }] })
       });
-      // also update parent chat meta
-      await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserFirebase.uid}/chats`, chatId), {
-        lastMessage: text.slice(0, 200),
-        updatedAt: serverTimestamp()
-      });
+      const data = await response.json();
+      const reply = data.reply || "[No response]";
+      appendMessage(reply, 'gemini');
+      geminiChatHistory.push({ role: 'user', content: message });
+      geminiChatHistory.push({ role: 'assistant', content: reply });
+      document.getElementById('chatLoadingIndicator').textContent = '';
     }
 
-    // --- UI helpers ---
-    function appendBubble(who, text) {
+    function appendMessage(text, sender) {
       const div = document.createElement('div');
-      div.className = `chat-message ${who === 'user' ? 'user' : 'gemini'}`;
+      div.className = `chat-message ${sender}`;
       div.textContent = text;
       chatDisplay.appendChild(div);
-      scrollToBottom(); // Scroll after appending new message
-    }
-    function scrollToBottom() {
       chatDisplay.scrollTop = chatDisplay.scrollHeight;
     }
-
-    // --- Send message flow ---
-    sendChatButton.addEventListener('click', onSend);
-    chatInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        onSend();
-      }
-    });
-
-    async function onSend() {
-      if (!currentUserFirebase) { showModal('Login Required', 'Please sign in first.'); return; }
-      if (!currentChatId) { showModal('No Chat', 'Create or open a chat first.'); return; }
-
-      const userText = chatInput.value.trim();
-      if (!userText) return;
-
-      chatInput.value = '';
-      appendBubble('user', userText);
-      // Removed immediate scrollToBottom here as appendBubble now calls it
-
-      // Save user message
-      await addMessage(currentChatId, { role: 'user', text: userText });
-      currentHistory.push({ role: 'user', text: userText });
-
-      // Call Gemini via your proxy
-      try {
-        const res = await fetch(CLOUDFLARE_WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mode: 'chat',
-            model: 'gemini-1.5-pro',
-            // Send a compact history the Worker expects (adjust if your Worker uses a different schema)
-            history: currentHistory.map(m => ({
-              role: m.role === 'user' ? 'user' : 'model',
-              content: m.text
-            })),
-            // latest user message too (some Workers like it separated)
-            message: userText
-          })
-        });
-
-        if (!res.ok) {
-          const t = await res.text().catch(()=> '');
-          throw new Error(`Proxy error ${res.status}: ${t}`);
-        }
-
-        const text = await res.text();
-        // Try parse JSON; if not JSON, treat as plain text
-        let modelReply = text;
-        try {
-          const obj = JSON.parse(text);
-          modelReply = obj.text || obj.output || obj.reply || text;
-        } catch (_) { /* plain text */ }
-
-        appendBubble('gemini', modelReply);
-        // Removed immediate scrollToBottom here as appendBubble now calls it
-
-        // Save model reply
-        await addMessage(currentChatId, { role: 'model', text: modelReply });
-        currentHistory.push({ role: 'model', text: modelReply });
-
-      } catch (err) {
-        console.error(err);
-        showModal('AI Error', err.message || 'Failed to get a reply.');
-      }
-    }
-
-    // --- MODAL FUNCTIONS ---
-    function showModal(title, message, buttons = []) {
-        const messageModal = document.getElementById('messageModal');
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = message;
-        const modalButtons = document.getElementById('modalButtons');
-        modalButtons.innerHTML = '';
-
-        if (buttons.length === 0) {
-             const okButton = document.createElement('button');
-             okButton.textContent = 'OK';
-             okButton.className = 'btn-primary';
-             okButton.onclick = () => { messageModal.style.display = 'none'; };
-             modalButtons.appendChild(okButton);
-        } else {
-             buttons.forEach(btnConfig => {
-                const button = document.createElement('button');
-                button.textContent = btnConfig.text;
-                button.className = btnConfig.className;
-                button.onclick = () => { 
-                    messageModal.style.display = 'none';
-                    if (btnConfig.onClick) btnConfig.onClick();
-                };
-                modalButtons.appendChild(button);
-            });
-        }
-        messageModal.style.display = 'flex';
-    }
-    
-    function showInputModal(title, label, callback) {
-        const messageModal = document.getElementById('messageModal');
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = `<label for="modalInput" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" style="width: 100%;" required>`;
-        const modalButtons = document.getElementById('modalButtons');
-        modalButtons.innerHTML = ''; 
-
-        const modalInput = document.getElementById('modalInput');
-        const saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.className = 'btn-primary';
-        saveButton.onclick = () => {
-            const value = modalInput.value.trim();
-            if (value) {
-                messageModal.style.display = 'none';
-                callback(value);
-            } else {
-                modalInput.style.border = '1px solid var(--accent-red)';
-                modalInput.focus();
-            }
-        };
-        modalButtons.appendChild(saveButton);
-
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
-        cancelButton.className = 'logout-btn';
-        cancelButton.onclick = () => { messageModal.style.display = 'none'; };
-        modalButtons.appendChild(cancelButton);
-
-        messageModal.style.display = 'flex';
-        modalInput.focus();
-        modalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } });
-    }
-
-    document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
-        const modal = btn.closest('.modal');
-        modal.style.display = 'none'; 
-    });
-
-    // --- THEME TOGGLE ---
-    const themeToggleButton = document.getElementById('themeToggleButton');
-    function applyTheme(theme) { 
-        document.body.classList.toggle('light-theme', theme === 'light'); 
-    }
-    function loadTheme() { 
-        const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
-        applyTheme(savedTheme); 
-    }
-    if (themeToggleButton) { // Check if the button exists before adding listener
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-            applyTheme(newTheme);
-            localStorage.setItem('ai-marker-theme', newTheme);
-        });
-    }
-
-    loadTheme(); // Apply theme on load
   </script>
 </body>
 </html>
