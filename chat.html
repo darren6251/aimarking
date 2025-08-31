@@ -297,10 +297,6 @@
                     <label for="aiSourceGemini">AI Source:</label>
                     <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
                     <label for="aiSourceGemini">Gemini API (Cloud)</label>
-                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
-                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
-                    <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
-                    <label for="aiSourceLocal">Local AI (Experimental)</label>
                     <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
                 </div>
                 <div id="chatDisplay">
@@ -343,13 +339,10 @@
         };
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const CLOUDFLARE_WORKER_URL = "https://us-central1-hardy-abode-420101.cloudfunctions.net/gemini-proxy/";
-        
 
         let app, db, auth;
         let currentUserId = null, currentUserName = null;
         let geminiChatHistory = []; 
-        let currentAiSource = 'gemini-api';
 
         // --- AUTH & INITIALIZATION ---
         const authWrapper = document.getElementById('authWrapper');
@@ -425,10 +418,6 @@
         const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
         const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
 
-        document.getElementById('aiSourceGemini').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'gemini-api'; });
-        document.getElementById('aiSourceDeepSeek').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'deepseek-api'; });
-        document.getElementById('aiSourceLocal').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'local-ai'; });
-
         async function handleSendMessage() {
             const message = chatInput.value.trim();
             if (!message) return;
@@ -436,99 +425,43 @@
             appendChatMessage(message, 'user');
             chatInput.value = '';
             chatLoadingIndicator.textContent = 'AI is typing...';
+            
+            // NOTE: Replace this with your own Google Cloud Function URL
+            const cloudFunctionUrl = `https://us-central1-hardy-abode-420101.cloudfunctions.net/gemini-proxy`; 
 
-            if (currentAiSource === 'gemini-api') {
-                geminiChatHistory.push({ role: "user", parts: [{ text: message }] });
+            // Sending the message to the Cloud Function proxy
+            const payload = {
+                message: message,
+                // You can add more data here if needed by your function
+            };
 
-                const payload = { contents: geminiChatHistory };
-                const apiKey = ""; // Canvas provides this at runtime
+            try {
+                const response = await fetch(cloudFunctionUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-                try {
-                    const apiUrl = `${CLOUDFLARE_WORKER_URL}v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(`API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
-                    }
-
-                    const result = await response.json();
-                    
-                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        const aiResponse = result.candidates[0].content.parts[0].text;
-                        appendChatMessage(aiResponse, 'gemini');
-                        geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                        await saveChatHistory();
-                    } else {
-                        appendChatMessage("Sorry, I received an unexpected response from the AI.", 'gemini');
-                    }
-                } catch (error) {
-                    console.error("Error sending message to Gemini:", error);
-                    appendChatMessage(`Error: ${error.message}`, 'gemini');
-                } finally {
-                    chatLoadingIndicator.textContent = '';
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Cloud Function error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
                 }
 
-            } else if (currentAiSource === 'deepseek-api') {
-                const deepseekPayload = {
-                    messages: [{ role: "user", content: message }],
-                    model: "deepseek-chat",
-                    stream: false
-                };
+                const result = await response.json();
                 
-                try {
-                    const response = await fetch(DEEPSEEK_WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(deepseekPayload)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(`API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
-                    }
-
-                    const result = await response.json();
-                    if (result.choices?.[0]?.message?.content) {
-                        const aiResponse = result.choices[0].message.content;
-                        appendChatMessage(aiResponse, 'gemini'); // Use gemini class for styling
-                    } else {
-                        appendChatMessage("Sorry, I received an unexpected response from DeepSeek AI.", 'gemini');
-                    }
-                } catch (error) {
-                    console.error("Error sending message to DeepSeek:", error);
-                    appendChatMessage(`Error with DeepSeek AI: ${error.message}`, 'gemini');
-                } finally {
-                    chatLoadingIndicator.textContent = '';
+                if (result.response) {
+                    const aiResponse = result.response;
+                    appendChatMessage(aiResponse, 'gemini');
+                    geminiChatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                    await saveChatHistory();
+                } else {
+                    appendChatMessage("Sorry, I received an unexpected response from the AI.", 'gemini');
                 }
-
-            } else if (currentAiSource === 'local-ai') {
-                const responses = {
-                    "hello": "Hello there! I'm the local AI. I can only provide very basic responses. Please switch to a cloud AI option for advanced help.",
-                    "hi": "Hello there! I'm the local AI. I can only provide very basic responses. Please switch to a cloud AI option for advanced help.",
-                    "math": "As a local AI, I don't have the advanced processing power for complex math problems. Please use a cloud AI option for that!",
-                    "equation": "As a local AI, I don't have the advanced processing power for complex math problems. Please use a cloud AI option for that!",
-                    "thank you": "You're welcome! Happy to assist in simple ways.",
-                    "thanks": "You're welcome! Happy to assist in simple ways."
-                };
-                const lowerCaseMessage = message.toLowerCase();
-                let localAiResponse = "I'm the experimental local AI. I can only provide very basic responses. 真係聽唔明，上面轉左online LLM AI幫到你幫緊你，唔好問我🙅唔知你up mud，sorry😀☺️";
-
-                for (const key in responses) {
-                    if (lowerCaseMessage.includes(key)) {
-                        localAiResponse = responses[key];
-                        break;
-                    }
-                }
-                
-                setTimeout(() => { // Simulate processing
-                    appendChatMessage(localAiResponse, 'gemini');
-                    chatLoadingIndicator.textContent = '';
-                }, 500);
+            } catch (error) {
+                console.error("Error sending message to Gemini:", error);
+                appendChatMessage(`Error: ${error.message}`, 'gemini');
+            } finally {
+                chatLoadingIndicator.textContent = '';
             }
         }
 
