@@ -310,8 +310,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -655,32 +655,37 @@
 
         async function loadStudentSubmissionsForTeacher(assignmentId, subjectId, container) {
             try {
-                const usersRef = collection(db, `artifacts/${appId}/users`);
-                const usersSnapshot = await getDocs(usersRef);
-                let allSubmissions = [];
+                // This is a more efficient query using collectionGroup.
+                // IMPORTANT: This requires a Firestore index. Go to Firestore > Indexes > Composite Indexes
+                // Create an index for the 'submissions' collection group:
+                // Field 1: assignmentId (Ascending)
+                const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
+                const querySnapshot = await getDocs(submissionsQuery);
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const studentId = userDoc.id;
-                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${studentId}/profile/data`);
-                    const studentProfileSnap = await getDoc(studentProfileRef);
-                    const studentName = studentProfileSnap.exists() ? (studentProfileSnap.data().name || `Student ${studentId.substring(0,6)}`) : `Student ${studentId.substring(0,6)}`;
-
-                    const submissionsRef = collection(db, `artifacts/${appId}/users/${studentId}/submissions`);
-                    const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
-                    const submissionsSnapshot = await getDocs(q);
-                    submissionsSnapshot.forEach(subDoc => {
-                        allSubmissions.push({ studentId, studentName, ...subDoc.data(), subId: subDoc.id });
-                    });
-                }
-
-                if (allSubmissions.length === 0) {
+                if (querySnapshot.empty) {
                     container.innerHTML = '<h4>Submissions</h4><p>No submissions yet.</p>';
                     return;
                 }
 
                 let submissionsHtml = '<h4>Submissions</h4>';
-                allSubmissions.sort((a, b) => b.submittedAt - a.submittedAt).forEach(sub => {
+                // Fetch all user profiles once to avoid multiple reads inside a loop
+                const userProfiles = new Map();
+                const usersSnapshot = await getDocs(collection(db, `artifacts/${appId}/users`));
+                for(const userDoc of usersSnapshot.docs) {
+                    const profileSnap = await getDoc(doc(db, `artifacts/${appId}/users/${userDoc.id}/profile/data`));
+                    if(profileSnap.exists()) {
+                         userProfiles.set(userDoc.id, profileSnap.data().name || `Student ${userDoc.id.substring(0,6)}`);
+                    } else {
+                         userProfiles.set(userDoc.id, `Student ${userDoc.id.substring(0,6)}`);
+                    }
+                }
+
+                const submissions = querySnapshot.docs.map(d => ({...d.data(), subId: d.id}));
+                submissions.sort((a, b) => b.submittedAt - a.submittedAt);
+                
+                submissions.forEach(sub => {
                     const submittedAt = new Date(sub.submittedAt).toLocaleString();
+                    const studentName = userProfiles.get(sub.submittedBy) || "Unknown Student";
                     let previewContent;
                     if (sub.fileLink) {
                         previewContent = `<button class="btn-primary preview-btn" data-type="submissionFile" data-item='${JSON.stringify({name: sub.fileName, link: sub.fileLink})}'>Preview File</button>`;
@@ -690,20 +695,22 @@
                     submissionsHtml += `
                         <div class="assignment-submission-item">
                             <div>
-                                <strong>${sub.studentName}</strong> <span class="submission-detail">(${submittedAt})</span>
+                                <strong>${studentName}</strong> <span class="submission-detail">(${submittedAt})</span>
                             </div>
                             <div class="submission-actions">
                                 ${previewContent}
-                                <button class="logout-btn delete-submission-btn" data-student-id="${sub.studentId}" data-submission-id="${sub.subId}" data-file-path="${sub.filePath || ''}" data-assignment-id="${assignmentId}" data-subject-id="${subjectId}">Delete</button>
+                                <button class="logout-btn delete-submission-btn" data-student-id="${sub.submittedBy}" data-submission-id="${sub.subId}" data-file-path="${sub.filePath || ''}" data-assignment-id="${assignmentId}" data-subject-id="${subjectId}">Delete</button>
                             </div>
                         </div>`;
                 });
+
                 container.innerHTML = submissionsHtml;
                 container.querySelectorAll('.preview-btn').forEach(btn => btn.addEventListener('click', e => handlePreview(e.target.dataset.type, JSON.parse(e.target.dataset.item))));
                 container.querySelectorAll('.delete-submission-btn').forEach(btn => btn.addEventListener('click', e => deleteSubmission(e.target.dataset.studentId, e.target.dataset.submissionId, e.target.dataset.assignmentId, e.target.dataset.subjectId, e.target.dataset.filePath)));
 
             } catch (error) {
-                container.innerHTML = `<p class="error-message">Failed to load submissions: ${error.message}</p>`;
+                 console.error("Error loading submissions: ", error);
+                container.innerHTML = `<p class="error-message">Failed to load submissions: ${error.message}. An index may be required in Firestore.</p>`;
             }
         }
 
@@ -711,30 +718,36 @@
              showModal('Confirm Deletion', `This will delete the assignment and ALL student submissions for it. This cannot be undone.`, [
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     try {
-                        const usersRef = collection(db, `artifacts/${appId}/users`);
-                        const usersSnapshot = await getDocs(usersRef);
                         const batch = writeBatch(db);
+                        
+                        // FIX: Use a collectionGroup query to efficiently find all submissions to delete
+                        // This requires the Firestore index mentioned in the comments.
+                        const submissionsQuery = query(collectionGroup(db, 'submissions'), where('assignmentId', '==', assignmentId));
+                        const subsSnapshot = await getDocs(submissionsQuery);
 
-                        for (const userDoc of usersSnapshot.docs) {
-                            const submissionsRef = collection(db, `artifacts/${appId}/users/${userDoc.id}/submissions`);
-                            const q = query(submissionsRef, where('assignmentId', '==', assignmentId));
-                            const subsSnapshot = await getDocs(q);
-                            for(const subDoc of subsSnapshot.docs){
-                                const subData = subDoc.data();
-                                if(subData.filePath) await deleteObject(ref(storage, subData.filePath)).catch(e => console.warn("Could not delete submission file from storage:", e.message));
-                                batch.delete(subDoc.ref);
+                        for(const subDoc of subsSnapshot.docs){
+                            const subData = subDoc.data();
+                            // Delete associated file from Storage if it exists
+                            if(subData.filePath) {
+                                const fileRef = ref(storage, subData.filePath);
+                                await deleteObject(fileRef).catch(e => console.warn("Could not delete submission file from storage:", e.message));
                             }
+                            // Add the submission document deletion to the batch
+                            batch.delete(subDoc.ref);
                         }
                         
+                        // Add the assignment document deletion to the batch
                         const assignmentDocRef = doc(db, getPath('assignments', [subjectId]), assignmentId);
                         batch.delete(assignmentDocRef);
                         
+                        // Commit all deletions at once
                         await batch.commit();
 
                         showModal('Success', 'Assignment and all submissions deleted.');
-                        await loadTeacherAssignments();
+                        await loadTeacherAssignments(); // Refresh the view
                     } catch (error) {
-                        showModal('Error', `Could not delete assignment: ${error.message}`);
+                        console.error("Deletion Error:", error);
+                        showModal('Error', `Could not delete assignment: ${error.message}. Please ensure the required Firestore index for 'submissions' is created.`);
                     }
                 }},
                 { text: 'Cancel', className: 'logout-btn' }
@@ -865,32 +878,59 @@
             }
         }
 
-        async function submitHomework(e) {
+        function submitHomework(e) {
             e.preventDefault();
-            const subjectId = document.getElementById('studentSubjectFilter').value;
-            const assignmentId = document.getElementById('studentAssignmentFilter').value;
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
             const file = document.getElementById('homeworkFile').files[0];
             const textAnswer = document.getElementById('homeworkTextAnswer').value.trim();
             const errorEl = document.getElementById('homeworkSubmissionError');
             errorEl.textContent = '';
 
+            const subjectId = document.getElementById('studentSubjectFilter').value;
+            const assignmentId = document.getElementById('studentAssignmentFilter').value;
+
             if (!subjectId || !assignmentId) return errorEl.textContent = 'Please select a subject and assignment.';
             if (!file && !textAnswer) return errorEl.textContent = 'Please upload a file or type an answer.';
 
-            const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
             
-            try {
-                let fileLink = '', filePath = '', fileName = '';
-                if(file){
-                    fileName = file.name;
-                    filePath = `submissions/${currentUserId}/${assignmentId}/${Date.now()}_${fileName}`;
-                    const storageRef = ref(storage, filePath);
-                    const uploadResult = await uploadBytes(storageRef, file);
-                    fileLink = await getDownloadURL(uploadResult.ref);
-                }
+            if (file) {
+                const filePath = `submissions/${currentUserId}/${assignmentId}/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, filePath);
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        submitBtn.textContent = `Uploading... ${Math.round(progress)}%`;
+                    }, 
+                    (error) => {
+                        console.error("Upload failed:", error);
+                        errorEl.textContent = `Upload failed: ${error.message}`;
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit Homework';
+                    }, 
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        await saveSubmissionToFirestore({
+                            subjectId, assignmentId, fileLink: downloadURL,
+                            filePath, fileName: file.name, textAnswer: textAnswer // Pass text too
+                        }, form);
+                    }
+                );
+            } else {
+                 submitBtn.textContent = 'Submitting...';
+                 saveSubmissionToFirestore({subjectId, assignmentId, textAnswer}, form);
+            }
+        }
+
+        async function saveSubmissionToFirestore(submissionData, form) {
+            const {subjectId, assignmentId, fileLink = '', filePath = '', fileName = '', textAnswer = ''} = submissionData;
+            const errorEl = form.querySelector('#homeworkSubmissionError');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            try {
                 const assignmentDoc = await getDoc(doc(db, getPath('assignments', [subjectId]), assignmentId));
                 const assignmentTitle = assignmentDoc.exists() ? assignmentDoc.data().title : 'Unknown Assignment';
 
@@ -898,21 +938,22 @@
                 await addDoc(submissionsRef, {
                     assignmentId, subjectId, assignmentTitle,
                     fileLink, filePath, fileName, textAnswer,
-                    submittedAt: Date.now()
+                    submittedAt: Date.now(),
+                    submittedBy: currentUserId
                 });
                 showModal('Success', 'Homework submitted!');
-                e.target.reset();
+                form.reset();
                 document.getElementById('homeworkFileName').textContent = 'No file chosen';
                 document.getElementById('assignmentDetails').style.display = 'none';
                 await loadMySubmissions();
-
-            } catch(error) {
-                errorEl.textContent = `Submission failed: ${error.message}`;
+            } catch (error) {
+                 errorEl.textContent = `Submission failed: ${error.message}`;
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Homework';
+                 submitBtn.disabled = false;
+                 submitBtn.textContent = 'Submit Homework';
             }
         }
+
 
         async function loadMySubmissions() {
             const listContainer = document.getElementById('mySubmissionsList');
