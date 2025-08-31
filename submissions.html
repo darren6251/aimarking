@@ -1252,7 +1252,8 @@
         submissionFileError.textContent = "Uploading...";
 
         try {
-            const submissionRef = collection(db, `artifacts/${appId}/public/data/submissions`);
+            // **FIX**: Save submission to user's private sub-collection
+            const submissionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
             const newSubmissionDoc = await addDoc(submissionRef, {
                 studentId: currentUserId,
                 studentName: currentUserName,
@@ -1264,11 +1265,12 @@
                 fileUrl: '',
             });
 
-            const storageRef = ref(storage, `submissions/${newSubmissionDoc.id}/${selectedSubmissionFile.name}`);
+            // **FIX**: Use a storage path that includes the userId to comply with security rules
+            const storageRef = ref(storage, `submissions/${currentUserId}/${newSubmissionDoc.id}/${selectedSubmissionFile.name}`);
             const uploadResult = await uploadBytes(storageRef, selectedSubmissionFile);
             const downloadURL = await getDownloadURL(uploadResult.ref);
 
-            await updateDoc(newSubmissionDoc, { fileUrl: downloadURL });
+            await updateDoc(newSubmissionDoc.ref, { fileUrl: downloadURL });
 
             showModal('Success', 'Your work has been submitted successfully!');
             submissionFileError.textContent = "";
@@ -1290,9 +1292,9 @@
         mySubmissionsList.innerHTML = '<p class="loading-indicator">Loading your submissions...</p>';
         if (!currentUserId) { mySubmissionsList.innerHTML = '<p class="loading-indicator">Please log in to see your submissions.</p>'; return; }
 
-        const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
-        // **FIX**: Removed orderBy from the query to prevent index-related permission errors.
-        const q = query(submissionsRef, where('studentId', '==', currentUserId));
+        // **FIX**: Query the user's private submissions collection
+        const submissionsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/submissions`);
+        const q = query(submissionsRef); // No 'where' clause needed
 
         try {
             const qSnap = await getDocs(q);
@@ -1303,7 +1305,6 @@
 
             mySubmissionsList.innerHTML = '';
             
-            // **FIX**: Map results to an array and sort client-side.
             const submissions = qSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
             submissions.sort((a, b) => (b.submissionDate?.toDate() || 0) - (a.submissionDate?.toDate() || 0));
 
@@ -1372,10 +1373,8 @@
 
         const subjectsRef = collection(db, `artifacts/${appId}/public/data/subjects`);
         try {
-            // **FIX**: Removed orderBy from query.
             const qSnap = await getDocs(query(subjectsRef));
             allSubjects = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // **FIX**: Sort client-side.
             allSubjects.sort((a,b) => a.name.localeCompare(b.name));
 
             if (allSubjects.length === 0) {
@@ -1487,10 +1486,8 @@
 
         const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
         try {
-            // **FIX**: Removed orderBy from query.
             const qSnap = await getDocs(query(tasksRef));
             const subjectTasks = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // **FIX**: Sort client-side.
             subjectTasks.sort((a,b) => (a.dueDate || 0) - (b.dueDate || 0));
 
             if (subjectTasks.length === 0) {
@@ -1525,7 +1522,6 @@
             for (const subjectDoc of qSnapSubjects.docs) {
                 const subjectId = subjectDoc.id;
                 const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
-                // **FIX**: Removed orderBy from query.
                 const qSnapTasks = await getDocs(query(tasksRef));
                 qSnapTasks.forEach(taskDoc => {
                     allTasks.push({ id: taskDoc.id, subjectId: subjectId, ...taskDoc.data() });
@@ -1636,30 +1632,44 @@
 
     // --- All Submissions ---
     async function loadAllSubmissions() {
-        allSubmissionsList.innerHTML = '<p class="loading-indicator">Loading all submissions...</p>';
-        const submissionsRef = collection(db, `artifacts/${appId}/public/data/submissions`);
-        
-        const selectedSubjectId = filterSubjectSelect.value;
-        const selectedTaskId = filterTaskSelect.value;
-        
-        // **FIX**: Build query without ordering, apply filters if they exist.
-        let q;
-        let filters = [];
-        if (selectedSubjectId) filters.push(where('subjectId', '==', selectedSubjectId));
-        if (selectedTaskId) filters.push(where('taskId', '==', selectedTaskId));
+        allSubmissionsList.innerHTML = '<p class="loading-indicator">Fetching submissions from all students...</p>';
 
-        if (filters.length > 0) {
-            q = query(submissionsRef, ...filters);
-        } else {
-            q = query(submissionsRef);
+        if (allStudents.length === 0) {
+            await loadAllStudents();
+        }
+        if(allStudents.length === 0){
+             allSubmissionsList.innerHTML = '<p class="loading-indicator">No students found to fetch submissions from.</p>';
+             return;
         }
 
         try {
-            const qSnap = await getDocs(q);
-            allSubmissions = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // **FIX**: Sort client-side.
-            allSubmissions.sort((a,b) => (b.submissionDate?.toDate() || 0) - (a.submissionDate?.toDate() || 0));
+            let submissionsFromAllStudents = [];
+            const submissionPromises = allStudents.map(student => {
+                const submissionsRef = collection(db, `artifacts/${appId}/users/${student.id}/submissions`);
+                return getDocs(submissionsRef);
+            });
 
+            const allSnapshots = await Promise.all(submissionPromises);
+
+            allSnapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    submissionsFromAllStudents.push({ id: doc.id, ...doc.data() });
+                });
+            });
+
+            const selectedSubjectId = filterSubjectSelect.value;
+            const selectedTaskId = filterTaskSelect.value;
+
+            let filteredSubmissions = submissionsFromAllStudents;
+            if (selectedSubjectId) {
+                filteredSubmissions = filteredSubmissions.filter(sub => sub.subjectId === selectedSubjectId);
+            }
+            if (selectedTaskId) {
+                filteredSubmissions = filteredSubmissions.filter(sub => sub.taskId === selectedTaskId);
+            }
+            
+            filteredSubmissions.sort((a,b) => (b.submissionDate?.toDate() || 0) - (a.submissionDate?.toDate() || 0));
+            allSubmissions = filteredSubmissions;
 
             if (allSubmissions.length === 0) {
                 allSubmissionsList.innerHTML = '<p class="loading-indicator">No submissions found matching criteria.</p>';
@@ -1680,7 +1690,7 @@
                     <p>File: <a href="${submission.fileUrl}" target="_blank">${submission.fileName}</a></p>
                     <p>Submitted On: ${submission.submissionDate ? new Date(submission.submissionDate.toDate()).toLocaleString() : 'N/A'}</p>
                     <div class="actions">
-                        <button class="action-btn" data-id="${submission.id}" data-file-url="${submission.fileUrl}">🗑️ Delete Submission</button>
+                        <button class="action-btn" data-id="${submission.id}" data-student-id="${submission.studentId}" data-file-url="${submission.fileUrl}">🗑️ Delete Submission</button>
                     </div>
                 `;
                 allSubmissionsList.appendChild(submissionElement);
@@ -1698,14 +1708,22 @@
     allSubmissionsList.addEventListener('click', async (e) => {
         if (e.target.tagName === 'BUTTON' && e.target.classList.contains('action-btn')) {
             const submissionId = e.target.dataset.id;
+            const studentId = e.target.dataset.studentId;
             const fileUrl = e.target.dataset.fileUrl;
+            
+            if (!studentId) {
+                showModal('Error', 'Could not delete submission: Student ID is missing.');
+                return;
+            }
+
             showModal('Confirm Delete', 'Are you sure you want to delete this submission? This action cannot be undone.', [
                 { text: 'Delete', className: 'logout-btn', onClick: async () => {
                     try {
                         const fileRef = ref(storage, fileUrl); 
                         await deleteObject(fileRef);
 
-                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/submissions`, submissionId));
+                        // **FIX**: Use the correct path with the studentId to delete the document
+                        await deleteDoc(doc(db, `artifacts/${appId}/users/${studentId}/submissions`, submissionId));
                         showModal('Success', 'Submission deleted successfully.');
                         await loadAllSubmissions();
                     } catch (error) {
@@ -1808,4 +1826,3 @@
   </script>
 </body>
 </html>
-
