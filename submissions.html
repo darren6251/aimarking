@@ -1497,9 +1497,13 @@
             return;
         }
 
-        const tasksRef = collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/tasks`);
+        // **THE FINAL FIX**: All task operations must use the central collection.
+        // This query now correctly fetches tasks from '/public/data/tasks' and filters them by the selected subjectId.
+        const tasksRef = collection(db, `artifacts/${appId}/public/data/tasks`);
+        const q = query(tasksRef, where("subjectId", "==", subjectId));
+
         try {
-            const qSnap = await getDocs(query(tasksRef));
+            const qSnap = await getDocs(q); // Use the corrected query 'q'
             const subjectTasks = qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             subjectTasks.sort((a,b) => (a.dueDate || 0) - (b.dueDate || 0));
 
@@ -1847,5 +1851,6 @@
   </script>
 </body>
 </html>
+
 
 
