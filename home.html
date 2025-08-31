@@ -68,7 +68,6 @@
         flex-direction: column;
         min-height: 100vh;
         transition: background-color 0.3s, color 0.3s;
-        padding-bottom: 80px; /* Add padding to prevent content from being hidden by the new footer bar */
     }
 
     button,
@@ -459,6 +458,73 @@
         box-shadow: 0 0 0 2px var(--focus-ring-color);
     }
 
+    /* --- Time and Countdown Section --- */
+    .time-info-section {
+        width: 100%;
+        max-width: 1200px;
+        padding: 2rem;
+        background-color: var(--bg-secondary);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .time-container {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+    .time-box {
+        text-align: center;
+    }
+    .time-label {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        display: block;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .time-display, .countdown-display {
+        font-size: 4rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+    }
+    #teacher-controls {
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    #countdown-datetime {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 8px;
+        border-radius: 6px;
+    }
+    #set-countdown-btn {
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #set-countdown-btn:hover {
+        opacity: 0.85;
+    }
+    body.light-theme #set-countdown-btn {
+        color: var(--bg-primary);
+    }
+
 
     /* Responsive Adjustments */
     @media (max-width: 768px) {
@@ -488,6 +554,12 @@
         .hero-text .buttons a {
             width: 100%;
         }
+        .time-container {
+            flex-direction: column;
+        }
+        .time-display, .countdown-display {
+            font-size: 2.5rem;
+        }
     }
 
     /* --- FOOTER --- */
@@ -507,59 +579,6 @@
     footer a:hover { 
         text-decoration: underline; 
         color: var(--text-primary); 
-    }
-    
-    /* --- Time and Countdown Bar --- */
-    .time-countdown-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: var(--bg-secondary);
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        z-index: 1002;
-    }
-    .time-display, .countdown-display {
-        font-size: 2rem;
-        font-weight: 600;
-        letter-spacing: 2px;
-        color: var(--text-primary);
-    }
-    .countdown-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    #teacher-controls {
-        display: none; /* Hidden by default */
-        align-items: center;
-        gap: 0.5rem;
-    }
-    #countdown-datetime {
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        padding: 8px;
-        border-radius: 6px;
-    }
-    #set-countdown-btn {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        padding: 8px 12px;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    #set-countdown-btn:hover {
-        opacity: 0.85;
-    }
-    body.light-theme #set-countdown-btn {
-        color: var(--bg-primary);
     }
 
   </style>
@@ -630,27 +649,33 @@
             </div>
           </div>
           <div class="hero-image">
-            <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png" alt="Darren Ng demonstrating AI Marker">
+            <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/eaakill.png" alt="Darren Ng demonstrating AI Marker">
           </div>
         </section>
+        
+        <section class="time-info-section">
+            <div class="time-container">
+                <div class="time-box">
+                    <span class="time-label">Current Time</span>
+                    <div id="currentTime" class="time-display">00:00:00</div>
+                </div>
+                <div class="time-box">
+                    <span class="time-label">Countdown</span>
+                    <div id="countdown" class="countdown-display">--:--:--:--</div>
+                </div>
+            </div>
+            <div id="teacher-controls">
+                <input type="datetime-local" id="countdown-datetime">
+                <button id="set-countdown-btn">Set</button>
+            </div>
+        </section>
+
       </div>
     </main>
     <!-- FOOTER -->
     <footer>
       <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
     </footer>
-  </div>
-
-  <!-- Time and Countdown Bar -->
-  <div class="time-countdown-bar">
-    <div id="currentTime" class="time-display">00:00:00</div>
-    <div class="countdown-container">
-      <div id="countdown" class="countdown-display">--:--:--:--</div>
-      <div id="teacher-controls">
-        <input type="datetime-local" id="countdown-datetime">
-        <button id="set-countdown-btn">Set</button>
-      </div>
-    </div>
   </div>
 
   <!-- Universal Modal -->
@@ -962,7 +987,7 @@
     }
 
     function listenForCountdownChanges() {
-        const countdownRef = doc(db, `artifacts/${appId}/public/settings/countdown`);
+        const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
         onSnapshot(countdownRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
@@ -988,7 +1013,7 @@
         }
 
         try {
-            const countdownRef = doc(db, `artifacts/${appId}/public/settings/countdown`);
+            const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
             await setDoc(countdownRef, { target: targetDate });
             showModal('Success', 'Countdown target has been set!');
         } catch (error) {
@@ -1068,3 +1093,4 @@
   </script>
 </body>
 </html>
+
