@@ -289,15 +289,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     <label class="label">Description</label>
     <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
     
-    <!-- NEW: Solution File Upload -->
-    <label class="label">Solution File (Optional)</label>
-    <div id="taskExistingSolution" class="helper" style="text-align:left; margin-bottom: 8px;"></div>
+    <!-- MODIFIED: Solution Section -->
+    <label class="label">Solution (Optional)</label>
+    <div id="taskExistingSolution" class="helper" style="text-align:left; margin-bottom: 8px; font-size: 13px; line-height: 1.6;"></div>
+    
+    <label class="label" style="margin-top:0;">Upload File</label>
     <input id="taskSolutionFile" type="file" class="input"/>
     <div id="solutionProgressWrapper" style="display: none; margin-top: 8px;">
         <progress id="solutionUploadProgress" value="0" max="100" style="width: 100%;"></progress>
         <p class="progress-text" id="solutionProgressText">Uploading 0%</p>
     </div>
-    <!-- END NEW -->
+
+    <label class="label">Or Enter Text</label>
+    <textarea id="taskSolutionText" class="input" rows="4" placeholder="Type or paste solution text here"></textarea>
+    <!-- END MODIFIED -->
 
     <div class="footer">
       <button class="btn-secondary" data-close>Cancel</button>
@@ -480,21 +485,31 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const d = editingTask?.dueDate ? new Date(editingTask.dueDate) : null;
       $('#taskDue').value = d? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : '';
       
-      // NEW: Handle solution file display
+      // MODIFIED: Handle solution file and text display
       $('#taskSolutionFile').value = '';
+      $('#taskSolutionText').value = editingTask?.solutionText || '';
       $('#solutionProgressWrapper').style.display = 'none';
       const existingSolutionDiv = $('#taskExistingSolution');
+      existingSolutionDiv.innerHTML = ''; // Clear previous
+
       if (editingTask?.solutionUrl && editingTask?.solutionFileName) {
-        existingSolutionDiv.innerHTML = `Current: <a href="${editingTask.solutionUrl}" target="_blank">${editingTask.solutionFileName}</a> <button data-act="remove-solution" style="color:var(--accent-red); background:none; border:none; cursor:pointer;">&times;</button>`;
-        existingSolutionDiv.querySelector('[data-act="remove-solution"]').addEventListener('click', removeSolution);
-      } else {
-        existingSolutionDiv.innerHTML = '';
+        existingSolutionDiv.innerHTML += `<div>Current File: <a href="${editingTask.solutionUrl}" target="_blank">${editingTask.solutionFileName}</a> <button data-act="remove-file-solution" style="color:var(--accent-red); background:none; border:none; cursor:pointer; font-weight:bold;">&times;</button></div>`;
       }
+      if (editingTask?.solutionText) {
+        existingSolutionDiv.innerHTML += `<div>Current Text: <em>"${editingTask.solutionText.substring(0, 50)}..."</em> <button data-act="remove-text-solution" style="color:var(--accent-red); background:none; border:none; cursor:pointer; font-weight:bold;">&times;</button></div>`;
+      }
+      
+      if (existingSolutionDiv.innerHTML === '') {
+        existingSolutionDiv.innerHTML = 'No solution provided yet.';
+      }
+
+      existingSolutionDiv.querySelector('[data-act="remove-file-solution"]')?.addEventListener('click', removeFileSolution);
+      existingSolutionDiv.querySelector('[data-act="remove-text-solution"]')?.addEventListener('click', removeTextSolution);
       
       open($('#taskModal'));
     }
 
-    async function removeSolution(e) {
+    async function removeFileSolution(e) {
         e.preventDefault();
         if (!editingTask || !editingTask.solutionFilePath) return;
         if (!confirm('Are you sure you want to remove the solution file?')) return;
@@ -503,7 +518,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
             await deleteObject(ref(storage, editingTask.solutionFilePath));
         } catch (error) {
             console.error("Error removing old solution file:", error);
-            // Non-fatal, maybe file doesn't exist. Continue.
         }
 
         const taskRef = doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTask.id);
@@ -513,11 +527,23 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
             solutionFilePath: null
         });
         
-        $('#taskExistingSolution').innerHTML = '';
         editingTask.solutionUrl = null;
         editingTask.solutionFileName = null;
         editingTask.solutionFilePath = null;
-        alert('Solution removed.');
+        openTaskModal(editingTask); // Re-render modal content
+        renderTasksForFilters();
+    }
+    
+    async function removeTextSolution(e) {
+        e.preventDefault();
+        if (!editingTask) return;
+        if (!confirm('Are you sure you want to remove the solution text?')) return;
+        
+        const taskRef = doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTask.id);
+        await updateDoc(taskRef, { solutionText: null });
+
+        editingTask.solutionText = null;
+        openTaskModal(editingTask); // Re-render modal content
         renderTasksForFilters();
     }
     
@@ -527,17 +553,25 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const due = ($('#taskDue').value||'').trim();
       const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
       const solutionFile = $('#taskSolutionFile').files[0];
+      const solutionText = ($('#taskSolutionText').value || '').trim();
       
       const payload = { 
         title, 
         description, 
         dueDate: dueMs,
         updatedAt: serverTimestamp(),
-        ...(editingTask ? {} : { createdAt: serverTimestamp() }), // Only add createdAt on new task
+        ...(editingTask ? {} : { createdAt: serverTimestamp() }),
         solutionUrl: editingTask?.solutionUrl || null,
         solutionFileName: editingTask?.solutionFileName || null,
         solutionFilePath: editingTask?.solutionFilePath || null,
+        solutionText: solutionText || (editingTask ? editingTask.solutionText : null),
       };
+
+      if (solutionText) {
+          payload.solutionText = solutionText;
+      } else if (editingTask) {
+          payload.solutionText = null; // Explicitly clear if field is empty
+      }
 
       const taskRef = editingTask ? doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTask.id) : doc(collection(tasksCol(selectedSubjectId, selectedTopicId)));
       
@@ -545,14 +579,23 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       saveButton.disabled = true;
       saveButton.textContent = 'Saving...';
 
+      const finishSave = (isSuccess) => {
+        if (isSuccess) {
+            $('#taskModal').style.display = 'none';
+            renderTasksForFilters();
+            loadTasksForTD();
+        }
+        saveButton.disabled = false;
+        saveButton.textContent = 'Save';
+      };
+
       try {
         if (solutionFile) {
-            // If there's an old file, delete it first
             if (editingTask?.solutionFilePath) {
                 try { await deleteObject(ref(storage, editingTask.solutionFilePath)); } catch(e) { console.warn("Old solution not found, continuing.", e); }
             }
 
-            const filePath = `solutions/${selectedSubjectId}/${topicId}/${taskRef.id}/${solutionFile.name}`;
+            const filePath = `solutions/${selectedSubjectId}/${selectedTopicId}/${taskRef.id}/${solutionFile.name}`;
             const storageRef = ref(storage, filePath);
             const uploadTask = uploadBytesResumable(storageRef, solutionFile);
 
@@ -567,8 +610,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
                 (error) => {
                     console.error("Upload failed:", error);
                     alert('Solution upload failed.');
-                    saveButton.disabled = false;
-                    saveButton.textContent = 'Save';
+                    finishSave(false);
                 }, 
                 async () => {
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -576,26 +618,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
                     payload.solutionFileName = solutionFile.name;
                     payload.solutionFilePath = filePath;
                     await setDoc(taskRef, payload, { merge: true });
-                    $('#taskModal').style.display='none';
-                    renderTasksForFilters();
-                    loadTasksForTD();
+                    finishSave(true);
                 }
             );
         } else {
-            // No new file, just save the metadata
             if(editingTask) { await updateDoc(taskRef, payload); } else { await setDoc(taskRef, payload); }
-            $('#taskModal').style.display='none';
-            renderTasksForFilters();
-            loadTasksForTD();
+            finishSave(true);
         }
       } catch (e) {
           console.error("Error saving task:", e);
           alert('Failed to save task.');
-      } finally {
-        if (!solutionFile) {
-           saveButton.disabled = false;
-           saveButton.textContent = 'Save';
-        }
+          finishSave(false);
       }
     });
 
@@ -739,7 +772,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
           <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
             ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open Submission</a>`: ''}
             ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
-            ${taskInfo?.solutionUrl ? `<a href="${taskInfo.solutionUrl}" target="_blank" class="btn-primary">View Solution</a>` : ''}
+            ${taskInfo?.solutionUrl ? `<a href="${taskInfo.solutionUrl}" target="_blank" class="btn-secondary">Solution File</a>` : ''}
+            ${taskInfo?.solutionText ? `<button class="btn-primary" data-act="view-solution-text">Solution Text</button>` : ''}
           </div>
           <div style="margin-top:auto; padding-top:8px;">
             <button class="logout-btn" data-act="delete">Delete</button>
@@ -751,6 +785,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
           renderMySubmissions();
         });
         if(s.textAnswer){ card.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=s.assignmentTitle; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
+        if(taskInfo?.solutionText){ card.querySelector('[data-act="view-solution-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=`Solution: ${s.assignmentTitle}`; $('#previewBody').textContent=taskInfo.solutionText; open($('#previewModal')); }); }
         list.appendChild(card);
       });
     }
@@ -829,3 +864,4 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   </script>
 </body>
 </html>
+
