@@ -350,9 +350,7 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const CLOUDFLARE_WORKER_URL = "https://geminiproxy-aylryiz2yq-uc.a.run.app/";
-        // This is a placeholder for your new AI API. You will need to replace this with your actual proxy URL.
-        const NEW_AI_API_URL = "https://us-central1-savvy-depot-420101.cloudfunctions.net/openRouterProxy"; 
-
+        
         let app, db, auth;
         let currentUserId = null, currentUserName = null;
         let geminiChatHistory = []; 
@@ -488,19 +486,14 @@
                 }
 
             } else if (currentAiSource === 'new-ai-api') {
-                // NOTE: This payload structure is a common one (like OpenAI's).
-                // You may need to adjust it based on the requirements of your new AI API.
-                const newApiPayload = {
-                    messages: [{ role: "user", content: message }],
-                    model: "deepseek-chat", // Change to your specific model name
-                    stream: false
-                };
-                
                 try {
-                    const response = await fetch(NEW_AI_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newApiPayload)
+                    const response = await fetch("https://us-central1-savvy-depot-420101.cloudfunctions.net/openRouterProxy", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            model: "openai/gpt-3.5-turbo",
+                            messages: [{ role: "user", content: message }]
+                        })
                     });
 
                     if (!response.ok) {
@@ -509,8 +502,6 @@
                     }
 
                     const result = await response.json();
-                    // NOTE: The path to the response text might be different for your new API.
-                    // This one is common: result.choices[0].message.content
                     if (result.choices?.[0]?.message?.content) {
                         const aiResponse = result.choices[0].message.content;
                         appendChatMessage(aiResponse, 'gemini'); // Use gemini class for styling
