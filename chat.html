@@ -206,7 +206,7 @@
 
         /* --- FORMS --- */
         label { display: inline-block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"] {
+        input[type="text"], textarea#chatInput {
             width: 100%; 
             background-color: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
@@ -215,7 +215,13 @@
             border-radius: 8px; 
             font-size: 1rem;
         }
-        input:focus { 
+        textarea#chatInput {
+            resize: none;
+            overflow-y: auto;
+            max-height: 200px;
+            line-height: 1.5;
+        }
+        input:focus, textarea:focus { 
             outline: none; 
             border-color: var(--accent-primary); 
             box-shadow: 0 0 0 3px var(--focus-ring-color); 
@@ -237,7 +243,7 @@
         .chat-message.user { background-color: var(--accent-primary); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 6px; }
         body.light-theme .chat-message.user { color: var(--bg-primary); }
         .chat-message.gemini { background-color: var(--bg-secondary); align-self: flex-start; border-bottom-left-radius: 6px; }
-        .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; }
+        .chat-input-wrapper { display: flex; gap: .5rem; flex-shrink: 0; align-items: flex-end; }
         #chatInput { flex: 1; }
         #sendChatButton { background: var(--accent-primary); color: var(--bg-primary); }
         body.light-theme #sendChatButton { color: var(--bg-primary); }
@@ -297,8 +303,8 @@
                     <label for="aiSourceGemini">AI Source:</label>
                     <input type="radio" id="aiSourceGemini" name="aiSource" value="gemini-api" checked>
                     <label for="aiSourceGemini">Gemini API (Cloud)</label>
-                    <input type="radio" id="aiSourceDeepSeek" name="aiSource" value="deepseek-api">
-                    <label for="aiSourceDeepSeek">DeepSeek API (Cloud)</label>
+                    <input type="radio" id="aiSourceNewAI" name="aiSource" value="new-ai-api">
+                    <label for="aiSourceNewAI">New AI API (Cloud)</label>
                     <input type="radio" id="aiSourceLocal" name="aiSource" value="local-ai">
                     <label for="aiSourceLocal">Local AI (Experimental)</label>
                     <button id="clearChatMemoryButton" class="logout-btn" style="margin-left: auto;">Clear Chat Memory</button>
@@ -307,7 +313,7 @@
                     <!-- Chat messages will be appended here -->
                 </div>
                 <div class="chat-input-wrapper">
-                    <input type="text" id="chatInput" placeholder="Type a message…">
+                    <textarea id="chatInput" placeholder="Type a message…" rows="1"></textarea>
                     <button id="sendChatButton" class="btn-primary">Send</button>
                 </div>
                  <p id="chatLoadingIndicator" class="loading-indicator"></p>
@@ -344,7 +350,8 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const CLOUDFLARE_WORKER_URL = "https://geminiproxy-aylryiz2yq-uc.a.run.app/";
-        const DEEPSEEK_WORKER_URL = "https://openrouterproxy-gafwignbsq-uc.a.run.app/https://openrouterproxy-gafwignbsq-uc.a.run.app/"; 
+        // This is a placeholder for your new AI API. You will need to replace this with your actual proxy URL.
+        const NEW_AI_API_URL = "https://new-ai-api-proxy-gafwignbsq-uc.a.run.app/"; 
 
         let app, db, auth;
         let currentUserId = null, currentUserName = null;
@@ -425,8 +432,14 @@
         const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
         const clearChatMemoryButton = document.getElementById('clearChatMemoryButton');
 
+        // Auto-resize textarea logic
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto'; // Reset height to recalculate
+            chatInput.style.height = `${chatInput.scrollHeight}px`; // Set to content height
+        });
+
         document.getElementById('aiSourceGemini').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'gemini-api'; });
-        document.getElementById('aiSourceDeepSeek').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'deepseek-api'; });
+        document.getElementById('aiSourceNewAI').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'new-ai-api'; });
         document.getElementById('aiSourceLocal').addEventListener('change', (e) => { if (e.target.checked) currentAiSource = 'local-ai'; });
 
         async function handleSendMessage() {
@@ -435,6 +448,7 @@
 
             appendChatMessage(message, 'user');
             chatInput.value = '';
+            chatInput.style.height = 'auto'; // Reset textarea height after sending
             chatLoadingIndicator.textContent = 'AI is typing...';
 
             if (currentAiSource === 'gemini-api') {
@@ -473,18 +487,20 @@
                     chatLoadingIndicator.textContent = '';
                 }
 
-            } else if (currentAiSource === 'deepseek-api') {
-                const deepseekPayload = {
+            } else if (currentAiSource === 'new-ai-api') {
+                // NOTE: This payload structure is a common one (like OpenAI's).
+                // You may need to adjust it based on the requirements of your new AI API.
+                const newApiPayload = {
                     messages: [{ role: "user", content: message }],
-                    model: "deepseek-chat",
+                    model: "new-ai-model", // Change to your specific model name
                     stream: false
                 };
                 
                 try {
-                    const response = await fetch(DEEPSEEK_WORKER_URL, {
+                    const response = await fetch(NEW_AI_API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(deepseekPayload)
+                        body: JSON.stringify(newApiPayload)
                     });
 
                     if (!response.ok) {
@@ -493,15 +509,17 @@
                     }
 
                     const result = await response.json();
+                    // NOTE: The path to the response text might be different for your new API.
+                    // This one is common: result.choices[0].message.content
                     if (result.choices?.[0]?.message?.content) {
                         const aiResponse = result.choices[0].message.content;
                         appendChatMessage(aiResponse, 'gemini'); // Use gemini class for styling
                     } else {
-                        appendChatMessage("Sorry, I received an unexpected response from DeepSeek AI.", 'gemini');
+                        appendChatMessage("Sorry, I received an unexpected response from the new AI API.", 'gemini');
                     }
                 } catch (error) {
-                    console.error("Error sending message to DeepSeek:", error);
-                    appendChatMessage(`Error with DeepSeek AI: ${error.message}`, 'gemini');
+                    console.error("Error sending message to New AI API:", error);
+                    appendChatMessage(`Error with New AI API: ${error.message}`, 'gemini');
                 } finally {
                     chatLoadingIndicator.textContent = '';
                 }
@@ -542,7 +560,8 @@
 
         sendChatButton.addEventListener('click', handleSendMessage);
         chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            // Send message on Enter, but allow new line with Shift+Enter
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage();
             }
