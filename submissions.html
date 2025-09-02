@@ -288,6 +288,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     <div class="row"><input id="taskTitle" class="input" placeholder="Task title"><input id="taskDue" class="input" type="date"></div>
     <label class="label">Description</label>
     <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
+    
+    <!-- NEW: Solution File Upload -->
+    <label class="label">Solution File (Optional)</label>
+    <div id="taskExistingSolution" class="helper" style="text-align:left; margin-bottom: 8px;"></div>
+    <input id="taskSolutionFile" type="file" class="input"/>
+    <div id="solutionProgressWrapper" style="display: none; margin-top: 8px;">
+        <progress id="solutionUploadProgress" value="0" max="100" style="width: 100%;"></progress>
+        <p class="progress-text" id="solutionProgressText">Uploading 0%</p>
+    </div>
+    <!-- END NEW -->
+
     <div class="footer">
       <button class="btn-secondary" data-close>Cancel</button>
       <button id="saveTask" class="btn-primary">Save</button>
@@ -320,7 +331,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
     // --- Firebase Configuration (from index (8)) ---
     const firebaseConfig = {
@@ -357,13 +368,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
     // State
     let currentUser = null; let currentRole = null; let currentProfileRef = null;
-    let selectedSubjectId = null; let selectedTopicId = null; let editingTaskId = null; let submittingTaskCtx = null;
+    let selectedSubjectId = null; let selectedTopicId = null; let editingTask = null;
 
     // Paths (under public/data in your rules)
     const subjectsCol = () => collection(db, `artifacts/${appId}/public/data/subjects`);
     const topicsCol   = (subjectId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics`);
     const tasksCol    = (subjectId, topicId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics/${topicId}/tasks`);
-
     const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`); // central log
 
     // Auth UI elements
@@ -404,7 +414,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     onAuthStateChanged(auth, async (user)=>{
       if(user){
         currentUser = user; currentProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-        // ensure profile
         const snap = await getDoc(currentProfileRef);
         if(snap.exists() && snap.data().role){ currentRole = snap.data().role; }
         authWrapper.style.display='none'; appRoot.style.display='block';
@@ -438,11 +447,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     const addSubjectBtn = $('#addSubjectBtn');
     const addTopicBtn = $('#addTopicBtn');
     const addTaskBtn = $('#addTaskBtn');
-
     const sFilter = $('#studentSubjectFilter');
     const tFilter = $('#studentTopicFilter');
-
-    // Teacher dashboard selects
     const tdSubject = $('#tdSubject');
     const tdTopic = $('#tdTopic');
     const tdTask = $('#tdTask');
@@ -451,14 +457,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     addTopicBtn.addEventListener('click', ()=>{ if(!canTeach()) return alert('Teachers only'); if(!selectedSubjectId) return alert('Pick a subject first'); $('#topicName').value=''; $('#topicModalSubject').textContent = `Under: ${subjectSelect.options[subjectSelect.selectedIndex]?.textContent||''}`; open($('#topicModal')); });
     addTaskBtn.addEventListener('click', ()=> openTaskModal());
 
-    // Save Subject
     $('#saveSubject').addEventListener('click', async ()=>{
       const name = ($('#subjectName').value||'').trim(); if(!name) return;
       await addDoc(subjectsCol(), { name, createdAt: Date.now() });
       $('#subjectModal').style.display='none'; await Promise.all([loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)]);
     });
 
-    // Save Topic
     $('#saveTopic').addEventListener('click', async ()=>{
       const name = ($('#topicName').value||'').trim(); if(!name || !selectedSubjectId) return;
       await addDoc(topicsCol(selectedSubjectId), { name, createdAt: Date.now() });
@@ -466,36 +470,140 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     });
 
     // Task modal
-    function openTaskModal(task){
+    function openTaskModal(task = null){
       if(!canTeach()){ alert('Teachers only'); return; }
       if(!selectedSubjectId || !selectedTopicId){ alert('Pick subject & topic first'); return; }
-      editingTaskId = task?.id || null;
-      $('#taskModalTitle').textContent = editingTaskId? 'Edit Task' : 'Create Task';
-      $('#taskTitle').value = task?.title || '';
-      $('#taskDesc').value = task?.description || '';
-      const d = task?.dueDate ? new Date(task.dueDate) : null;
+      editingTask = task;
+      $('#taskModalTitle').textContent = editingTask ? 'Edit Task' : 'Create Task';
+      $('#taskTitle').value = editingTask?.title || '';
+      $('#taskDesc').value = editingTask?.description || '';
+      const d = editingTask?.dueDate ? new Date(editingTask.dueDate) : null;
       $('#taskDue').value = d? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : '';
+      
+      // NEW: Handle solution file display
+      $('#taskSolutionFile').value = '';
+      $('#solutionProgressWrapper').style.display = 'none';
+      const existingSolutionDiv = $('#taskExistingSolution');
+      if (editingTask?.solutionUrl && editingTask?.solutionFileName) {
+        existingSolutionDiv.innerHTML = `Current: <a href="${editingTask.solutionUrl}" target="_blank">${editingTask.solutionFileName}</a> <button data-act="remove-solution" style="color:var(--accent-red); background:none; border:none; cursor:pointer;">&times;</button>`;
+        existingSolutionDiv.querySelector('[data-act="remove-solution"]').addEventListener('click', removeSolution);
+      } else {
+        existingSolutionDiv.innerHTML = '';
+      }
+      
       open($('#taskModal'));
     }
 
+    async function removeSolution(e) {
+        e.preventDefault();
+        if (!editingTask || !editingTask.solutionFilePath) return;
+        if (!confirm('Are you sure you want to remove the solution file?')) return;
+        
+        try {
+            await deleteObject(ref(storage, editingTask.solutionFilePath));
+        } catch (error) {
+            console.error("Error removing old solution file:", error);
+            // Non-fatal, maybe file doesn't exist. Continue.
+        }
+
+        const taskRef = doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTask.id);
+        await updateDoc(taskRef, {
+            solutionUrl: null,
+            solutionFileName: null,
+            solutionFilePath: null
+        });
+        
+        $('#taskExistingSolution').innerHTML = '';
+        editingTask.solutionUrl = null;
+        editingTask.solutionFileName = null;
+        editingTask.solutionFilePath = null;
+        alert('Solution removed.');
+        renderTasksForFilters();
+    }
+    
     $('#saveTask').addEventListener('click', async ()=>{
       const title = ($('#taskTitle').value||'').trim(); if(!title) return;
       const description = ($('#taskDesc').value||'').trim();
       const due = ($('#taskDue').value||'').trim();
       const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
-      const payload = { title, description, dueDate: dueMs, createdAt: Date.now() };
-      if(editingTaskId){ await updateDoc(doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTaskId), payload); }
-      else { await addDoc(tasksCol(selectedSubjectId, selectedTopicId), payload); }
-      $('#taskModal').style.display='none'; renderTasksForFilters(); loadTasksForTD();
+      const solutionFile = $('#taskSolutionFile').files[0];
+      
+      const payload = { 
+        title, 
+        description, 
+        dueDate: dueMs,
+        updatedAt: serverTimestamp(),
+        ...(editingTask ? {} : { createdAt: serverTimestamp() }), // Only add createdAt on new task
+        solutionUrl: editingTask?.solutionUrl || null,
+        solutionFileName: editingTask?.solutionFileName || null,
+        solutionFilePath: editingTask?.solutionFilePath || null,
+      };
+
+      const taskRef = editingTask ? doc(db, tasksCol(selectedSubjectId, selectedTopicId).path, editingTask.id) : doc(collection(tasksCol(selectedSubjectId, selectedTopicId)));
+      
+      const saveButton = $('#saveTask');
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+
+      try {
+        if (solutionFile) {
+            // If there's an old file, delete it first
+            if (editingTask?.solutionFilePath) {
+                try { await deleteObject(ref(storage, editingTask.solutionFilePath)); } catch(e) { console.warn("Old solution not found, continuing.", e); }
+            }
+
+            const filePath = `solutions/${selectedSubjectId}/${topicId}/${taskRef.id}/${solutionFile.name}`;
+            const storageRef = ref(storage, filePath);
+            const uploadTask = uploadBytesResumable(storageRef, solutionFile);
+
+            $('#solutionProgressWrapper').style.display = 'block';
+            
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    $('#solutionUploadProgress').value = progress;
+                    $('#solutionProgressText').textContent = `Uploading ${Math.round(progress)}%`;
+                }, 
+                (error) => {
+                    console.error("Upload failed:", error);
+                    alert('Solution upload failed.');
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save';
+                }, 
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    payload.solutionUrl = downloadURL;
+                    payload.solutionFileName = solutionFile.name;
+                    payload.solutionFilePath = filePath;
+                    await setDoc(taskRef, payload, { merge: true });
+                    $('#taskModal').style.display='none';
+                    renderTasksForFilters();
+                    loadTasksForTD();
+                }
+            );
+        } else {
+            // No new file, just save the metadata
+            if(editingTask) { await updateDoc(taskRef, payload); } else { await setDoc(taskRef, payload); }
+            $('#taskModal').style.display='none';
+            renderTasksForFilters();
+            loadTasksForTD();
+        }
+      } catch (e) {
+          console.error("Error saving task:", e);
+          alert('Failed to save task.');
+      } finally {
+        if (!solutionFile) {
+           saveButton.disabled = false;
+           saveButton.textContent = 'Save';
+        }
+      }
     });
 
     // Select changes
     subjectSelect.addEventListener('change', async (e)=>{ selectedSubjectId = e.target.value||null; await loadTopics(selectedSubjectId, topicSelect); topicSelect.disabled=!selectedSubjectId; addTaskBtn.disabled = true; });
     topicSelect.addEventListener('change', (e)=>{ selectedTopicId = e.target.value||null; addTaskBtn.disabled = !selectedTopicId; });
-
     sFilter.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tFilter); tFilter.disabled = !e.target.value; renderTasksForFilters(); });
     tFilter.addEventListener('change', ()=> renderTasksForFilters());
-
     tdSubject.addEventListener('change', async (e)=>{ await loadTopics(e.target.value, tdTopic); tdTopic.disabled = !e.target.value; tdTask.disabled = true; $('#submissionsList').innerHTML=''; });
     tdTopic.addEventListener('change', ()=>{ tdTask.disabled = !tdTopic.value; loadTasksForTD(); });
     tdTask.addEventListener('change', ()=> loadSubmissionsForTD());
@@ -514,21 +622,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
           <div class="badge">Due: ${dueTxt}</div>
           <strong>${t.title}</strong>
           <div class="muted">${(t.description||'').substring(0,160)}</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px;">
             <button class="btn-primary" data-act="submit">Submit</button>
             ${canTeach()? '<button class="btn-secondary" data-act="edit">Edit</button><button class="logout-btn" data-act="delete">Delete</button>' : ''}
           </div>`;
         tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
         if(canTeach()){
-          tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> openTaskModal(t));
+          tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> { selectedSubjectId = subj; selectedTopicId = top; openTaskModal(t); });
           tile.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-            if(!confirm('Delete this task?')) return; await deleteDoc(doc(db, tasksCol(subj, top).path, d.id)); renderTasksForFilters(); loadTasksForTD();
+            if(!confirm('Delete this task?')) return; 
+            // Also delete solution if it exists
+            if (t.solutionFilePath) {
+                try { await deleteObject(ref(storage, t.solutionFilePath)); } catch(e){ console.warn("Could not delete solution file", e); }
+            }
+            await deleteDoc(doc(db, tasksCol(subj, top).path, d.id)); 
+            renderTasksForFilters(); 
+            loadTasksForTD();
           });
         }
         container.appendChild(tile);
       });
     }
 
+    let submittingTaskCtx = null;
     function openSubmission(task, subjectId, topicId){
       submittingTaskCtx = { task, subjectId, topicId };
       $('#submitModalTitle').textContent = `Submit: ${task.title}`;
@@ -544,12 +660,22 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const link = ($('#submissionLink').value||'').trim();
       const text = ($('#submissionText').value||'').trim();
       if(!file && !link && !text){ alert('Attach a file, link, or enter text.'); return; }
-      // Upload file if provided
-      let filePath = '', fileLink = '';
+      
+      const sendBtn = $('#sendSubmission');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Submitting...';
+
+      let fileLink = '', filePath = '';
       if(file){
         const path = `submissions/${currentUser.uid}/${Date.now()}_${file.name}`;
-        const r = await uploadBytes(ref(storage, path), file);
-        fileLink = await getDownloadURL(r.ref); filePath = path;
+        try {
+            const r = await uploadBytes(ref(storage, path), file);
+            fileLink = await getDownloadURL(r.ref); filePath = path;
+        } catch(e) {
+            alert('File upload failed.');
+            sendBtn.disabled = false; sendBtn.textContent = 'Submit';
+            return;
+        }
       }
       const payloadUser = {
         assignmentTitle: submittingTaskCtx.task.title,
@@ -562,9 +688,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         filePath: filePath,
         textAnswer: text||''
       };
-      // write to user's private submissions
       const userSubRef = await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), payloadUser);
-      // write to central log (allowed for any signed-in user by your rules)
       await addDoc(allSubsCol(), {
         ...payloadUser,
         submissionId: userSubRef.id,
@@ -576,6 +700,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         createdAt: serverTimestamp()
       });
       $('#submitModal').style.display='none';
+      sendBtn.disabled = false; sendBtn.textContent = 'Submit';
       renderMySubmissions();
       alert('Submitted!');
     });
@@ -583,24 +708,46 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     async function renderMySubmissions(){
       const list = $('#mySubmissions'); list.innerHTML='';
       if(!currentUser) return;
-      const snap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
-      if(snap.docs.length===0){ list.innerHTML = '<p class="helper">No submissions yet.</p>'; return; }
-      snap.docs.forEach(d=>{
+      const subSnap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
+      if(subSnap.docs.length===0){ list.innerHTML = '<p class="helper">No submissions yet.</p>'; return; }
+      
+      // NEW: Efficiently fetch all task data needed
+      const tasksToFetch = {};
+      subSnap.docs.forEach(doc => {
+          const sub = doc.data();
+          if (!tasksToFetch[sub.topicId]) {
+              tasksToFetch[sub.topicId] = { subjectId: sub.subjectId, tasks: new Set() };
+          }
+          tasksToFetch[sub.topicId].tasks.add(sub.taskId);
+      });
+
+      const taskDataMap = new Map();
+      for (const topicId in tasksToFetch) {
+          const { subjectId } = tasksToFetch[topicId];
+          const tasksSnap = await getDocs(tasksCol(subjectId, topicId));
+          tasksSnap.forEach(doc => taskDataMap.set(doc.id, doc.data()));
+      }
+
+      subSnap.docs.forEach(d=>{
         const s = d.data();
+        const taskInfo = taskDataMap.get(s.taskId);
+        
         const card = document.createElement('div'); card.className='tile';
         card.innerHTML = `
           <strong>${s.assignmentTitle}</strong>
           <div class="muted">${new Date(s.submittedAt).toLocaleString()}</div>
-          ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open File/Link</a>`: ''}
-          ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
-          <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+            ${s.fileLink? `<a class="btn-secondary" href="${s.fileLink}" target="_blank">Open Submission</a>`: ''}
+            ${s.textAnswer? `<button class="btn-secondary" data-act="view-text">View Text</button>`: ''}
+            ${taskInfo?.solutionUrl ? `<a href="${taskInfo.solutionUrl}" target="_blank" class="btn-primary">View Solution</a>` : ''}
+          </div>
+          <div style="margin-top:auto; padding-top:8px;">
             <button class="logout-btn" data-act="delete">Delete</button>
           </div>`;
         card.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
           if(!confirm('Delete this submission?')) return;
           if(s.filePath){ try{ await deleteObject(ref(storage, s.filePath)); }catch(_){} }
           await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`, d.id));
-          // Optionally, teacher log remains or could be cleaned by teachers.
           renderMySubmissions();
         });
         if(s.textAnswer){ card.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=s.assignmentTitle; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
@@ -620,11 +767,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     async function loadSubmissionsForTD(){
       const container = $('#submissionsList'); container.innerHTML='';
       if(!tdSubject.value || !tdTopic.value || !tdTask.value){ return; }
-      // query central log and filter client-side by taskId (rules allow read to any signed-in user)
-      const snap = await getDocs(query(allSubsCol(), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
-      const items = snap.docs.map(d=>({ id:d.id, ...d.data() })).filter(x=> x.subjectId===tdSubject.value && x.topicId===tdTopic.value && x.taskId===tdTask.value);
-      if(items.length===0){ container.innerHTML = '<p class="helper">No submissions for this task yet.</p>'; return; }
-      items.forEach(s=>{
+      const snap = await getDocs(query(allSubsCol(), where('taskId', '==', tdTask.value), orderBy('createdAt','desc'))).catch(()=>({docs:[]}));
+      if(snap.docs.length===0){ container.innerHTML = '<p class="helper">No submissions for this task yet.</p>'; return; }
+      snap.docs.forEach(d=>{
+        const s = d.data();
         const row = document.createElement('div'); row.className='card';
         row.innerHTML = `
           <div class="row" style="align-items:center">
@@ -653,7 +799,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
           </div>`;
         if(s.textAnswer){ row.querySelector('[data-act="view-text"]').addEventListener('click', ()=>{ $('#previewTitle').textContent=`${s.studentName} — Text`; $('#previewBody').textContent=s.textAnswer; open($('#previewModal')); }); }
         row.querySelector('[data-act="save"]').addEventListener('click', async ()=>{
-          await updateDoc(doc(db, allSubsCol().path, s.id), {
+          await updateDoc(doc(db, allSubsCol().path, d.id), {
             status: row.querySelector('[data-field="status"]').value,
             score: row.querySelector('[data-field="score"]').value || null,
             feedback: row.querySelector('[data-field="feedback"]').value
@@ -661,7 +807,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
           alert('Saved');
         });
         row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-          if(!confirm('Delete this log entry?')) return; await deleteDoc(doc(db, allSubsCol().path, s.id)); loadSubmissionsForTD();
+          if(!confirm('Delete this log entry?')) return; await deleteDoc(doc(db, allSubsCol().path, d.id)); loadSubmissionsForTD();
         });
         container.appendChild(row);
       });
@@ -670,18 +816,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     function renderAfterAuth(){
       $('#teacherDashboard').style.display = canTeach()? 'block':'none';
       $('#roleNote').textContent = canTeach()? 'You are a teacher.' : 'Only teachers can create or edit.';
-      // load selects
       Promise.all([
         loadSubjects(subjectSelect), loadSubjects(sFilter), loadSubjects(tdSubject)
       ]).then(()=>{
-        // attempt stick to previous selection
         if(subjectSelect.value){ loadTopics(subjectSelect.value, topicSelect); }
         if(sFilter.value){ loadTopics(sFilter.value, tFilter); }
         if(tdSubject.value){ loadTopics(tdSubject.value, tdTopic); }
       });
+      renderTasksForFilters();
       renderMySubmissions();
     }
-
   </script>
 </body>
 </html>
