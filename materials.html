@@ -254,7 +254,6 @@
         
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
 
-        /* Modernized Header Buttons */
         .header-actions .tab {
             padding: 8px 16px;
             color: var(--text-secondary);
@@ -307,7 +306,7 @@
         .dropdown-menu-content {
             display: none;
             position: absolute;
-            top: 110%; /* Adjusted to be clearly below the button */
+            top: 110%;
             left: 0;
             background-color: var(--bg-secondary);
             min-width: 180px;
@@ -349,21 +348,21 @@
             overflow-y: auto;
             padding: 32px;
             gap: 32px;
-            justify-content: center; /* Center content horizontally */
+            justify-content: center;
         }
         
-        #homeSection, #profileSection, #tutorialSection, #pastPapersSection, #exerciseSection {
+        #homeSection, #tutorialSection, #pastPapersSection, #exerciseSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
-            width: 100%; /* Take full width of main */
-            max-width: 900px; /* Max width for content readability */
-            margin: 0 auto; /* Center content within main */
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         /* --- FORMS --- */
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"] {
+        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"], input[type="datetime-local"] {
             width: 100%; 
             background-color: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
@@ -392,7 +391,6 @@
             font-size: 1rem; 
             margin-bottom: 1.5rem; 
             cursor: pointer; 
-            word-wrap: break-word; 
             padding: 1rem; 
             text-align: center; 
         }
@@ -452,7 +450,7 @@
             transition: max-height 0.3s ease-out;
             max-height: 0;
         }
-        .nested-container.expanded { max-height: 1000px; } /* Sufficiently large to show content */
+        .nested-container.expanded { max-height: 1000px; }
 
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; cursor: grab; }
         .sub-item:hover { background-color: var(--bg-tertiary); }
@@ -586,10 +584,10 @@
                 <p>Operated by Darren Ng</p>
             </div>
             <div class="header-actions">
-                <button id="toggleHomeButton" class="tab active">Home</button>
+                <a href="home2.html" class="tab">Home</a>
                 
                 <div class="dropdown-menu">
-                    <button class="tab" id="materialsButton">Materials</button>
+                    <button class="tab active" id="materialsButton">Materials</button>
                     <div class="dropdown-menu-content">
                         <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                         <button id="togglePastPapersButton" class="tab">Past Papers</button>
@@ -597,7 +595,6 @@
                     </div>
                 </div>
 
-                <button id="toggleProfileButton" class="tab">Profile</button>
                 <button id="themeToggleButton" class="tab">Theme</button>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
@@ -608,55 +605,11 @@
         </header>
         
         <main>
-            <!-- Home Section -->
-            <div id="homeSection" style="display: block; opacity: 1;">
-                <section class="hero">
-                    <div class="hero-text">
-                        <h2>Hi <span id="homeUserNamePlaceholder"></span>, welcome to your materials hub.</h2>
-                        <span>to fight DSE</span>
-                        <div class="buttons">
-                            <a href="#tutorial" id="homeTutorialLink">Tutorial Video</a>
-                        </div>
-                    </div>
-                    <div class="hero-image">
-                        <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/hero.png" alt="Darren Ng demonstrating AI Marker">
-                    </div>
-                </section>
-            </div>
-
             <!-- Generic Material Section Template -->
             <div id="tutorialSection"></div>
             <div id="pastPapersSection"></div>
             <div id="exerciseSection"></div>
             
-            <!-- Profile Section -->
-            <div id="profileSection">
-                <h2 class="section-title">Edit Your Profile</h2>
-                <form id="profileForm" class="form-container">
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileName">Display Name</label>
-                        <input type="text" id="profileName" name="name" required>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileAge">Age</label>
-                        <input type="number" id="profileAge" name="age">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileGrade">Year/Grade</label>
-                        <input type="text" id="profileGrade" name="grade">
-                    </div>
-                     <div style="margin-bottom: 1rem;">
-                        <label for="profileSchool">School</label>
-                        <input type="text" id="profileSchool" name="school">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label for="profileElectives">Elective Subjects</label>
-                        <textarea id="profileElectives" name="electives" placeholder="e.g., Physics, Computer Science, Art"></textarea>
-                    </div>
-                    <button type="submit" id="saveProfileButton" class="btn-primary">Save Profile</button>
-                </form>
-            </div>
-
             <!-- Finder Style Materials Section (Desktop Only) -->
             <div id="finderMaterialsSection" class="finder-window-wrapper">
                 <div class="finder-titlebar" id="finderDragBar">
@@ -976,20 +929,10 @@
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             
-            const homeNameSpan = document.getElementById('homeUserNamePlaceholder');
-            if (currentUserName && homeNameSpan) {
-                homeNameSpan.textContent = currentUserName;
-            } else {
-                 const heroHeading = document.querySelector('#homeSection .hero-text h2');
-                 if(heroHeading) heroHeading.textContent = 'Hi, welcome to your materials hub.';
-            }
-
             initializeAllMaterialSections();
             await checkForSuccessfulPurchase();
 
-            showSection('homeSection');
-            
-            document.getElementById('homeTutorialLink')?.addEventListener('click', (e) => { e.preventDefault(); showSection('tutorialSection'); });
+            showSection('tutorialSection');
         }
 
         async function handleGoogleSignIn() {
@@ -1040,11 +983,9 @@
         let currentMaterialViewMode = 'card'; // 'card' or 'finder'
 
         function showSection(sectionIdToShow) {
-            const sections = ['homeSection', 'profileSection', 'tutorialSection', 'pastPapersSection', 'exerciseSection'];
+            const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection'];
             const buttons = {
-                toggleHomeButton: 'homeSection',
                 materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
-                toggleProfileButton: 'profileSection'
             };
             
             document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
@@ -1084,16 +1025,12 @@
                 document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
             }
 
-            if (sectionIdToShow === 'profileSection') loadProfileData();
             if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
                 loadPromoCodesForTeacher();
             }
         }
 
         function setupSectionToggle() {
-            document.getElementById('toggleHomeButton')?.addEventListener('click', () => showSection('homeSection'));
-            document.getElementById('toggleProfileButton')?.addEventListener('click', () => showSection('profileSection'));
-            
             document.getElementById('toggleTutorialButton')?.addEventListener('click', () => {
                 showSection('tutorialSection');
                 if (window.innerWidth >= 769) {
@@ -1121,44 +1058,8 @@
                     renderStudentItems('exercises');
                 }
             });
-            
-            document.getElementById('userDisplayName')?.addEventListener('click', () => showSection('profileSection'));
         }
         setupSectionToggle();
-        
-        // --- PROFILE MANAGEMENT ---
-
-        document.getElementById('profileForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUserId) { showModal('Error', 'You must be logged in to save your profile.'); return; }
-            
-            const formData = new FormData(e.target);
-            const profileData = Object.fromEntries(formData.entries());
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            try {
-                await setDoc(userProfileRef, profileData, { merge: true });
-                currentUserName = profileData.name;
-                document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-                showModal('Success', 'Your profile has been updated!');
-            } catch (error) {
-                console.error("Error saving profile:", error);
-                showModal('Error', `Could not save profile: ${error.message}`);
-            }
-        });
-
-        async function loadProfileData() {
-            if (!currentUserId) return;
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            const docSnap = await getDoc(userProfileRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('profileName').value = data.name || '';
-                document.getElementById('profileAge').value = data.age || '';
-                document.getElementById('profileGrade').value = data.grade || '';
-                document.getElementById('profileSchool').value = data.school || '';
-                document.getElementById('profileElectives').value = data.electives || '';
-            }
-        }
         
         // --- REFACTORED MATERIALS MANAGEMENT ---
 
@@ -2991,4 +2892,3 @@
 </script>
 </body>
 </html>
-
