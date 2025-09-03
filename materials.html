@@ -16,6 +16,7 @@
             --text-primary: #f5f5f5; /* Off-white for primary text */
             --text-secondary: #a3a3a3; /* Muted gray for secondary text */
             --accent-primary: #ffffff; /* White for key actions and highlights */
+            --accent-green: #28c840;
             --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
             --border-color: #333333; /* Subtle border color */
             --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
@@ -246,6 +247,9 @@
             height: 64px;
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
         .logo-container { display: flex; align-items: center; gap: 1rem; }
@@ -351,13 +355,22 @@
             justify-content: center;
         }
         
-        #homeSection, #tutorialSection, #pastPapersSection, #exerciseSection {
+        #tutorialSection, #pastPapersSection, #exerciseSection, #lessonHistorySection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        #videoPlayerSection {
+            display: none; /* Hidden by default */
+            width: 100%;
+            max-width: none; /* Allow it to take full width */
+            padding: 0;
+            margin: -32px; /* Counteract main padding */
+            height: calc(100vh - 64px); /* Full height minus header */
         }
         
         /* --- FORMS --- */
@@ -414,12 +427,13 @@
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
         /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
-        .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
         .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .material-card-thumbnail { position: relative; cursor: pointer; }
+        .material-card-thumbnail { position: relative; }
         .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
         .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
         .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .completion-status { position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.7); color: var(--accent-green); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;}
         
         /* --- TEACHER CONTENT MANAGEMENT --- */
         .content-item { 
@@ -464,23 +478,22 @@
         .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
         .content-header[aria-expanded="false"] .collapse-arrow { transform: rotate(0deg); }
 
-        /* --- VIDEO & HERO --- */
-        .video-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px 8px 0 0; }
-        .video-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-        .play-button-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 15px rgba(0, 0, 0, 0.5); pointer-events: none; transition: all 0.2s ease; }
-        .material-card-thumbnail:hover .play-button-overlay { color: #fff; transform: translate(-50%, -50%) scale(1.1); }
-
-        .hero { display: flex; align-items: center; justify-content: space-between; padding: 2rem 1.5rem; }
-        .hero-text { max-width: 50%; opacity: 0; animation: slideInUp 1s ease-out forwards; }
-        .hero-text h2 { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
-        .hero-text span { display: block; font-size: 1.5rem; font-weight: normal; margin-top: 0.5rem; color: var(--text-secondary); }
-        .hero-image { max-width: 40%; opacity: 0; animation: slideInUp 1s 0.2s ease-out forwards; }
-        .hero-image img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-
-        .buttons { margin-top: 1.5rem; display: flex; gap: 1rem; }
-        .buttons a { padding: 0.75rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; transition: background 0.2s, color 0.2s; color: var(--text-primary); text-decoration: none; }
-        .buttons a:hover { background: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
-        body.light-theme .buttons a:hover { color: var(--bg-primary); }
+        /* --- VIDEO PLAYER SECTION --- */
+        #videoPlayerSection { display: none; flex-direction: row; height: calc(100vh - 64px); }
+        .video-main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: #000; }
+        #videoPlayerContainer { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        #videoPlayerContainer iframe { width: 100%; height: 100%; border: none; }
+        .video-player-header { padding: 1rem; background: var(--bg-primary); }
+        .video-player-header .back-button { background: none; border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .video-player-header .back-button:hover { background-color: var(--bg-secondary); }
+        
+        .video-sidebar { width: 350px; flex-shrink: 0; background-color: var(--bg-secondary); border-left: 1px solid var(--border-color); padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; }
+        #videoInfoTitle { font-size: 1.5rem; font-weight: 600; }
+        #videoInfoDescription { color: var(--text-secondary); line-height: 1.6; }
+        .completion-control button { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; }
+        .completion-control button.mark-complete { background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .completion-control button.mark-incomplete { background-color: var(--accent-green); color: var(--bg-primary); }
+        .completion-control button:hover { opacity: 0.9; }
 
         /* --- E-COMMERCE --- */
         .store-layout { display: flex; gap: 24px; width: 100%; }
@@ -544,6 +557,8 @@
         @media (max-width: 992px) {
             .store-layout { flex-direction: column; }
             .shopping-cart { width: 100%; position: sticky; bottom: 0; border-radius: 8px 8px 0 0; }
+            .videoPlayerSection { flex-direction: column; }
+            .video-sidebar { width: 100%; height: 250px; border-left: none; border-top: 1px solid var(--border-color);}
         }
         @media (max-width: 768px) {
             #authWrapper { flex-direction: column; position: static; height: auto; }
@@ -551,9 +566,6 @@
             header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
             .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
             main { flex-direction: column; padding: 16px; }
-            .hero { flex-direction: column-reverse; text-align: center; }
-            .hero-text, .hero-image { max-width: 100%; }
-            .buttons { justify-content: center; }
             .finder-window-wrapper { display: none !important; }
         }
     
@@ -592,6 +604,7 @@
                         <button id="toggleTutorialButton" class="tab">Tutorial Videos</button>
                         <button id="togglePastPapersButton" class="tab">Past Papers</button>
                         <button id="toggleExercisesButton" class="tab">Exercises for Sale</button>
+                        <button id="toggleLessonHistoryButton" class="tab">Lesson History</button>
                     </div>
                 </div>
 
@@ -609,6 +622,26 @@
             <div id="tutorialSection"></div>
             <div id="pastPapersSection"></div>
             <div id="exerciseSection"></div>
+            <div id="lessonHistorySection"></div>
+
+            <!-- Enhanced Video Player Section -->
+            <div id="videoPlayerSection">
+                <div class="video-main-content">
+                    <div class="video-player-header">
+                        <button class="back-button" id="backToTutorialsBtn">← Back to Tutorials</button>
+                    </div>
+                    <div id="videoPlayerContainer">
+                        <!-- YouTube Iframe will be injected here -->
+                    </div>
+                </div>
+                <div class="video-sidebar">
+                    <h2 id="videoInfoTitle"></h2>
+                    <p id="videoInfoDescription"></p>
+                    <div class="completion-control">
+                        <button id="completionToggleButton"></button>
+                    </div>
+                </div>
+            </div>
             
             <!-- Finder Style Materials Section (Desktop Only) -->
             <div id="finderMaterialsSection" class="finder-window-wrapper">
@@ -775,12 +808,44 @@
         </div>
     </div>
 
-    <!-- Video Preview Modal -->
+    <!-- New Lesson History Modal -->
+    <div id="addLessonHistoryModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3>Add New Lesson History</h3>
+             <form id="addLessonHistoryForm">
+                <input type="hidden" id="lessonParentId1">
+                <input type="hidden" id="lessonParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="lessonHistoryTitle">Lesson Title</label>
+                     <input type="text" id="lessonHistoryTitle" required>
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label for="lessonHistoryNotes">Notes</label>
+                    <textarea id="lessonHistoryNotes" placeholder="Enter lesson notes here..."></textarea>
+                </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label>Upload File (Optional)</label>
+                    <div id="lessonHistoryDropZone" class="drop-zone">
+                        <span>Drag & Drop File Here or click</span>
+                        <input type="file" id="lessonHistoryFile" hidden>
+                    </div>
+                    <span id="lessonHistoryFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
+                </div>
+                 <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Add Lesson</button>
+                 </div>
+             </form>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal (repurposed for lesson notes) -->
     <div id="videoPreviewModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h3 id="videoPreviewTitle"></h3>
-            <div id="videoPreviewContent"></div>
+            <div id="videoPreviewContent" style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto;"></div>
+            <div id="lessonFileLinkContainer" style="margin-top: 1rem; text-align: center;"></div>
         </div>
     </div>
 
@@ -932,7 +997,7 @@
             initializeAllMaterialSections();
             await checkForSuccessfulPurchase();
 
-            showSection('tutorialSection');
+            showSection('tutorialSection'); // Default to tutorials
         }
 
         async function handleGoogleSignIn() {
@@ -982,12 +1047,18 @@
 
         let currentMaterialViewMode = 'card'; // 'card' or 'finder'
 
-        function showSection(sectionIdToShow) {
-            const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection'];
+        function showSection(sectionIdToShow, isReturning = false) {
+            const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection', 'lessonHistorySection', 'videoPlayerSection'];
             const buttons = {
-                materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection'],
+                materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection', 'lessonHistorySection'],
             };
             
+            if (!isReturning) { // Hide video player if we are navigating away normally
+                document.getElementById('videoPlayerSection').style.display = 'none';
+                document.querySelector('main').style.display = 'flex';
+            }
+
+
             document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
 
             let activeButtonId = null;
@@ -1009,20 +1080,22 @@
                 const section = document.getElementById(id);
                 if (section) {
                     const isTarget = id === sectionIdToShow;
-                    section.style.display = isTarget ? 'block' : 'none';
+                    section.style.display = isTarget ? (id === 'videoPlayerSection' ? 'flex' : 'block') : 'none';
                     setTimeout(() => section.style.opacity = isTarget ? '1' : '0', 10);
                 }
             });
 
             const finderSection = document.getElementById('finderMaterialsSection');
-            const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection'].includes(sectionIdToShow);
+            const isMaterialSection = ['tutorialSection', 'pastPapersSection', 'exerciseSection', 'lessonHistorySection'].includes(sectionIdToShow);
             
             if (isMaterialSection && window.innerWidth >= 769) { // Desktop
                 finderSection.style.display = currentMaterialViewMode === 'finder' ? 'flex' : 'none';
                 document.getElementById(sectionIdToShow).classList.toggle('hidden-on-desktop', currentMaterialViewMode === 'finder');
             } else { // Mobile or non-material section
                 finderSection.style.display = 'none';
-                document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
+                if(document.getElementById(sectionIdToShow)) {
+                    document.getElementById(sectionIdToShow).classList.remove('hidden-on-desktop');
+                }
             }
 
             if (sectionIdToShow === 'exerciseSection' && currentUserRole === 'teacher') {
@@ -1056,6 +1129,15 @@
                     else renderStudentItems('exercises');
                 } else {
                     renderStudentItems('exercises');
+                }
+            });
+            document.getElementById('toggleLessonHistoryButton')?.addEventListener('click', () => {
+                showSection('lessonHistorySection');
+                 if (window.innerWidth >= 769) {
+                    if (currentMaterialViewMode === 'finder') showFinderView('lessonHistory');
+                    else renderStudentItems('lessonHistory');
+                } else {
+                    renderStudentItems('lessonHistory');
                 }
             });
         }
@@ -1094,6 +1176,16 @@
                 level3: 'Exercise',
                 modalId: 'addExerciseModal',
                 isPaid: true
+            },
+            lessonHistory: {
+                sectionId: 'lessonHistorySection',
+                collectionName: 'lessonHistory',
+                title: 'Lesson History',
+                level1: 'Subject',
+                level2: 'Topic',
+                level3: 'Lesson',
+                modalId: 'addLessonHistoryModal',
+                isPaid: false
             }
         };
 
@@ -1110,18 +1202,7 @@
             for (const type in materialsConfig) {
                 setupMaterialSection(type);
             }
-            document.getElementById('tutorialSection').addEventListener('click', (e) => {
-                const thumbnail = e.target.closest('.material-card-thumbnail[data-youtube-id]');
-                if (thumbnail) {
-                    e.preventDefault();
-                    const videoId = thumbnail.dataset.youtubeId;
-                    const embedContainer = document.createElement('div');
-                    embedContainer.className = 'video-embed-container';
-                    embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
-                    thumbnail.replaceWith(embedContainer);
-                }
-            });
-
+            
             setupFinderWindow();
             setupGoogleDriveLinkConversion();
         }
@@ -1336,7 +1417,7 @@
                                      <div class="item-actions">
                                         ${type === 'pastPapers' ? `<button class="edit-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>` : ''}
                                         <button class="preview-item-btn btn-primary" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview</button>
-                                        <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem;">Download</a>
+                                        <a href="${item.link}" download="${itemName}.pdf" class="download-item-btn btn-primary" style="margin-left: 0.5rem; display: ${item.link ? 'inline-block' : 'none'}">Download</a>
                                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                                      </div>`;
                         el.setAttribute('draggable', 'true');
@@ -1403,18 +1484,8 @@
         }
 
         function handlePreview(type, item) {
-            if (type === 'tutorials') {
-                const videoPreviewModal = document.getElementById('videoPreviewModal');
-                const videoPreviewTitle = document.getElementById('videoPreviewTitle');
-                const videoPreviewContent = document.getElementById('videoPreviewContent');
-                
-                videoPreviewTitle.textContent = item.title;
-                if (item.type === 'youtube') {
-                    videoPreviewContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-in-picture" allowfullscreen></iframe>`;
-                } else if (item.type === 'embed') {
-                    videoPreviewContent.innerHTML = item.embedCode;
-                }
-                videoPreviewModal.style.display = 'flex';
+             if (type === 'tutorials') {
+                showVideoPlayer(item);
             } else if (type === 'pastPapers' || type === 'exercises') {
                 if (item.link) {
                     if (item.link.toLowerCase().endsWith('.pdf') || item.link.includes('drive.google.com/uc?export=download')) {
@@ -1427,6 +1498,17 @@
                 } else {
                     showModal('Preview Error', 'No link available for this item.');
                 }
+            } else if (type === 'lessonHistory') {
+                const modal = document.getElementById('videoPreviewModal');
+                document.getElementById('videoPreviewTitle').textContent = item.name;
+                document.getElementById('videoPreviewContent').textContent = item.notes || 'No notes for this lesson.';
+                const linkContainer = document.getElementById('lessonFileLinkContainer');
+                if (item.link) {
+                    linkContainer.innerHTML = `<a href="${item.link}" target="_blank" class="btn-primary">View/Download Attached File</a>`;
+                } else {
+                    linkContainer.innerHTML = '';
+                }
+                modal.style.display = 'flex';
             }
         }
 
@@ -1471,6 +1553,9 @@
             if (type === 'tutorials') {
                 document.getElementById('tutorialThumbnailPreview').style.display = 'none';
             }
+            if (type === 'lessonHistory') {
+                document.getElementById('lessonHistoryFileName').textContent = 'No file chosen';
+            }
         }
 
         async function handleDeleteItem(type, level, id, parentIds) {
@@ -1481,15 +1566,14 @@
                 { text: 'Delete', className: 'btn-primary', onClick: async () => {
                     const docRef = doc(db, getPath(type, parentIds), id);
                     try {
-                        if (level === 3 && (type === 'pastPapers' || type === 'exercises')) {
+                        if (level === 3 && (type === 'pastPapers' || type === 'exercises' || type === 'lessonHistory')) {
                             const itemSnap = await getDoc(docRef);
                             const itemData = itemSnap.data();
-                            if (itemData && itemData.link && !itemData.link.startsWith('https://drive.google.com')) {
-                                const storagePath = ref(storage, itemData.link).fullPath;
-                                const fileRef = ref(storage, storagePath);
+                            if (itemData && itemData.filePath) {
+                                const fileRef = ref(storage, itemData.filePath);
                                 try {
                                     await deleteObject(fileRef);
-                                    console.log('File deleted from storage:', storagePath);
+                                    console.log('File deleted from storage:', itemData.filePath);
                                 } catch (storageError) {
                                     console.warn('Could not delete file from storage (may not exist or external link):', storageError);
                                 }
@@ -1673,6 +1757,13 @@
                  snapshot.forEach(doc => purchasedItems[doc.id] = true);
              }
 
+             let videoStatuses = {};
+             if(type === 'tutorials') {
+                 const videoStatusRef = collection(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`);
+                 const snapshot = await getDocs(videoStatusRef);
+                 snapshot.forEach(doc => videoStatuses[doc.id] = doc.data().completed);
+             }
+
              try {
                 const snapshot = await getDocs(q).catch(e=>{
                     console.error(e);
@@ -1685,14 +1776,17 @@
                     item.id = doc.id;
                     const card = document.createElement('div');
                     card.className = 'material-card';
+                    card.addEventListener('click', () => handlePreview(type, item));
                     
                     let cardContent = '';
                     if (type === 'tutorials') {
+                        const isCompleted = videoStatuses[item.id];
                         if (item.type === 'youtube') {
                             cardContent = `
                                 <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
                                     <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
                                     <div class="play-button-overlay">▶</div>
+                                    ${isCompleted ? '<div class="completion-status">✓</div>' : ''}
                                 </div>
                                 <div class="material-card-content"><h3>${item.title}</h3></div>
                             `;
@@ -1703,6 +1797,7 @@
                             `;
                         }
                     } else if (config.isPaid) {
+                        card.removeEventListener('click', () => handlePreview(type, item));
                         const isPurchased = purchasedItems[item.id];
                         const inCart = shoppingCart.find(cartItem => cartItem.id === item.id);
                         card.className = 'product-card';
@@ -1716,31 +1811,26 @@
                         if(!isPurchased) {
                            const addToCartBtn = card.querySelector('.add-to-cart-btn');
                            if (addToCartBtn) {
-                               addToCartBtn.addEventListener('click', () => addToCart(item));
+                               addToCartBtn.addEventListener('click', (e) => {e.stopPropagation(); addToCart(item);});
                            }
                         } else {
                             const downloadBtn = card.querySelector('.download-btn');
                             if (downloadBtn) {
                                 downloadBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
                                     const itemData = JSON.parse(e.target.dataset.item);
                                     handlePreview(type, itemData);
                                 });
                             }
                         }
-                    } else { // Free materials like past papers
+                    } else { // Free materials like past papers & lesson history
+                        let description = item.notes ? item.notes.substring(0, 100) + '...' : `Click to view ${config.level3}`;
                         cardContent = `
                             <div class="material-card-content">
                                 <h3>${item.name}</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">${description}</p>
                             </div>
-                            <button class="btn-primary download-btn" data-type="${type}" data-item='${JSON.stringify(item)}'>Preview/Download</button>
                         `;
-                        const downloadBtn = card.querySelector('.download-btn');
-                        if (downloadBtn) {
-                            downloadBtn.addEventListener('click', (e) => {
-                                const itemData = JSON.parse(e.target.dataset.item);
-                                handlePreview(type, itemData);
-                            });
-                        }
                     }
                     card.innerHTML = cardContent;
                     grid.appendChild(card);
@@ -2362,6 +2452,56 @@
             }
         });
 
+         document.getElementById('addLessonHistoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const parentId1 = form.querySelector('#lessonParentId1').value;
+            const parentId2 = form.querySelector('#lessonParentId2').value;
+            const title = document.getElementById('lessonHistoryTitle').value;
+            const notes = document.getElementById('lessonHistoryNotes').value;
+            const fileInput = document.getElementById('lessonHistoryFile');
+            const file = fileInput.files[0];
+
+            if (!title.trim()) {
+                return showModal('Input Error', 'Please provide a lesson title.');
+            }
+
+            const buttonsContainer = form.querySelector('.modal-form-buttons');
+            const originalButtonsHTML = buttonsContainer.innerHTML;
+            buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
+            
+            let downloadURL = '';
+            let filePath = '';
+
+            try {
+                if (file) {
+                    buttonsContainer.innerHTML = `<p class="loading-indicator">Uploading file...</p>`;
+                    filePath = `materials/lesson-history/${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadResult = await uploadBytes(storageRef, file);
+                    downloadURL = await getDownloadURL(uploadResult.ref);
+                }
+
+                const collectionRef = collection(db, getPath('lessonHistory', [parentId1, parentId2]));
+                await addDoc(collectionRef, { 
+                    name: title.trim(), 
+                    notes: notes.trim(),
+                    link: downloadURL, 
+                    filePath: filePath,
+                    timestamp: Date.now() 
+                });
+                
+                showModal('Success', 'Lesson history added.');
+                document.getElementById('addLessonHistoryModal').style.display = 'none';
+                renderContent('lessonHistory', `container-level3-lessonHistory-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) { 
+                console.error("Lesson history upload error:", error);
+                showModal('Error', `Could not add lesson: ${error.message}`); 
+            } finally {
+                buttonsContainer.innerHTML = originalButtonsHTML;
+            }
+        });
+
         document.getElementById('tutorialLink').addEventListener('input', (e) => {
             const videoDetails = parseVideoInput(e.target.value);
             const thumbnailPreview = document.getElementById('tutorialThumbnailPreview');
@@ -2398,6 +2538,7 @@
         }
         setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
         setupDropZone('exerciseDropZone', 'exerciseFile', 'exerciseFileName');
+        setupDropZone('lessonHistoryDropZone', 'lessonHistoryFile', 'lessonHistoryFileName');
 
         function showModal(title, message, buttons = []) {
             const messageModal = document.getElementById('messageModal');
@@ -2880,6 +3021,69 @@
             prevPdfPageBtn.disabled = pageNum <= 1;
             nextPdfPageBtn.disabled = pageNum >= pdfDoc.numPages;
         }
+
+        // --- VIDEO PLAYER LOGIC ---
+        let currentVideoItem = null;
+
+        async function showVideoPlayer(item) {
+            currentVideoItem = item;
+            document.querySelector('main').style.display = 'none'; // Hide main grid
+            const playerSection = document.getElementById('videoPlayerSection');
+            playerSection.style.display = 'flex';
+
+            document.getElementById('videoInfoTitle').textContent = item.title;
+            document.getElementById('videoInfoDescription').textContent = "Description will be here."; // Placeholder
+            
+            const playerContainer = document.getElementById('videoPlayerContainer');
+            if (item.type === 'youtube') {
+                playerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtubeId}?autoplay=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                playerContainer.innerHTML = item.embedCode;
+            }
+
+            await updateCompletionButtonUI(item.id);
+        }
+
+        document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
+            showSection('tutorialSection', true);
+            document.getElementById('videoPlayerContainer').innerHTML = ''; // Stop video
+        });
+
+        document.getElementById('completionToggleButton').addEventListener('click', async () => {
+            if (!currentVideoItem || !currentUserId) return;
+            const videoId = currentVideoItem.id;
+            const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
+
+            try {
+                const docSnap = await getDoc(statusRef);
+                if (docSnap.exists() && docSnap.data().completed) {
+                    await deleteDoc(statusRef); // Mark as not complete by deleting
+                } else {
+                    await setDoc(statusRef, { completed: true, timestamp: Date.now() }); // Mark as complete
+                }
+                await updateCompletionButtonUI(videoId);
+                await renderStudentItems('tutorials'); // Refresh the main grid view
+            } catch (error) {
+                console.error("Error toggling video completion status:", error);
+                showModal('Error', 'Could not update video status.');
+            }
+        });
+
+        async function updateCompletionButtonUI(videoId) {
+            const button = document.getElementById('completionToggleButton');
+            const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
+            const docSnap = await getDoc(statusRef);
+
+            if (docSnap.exists() && docSnap.data().completed) {
+                button.textContent = "✓ Completed";
+                button.className = 'mark-incomplete';
+            } else {
+                button.textContent = "Mark as Complete";
+                button.className = 'mark-complete';
+            }
+        }
+
+
     </script>
   
     <script>
@@ -2892,3 +3096,4 @@
 </script>
 </body>
 </html>
+
