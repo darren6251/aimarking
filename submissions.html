@@ -121,7 +121,7 @@ header .logo-container p{margin:0;color:var(--text-secondary);font-size:12px}
 /* --- GENERAL LAYOUT & COMPONENTS --- */
 button, input, select, textarea { font-family: inherit; transition: all .2s ease-in-out; }
 button:disabled{opacity:.6;cursor:not-allowed}
-.btn-primary{background:var(--accent-primary);color:var(--bg-primary);border:none;padding:10px 16px;border-radius:8px;cursor:pointer; font-weight: 600; font-size: 14px;}
+.btn-primary{background:var(--accent-primary);color:var(--bg-primary);border:none;padding:10px 16px;border-radius:8px;cursor:pointer; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; text-align: center;}
 body.light-theme .btn-primary { color: var(--bg-primary); }
 .btn-primary:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 .btn-secondary{background:transparent;color:var(--text-primary);border:1px solid var(--border-color);padding:10px 16px;border-radius:8px;cursor:pointer; font-weight: 500;}
@@ -289,7 +289,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     <label class="label">Description</label>
     <textarea id="taskDesc" class="input" rows="5" placeholder="Brief instructions for this task"></textarea>
     
-    <!-- MODIFIED: Solution Section -->
+    <!-- NEW: Submission URL Field -->
+    <label class="label">Submission Link (Optional)</label>
+    <input id="taskSubmissionUrl" class="input" placeholder="e.g., https://forms.gle/your-link"/>
+    
     <label class="label">Solution (Optional)</label>
     <div id="taskExistingSolution" class="helper" style="text-align:left; margin-bottom: 8px; font-size: 13px; line-height: 1.6;"></div>
     
@@ -302,7 +305,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
     <label class="label">Or Enter Text</label>
     <textarea id="taskSolutionText" class="input" rows="4" placeholder="Type or paste solution text here"></textarea>
-    <!-- END MODIFIED -->
 
     <div class="footer">
       <button class="btn-secondary" data-close>Cancel</button>
@@ -338,7 +340,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
-    // --- Firebase Configuration (from index (8)) ---
+    // --- Firebase Configuration ---
     const firebaseConfig = {
       apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -348,8 +350,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       appId: "1:298162112230:web:529d3f95536991be685d27",
       measurementId: "G-CHKLKSM17S"
     };
-    const TEACHER_CODE = "Derren0625"; // from index (8)
-    const STUDENT_CODE = "STUDENT456"; // from index (8)
+    const TEACHER_CODE = "Derren0625";
+    const STUDENT_CODE = "STUDENT456";
     const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
 
     // Init
@@ -375,11 +377,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     let currentUser = null; let currentRole = null; let currentProfileRef = null;
     let selectedSubjectId = null; let selectedTopicId = null; let editingTask = null;
 
-    // Paths (under public/data in your rules)
+    // Paths
     const subjectsCol = () => collection(db, `artifacts/${appId}/public/data/subjects`);
     const topicsCol   = (subjectId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics`);
     const tasksCol    = (subjectId, topicId) => collection(db, `artifacts/${appId}/public/data/subjects/${subjectId}/topics/${topicId}/tasks`);
-    const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`); // central log
+    const allSubsCol  = () => collection(db, `artifacts/${appId}/public/data/all_submissions`);
 
     // Auth UI elements
     const authWrapper = $('#authWrapper');
@@ -485,7 +487,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const d = editingTask?.dueDate ? new Date(editingTask.dueDate) : null;
       $('#taskDue').value = d? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : '';
       
-      // MODIFIED: Handle solution file and text display
+      // MODIFIED: Populate submission URL
+      $('#taskSubmissionUrl').value = editingTask?.submissionUrl || '';
+
+      // Handle solution file and text display
       $('#taskSolutionFile').value = '';
       $('#taskSolutionText').value = editingTask?.solutionText || '';
       $('#solutionProgressWrapper').style.display = 'none';
@@ -554,11 +559,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const dueMs = due? new Date(due+'T23:59:59').getTime() : null;
       const solutionFile = $('#taskSolutionFile').files[0];
       const solutionText = ($('#taskSolutionText').value || '').trim();
+
+      // MODIFIED: Get submission URL
+      const submissionUrl = ($('#taskSubmissionUrl').value || '').trim();
       
       const payload = { 
         title, 
         description, 
         dueDate: dueMs,
+        submissionUrl: submissionUrl || null, // Add to payload
         updatedAt: serverTimestamp(),
         ...(editingTask ? {} : { createdAt: serverTimestamp() }),
         solutionUrl: editingTask?.solutionUrl || null,
@@ -651,20 +660,33 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         const t = d.data(); t.id = d.id;
         const dueTxt = t.dueDate? new Date(t.dueDate).toLocaleDateString() : '—';
         const tile = document.createElement('div'); tile.className='tile';
+        
+        // MODIFIED: Conditional submit button/link
+        let submitActionHtml = '';
+        if (t.submissionUrl) {
+            submitActionHtml = `<a href="${t.submissionUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary">Go to Submission Link</a>`;
+        } else {
+            submitActionHtml = `<button class="btn-primary" data-act="submit">Submit Here</button>`;
+        }
+
         tile.innerHTML = `
           <div class="badge">Due: ${dueTxt}</div>
           <strong>${t.title}</strong>
           <div class="muted">${(t.description||'').substring(0,160)}</div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px;">
-            <button class="btn-primary" data-act="submit">Submit</button>
+            ${submitActionHtml}
             ${canTeach()? '<button class="btn-secondary" data-act="edit">Edit</button><button class="logout-btn" data-act="delete">Delete</button>' : ''}
           </div>`;
-        tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
+        
+        // MODIFIED: Only add listener if it's the modal button
+        if (!t.submissionUrl) {
+          tile.querySelector('[data-act="submit"]').addEventListener('click', ()=> openSubmission(t, subj, top));
+        }
+
         if(canTeach()){
           tile.querySelector('[data-act="edit"]').addEventListener('click', ()=> { selectedSubjectId = subj; selectedTopicId = top; openTaskModal(t); });
           tile.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
             if(!confirm('Delete this task?')) return; 
-            // Also delete solution if it exists
             if (t.solutionFilePath) {
                 try { await deleteObject(ref(storage, t.solutionFilePath)); } catch(e){ console.warn("Could not delete solution file", e); }
             }
@@ -702,9 +724,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       if(file){
         const path = `submissions/${currentUser.uid}/${Date.now()}_${file.name}`;
         try {
-            const r = await uploadBytes(ref(storage, path), file);
-            fileLink = await getDownloadURL(r.ref); filePath = path;
+            const uploadTask = uploadBytesResumable(ref(storage, path), file);
+            await uploadTask;
+            fileLink = await getDownloadURL(uploadTask.snapshot.ref); 
+            filePath = path;
         } catch(e) {
+            console.error(e);
             alert('File upload failed.');
             sendBtn.disabled = false; sendBtn.textContent = 'Submit';
             return;
@@ -744,7 +769,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       const subSnap = await getDocs(query(collection(db, `artifacts/${appId}/users/${currentUser.uid}/submissions`), orderBy('submittedAt','desc'))).catch(()=>({docs:[]}));
       if(subSnap.docs.length===0){ list.innerHTML = '<p class="helper">No submissions yet.</p>'; return; }
       
-      // NEW: Efficiently fetch all task data needed
       const tasksToFetch = {};
       subSnap.docs.forEach(doc => {
           const sub = doc.data();
@@ -790,7 +814,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
       });
     }
 
-    // Teacher dashboard — list submissions for a selected task
+    // Teacher dashboard
     async function loadTasksForTD(){
       tdTask.innerHTML = '<option value="">— Task —</option>';
       if(!tdSubject.value || !tdTopic.value){ tdTask.disabled=true; return; }
@@ -864,4 +888,3 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   </script>
 </body>
 </html>
-
