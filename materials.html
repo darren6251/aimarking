@@ -557,7 +557,7 @@
         @media (max-width: 992px) {
             .store-layout { flex-direction: column; }
             .shopping-cart { width: 100%; position: sticky; bottom: 0; border-radius: 8px 8px 0 0; }
-            .videoPlayerSection { flex-direction: column; }
+            #videoPlayerSection { flex-direction: column; }
             .video-sidebar { width: 100%; height: 250px; border-left: none; border-top: 1px solid var(--border-color);}
         }
         @media (max-width: 768px) {
@@ -832,6 +832,11 @@
                     </div>
                     <span id="lessonHistoryFileName" class="text-gray-500 text-sm block text-center mt-2">No file chosen</span>
                 </div>
+                <p style="text-align:center; margin-bottom: 1rem; color: var(--text-secondary);">OR</p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="lessonHistoryLink">Paste External Download Link</label>
+                    <input type="url" id="lessonHistoryLink" placeholder="https://example.com/document.pdf">
+                </div>
                  <div class="modal-form-buttons">
                     <button type="submit" class="btn-primary">Add Lesson</button>
                  </div>
@@ -1047,18 +1052,12 @@
 
         let currentMaterialViewMode = 'card'; // 'card' or 'finder'
 
-        function showSection(sectionIdToShow, isReturning = false) {
+        function showSection(sectionIdToShow) {
             const sections = ['tutorialSection', 'pastPapersSection', 'exerciseSection', 'lessonHistorySection', 'videoPlayerSection'];
             const buttons = {
                 materialsButton: ['tutorialSection', 'pastPapersSection', 'exerciseSection', 'lessonHistorySection'],
             };
             
-            if (!isReturning) { // Hide video player if we are navigating away normally
-                document.getElementById('videoPlayerSection').style.display = 'none';
-                document.querySelector('main').style.display = 'flex';
-            }
-
-
             document.querySelectorAll('.header-actions .tab').forEach(t => t.classList.remove('active'));
 
             let activeButtonId = null;
@@ -1555,6 +1554,7 @@
             }
             if (type === 'lessonHistory') {
                 document.getElementById('lessonHistoryFileName').textContent = 'No file chosen';
+                document.getElementById('lessonHistoryLink').value = '';
             }
         }
 
@@ -2268,7 +2268,8 @@
             const linkInputs = [
                 document.getElementById('pastPaperLink'),
                 document.getElementById('exerciseLink'),
-                document.getElementById('editPastPaperLink')
+                document.getElementById('editPastPaperLink'),
+                document.getElementById('lessonHistoryLink')
             ];
 
             linkInputs.forEach(input => {
@@ -2461,6 +2462,7 @@
             const notes = document.getElementById('lessonHistoryNotes').value;
             const fileInput = document.getElementById('lessonHistoryFile');
             const file = fileInput.files[0];
+            const link = document.getElementById('lessonHistoryLink').value.trim();
 
             if (!title.trim()) {
                 return showModal('Input Error', 'Please provide a lesson title.');
@@ -2470,7 +2472,7 @@
             const originalButtonsHTML = buttonsContainer.innerHTML;
             buttonsContainer.innerHTML = `<p class="loading-indicator">Processing...</p>`;
             
-            let downloadURL = '';
+            let downloadURL = link;
             let filePath = '';
 
             try {
@@ -3027,9 +3029,7 @@
 
         async function showVideoPlayer(item) {
             currentVideoItem = item;
-            document.querySelector('main').style.display = 'none'; // Hide main grid
-            const playerSection = document.getElementById('videoPlayerSection');
-            playerSection.style.display = 'flex';
+            showSection('videoPlayerSection');
 
             document.getElementById('videoInfoTitle').textContent = item.title;
             document.getElementById('videoInfoDescription').textContent = "Description will be here."; // Placeholder
@@ -3045,7 +3045,7 @@
         }
 
         document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
-            showSection('tutorialSection', true);
+            showSection('tutorialSection');
             document.getElementById('videoPlayerContainer').innerHTML = ''; // Stop video
         });
 
