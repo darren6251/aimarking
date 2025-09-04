@@ -289,11 +289,9 @@
             <span class="close-button">&times;</span>
             <h3 id="pdfPreviewTitle" style="text-align: center; margin-bottom: 10px;"></h3>
             <div id="pdfCanvasContainer">
-                <!-- PATCH: Added a loader element for better user feedback -->
                 <div id="pdfLoader" class="loading-indicator" style="display: none;">Loading PDF...</div>
                 <canvas id="pdfCanvas"></canvas>
             </div>
-            <!-- PATCH: Added a download button and used flexbox for better layout -->
             <div id="pdfControls" style="text-align: center; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 1rem;">
                 <button id="prevPdfPage">Previous</button>
                 <div><span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span></div>
@@ -306,7 +304,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -454,7 +452,7 @@
             section.innerHTML = `
                 <h2 class="section-title">${config.title}</h2>
                 <div id="teacher-${type}-view" style="display:none;">
-                     <div class="form-container">
+                     <div id="teacher-controls-${type}" class="form-container" style="display: flex; gap: 1rem;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
                     </div>
                     <div id="level1-${type}-container"></div>
@@ -472,6 +470,16 @@
             document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
 
             if (isTeacher) {
+                // ADDED: Seeding button for DSE Physics papers
+                const teacherControls = document.getElementById(`teacher-controls-${type}`);
+                const seedButton = document.createElement('button');
+                seedButton.id = 'seed-dse-phy-btn';
+                seedButton.className = 'btn-primary';
+                seedButton.style.backgroundColor = 'var(--accent-green)';
+                seedButton.textContent = 'Seed DSE Physics Papers';
+                teacherControls.appendChild(seedButton);
+                seedButton.addEventListener('click', seedDsePhysicsData);
+
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
@@ -482,6 +490,7 @@
         
         async function renderContent(type, containerId, level, parentIds = []) {
             const container = document.getElementById(containerId);
+            if (!container) return;
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
             container.innerHTML = `<p class="loading-indicator">Loading...</p>`;
@@ -629,6 +638,7 @@
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
             showInputModal(`Add New ${levelName}`, `Enter ${levelName} Name:`, async (name) => {
+                if (!name || name.trim() === '') return;
                 const collectionRef = collection(db, getPath(type, parentIds));
                 await addDoc(collectionRef, { name: name.trim() });
                 const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
@@ -723,7 +733,7 @@
             ]);
         }
         
-        // --- PDF PREVIEW LOGIC (PATCHED) ---
+        // --- PDF PREVIEW LOGIC ---
         let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
         const pdfCanvas = document.getElementById('pdfCanvas');
         const pdfContext = pdfCanvas.getContext('2d');
@@ -735,16 +745,14 @@
             document.getElementById('pdfPreviewTitle').textContent = title;
             document.getElementById('pdfPreviewModal').style.display = 'flex';
             
-            // Reset state and show loader
             pdfDoc = null;
             pdfCanvas.style.display = 'none';
-            pdfControls.style.display = 'none';
             pdfLoader.style.display = 'block';
             pdfLoader.textContent = 'Loading PDF...';
+            pdfControls.style.display = 'flex'; // Show controls immediately
             pdfDownloadLink.href = pdfUrl; // Set download link immediately
 
             try {
-                // Use a CORS proxy to fetch the PDF. This is necessary for viewing files from sources like Google Drive which have strict cross-origin policies.
                 const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(pdfUrl)}`;
                 
                 const loadingTask = pdfjsLib.getDocument(proxiedUrl);
@@ -753,25 +761,20 @@
                 document.getElementById('pdfTotalPages').textContent = pdfDoc.numPages;
                 pageNum = 1;
                 
-                // Hide loader, show canvas and controls
                 pdfLoader.style.display = 'none';
                 pdfCanvas.style.display = 'block';
-                pdfControls.style.display = 'flex';
                 
                 renderPage(pageNum);
             } catch (error) {
                 console.error('Error loading PDF:', error);
-                pdfLoader.textContent = 'Failed to load PDF preview. The link may be invalid or blocked.';
-                // Hide the modal after showing the error
-                setTimeout(() => {
-                     document.getElementById('pdfPreviewModal').style.display = 'none';
-                }, 2500);
+                pdfLoader.textContent = 'Failed to load PDF preview. You can still download the file.';
+                pdfCanvas.style.display = 'none';
             }
         }
 
         function renderPage(num) {
             pageRendering = true;
-            if (!pdfDoc) return; // Safety check
+            if (!pdfDoc) return;
             pdfDoc.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale: 1.5 });
                 pdfCanvas.height = viewport.height;
@@ -812,9 +815,78 @@
         });
 
 
+        // --- DSE PHYSICS SEEDING LOGIC ---
+        const dsePhysicsData = [
+            { year: "2023", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2023-PHY-2-MS.pdf" } ] },
+            { year: "2022", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2022-PHY-2-MS.pdf" } ] },
+            { year: "2021", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2021-PHY-2-MS.pdf" } ] },
+            { year: "2020", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2020-PHY-2-MS.pdf" } ] },
+            { year: "2019", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2019-PHY-2-MS.pdf" } ] },
+            { year: "2018", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2018-PHY-2-MS.pdf" } ] },
+            { year: "2017", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2017-PHY-2-MS.pdf" } ] },
+            { year: "2016", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2016-PHY-2-MS.pdf" } ] },
+            { year: "2015", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2015-PHY-2-MS.pdf" } ] },
+            { year: "2014", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2014-PHY-2-MS.pdf" } ] },
+            { year: "2013", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2013-PHY-2-MS.pdf" } ] },
+            { year: "2012", papers: [ { name: "Paper 1A (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-1A-E.pdf" }, { name: "Paper 1A (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-1A-MS.pdf" }, { name: "Paper 1B (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-1B-E.pdf" }, { name: "Paper 1B (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-1B-MS.pdf" }, { name: "Paper 2 (Eng)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-2-E.pdf" }, { name: "Paper 2 (MS)", link: "https://web.archive.org/web/20240301075727if_/https://www.dsepp.com/phy/2012-PHY-2-MS.pdf" } ] }
+        ];
+
+        async function seedDsePhysicsData() {
+            const seedButton = document.getElementById('seed-dse-phy-btn');
+            seedButton.disabled = true;
+            seedButton.textContent = 'Seeding...';
+            showModal('Seeding Data', 'Please wait while the DSE Physics papers are being added to the database...');
+
+            try {
+                // Get or create Subject
+                const subjectName = "DSE Physics (Eng)";
+                const subjectsRef = collection(db, getPath('pastPapers'));
+                let subjectQuery = await getDocs(query(subjectsRef, where("name", "==", subjectName)));
+                let subjectId;
+                if (subjectQuery.empty) {
+                    const subjectDoc = await addDoc(subjectsRef, { name: subjectName });
+                    subjectId = subjectDoc.id;
+                } else {
+                    subjectId = subjectQuery.docs[0].id;
+                }
+
+                for (const yearData of dsePhysicsData) {
+                    // Get or create Year
+                    const yearsRef = collection(db, getPath('pastPapers', [subjectId]));
+                    let yearQuery = await getDocs(query(yearsRef, where("name", "==", yearData.year)));
+                    let yearId;
+                    if (yearQuery.empty) {
+                        const yearDoc = await addDoc(yearsRef, { name: yearData.year });
+                        yearId = yearDoc.id;
+                    } else {
+                        yearId = yearQuery.docs[0].id;
+                    }
+
+                    // Add papers, checking if they exist
+                    const papersRef = collection(db, getPath('pastPapers', [subjectId, yearId]));
+                    for (const paper of yearData.papers) {
+                        let paperQuery = await getDocs(query(papersRef, where("name", "==", paper.name)));
+                        if (paperQuery.empty) {
+                           await addDoc(papersRef, { name: paper.name, link: paper.link, timestamp: Date.now() });
+                        }
+                    }
+                }
+                showModal('Success', 'DSE Physics past papers from 2012-2023 have been successfully added.');
+                renderContent('pastPapers', 'level1-pastPapers-container', 1);
+
+            } catch (error) {
+                console.error("Seeding error:", error);
+                showModal('Error', 'An error occurred while seeding the data. Please check the console for details.');
+            } finally {
+                seedButton.textContent = 'Seed DSE Physics Papers';
+                seedButton.disabled = false;
+            }
+        }
+
         // --- UTILITY & HELPER FUNCTIONS ---
         function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) {
             const dropZone = document.getElementById(dropZoneId), fileInput = document.getElementById(fileInputId), fileNameDisplay = document.getElementById(fileNameDisplayId);
+            if (!dropZone || !fileInput || !fileNameDisplay) return;
             dropZone.onclick = () => fileInput.click();
             dropZone.ondragover = dropZone.ondragenter = (e) => { e.preventDefault(); dropZone.classList.add('highlight'); };
             dropZone.ondragleave = dropZone.ondrop = () => dropZone.classList.remove('highlight');
@@ -871,3 +943,4 @@
     </script>
 </body>
 </html>
+
