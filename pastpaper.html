@@ -4,20 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Marker - Past Papers</title>
+    <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Custom styles -->
     <style>
+        /* --- MODERN BLACK & WHITE THEME --- */
         :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #2a2a2a;
-            --text-primary: #f5f5f5;
-            --text-secondary: #a3a3a3;
-            --accent-primary: #ffffff;
+            --bg-primary: #0a0a0a; /* Near black for main background */
+            --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
+            --bg-tertiary: #2a2a2a; /* Lighter gray for hovers */
+            --text-primary: #f5f5f5; /* Off-white for primary text */
+            --text-secondary: #a3a3a3; /* Muted gray for secondary text */
+            --accent-primary: #ffffff; /* White for key actions and highlights */
             --accent-green: #28c840;
-            --accent-red: #ef4444;
-            --border-color: #333333;
-            --focus-ring-color: rgba(245, 245, 245, 0.5);
+            --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
+            --border-color: #333333; /* Subtle border color */
+            --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
         }
+        
+        /* --- LIGHT THEME OVERRIDES --- */
         body.light-theme {
             --bg-primary: #ffffff;
             --bg-secondary: #f5f5f5;
@@ -28,6 +33,7 @@
             --border-color: #d4d4d4;
             --focus-ring-color: rgba(10, 10, 10, 0.5);
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text-primary); background-color: var(--bg-primary); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
         button, input, textarea, select { transition: all .2s ease-in-out; font-family: inherit; }
@@ -52,9 +58,9 @@
         .logo-container { display: flex; align-items: center; gap: 1rem; }
         .logo-container h1 { font-size: 1.5rem; }
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-        .header-actions .tab, .header-actions .dropdown-menu-content a { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; border: none; border-radius: 8px; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; display: block; width: 100%; text-align: left; }
-        .header-actions .tab:hover, .header-actions .dropdown-menu-content a:hover { background: var(--bg-secondary); color: var(--text-primary); }
-        .header-actions .tab.active, .header-actions .dropdown-menu-content a.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
+        .header-actions .tab, .header-actions .dropdown-menu a { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; border: none; border-radius: 8px; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; display: block; width: 100%; text-align: left; }
+        .header-actions .tab:hover, .header-actions .dropdown-menu a:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .header-actions .tab.active, .header-actions .dropdown-menu a.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
         #userDisplayName { font-weight: 500; cursor: pointer; }
         .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
@@ -97,12 +103,12 @@
 </head>
 <body>
 
-    <div id="authWrapper">
+    <div id="authWrapper" style="display:none;">
         <div class="login-left-panel"><h1>AI Marker</h1><p>Your Materials Hub</p></div>
         <div class="login-right-panel"><div id="authContainer"></div></div>
     </div>
 
-    <div id="appSection">
+    <div id="appSection" style="display:none;">
         <header>
             <div class="logo-container"><h1>AI Marker</h1><p>Operated by Darren Ng</p></div>
             <div class="header-actions">
@@ -146,13 +152,24 @@
                 <input type="hidden" id="paperParentId1"><input type="hidden" id="paperParentId2">
                 <div><label for="pastPaperName">Paper Name / Title</label><input type="text" id="pastPaperName" required></div>
                 <div><label>Upload File (PDF only)</label><div id="pastPaperDropZone" class="drop-zone"><span>Drag & Drop PDF Here</span><input type="file" id="pastPaperFile" accept="application/pdf" hidden></div><span id="pastPaperFileName">No file chosen</span></div>
-                <p>OR</p>
+                <p style="text-align:center; margin-bottom: 1rem;">OR</p>
                 <div><label for="pastPaperLink">Paste External Link</label><input type="url" id="pastPaperLink"></div>
                 <div class="modal-form-buttons"><button type="submit" class="btn-primary">Add Paper</button></div>
              </form>
         </div>
     </div>
-    <div id="editPastPaperModal" class="modal"><!-- ... form from original ... --></div>
+    <div id="editPastPaperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Past Paper</h3>
+            <form id="editPastPaperForm">
+                <input type="hidden" id="editPaperId"><input type="hidden" id="editPaperParentId1"><input type="hidden" id="editPaperParentId2">
+                <div><label for="editPastPaperName">Paper Name / Title</label><input type="text" id="editPastPaperName" required></div>
+                <div><label for="editPastPaperLink">Download Link</label><input type="url" id="editPastPaperLink" required></div>
+                <div class="modal-form-buttons"><button type="submit" class="btn-primary">Save Changes</button><button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button></div>
+            </form>
+        </div>
+    </div>
     <div id="pdfPreviewModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -191,8 +208,8 @@
         const appSection = document.getElementById('appSection');
         const authContainer = document.getElementById('authContainer');
 
-        const googleSignInTemplate = `<h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"><span>Sign in with Google</span></button>`;
-        const codeEntryTemplate = `<h2>Enter Access Code</h2><input type="text" id="accessCodeInput" placeholder="Enter code"><button id="submitCodeButton" class="btn-primary">Submit</button>`;
+        const googleSignInTemplate = `<h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
+        const codeEntryTemplate = `<h2>Enter Access Code</h2><p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code.</p><input type="text" id="accessCodeInput" placeholder="Enter code here"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button><p id="codeError" class="error-message"></p>`;
 
         try {
             app = initializeApp(firebaseConfig);
@@ -211,9 +228,11 @@
                     const profileData = userProfileDoc.data();
                     currentUserRole = profileData.role;
                     currentUserName = profileData.name || user.displayName;
+                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                     showApp();
                 } else {
                     currentUserName = user.displayName;
+                    currentUserRole = 'unassigned';
                     showCodeEntry();
                 }
             } else {
@@ -229,9 +248,33 @@
             document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
 
-        function showCodeEntry() { /* ... */ }
-        async function handleGoogleSignIn() { /* ... */ }
-        async function handleSubmitCode() { /* ... */ }
+        function showCodeEntry() {
+            appSection.style.display = 'none';
+            authWrapper.style.display = 'flex';
+            authWrapper.style.opacity = '1';
+            authContainer.innerHTML = codeEntryTemplate;
+            document.getElementById('submitCodeButton')?.addEventListener('click', () => handleSubmitCode());
+        }
+
+        async function handleGoogleSignIn() {
+            const provider = new GoogleAuthProvider();
+            try { await signInWithPopup(auth, provider); } catch (error) { document.getElementById('authError').textContent = `Sign-in failed: ${error.message}`; }
+        }
+
+        async function handleSubmitCode() {
+            const code = document.getElementById('accessCodeInput').value.trim();
+            let roleToSet = null;
+            if (code === TEACHER_CODE) roleToSet = 'teacher';
+            else if (code === STUDENT_CODE) roleToSet = 'student';
+            else { document.getElementById('codeError').textContent = 'Invalid code.'; return; }
+            
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                currentUserRole = roleToSet;
+                showApp();
+            } catch (error) { document.getElementById('codeError').textContent = `Could not set role: ${error.message}`; }
+        }
 
         function showApp() {
             authWrapper.style.display = 'none';
@@ -241,30 +284,169 @@
             showSection('pastPapersSection');
         }
 
+        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        document.getElementById('switchRoleButton').addEventListener('click', () => showCodeEntry());
+        
         const materialsConfig = {
             pastPapers: {
                 sectionId: 'pastPapersSection', collectionName: 'pastPapers', title: 'Past Papers',
                 level1: 'Subject', level2: 'Year', level3: 'Paper',
-                modalId: 'addPastPaperModal', editModalId: 'editPastPaperModal', isPaid: false
+                modalId: 'addPastPaperModal', editModalId: 'editPastPaperModal',
             }
         };
 
         function showSection(sectionId) {
-             document.querySelectorAll('main > div').forEach(div => div.style.display = 'none');
+             document.querySelectorAll('main > div').forEach(div => {
+                 div.style.display = 'none';
+                 div.style.opacity = '0';
+            });
              const target = document.getElementById(sectionId);
              if(target) {
                 target.style.display = 'block';
-                target.style.opacity = 1;
+                setTimeout(() => target.style.opacity = 1, 10);
              }
         }
         
         function initializeAllMaterialSections() { setupMaterialSection('pastPapers'); }
         
-        // --- Paste ALL other required JS functions from the complete materials.html here ---
-        // setupMaterialSection, renderContent, handleTeacherClick, setupStudentFilters, renderStudentItems
-        // populateFilter, handlePreview, modals, PDF viewer logic, etc.
-        // Make sure they are complete and not truncated.
+        function getPath(type, ids = []) {
+            const config = materialsConfig[type];
+            return `artifacts/${appId}/public/data/${config.collectionName}` + (ids.length > 0 ? `/${ids.join(`/${config.level2.toLowerCase()}s/`)}/${config.level3.toLowerCase()}s` : '');
+        }
 
+        function setupMaterialSection(type) {
+            const config = materialsConfig[type];
+            const section = document.getElementById(config.sectionId);
+            section.innerHTML = `
+                <h2 class="section-title">${config.title}</h2>
+                <div id="teacher-${type}-view" style="display:none;">
+                    <div class="form-container"><button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button></div>
+                    <div id="level1-${type}-container"></div>
+                </div>
+                <div id="student-${type}-view" style="display:none;">
+                    <div class="filters-container"><select id="level1-${type}-filter"></select><select id="level2-${type}-filter" disabled></select></div>
+                    <div id="level3-${type}-grid" class="grid-container"></div>
+                </div>`;
+            
+            const isTeacher = currentUserRole === 'teacher';
+            document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
+            document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+
+            if (isTeacher) {
+                renderContent(type, `level1-${type}-container`, 1);
+                document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
+                document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+            } else {
+                setupStudentFilters(type);
+            }
+        }
+        
+        async function renderContent(type, containerId, level, parentIds = []) {
+            const container = document.getElementById(containerId);
+            const config = materialsConfig[type];
+            container.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+            const q = query(collection(db, getPath(type, parentIds.slice(0, level - 1))), orderBy('name'));
+            try {
+                const snapshot = await getDocs(q);
+                container.innerHTML = snapshot.empty ? `<p>No items yet.</p>` : '';
+                snapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const el = document.createElement('div');
+                    el.className = level < 3 ? 'content-item' : 'sub-item';
+                    if (level < 3) {
+                        el.innerHTML = `<div class="content-header" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'><h3>${item.name} <span class="collapse-arrow"></span></h3><div class="item-actions"><button class="add-item-btn btn-primary" data-level="${level + 1}" data-parent-ids='${JSON.stringify([...parentIds, item.id])}'>Add ${config[`level${level+1}`]}</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div></div><div class="nested-container" id="container-level${level+1}-${type}-${item.id}"></div>`;
+                    } else {
+                         el.innerHTML = `<span>${item.name}</span><div class="item-actions"><button class="edit-item-btn btn-primary" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button><button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div>`;
+                    }
+                    container.appendChild(el);
+                });
+            } catch (e) { container.innerHTML = `<p class="error-message">Error loading content.</p>`; console.error(e); }
+        }
+        
+        function handleTeacherClick(e, type) {
+            const button = e.target.closest('button');
+            const header = e.target.closest('.content-header');
+            if (button) {
+                e.stopPropagation();
+                const parentIds = JSON.parse(button.dataset.parentIds || '[]');
+                if (button.matches('.add-item-btn')) {
+                    const level = parseInt(button.dataset.level);
+                    level < 3 ? showAddItemModal(type, level, parentIds) : showAddFinalItemModal(type, parentIds);
+                } else if (button.matches('.delete-item-btn')) {
+                    handleDeleteItem(type, parseInt(button.dataset.level), button.dataset.id, parentIds);
+                } else if (button.matches('.preview-item-btn')) {
+                    handlePreview(type, JSON.parse(button.dataset.item));
+                } else if (button.matches('.edit-item-btn')) {
+                    showEditPastPaperModal(JSON.parse(button.dataset.item), parentIds);
+                }
+            } else if (header) {
+                const { level, id, parentIds } = header.dataset;
+                const container = document.getElementById(`container-level${parseInt(level) + 1}-${type}-${id}`);
+                const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                header.setAttribute('aria-expanded', !isExpanded);
+                container.classList.toggle('expanded', !isExpanded);
+                if (!isExpanded && !container.dataset.loaded) {
+                    renderContent(type, container.id, parseInt(level) + 1, [...JSON.parse(parentIds), id]);
+                    container.dataset.loaded = 'true';
+                }
+            }
+        }
+
+        async function setupStudentFilters(type) {
+             const config = materialsConfig[type];
+             const level1Filter = document.getElementById(`level1-${type}-filter`);
+             const level2Filter = document.getElementById(`level2-${type}-filter`);
+             const grid = document.getElementById(`level3-${type}-grid`);
+             await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+             level1Filter.onchange = () => {
+                 const level1Id = level1Filter.value;
+                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                 grid.innerHTML = '';
+                 if(level1Id) {
+                    populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
+                    level2Filter.disabled = false;
+                 } else {
+                    level2Filter.disabled = true;
+                 }
+             };
+             level2Filter.onchange = () => renderStudentItems(type);
+        }
+
+        async function renderStudentItems(type) {
+            const grid = document.getElementById(`level3-${type}-grid`);
+            const level1Id = document.getElementById(`level1-${type}-filter`).value;
+            const level2Id = document.getElementById(`level2-${type}-filter`).value;
+            grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+            if (!level1Id || !level2Id) { grid.innerHTML = ''; return; }
+
+            const q = query(collection(db, getPath(type, [level1Id, level2Id])), orderBy('name'));
+            try {
+                const snapshot = await getDocs(q);
+                grid.innerHTML = snapshot.empty ? `<p>No items found.</p>` : '';
+                snapshot.forEach(doc => {
+                    const item = {id: doc.id, ...doc.data()};
+                    const card = document.createElement('div');
+                    card.className = 'material-card';
+                    card.innerHTML = `<div class="material-card-content"><h3>${item.name}</h3></div>`;
+                    card.addEventListener('click', () => handlePreview(type, item));
+                    grid.appendChild(card);
+                });
+            } catch(e) { grid.innerHTML = `<p class="error-message">Error loading items.</p>`; console.error(e); }
+        }
+
+        async function populateFilter(select, ref, label) {
+            select.innerHTML = `<option value="">-- Select ${label} --</option>`;
+            const q = query(ref, orderBy('name'));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => select.add(new Option(doc.data().name, doc.id)));
+        }
+
+        function handlePreview(type, item) {
+            if (item.link) showPdfPreviewModal(item.name, item.link);
+            else showModal('Preview Error', 'No link available.');
+        }
+
+        // --- All other functions (modals, delete, forms, PDF preview, etc.) should be pasted here from the complete materials2.html ---
     </script>
 </body>
 </html>
