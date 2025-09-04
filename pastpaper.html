@@ -35,94 +35,178 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text-primary); background-color: var(--bg-primary); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         button, input, textarea, select { transition: all .2s ease-in-out; font-family: inherit; }
         button:disabled { opacity: .5; cursor: not-allowed; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #authWrapper { display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001; }
+        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* --- LOGIN PAGE --- */
+        #authWrapper {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1001;
+        }
         .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
         .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; }
-        .login-left-panel h1 { font-size: 3.5rem; }
+        .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; }
         .login-left-panel p { font-size: 1.25rem; color: var(--text-secondary); }
         .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
-        #authContainer { width: 100%; max-width: 380px; display: flex; flex-direction: column; background-color: var(--bg-primary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        #authContainer h2 { font-size: 2rem; margin-bottom: 2rem; text-align: center; }
-        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; }
+        
+        #authContainer {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        #authContainer h2 { font-size: 2rem; font-weight: 600; margin-bottom: 2rem; text-align: center; }
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
         .google-btn:hover { background-color: var(--bg-tertiary); }
+        .google-btn img { height: 20px; }
         #accessCodeInput { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 1rem; text-align: center; font-size: 1rem; }
+        #accessCodeInput:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
         .btn-primary { background-color: var(--accent-primary); color: var(--bg-primary); padding: .75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 1rem; }
         body.light-theme .btn-primary { color: var(--bg-primary); }
-        .btn-primary:hover { opacity: 0.85; }
-        #appSection { display: none; flex-direction: column; height: 100vh; animation: fadeIn .6s ease-out both; }
-        header { background: var(--bg-primary); color: var(--text-primary); display: flex; align-items: center; padding: 0 24px; height: 64px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
+        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
+        
+        #appSection { display: none; flex-direction: column; height: 100vh; background-color: var(--bg-primary); animation: fadeIn .6s ease-out both; }
+        
+        /* --- HEADER --- */
+        header { background: var(--bg-primary); display: flex; align-items: center; padding: 0 24px; height: 64px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
         .logo-container { display: flex; align-items: center; gap: 1rem; }
-        .logo-container h1 { font-size: 1.5rem; }
+        .logo-container h1 { font-size: 1.5rem; font-weight: 700; }
+        .logo-container p { font-weight: 400; color: var(--text-secondary); }
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-        .header-actions .tab, .header-actions .dropdown-menu a { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; border: none; border-radius: 8px; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; display: block; width: 100%; text-align: left; }
-        .header-actions .tab:hover, .header-actions .dropdown-menu a:hover { background: var(--bg-secondary); color: var(--text-primary); }
-        .header-actions .tab.active, .header-actions .dropdown-menu a.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
+        .header-actions .tab, .header-actions .dropdown-menu-content a { padding: 8px 16px; color: var(--text-secondary); text-decoration: none; transition: .2s; border: none; border-radius: 8px; background: transparent; font-weight: 500; cursor: pointer; font-size: 0.875rem; display: block; width: 100%; text-align: left; }
+        .header-actions .tab:hover, .header-actions .dropdown-menu-content a:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .header-actions .tab.active, .header-actions .dropdown-menu-content a.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-        #userDisplayName { font-weight: 500; cursor: pointer; }
+        #userDisplayName { font-weight: 500; }
         .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
-        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
+        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--text-primary); }
         #switchRoleButton { background-color: var(--bg-secondary); color: var(--text-primary); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; }
+        #switchRoleButton:hover { background-color: var(--bg-tertiary); }
+
+        /* --- DROPDOWN MENU --- */
         .dropdown-menu { position: relative; display: inline-block; }
-        .dropdown-menu-content { display: none; position: absolute; top: 110%; left: 0; background-color: var(--bg-secondary); min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 10; border-radius: 8px; border: 1px solid var(--border-color); padding: 4px; }
+        .dropdown-menu-content { display: none; position: absolute; top: 110%; left: 0; background-color: var(--bg-secondary); min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 10; border-radius: 8px; border: 1px solid var(--border-color); padding: 4px; animation: fadeIn 0.2s ease-out; }
         .dropdown-menu:hover .dropdown-menu-content { display: block; }
+
+        /* --- MAIN CONTENT & FORMS --- */
         main { flex: 1; display: flex; overflow-y: auto; padding: 32px; justify-content: center; }
         #pastPapersSection { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; width: 100%; max-width: 1200px; margin: 0 auto; }
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-        input[type="text"], input[type="url"], textarea, select { width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 1rem; }
-        .drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); margin-bottom: 1.5rem; cursor: pointer; padding: 1rem; text-align: center; }
-        .error-message { color: var(--accent-red); font-size: 0.875rem; }
+        input[type="text"], input[type="url"] { width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 1rem; }
+        input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
+        .drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; padding: 1rem; text-align: center; }
+        .drop-zone.highlight { border-color: var(--accent-primary); background: rgba(245, 245, 245, .05); }
+        body.light-theme .drop-zone.highlight { background: rgba(10, 10, 10, .05); }
         .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
         .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; }
-        .form-container { margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-        .material-card { background-color: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; text-decoration: none; color: var(--text-primary); cursor: pointer; }
+        .material-card { background-color: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+        .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .material-card-content { padding: 1.5rem; flex-grow: 1; }
-        .material-card-content h3 { font-size: 1.25rem; }
+        .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        
+        /* --- TEACHER CONTENT MANAGEMENT --- */
         .content-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background: var(--bg-primary); }
         .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
-        .item-actions button { margin-left: 0.5rem; }
-        .nested-container { padding-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border-color); overflow: hidden; max-height: 0; transition: max-height 0.3s ease-out; }
+        .content-header h3, .content-header h4 { margin: 0; }
+        .item-actions button { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; }
+        .nested-container { padding-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border-color); overflow: hidden; transition: max-height 0.3s ease-out; max-height: 0; }
         .nested-container.expanded { max-height: 1000px; }
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; }
         .sub-item:hover { background-color: var(--bg-tertiary); }
         .collapse-arrow { margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary); }
         .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; }
-        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; }
+
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
+        .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
+        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
-        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; }
-        #pdfCanvasContainer { width: 100%; height: 80vh; overflow: auto; }
-        #pdfCanvas { border: 1px solid var(--border-color); }
-        footer { padding: 10px 20px; text-align: right; color: var(--text-secondary); font-size: 0.875rem; }
+
+        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
+        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
+        #pdfControls button { background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        #pdfControls button:hover:not(:disabled) { background-color: #444; }
+        #pdfControls button:disabled { opacity: 0.5; cursor: not-allowed;}
+
+        /* --- FOOTER --- */
+        footer { position: fixed; bottom: 0; right: 0; text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; pointer-events: none; }
+        footer a { color: var(--text-secondary); text-decoration: none; pointer-events: all;}
+        footer a:hover { text-decoration: underline; color: var(--text-primary); }
+
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            #authWrapper { flex-direction: column; position: static; height: auto; }
+            .login-left-panel, .login-right-panel { width: 100%; }
+            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
+            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
+            main { padding: 16px; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="authWrapper" style="display:none;">
-        <div class="login-left-panel"><h1>AI Marker</h1><p>Your Materials Hub</p></div>
-        <div class="login-right-panel"><div id="authContainer"></div></div>
+    <div id="authWrapper" style="display: none;">
+        <div class="login-left-panel">
+            <h1>AI Marker</h1>
+            <p>Your Materials Hub</p>
+        </div>
+        <div class="login-right-panel">
+            <div id="authContainer">
+                 <!-- JS will inject googleSignInTemplate or codeEntryTemplate -->
+            </div>
+        </div>
     </div>
 
-    <div id="appSection" style="display:none;">
+    <div id="appSection" style="display: none;">
         <header>
-            <div class="logo-container"><h1>AI Marker</h1><p>Operated by Darren Ng</p></div>
+            <div class="logo-container">
+                <h1>AI Marker</h1>
+                <p>Operated by Darren Ng</p>
+            </div>
             <div class="header-actions">
                 <a href="home.html" class="tab">Home</a>
+                <button id="themeToggleButton" class="logout-btn">Theme</button>
+                
                 <div class="dropdown-menu">
-                    <button class="tab active">Materials</button>
+                    <button class="tab active" id="materialsButton">Materials</button>
                     <div class="dropdown-menu-content">
                         <a href="tutorials.html" class="tab">Tutorial Videos</a>
-                        <a href="pastpapers.html" class="tab active">Past Papers</a>
+                        <a href="pastpaper.html" class="tab active">Past Papers</a>
                         <a href="exercises.html" class="tab">Exercises for Sale</a>
                         <a href="lessonhistory.html" class="tab">Lesson History</a>
                     </div>
                 </div>
-                <button id="themeToggleButton" class="tab">Theme</button>
+
                 <div class="user-info">
                      <span id="userDisplayName"></span>
                      <button id="switchRoleButton">Switch Role</button>
@@ -136,6 +220,10 @@
         </main>
     </div>
 
+    <!-- Modals -->
+    <footer>
+        <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
+    </footer>
     <div id="messageModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -149,12 +237,28 @@
              <span class="close-button">&times;</span>
              <h3>Add New Past Paper</h3>
              <form id="addPastPaperForm">
-                <input type="hidden" id="paperParentId1"><input type="hidden" id="paperParentId2">
-                <div><label for="pastPaperName">Paper Name / Title</label><input type="text" id="pastPaperName" required></div>
-                <div><label>Upload File (PDF only)</label><div id="pastPaperDropZone" class="drop-zone"><span>Drag & Drop PDF Here</span><input type="file" id="pastPaperFile" accept="application/pdf" hidden></div><span id="pastPaperFileName">No file chosen</span></div>
-                <p style="text-align:center; margin-bottom: 1rem;">OR</p>
-                <div><label for="pastPaperLink">Paste External Link</label><input type="url" id="pastPaperLink"></div>
-                <div class="modal-form-buttons"><button type="submit" class="btn-primary">Add Paper</button></div>
+                <input type="hidden" id="paperParentId1">
+                <input type="hidden" id="paperParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="pastPaperName">Paper Name / Title</label>
+                     <input type="text" id="pastPaperName" required placeholder="e.g., Paper 1 Section A">
+                 </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label>Upload File (PDF only)</label>
+                    <div id="pastPaperDropZone" class="drop-zone">
+                        <span>Drag & Drop PDF Here or click to select</span>
+                        <input type="file" id="pastPaperFile" accept="application/pdf" hidden>
+                    </div>
+                    <span id="pastPaperFileName" style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; display: block;">No file chosen</span>
+                </div>
+                <p style="text-align:center; margin: -1rem 0 1rem 0; color: var(--text-secondary);">OR</p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="pastPaperLink">Paste External Link (for large files)</label>
+                    <input type="url" id="pastPaperLink" placeholder="https://example.com/document.pdf">
+                </div>
+                 <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Add Paper</button>
+                 </div>
              </form>
         </div>
     </div>
@@ -163,19 +267,35 @@
             <span class="close-button">&times;</span>
             <h3>Edit Past Paper</h3>
             <form id="editPastPaperForm">
-                <input type="hidden" id="editPaperId"><input type="hidden" id="editPaperParentId1"><input type="hidden" id="editPaperParentId2">
-                <div><label for="editPastPaperName">Paper Name / Title</label><input type="text" id="editPastPaperName" required></div>
-                <div><label for="editPastPaperLink">Download Link</label><input type="url" id="editPastPaperLink" required></div>
-                <div class="modal-form-buttons"><button type="submit" class="btn-primary">Save Changes</button><button type="button" class="logout-btn" onclick="document.getElementById('editPastPaperModal').style.display = 'none';">Cancel</button></div>
+                <input type="hidden" id="editPaperId">
+                <input type="hidden" id="editPaperParentId1">
+                <input type="hidden" id="editPaperParentId2">
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperName">Paper Name / Title</label>
+                    <input type="text" id="editPastPaperName" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="editPastPaperLink">Download Link</label>
+                    <input type="url" id="editPastPaperLink" required>
+                </div>
+                <div id="modalButtons">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
             </form>
         </div>
     </div>
     <div id="pdfPreviewModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h3 id="pdfPreviewTitle"></h3>
-            <div id="pdfCanvasContainer"><canvas id="pdfCanvas"></canvas></div>
-            <div id="pdfControls"><button id="prevPdfPage">Previous</button><span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span><button id="nextPdfPage">Next</button></div>
+            <h3 id="pdfPreviewTitle" style="text-align: center; margin-bottom: 10px;"></h3>
+            <div id="pdfCanvasContainer">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+            <div id="pdfControls" style="text-align: center; margin-top: 10px;">
+                <button id="prevPdfPage">Previous</button>
+                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                <button id="nextPdfPage">Next</button>
+            </div>
         </div>
     </div>
 
@@ -195,40 +315,41 @@
           measurementId: "G-CHKLKSM17S"
         };
         
+        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
 
-        pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
         let app, db, auth, storage;
-        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        
+        let currentUserId = null, currentUserRole = null, currentUserName = null;
+
         const authWrapper = document.getElementById('authWrapper');
         const appSection = document.getElementById('appSection');
         const authContainer = document.getElementById('authContainer');
 
         const googleSignInTemplate = `<h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
-        const codeEntryTemplate = `<h2>Enter Access Code</h2><p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code.</p><input type="text" id="accessCodeInput" placeholder="Enter code here"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button><p id="codeError" class="error-message"></p>`;
+        const codeEntryTemplate = `<h2>Enter Access Code</h2><p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code.</p><input type="text" id="accessCodeInput" placeholder="Enter code"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button><p id="codeError" class="error-message"></p>`;
 
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             storage = getStorage(app);
-        } catch (error) { console.error("Firebase init error:", error); }
+            console.log("Firebase initialized successfully.");
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid;
-                currentUserEmail = user.email;
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 const userProfileDoc = await getDoc(userProfileRef);
                 if (userProfileDoc.exists() && userProfileDoc.data().role) {
                     const profileData = userProfileDoc.data();
                     currentUserRole = profileData.role;
                     currentUserName = profileData.name || user.displayName;
-                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                     showApp();
                 } else {
                     currentUserName = user.displayName;
@@ -236,6 +357,9 @@
                     showCodeEntry();
                 }
             } else {
+                currentUserId = null;
+                currentUserRole = null;
+                currentUserName = null;
                 showLogin();
             }
         });
@@ -243,45 +367,44 @@
         function showLogin() {
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
+            setTimeout(() => authWrapper.style.opacity = '1', 10);
             authContainer.innerHTML = googleSignInTemplate;
             document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
 
         function showCodeEntry() {
-            appSection.style.display = 'none';
-            authWrapper.style.display = 'flex';
-            authWrapper.style.opacity = '1';
             authContainer.innerHTML = codeEntryTemplate;
-            document.getElementById('submitCodeButton')?.addEventListener('click', () => handleSubmitCode());
+            document.getElementById('submitCodeButton')?.addEventListener('click', handleSubmitCode);
+            document.getElementById('accessCodeInput')?.focus();
+        }
+
+        async function showApp() {
+            authWrapper.style.display = 'none';
+            appSection.style.display = 'flex';
+            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+            setupMaterialSection('pastPapers');
+            showSection('pastPapersSection');
         }
 
         async function handleGoogleSignIn() {
             const provider = new GoogleAuthProvider();
-            try { await signInWithPopup(auth, provider); } catch (error) { document.getElementById('authError').textContent = `Sign-in failed: ${error.message}`; }
+            try { await signInWithPopup(auth, provider); } catch (error) { console.error("Google Sign-In Error:", error); }
         }
 
         async function handleSubmitCode() {
             const code = document.getElementById('accessCodeInput').value.trim();
-            let roleToSet = null;
-            if (code === TEACHER_CODE) roleToSet = 'teacher';
-            else if (code === STUDENT_CODE) roleToSet = 'student';
-            else { document.getElementById('codeError').textContent = 'Invalid code.'; return; }
+            const codeError = document.getElementById('codeError');
+            let roleToSet = (code === TEACHER_CODE) ? 'teacher' : (code === STUDENT_CODE) ? 'student' : null;
             
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
-                currentUserRole = roleToSet;
-                showApp();
-            } catch (error) { document.getElementById('codeError').textContent = `Could not set role: ${error.message}`; }
-        }
-
-        function showApp() {
-            authWrapper.style.display = 'none';
-            appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
-            initializeAllMaterialSections();
-            showSection('pastPapersSection');
+            if (!roleToSet) {
+                codeError.textContent = 'Invalid access code.';
+                return;
+            }
+            
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+            await setDoc(userProfileRef, { role: roleToSet, name: currentUserName }, { merge: true });
+            currentUserRole = roleToSet;
+            showApp();
         }
 
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
@@ -289,45 +412,57 @@
         
         const materialsConfig = {
             pastPapers: {
-                sectionId: 'pastPapersSection', collectionName: 'pastPapers', title: 'Past Papers',
-                level1: 'Subject', level2: 'Year', level3: 'Paper',
-                modalId: 'addPastPaperModal', editModalId: 'editPastPaperModal',
+                sectionId: 'pastPapersSection',
+                collectionName: 'pastPapers',
+                title: 'Past Papers',
+                level1: 'Subject',
+                level2: 'Year',
+                level3: 'Paper',
+                modalId: 'addPastPaperModal',
+                editModalId: 'editPastPaperModal',
             }
         };
 
+        function getPath(type, ids = []) {
+            const config = materialsConfig[type];
+            let pathParts = [`artifacts/${appId}/public/data/${config.collectionName}`];
+            if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
+            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            return pathParts.join('/');
+        }
+        
         function showSection(sectionId) {
              document.querySelectorAll('main > div').forEach(div => {
-                 div.style.display = 'none';
-                 div.style.opacity = '0';
-            });
+                div.style.display = 'none';
+                div.style.opacity = 0;
+             });
              const target = document.getElementById(sectionId);
              if(target) {
                 target.style.display = 'block';
                 setTimeout(() => target.style.opacity = 1, 10);
              }
         }
-        
-        function initializeAllMaterialSections() { setupMaterialSection('pastPapers'); }
-        
-        function getPath(type, ids = []) {
-            const config = materialsConfig[type];
-            return `artifacts/${appId}/public/data/${config.collectionName}` + (ids.length > 0 ? `/${ids.join(`/${config.level2.toLowerCase()}s/`)}/${config.level3.toLowerCase()}s` : '');
-        }
 
         function setupMaterialSection(type) {
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
+
             section.innerHTML = `
                 <h2 class="section-title">${config.title}</h2>
                 <div id="teacher-${type}-view" style="display:none;">
-                    <div class="form-container"><button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button></div>
+                     <div class="form-container">
+                        <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                    </div>
                     <div id="level1-${type}-container"></div>
                 </div>
                 <div id="student-${type}-view" style="display:none;">
-                    <div class="filters-container"><select id="level1-${type}-filter"></select><select id="level2-${type}-filter" disabled></select></div>
+                    <div class="filters-container" style="display:flex; gap: 1rem; margin-bottom: 2rem;">
+                        <select id="level1-${type}-filter" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);"><option value="">-- Select ${config.level1} --</option></select>
+                        <select id="level2-${type}-filter" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);" disabled><option value="">-- Select ${config.level2} --</option></select>
+                    </div>
                     <div id="level3-${type}-grid" class="grid-container"></div>
                 </div>`;
-            
+
             const isTeacher = currentUserRole === 'teacher';
             document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
             document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
@@ -344,34 +479,61 @@
         async function renderContent(type, containerId, level, parentIds = []) {
             const container = document.getElementById(containerId);
             const config = materialsConfig[type];
+            const levelName = config[`level${level}`];
             container.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            const q = query(collection(db, getPath(type, parentIds.slice(0, level - 1))), orderBy('name'));
-            try {
-                const snapshot = await getDocs(q);
-                container.innerHTML = snapshot.empty ? `<p>No items yet.</p>` : '';
-                snapshot.forEach(doc => {
-                    const item = { id: doc.id, ...doc.data() };
-                    const el = document.createElement('div');
-                    el.className = level < 3 ? 'content-item' : 'sub-item';
-                    if (level < 3) {
-                        el.innerHTML = `<div class="content-header" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'><h3>${item.name} <span class="collapse-arrow"></span></h3><div class="item-actions"><button class="add-item-btn btn-primary" data-level="${level + 1}" data-parent-ids='${JSON.stringify([...parentIds, item.id])}'>Add ${config[`level${level+1}`]}</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div></div><div class="nested-container" id="container-level${level+1}-${type}-${item.id}"></div>`;
-                    } else {
-                         el.innerHTML = `<span>${item.name}</span><div class="item-actions"><button class="edit-item-btn btn-primary" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button><button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div>`;
-                    }
-                    container.appendChild(el);
-                });
-            } catch (e) { container.innerHTML = `<p class="error-message">Error loading content.</p>`; console.error(e); }
+
+            const collectionRef = collection(db, getPath(type, parentIds));
+            const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
+            
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                container.innerHTML = `<p style="color: var(--text-secondary);">No ${levelName.toLowerCase()}s added yet.</p>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const item = doc.data();
+                item.id = doc.id;
+                const el = document.createElement('div');
+                el.className = level < 3 ? 'content-item' : 'sub-item';
+
+                let html;
+                if (level < 3) {
+                    const nextLevel = level + 1;
+                    const newParentIds = [...parentIds, doc.id];
+                    html = `<div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                                <${level === 1 ? 'h3' : 'h4'}>${item.name} <span class="collapse-arrow"></span></${level === 1 ? 'h3' : 'h4'}>
+                                <div class="item-actions">
+                                    <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                </div>
+                            </div>
+                            <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>`;
+                } else {
+                    html = `<span>${item.name}</span>
+                            <div class="item-actions">
+                                <button class="edit-item-btn btn-primary" data-item='${JSON.stringify(item)}' data-parent-ids='${JSON.stringify(parentIds)}'>Edit</button>
+                                <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
+                                <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                            </div>`;
+                }
+                el.innerHTML = html;
+                container.appendChild(el);
+            });
         }
         
         function handleTeacherClick(e, type) {
-            const button = e.target.closest('button');
             const header = e.target.closest('.content-header');
+            const button = e.target.closest('button');
+
             if (button) {
                 e.stopPropagation();
                 const parentIds = JSON.parse(button.dataset.parentIds || '[]');
                 if (button.matches('.add-item-btn')) {
-                    const level = parseInt(button.dataset.level);
-                    level < 3 ? showAddItemModal(type, level, parentIds) : showAddFinalItemModal(type, parentIds);
+                    const nextLevel = parseInt(button.dataset.level);
+                    if (nextLevel < 3) showAddItemModal(type, nextLevel, parentIds);
+                    else showAddFinalItemModal(type, parentIds);
                 } else if (button.matches('.delete-item-btn')) {
                     handleDeleteItem(type, parseInt(button.dataset.level), button.dataset.id, parentIds);
                 } else if (button.matches('.preview-item-btn')) {
@@ -385,6 +547,7 @@
                 const isExpanded = header.getAttribute('aria-expanded') === 'true';
                 header.setAttribute('aria-expanded', !isExpanded);
                 container.classList.toggle('expanded', !isExpanded);
+                
                 if (!isExpanded && !container.dataset.loaded) {
                     renderContent(type, container.id, parseInt(level) + 1, [...JSON.parse(parentIds), id]);
                     container.dataset.loaded = 'true';
@@ -392,62 +555,273 @@
             }
         }
 
+        function handlePreview(type, item) {
+            if (item.link) {
+                showPdfPreviewModal(item.name, item.link);
+            } else {
+                showModal('Preview Error', 'No link available for this item.');
+            }
+        }
+
         async function setupStudentFilters(type) {
-             const config = materialsConfig[type];
-             const level1Filter = document.getElementById(`level1-${type}-filter`);
-             const level2Filter = document.getElementById(`level2-${type}-filter`);
-             const grid = document.getElementById(`level3-${type}-grid`);
-             await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
-             level1Filter.onchange = () => {
-                 const level1Id = level1Filter.value;
-                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
-                 grid.innerHTML = '';
-                 if(level1Id) {
+            const config = materialsConfig[type];
+            const level1Filter = document.getElementById(`level1-${type}-filter`);
+            const level2Filter = document.getElementById(`level2-${type}-filter`);
+            const grid = document.getElementById(`level3-${type}-grid`);
+
+            await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+
+            level1Filter.onchange = () => {
+                const level1Id = level1Filter.value;
+                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                level2Filter.disabled = true;
+                grid.innerHTML = '';
+                if (level1Id) {
                     populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
                     level2Filter.disabled = false;
-                 } else {
-                    level2Filter.disabled = true;
-                 }
-             };
-             level2Filter.onchange = () => renderStudentItems(type);
+                }
+            };
+            level2Filter.onchange = () => renderStudentItems(type);
         }
 
         async function renderStudentItems(type) {
-            const grid = document.getElementById(`level3-${type}-grid`);
-            const level1Id = document.getElementById(`level1-${type}-filter`).value;
-            const level2Id = document.getElementById(`level2-${type}-filter`).value;
-            grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            if (!level1Id || !level2Id) { grid.innerHTML = ''; return; }
+             const config = materialsConfig[type];
+             const grid = document.getElementById(`level3-${type}-grid`);
+             const level1Id = document.getElementById(`level1-${type}-filter`).value;
+             const level2Id = document.getElementById(`level2-${type}-filter`).value;
 
-            const q = query(collection(db, getPath(type, [level1Id, level2Id])), orderBy('name'));
-            try {
-                const snapshot = await getDocs(q);
-                grid.innerHTML = snapshot.empty ? `<p>No items found.</p>` : '';
-                snapshot.forEach(doc => {
-                    const item = {id: doc.id, ...doc.data()};
-                    const card = document.createElement('div');
-                    card.className = 'material-card';
-                    card.innerHTML = `<div class="material-card-content"><h3>${item.name}</h3></div>`;
-                    card.addEventListener('click', () => handlePreview(type, item));
-                    grid.appendChild(card);
-                });
-            } catch(e) { grid.innerHTML = `<p class="error-message">Error loading items.</p>`; console.error(e); }
+             grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+             if (!level1Id || !level2Id) { grid.innerHTML = ''; return; }
+
+             const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
+             const q = query(itemsRef, orderBy('name', 'asc'));
+             
+             const snapshot = await getDocs(q);
+             grid.innerHTML = snapshot.empty ? `<p style="color: var(--text-secondary);">No ${config.level3.toLowerCase()}s found.</p>` : '';
+             snapshot.forEach(doc => {
+                 const item = doc.data();
+                 item.id = doc.id;
+                 const card = document.createElement('div');
+                 card.className = 'material-card';
+                 card.onclick = () => handlePreview(type, item);
+                 card.innerHTML = `<div class="material-card-content"><h3>${item.name}</h3></div>`;
+                 grid.appendChild(card);
+             });
         }
-
-        async function populateFilter(select, ref, label) {
-            select.innerHTML = `<option value="">-- Select ${label} --</option>`;
-            const q = query(ref, orderBy('name'));
+        
+        async function populateFilter(selectElement, collectionRef, levelName) {
+            selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+            const q = query(collectionRef, orderBy('name', levelName === 'Year' ? 'desc' : 'asc'));
             const snapshot = await getDocs(q);
-            snapshot.forEach(doc => select.add(new Option(doc.data().name, doc.id)));
+            selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
+            if(snapshot.empty) {
+                selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
+                return;
+            }
+            snapshot.forEach(doc => selectElement.add(new Option(doc.data().name, doc.id)));
+        }
+        
+        function showAddItemModal(type, level, parentIds = []) {
+            const config = materialsConfig[type];
+            const levelName = config[`level${level}`];
+            showInputModal(`Add New ${levelName}`, `Enter ${levelName} Name:`, async (name) => {
+                const collectionRef = collection(db, getPath(type, parentIds));
+                await addDoc(collectionRef, { name: name.trim() });
+                const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                renderContent(type, containerId, level, parentIds);
+            });
         }
 
-        function handlePreview(type, item) {
-            if (item.link) showPdfPreviewModal(item.name, item.link);
-            else showModal('Preview Error', 'No link available.');
+        function showAddFinalItemModal(type, parentIds) {
+            const config = materialsConfig[type];
+            const modal = document.getElementById(config.modalId);
+            modal.style.display = 'flex';
+            const form = modal.querySelector('form');
+            form.querySelector('input[type=hidden]:nth-of-type(1)').value = parentIds[0];
+            form.querySelector('input[type=hidden]:nth-of-type(2)').value = parentIds[1];
+            form.reset();
+            document.getElementById('pastPaperFileName').textContent = 'No file chosen';
         }
 
-        // --- All other functions (modals, delete, forms, PDF preview, etc.) should be pasted here from the complete materials2.html ---
+        document.getElementById('addPastPaperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const parentId1 = e.target.querySelector('#paperParentId1').value;
+            const parentId2 = e.target.querySelector('#paperParentId2').value;
+            const name = document.getElementById('pastPaperName').value;
+            const file = document.getElementById('pastPaperFile').files[0];
+            let link = document.getElementById('pastPaperLink').value.trim();
+
+            if (!name.trim() || (!file && !link)) {
+                return showModal('Input Error', 'Please provide a paper name and either upload a PDF or paste a link.');
+            }
+            
+            e.target.querySelector('button[type=submit]').disabled = true;
+            e.target.querySelector('button[type=submit]').textContent = 'Processing...';
+
+            try {
+                let downloadURL = link;
+                let filePath = '';
+                if (file) {
+                    filePath = `materials/past-papers/${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadResult = await uploadBytes(storageRef, file);
+                    downloadURL = await getDownloadURL(uploadResult.ref);
+                }
+                
+                const collectionRef = collection(db, getPath('pastPapers', [parentId1, parentId2]));
+                await addDoc(collectionRef, { name: name.trim(), link: downloadURL, filePath, timestamp: Date.now() });
+                
+                document.getElementById('addPastPaperModal').style.display = 'none';
+                renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+            } catch (error) { 
+                showModal('Error', `Could not add paper: ${error.message}`); 
+            } finally {
+                 e.target.querySelector('button[type=submit]').disabled = false;
+                 e.target.querySelector('button[type=submit]').textContent = 'Add Paper';
+            }
+        });
+
+        function showEditPastPaperModal(item, parentIds) {
+            const modal = document.getElementById('editPastPaperModal');
+            modal.style.display = 'flex';
+            document.getElementById('editPaperId').value = item.id;
+            document.getElementById('editPaperParentId1').value = parentIds[0];
+            document.getElementById('editPaperParentId2').value = parentIds[1];
+            document.getElementById('editPastPaperName').value = item.name;
+            document.getElementById('editPastPaperLink').value = item.link;
+        }
+
+        document.getElementById('editPastPaperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const parentId1 = e.target.querySelector('#editPaperParentId1').value;
+            const parentId2 = e.target.querySelector('#editPaperParentId2').value;
+            const itemId = document.getElementById('editPaperId').value;
+            const name = document.getElementById('editPastPaperName').value.trim();
+            const link = document.getElementById('editPastPaperLink').value.trim();
+
+            const docRef = doc(db, getPath('pastPapers', [parentId1, parentId2]), itemId);
+            await updateDoc(docRef, { name, link });
+            
+            document.getElementById('editPastPaperModal').style.display = 'none';
+            renderContent('pastPapers', `container-level3-pastPapers-${parentId2}`, 3, [parentId1, parentId2]);
+        });
+
+
+        async function handleDeleteItem(type, level, id, parentIds) {
+            showModal('Confirm Deletion', `Are you sure? This will delete the item and everything inside it.`, [
+                { text: 'Delete', className: 'logout-btn', onClick: async () => {
+                    const docRef = doc(db, getPath(type, parentIds), id);
+                    await deleteDoc(docRef);
+                    const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                    renderContent(type, containerId, level, parentIds);
+                }},
+                { text: 'Cancel', className: 'btn-primary' }
+            ]);
+        }
+        
+        // --- PDF PREVIEW LOGIC ---
+        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
+        const pdfCanvas = document.getElementById('pdfCanvas'), pdfContext = pdfCanvas.getContext('2d');
+        
+        async function showPdfPreviewModal(title, pdfUrl) {
+            document.getElementById('pdfPreviewTitle').textContent = title;
+            document.getElementById('pdfPreviewModal').style.display = 'flex';
+            try {
+                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                document.getElementById('pdfTotalPages').textContent = pdfDoc.numPages;
+                pageNum = 1;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                document.getElementById('pdfPreviewModal').style.display = 'none';
+            }
+        }
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                page.render({ canvasContext: pdfContext, viewport }).promise.then(() => {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+            document.getElementById('pdfPageNum').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        document.getElementById('prevPdfPage').addEventListener('click', () => { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); });
+        document.getElementById('nextPdfPage').addEventListener('click', () => { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); });
+
+
+        // --- UTILITY & HELPER FUNCTIONS ---
+        function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) {
+            const dropZone = document.getElementById(dropZoneId), fileInput = document.getElementById(fileInputId), fileNameDisplay = document.getElementById(fileNameDisplayId);
+            dropZone.onclick = () => fileInput.click();
+            dropZone.ondragover = dropZone.ondragenter = (e) => { e.preventDefault(); dropZone.classList.add('highlight'); };
+            dropZone.ondragleave = dropZone.ondrop = () => dropZone.classList.remove('highlight');
+            dropZone.ondrop = (e) => { e.preventDefault(); fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); };
+            fileInput.onchange = () => { fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen'; };
+        }
+        setupDropZone('pastPaperDropZone', 'pastPaperFile', 'pastPaperFileName');
+
+        function showModal(title, message, buttons = []) {
+            const modal = document.getElementById('messageModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            const modalButtons = document.getElementById('modalButtons');
+            modalButtons.innerHTML = '';
+            if (buttons.length === 0) {
+                 const okBtn = document.createElement('button');
+                 okBtn.textContent = 'OK';
+                 okBtn.className = 'btn-primary';
+                 okBtn.onclick = () => modal.style.display = 'none';
+                 modalButtons.appendChild(okBtn);
+            } else {
+                 buttons.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.textContent = c.text;
+                    btn.className = c.className;
+                    btn.onclick = () => { modal.style.display = 'none'; if (c.onClick) c.onClick(); };
+                    modalButtons.appendChild(btn);
+                });
+            }
+            modal.style.display = 'flex';
+        }
+        
+        function showInputModal(title, label, callback) {
+            showModal(title, `<label>${label}</label><input type="text" id="modalInput" style="width:100%; margin-top: 8px;">`, [
+                { text: 'Cancel', className: 'logout-btn' },
+                { text: 'Save', className: 'btn-primary', onClick: () => callback(document.getElementById('modalInput').value) }
+            ]);
+            setTimeout(() => document.getElementById('modalInput').focus(), 100);
+        }
+
+        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => btn.closest('.modal').style.display = 'none');
+
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
+        function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
+        themeToggleButton.addEventListener('click', () => {
+            const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('ai-marker-theme', newTheme);
+        });
+        loadTheme();
+        
+        window.addEventListener('load', () => document.getElementById('authWrapper').style.opacity = '1');
     </script>
 </body>
 </html>
-
