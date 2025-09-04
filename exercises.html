@@ -306,6 +306,7 @@
                 <button id="prevPdfPage">Previous</button>
                 <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
                 <button id="nextPdfPage">Next</button>
+                <button id="downloadPdfBtn" class="btn-primary" style="margin-left: 1rem;">Download</button>
             </div>
         </div>
     </div>
@@ -537,6 +538,8 @@
                     <div class="nested-container" id="container-level${level + 1}-${type}-${item.id}"></div>` :
                     `<span>${item.name} - $${item.price.toFixed(2)}</span>
                     <div class="item-actions">
+                        <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
+                        <button class="download-item-btn logout-btn" data-item='${JSON.stringify(item)}'>Download</button>
                         <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                     </div>`;
                 container.appendChild(el);
@@ -554,6 +557,12 @@
                     (nextLevel < 3) ? showAddItemModal(type, nextLevel, parentIds) : showAddFinalItemModal(type, parentIds);
                 } else if (button.matches('.delete-item-btn')) {
                     handleDeleteItem(type, parseInt(button.dataset.level), button.dataset.id, parentIds);
+                } else if (button.matches('.preview-item-btn')) {
+                    const item = JSON.parse(button.dataset.item);
+                    showPdfPreviewModal(item.name, item.link);
+                } else if (button.matches('.download-item-btn')) {
+                    const item = JSON.parse(button.dataset.item);
+                    downloadFile(item);
                 }
             } else if (header) {
                 const { level, id, parentIds } = header.dataset;
@@ -607,7 +616,10 @@
                     <h4>${item.name}</h4>
                     <p class="product-price">$${item.price.toFixed(2)}</p>
                     ${isPurchased 
-                        ? `<button class="download-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview/Download</button>`
+                        ? `<div style="display: flex; gap: 0.5rem;">
+                                <button class="preview-btn btn-primary" style="flex:1;" data-item='${JSON.stringify(item)}'>Preview</button>
+                                <button class="download-file-btn logout-btn" style="flex:1;" data-item='${JSON.stringify(item)}'>Download</button>
+                           </div>`
                         : `<button class="add-to-cart-btn btn-primary" data-item='${JSON.stringify(item)}' ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add to Cart'}</button>`
                     }`;
                  grid.appendChild(card);
@@ -617,7 +629,8 @@
                  if(!itemData) return;
                  const item = JSON.parse(itemData);
                  if (e.target.matches('.add-to-cart-btn')) addToCart(item);
-                 if (e.target.matches('.download-btn')) showPdfPreviewModal(item.name, item.link);
+                 if (e.target.matches('.preview-btn')) showPdfPreviewModal(item.name, item.link);
+                 if (e.target.matches('.download-file-btn')) downloadFile(item);
              };
         }
         
@@ -792,7 +805,8 @@
         let pdfDoc = null,
             pageNum = 1,
             pageRendering = false,
-            pageNumPending = null;
+            pageNumPending = null,
+            currentItemForPreview = null;
 
         const pdfCanvas = document.getElementById('pdfCanvas');
         const pdfContext = pdfCanvas.getContext('2d');
@@ -802,6 +816,33 @@
         const totalPagesDisplay = document.getElementById('pdfTotalPages');
         const prevPageBtn = document.getElementById('prevPdfPage');
         const nextPageBtn = document.getElementById('nextPdfPage');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
+        /**
+         * Triggers a file download in the browser.
+         * @param {object} item The item object, containing 'link' and 'name'.
+         */
+        function downloadFile(item) {
+            if (!item || !item.link) {
+                console.error("Download failed: item or item link is missing.");
+                showModal('Error', 'Could not download the file. The link is missing.');
+                return;
+            }
+            const finalUrl = getGoogleDriveDirectLink(item.link);
+            const link = document.createElement('a');
+            link.href = finalUrl;
+            // Add a fallback name and ensure it ends with .pdf
+            let fileName = item.name || 'download';
+            if (!fileName.toLowerCase().endsWith('.pdf')) {
+                fileName += '.pdf';
+            }
+            link.download = fileName;
+            // Use target=_blank as a fallback for some browsers/setups
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         /**
          * Converts a standard Google Drive sharing URL to a direct download link.
@@ -829,6 +870,7 @@
          * @param {string} url The URL of the PDF file.
          */
         async function showPdfPreviewModal(title, url) {
+            currentItemForPreview = { name: title, link: url };
             pdfPreviewTitle.textContent = title;
             pdfPreviewModal.style.display = 'flex';
 
@@ -907,6 +949,14 @@
             pageRendering ? (pageNumPending = pageNum) : renderPage(pageNum);
         };
 
+        downloadPdfBtn.onclick = () => {
+            if (currentItemForPreview) {
+                downloadFile(currentItemForPreview);
+            } else {
+                showModal('Error', 'Could not start download, item data not found.');
+            }
+        };
+
         function setupDropZone(dropZoneId, fileInputId, fileNameDisplayId) {
             const dropZone = document.getElementById(dropZoneId), fileInput = document.getElementById(fileInputId), fileNameDisplay = document.getElementById(fileNameDisplayId);
             dropZone.onclick=()=>fileInput.click();
@@ -949,3 +999,4 @@
     </script>
 </body>
 </html>
+
