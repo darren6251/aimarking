@@ -289,12 +289,16 @@
             <span class="close-button">&times;</span>
             <h3 id="pdfPreviewTitle" style="text-align: center; margin-bottom: 10px;"></h3>
             <div id="pdfCanvasContainer">
+                <!-- PATCH: Added a loader element for better user feedback -->
+                <div id="pdfLoader" class="loading-indicator" style="display: none;">Loading PDF...</div>
                 <canvas id="pdfCanvas"></canvas>
             </div>
-            <div id="pdfControls" style="text-align: center; margin-top: 10px;">
+            <!-- PATCH: Added a download button and used flexbox for better layout -->
+            <div id="pdfControls" style="text-align: center; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 1rem;">
                 <button id="prevPdfPage">Previous</button>
-                <span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span>
+                <div><span id="pdfPageNum"></span> / <span id="pdfTotalPages"></span></div>
                 <button id="nextPdfPage">Next</button>
+                <a id="pdfDownloadLink" href="#" download target="_blank" class="btn-primary" style="text-decoration: none;">Download</a>
             </div>
         </div>
     </div>
@@ -719,31 +723,64 @@
             ]);
         }
         
-        // --- PDF PREVIEW LOGIC ---
+        // --- PDF PREVIEW LOGIC (PATCHED) ---
         let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
-        const pdfCanvas = document.getElementById('pdfCanvas'), pdfContext = pdfCanvas.getContext('2d');
-        
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const pdfContext = pdfCanvas.getContext('2d');
+        const pdfLoader = document.getElementById('pdfLoader');
+        const pdfControls = document.getElementById('pdfControls');
+        const pdfDownloadLink = document.getElementById('pdfDownloadLink');
+
         async function showPdfPreviewModal(title, pdfUrl) {
             document.getElementById('pdfPreviewTitle').textContent = title;
             document.getElementById('pdfPreviewModal').style.display = 'flex';
+            
+            // Reset state and show loader
+            pdfDoc = null;
+            pdfCanvas.style.display = 'none';
+            pdfControls.style.display = 'none';
+            pdfLoader.style.display = 'block';
+            pdfLoader.textContent = 'Loading PDF...';
+            pdfDownloadLink.href = pdfUrl; // Set download link immediately
+
             try {
-                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                // Use a CORS proxy to fetch the PDF. This is necessary for viewing files from sources like Google Drive which have strict cross-origin policies.
+                const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(pdfUrl)}`;
+                
+                const loadingTask = pdfjsLib.getDocument(proxiedUrl);
+                pdfDoc = await loadingTask.promise;
+                
                 document.getElementById('pdfTotalPages').textContent = pdfDoc.numPages;
                 pageNum = 1;
+                
+                // Hide loader, show canvas and controls
+                pdfLoader.style.display = 'none';
+                pdfCanvas.style.display = 'block';
+                pdfControls.style.display = 'flex';
+                
                 renderPage(pageNum);
             } catch (error) {
                 console.error('Error loading PDF:', error);
-                document.getElementById('pdfPreviewModal').style.display = 'none';
+                pdfLoader.textContent = 'Failed to load PDF preview. The link may be invalid or blocked.';
+                // Hide the modal after showing the error
+                setTimeout(() => {
+                     document.getElementById('pdfPreviewModal').style.display = 'none';
+                }, 2500);
             }
         }
 
         function renderPage(num) {
             pageRendering = true;
+            if (!pdfDoc) return; // Safety check
             pdfDoc.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale: 1.5 });
                 pdfCanvas.height = viewport.height;
                 pdfCanvas.width = viewport.width;
-                page.render({ canvasContext: pdfContext, viewport }).promise.then(() => {
+                const renderContext = {
+                    canvasContext: pdfContext,
+                    viewport: viewport
+                };
+                page.render(renderContext).promise.then(() => {
                     pageRendering = false;
                     if (pageNumPending !== null) {
                         renderPage(pageNumPending);
@@ -762,8 +799,17 @@
             }
         }
 
-        document.getElementById('prevPdfPage').addEventListener('click', () => { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); });
-        document.getElementById('nextPdfPage').addEventListener('click', () => { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); });
+        document.getElementById('prevPdfPage').addEventListener('click', () => {
+            if (!pdfDoc || pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        document.getElementById('nextPdfPage').addEventListener('click', () => {
+            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
 
 
         // --- UTILITY & HELPER FUNCTIONS ---
