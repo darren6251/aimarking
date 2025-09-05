@@ -4,7 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Marker - Login</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom styles for countdown to match the new theme -->
+  <style>
+    .datetime-container {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: var(--bg-secondary); /* Using theme variable */
+        border-radius: 10px;
+        border: 1px solid var(--border-color); /* Using theme variable */
+        width: 100%;
+        max-width: 380px;
+    }
+
+    #datetime {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+        color: var(--text-secondary); /* Using theme variable */
+    }
+
+    #countdown-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        color: var(--text-primary); /* Using theme variable */
+    }
+
+    #countdown {
+        font-size: 1.5em;
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: 700;
+        color: var(--text-primary); /* Using theme variable */
+        background-color: var(--bg-primary); /* Using theme variable */
+        padding: 10px 15px;
+        border-radius: 8px;
+        display: inline-block;
+    }
+  </style>
+
   <!-- PDF.js library (in case you preview PDFs on login screen later) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
@@ -14,6 +57,13 @@
     <div class="login-left-panel">
       <h1>AI Marker</h1>
       <p>Mark with AI, learn better.</p>
+      
+      <!-- Added Date, Time, and Countdown Section -->
+      <div class="datetime-container">
+        <div id="datetime">Loading date and time...</div>
+        <div id="countdown-title">2026DSE FROM NOW</div>
+        <div id="countdown">Calculating...</div>
+      </div>
     </div>
 
     <div class="login-right-panel">
@@ -27,6 +77,49 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+    // --- New Clock and Countdown Logic ---
+    const datetimeEl = document.getElementById('datetime');
+    const countdownEl = document.getElementById('countdown');
+
+    // Function to update the current time and date
+    function updateTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        datetimeEl.textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    // Function to update the countdown
+    function updateCountdown() {
+        const countDownDate = new Date("April 9, 2026 00:00:00").getTime();
+        const now = new Date().getTime();
+        const distance = countDownDate - now;
+
+        // Time calculations for days, hours, minutes and seconds
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // Display the result in the element with id="countdown"
+        countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+        // If the count down is finished, write some text
+        if (distance < 0) {
+            clearInterval(countdownInterval);
+            countdownEl.innerHTML = "DSE HAS BEGUN!";
+        }
+    }
+
+    // Initial calls to display immediately on load
+    updateTime();
+    updateCountdown();
+
+    // Update the time and countdown every second
+    setInterval(updateTime, 1000);
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    // --- End of New Logic ---
+
 
     // --- Firebase Config (yours) ---
     const firebaseConfig = {
@@ -58,7 +151,9 @@
       try {
         await signInWithPopup(auth, provider);
       } catch (error) {
-        alert("Login failed: " + error.message);
+        // Using console.error is better than alert for debugging
+        console.error("Login failed: ", error);
+        // You could also show a user-friendly message on the page itself
       }
     });
 
@@ -72,3 +167,4 @@
   </script>
 </body>
 </html>
+
