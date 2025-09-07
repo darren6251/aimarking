@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomials & Indices Quiz</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- MODERN BLACK & WHITE THEME --- */
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a3a3a3;
+            --accent-primary: #ffffff;
+            --accent-correct: #22c55e; /* Green */
+            --accent-incorrect: #ef4444; /* Red */
+            --border-color: #333333;
+            --focus-ring-color: rgba(245, 245, 245, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        main {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* --- HEADER --- */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin: 0 0 0.5rem 0;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* --- QUIZ COMPONENTS --- */
+        #quiz-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .question-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all .2s;
+        }
+
+        .question-card.correct {
+            border-color: var(--accent-correct);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+        }
+
+        .question-card.incorrect {
+            border-color: var(--accent-incorrect);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 1.5rem 0;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .option-label {
+            display: block;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all .2s;
+            position: relative;
+        }
+
+        .option-label:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        .option-label.selected {
+             border-color: var(--accent-primary);
+             background-color: var(--bg-tertiary);
+        }
+        
+        .option-label input[type="radio"] {
+            opacity: 0;
+            position: absolute;
+        }
+
+        .option-label input[type="radio"]:checked + span {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+        
+        .option-label.correct {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--accent-correct);
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        .option-label.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-incorrect);
+        }
+
+        .feedback-area {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .correct-answer-text {
+            color: var(--accent-correct);
+            font-weight: 600;
+        }
+        
+        /* --- ACTIONS & RESULTS --- */
+        #actions {
+            text-align: center;
+            margin-top: 2.5rem;
+        }
+        
+        .btn {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all .2s ease-in-out;
+        }
+
+        .btn:hover:not(:disabled) {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        #results-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            animation: fadeIn .5s ease-in-out;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #results-container h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.75rem;
+        }
+
+        #score-text {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            color: var(--accent-primary);
+        }
+        
+        #score-feedback {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Math rendering helpers */
+        sup { line-height: 0; }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            text-align: center;
+            vertical-align: middle;
+            margin: 0 0.2em;
+        }
+        .numerator {
+            border-bottom: 1px solid var(--text-primary);
+            padding: 0 0.2em;
+        }
+        .denominator {
+            padding: 0 0.2em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <main>
+        <header>
+            <h1>Math Quiz</h1>
+            <p>Test your knowledge of Polynomials and Laws of Indices.</p>
+        </header>
+
+        <div id="quiz-container">
+            <!-- Questions will be injected here by JavaScript -->
+        </div>
+
+        <div id="actions">
+            <button id="submit-btn" class="btn">Submit Answers</button>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <h2>Quiz Complete!</h2>
+            <p id="score-text"></p>
+            <p id="score-feedback"></p>
+            <button id="retry-btn" class="btn btn-secondary">Retry Quiz</button>
+        </div>
+    </main>
+
+    <script>
+        // Data derived from the user-provided JSON file.
+        const quizData = [
+            { question: "Simplify the expression a<sup>-5</sup> &times; a<sup>2</sup>.", options: ["a<sup>-3</sup>", "a<sup>-7</sup>", "a<sup>3</sup>", "a<sup>-10</sup>"], answer: "a<sup>-3</sup>" },
+            { question: "Factorize the expression x<sup>2</sup> - 49.", options: ["(x-7)(x-7)", "(x+7)(x-7)", "(x+7)(x+7)", "Cannot be factorized"], answer: "(x+7)(x-7)" },
+            { question: "Simplify the expression (p<sup>4</sup>)<sup>-2</sup>.", options: ["p<sup>2</sup>", "p<sup>8</sup>", "p<sup>-8</sup>", "p<sup>-6</sup>"], answer: "p<sup>-8</sup>" },
+            { question: "Factorize the expression m<sup>3</sup> + 64.", options: ["(m+4)(m<sup>2</sup> - 4m + 16)", "(m+4)(m<sup>2</sup> + 4m + 16)", "(m-4)(m<sup>2</sup> + 4m + 16)", "(m+8)(m-8)"], answer: "(m+4)(m<sup>2</sup> - 4m + 16)" },
+            { question: "Simplify the expression <span class='fraction'><span class='numerator'>x<sup>8</sup>y<sup>2</sup></span><span class='denominator'>x<sup>3</sup>y<sup>5</sup></span></span>. Express your answer with positive indices.", options: ["x<sup>5</sup>y<sup>3</sup>", "<span class='fraction'><span class='numerator'>x<sup>5</sup></span><span class='denominator'>y<sup>3</sup></span></span>", "x<sup>11</sup>y<sup>7</sup>", "<span class='fraction'><span class='numerator'>y<sup>3</sup></span><span class='denominator'>x<sup>5</sup></span></span>"], answer: "<span class='fraction'><span class='numerator'>x<sup>5</sup></span><span class='denominator'>y<sup>3</sup></span></span>" },
+            { question: "Factorize the expression 2x<sup>2</sup> - 7x + 3.", options: ["(2x+1)(x+3)", "(2x-3)(x-1)", "(x-3)(2x+1)", "(2x-1)(x-3)"], answer: "(2x-1)(x-3)" },
+            { question: "What is the value of (5<sup>0</sup> + 2)<sup>-2</sup>?", options: ["9", "<span class='fraction'><span class='numerator'>1</span><span class='denominator'>9</span></span>", "<span class='fraction'><span class='numerator'>1</span><span class='denominator'>49</span></span>", "1"], answer: "<span class='fraction'><span class='numerator'>1</span><span class='denominator'>9</span></span>" },
+            { question: "Factorize the expression ab - 5a + 3b - 15.", options: ["(a+3)(b-5)", "(a-5)(b+3)", "(a+5)(b-3)", "(a-3)(b+5)"], answer: "(a+3)(b-5)" },
+            { question: "Factorize the expression x<sup>2</sup> - y<sup>2</sup> + 6x + 9.", options: ["(x-y+3)(x-y-3)", "(x+y+3)(x+y-3)", "(x+3-y)(x+3+y)", "(x-3-y)(x-3+y)"], answer: "(x+3-y)(x+3+y)" },
+            { question: "Simplify the expression <span class='fraction'><span class='numerator'>(2x<sup>2</sup>)<sup>-3</sup></span><span class='denominator'>4y<sup>0</sup></span></span> &times; (xy)<sup>4</sup>. Express the answer with positive indices.", options: ["<span class='fraction'><span class='numerator'>y<sup>4</sup></span><span class='denominator'>32x<sup>2</sup></span></span>", "<span class='fraction'><span class='numerator'>x<sup>2</sup>y<sup>4</sup></span><span class='denominator'>8</span></span>", "<span class='fraction'><span class='numerator'>y<sup>4</sup></span><span class='denominator'>8x<sup>2</sup></span></span>", "<span class='fraction'><span class='numerator'>2y<sup>4</sup></span><span class='denominator'>x<sup>2</sup></span></span>"], answer: "<span class='fraction'><span class='numerator'>y<sup>4</sup></span><span class='denominator'>32x<sup>2</sup></span></span>" }
+        ];
+
+        const quizContainer = document.getElementById('quiz-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const scoreText = document.getElementById('score-text');
+        const scoreFeedback = document.getElementById('score-feedback');
+        const retryBtn = document.getElementById('retry-btn');
+        
+        function renderQuiz() {
+            quizContainer.innerHTML = '';
+            quizData.forEach((item, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.id = `question-card-${index}`;
+
+                let optionsHtml = item.options.map((option, optionIndex) => {
+                    const letter = String.fromCharCode(65 + optionIndex); // A, B, C, D
+                    return `
+                    <label class="option-label">
+                        <input type="radio" name="question${index}" value="${option}">
+                        <span><strong>${letter}.</strong> ${option}</span>
+                    </label>
+                `}).join('');
+
+                questionCard.innerHTML = `
+                    <p class="question-text">${index + 1}. ${item.question}</p>
+                    <div class="options-grid">${optionsHtml}</div>
+                    <div class="feedback-area" id="feedback-${index}" style="display: none;"></div>
+                `;
+                quizContainer.appendChild(questionCard);
+
+                // Add event listeners for immediate selection feedback
+                const optionLabels = questionCard.querySelectorAll('.option-label');
+                optionLabels.forEach(label => {
+                    label.addEventListener('click', () => {
+                        // Deselect siblings
+                        optionLabels.forEach(l => l.classList.remove('selected'));
+                        // Select clicked one
+                        label.classList.add('selected');
+                    });
+                });
+            });
+        }
+        
+        function handleSubmit() {
+            let score = 0;
+            quizData.forEach((item, index) => {
+                const questionCard = document.getElementById(`question-card-${index}`);
+                const feedbackArea = document.getElementById(`feedback-${index}`);
+                const selectedOption = quizContainer.querySelector(`input[name="question${index}"]:checked`);
+                
+                const allRadios = questionCard.querySelectorAll(`input[name="question${index}"]`);
+                allRadios.forEach(radio => radio.disabled = true);
+                
+                const correctAnswerLabel = [...questionCard.querySelectorAll('.option-label')].find(label => label.querySelector('span').innerHTML.includes(item.answer));
+
+                if (selectedOption) {
+                    const selectedLabel = selectedOption.parentElement;
+                    if (selectedOption.value === item.answer) {
+                        score++;
+                        questionCard.classList.add('correct');
+                        selectedLabel.classList.add('correct');
+                    } else {
+                        questionCard.classList.add('incorrect');
+                        selectedLabel.classList.add('incorrect');
+                        if (correctAnswerLabel) correctAnswerLabel.classList.add('correct');
+                        feedbackArea.innerHTML = `<p class="correct-answer-text">Correct Answer: ${item.answer}</p>`;
+                        feedbackArea.style.display = 'block';
+                    }
+                } else {
+                    questionCard.classList.add('incorrect');
+                    if (correctAnswerLabel) correctAnswerLabel.classList.add('correct');
+                    feedbackArea.innerHTML = `<p class="correct-answer-text">Correct Answer: ${item.answer}</p>`;
+                    feedbackArea.style.display = 'block';
+                }
+            });
+            
+            scoreText.textContent = `${score} / ${quizData.length}`;
+            let feedback = "Keep practicing!";
+            const percentage = (score / quizData.length) * 100;
+            if (percentage >= 80) feedback = "Excellent work!";
+            else if (percentage >= 50) feedback = "Good job, you're getting there!";
+            scoreFeedback.textContent = feedback;
+            
+            resultsContainer.style.display = 'block';
+            submitBtn.style.display = 'none';
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetQuiz() {
+            resultsContainer.style.display = 'none';
+            submitBtn.style.display = 'inline-block';
+            renderQuiz();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        submitBtn.addEventListener('click', handleSubmit);
+        retryBtn.addEventListener('click', resetQuiz);
+
+        // Initial render
+        renderQuiz();
+
+    </script>
+</body>
+</html>
