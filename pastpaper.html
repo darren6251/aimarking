@@ -136,6 +136,11 @@
             </button>
           </div>
 
+          <!-- CHANGED: Converted to <a> tag -->
+          <a id="homeButton" href="home.html" class="hidden md:flex items-center gap-2 glow-btn px-4 py-2 rounded-full text-sm font-medium focus-ring bg-white/4 text-white/90">
+            <span>🏠 Home</span>
+          </a>
+
           <nav id="desktopSubjectNav" class="hidden md:flex items-center gap-4" aria-label="Subjects">
 
             <!-- Subjects load here -->
@@ -168,6 +173,10 @@
         <aside class="lg:col-span-1 space-y-6">
           <div class="md:hidden glass p-4 rounded-xl">
             <div id="mobileSubjectNav" class="flex gap-3 overflow-x-auto py-2 -mx-2 px-2">
+              <!-- CHANGED: Converted to <a> tag -->
+              <a id="mobileHomeButton" href="home.html" class="shrink-0 px-3 py-2 rounded-full text-sm font-medium glow-btn bg-white/6 text-white/90">
+                <span>🏠 Home</span>
+              </a>
               <!-- Mobile subjects load here -->
             </div>
           </div>
@@ -406,7 +415,7 @@
         favorite: false,
         currentType: 'Paper 1',
         papers: [], // full paper objects
-        currentIndex: 0,
+        currentIndex: -1, // CHANGED: Start with no paper selected
         viewed: 0,
         modalTitle: 'Add paper',
         form: { id: null, subject:'', year:'', type:'Paper 1', title:'', link:'' },
@@ -451,11 +460,13 @@
         dom.mainContent.style.display = 'block';
         dom.displayName.textContent = user.displayName || 'User';
         dom.userRole.textContent = role;
-        if (role === 'teacher') {
-            dom.teacherControls.style.display = 'block';
-        } else {
-            dom.teacherControls.style.display = 'none';
-        }
+        // CHANGED: Disable teacher controls as requested
+        // if (role === 'teacher') {
+        //     dom.teacherControls.style.display = 'block';
+        // } else {
+        //     dom.teacherControls.style.display = 'none';
+        // }
+        dom.teacherControls.style.display = 'none'; // Always hide
         initUI();
     }
 
@@ -608,7 +619,8 @@
     }
 
     function renderViewer() {
-        const paper = appState.papers[appState.currentIndex] || null;
+        // CHANGED: Check if index is valid before getting paper
+        const paper = appState.currentIndex >= 0 ? appState.papers[appState.currentIndex] : null; 
         if (paper) {
             dom.viewerLoading.style.display = 'none';
             dom.viewerContent.style.display = 'block';
@@ -617,10 +629,13 @@
             dom.openNewTabLink.href = paper.link;
             dom.favoriteButton.style.color = appState.favorite ? '#facc15' : '#cbd5e1';
             dom.pdfEmbedTip.style.display = 'block';
-            if (appState.role === 'teacher') {
-                dom.teacherPaperControls.style.display = 'flex';
-            }
+            // CHANGED: Disable teacher controls as requested
+            // if (appState.role === 'teacher') {
+            //     dom.teacherPaperControls.style.display = 'flex';
+            // }
+            dom.teacherPaperControls.style.display = 'none'; // Always hide
         } else {
+            // This is now the default state
             dom.viewerLoading.style.display = 'none';
             dom.viewerContent.style.display = 'block';
             dom.currentPaperTitleLabel.textContent = 'No paper selected';
@@ -672,10 +687,11 @@
           diff: item.diff || 3,
           link: item.link || ''
         }));
-        appState.currentIndex = 0;
+        // CHANGED: Set to -1 so no paper is loaded automatically
+        appState.currentIndex = -1; 
         
         renderPapersGrid();
-        renderViewer();
+        renderViewer(); // This will now show the "No paper selected" state
         setLoading(false);
     }
     
@@ -746,14 +762,24 @@
     
     function nextPaper() {
         if (!appState.papers.length) return;
-        appState.currentIndex = (appState.currentIndex + 1) % appState.papers.length;
+        // CHANGED: Handle -1 case
+        if (appState.currentIndex === -1) {
+            appState.currentIndex = 0;
+        } else {
+            appState.currentIndex = (appState.currentIndex + 1) % appState.papers.length;
+        }
         renderViewer();
         toast('Next');
     }
 
     function prevPaper() {
         if (!appState.papers.length) return;
-        appState.currentIndex = (appState.currentIndex - 1 + appState.papers.length) % appState.papers.length;
+        // CHANGED: Handle -1 case
+        if (appState.currentIndex === -1) {
+            appState.currentIndex = appState.papers.length - 1;
+        } else {
+            appState.currentIndex = (appState.currentIndex - 1 + appState.papers.length) % appState.papers.length;
+        }
         renderViewer();
         toast('Prev');
     }
@@ -764,16 +790,41 @@
         renderViewer();
     }
     
+    // CHANGED: Updated download logic
     function downloadPdf() {
-        const paper = appState.papers[appState.currentIndex];
-        if (!paper) return;
-        const url = (paper.link ||'').replace('/preview','/view');
-        window.open(url,'_blank');
-        toast('Opening...');
+        const paper = appState.currentIndex >= 0 ? appState.papers[appState.currentIndex] : null;
+        if (!paper || !paper.link) {
+            toast('No paper selected or link missing');
+            return;
+        }
+        
+        // Try to parse Google Drive link (e.g., .../file/d/FILE_ID/preview)
+        const match = paper.link.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            const fileId = match[1];
+            // This URL format forces download
+            const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            
+            // Create a temporary link to trigger the download
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.target = '_blank'; // Fallback in case click() doesn't work
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            toast('Download started...');
+        } else {
+            // Fallback for other/unrecognized links
+            toast('Opening link in new tab...');
+            const url = (paper.link ||'').replace('/preview','/view');
+            window.open(url,'_blank');
+        }
     }
 
     function sharePaper() {
-        const paper = appState.papers[appState.currentIndex];
+        // CHANGED: Check for valid index
+        const paper = appState.currentIndex >= 0 ? appState.papers[appState.currentIndex] : null;
         if (!paper || !paper.link) return;
         navigator.clipboard?.writeText(paper.link).then(() => toast('Link copied to clipboard'));
     }
@@ -845,7 +896,8 @@
         openModal();
     }
     function openEditPaper() {
-        const p = appState.papers[appState.currentIndex];
+        // CHANGED: Check for valid index
+        const p = appState.currentIndex >= 0 ? appState.papers[appState.currentIndex] : null;
         if (!p) return;
         appState.modalTitle = 'Edit paper';
         appState.form = { subject: appState.subject, year: appState.year, type: p.type, title: p.title, link: p.link, id: p.id };
@@ -855,7 +907,8 @@
     async function deleteCurrentPaper() {
         if (appState.role !== 'teacher') { toast('Teacher only'); return; }
         
-        const p = appState.papers[appState.currentIndex];
+        // CHANGED: Check for valid index
+        const p = appState.currentIndex >= 0 ? appState.papers[appState.currentIndex] : null;
         const subjDoc = appState.subjects.find(s => s.name === appState.subject);
         const yearDoc = appState.years.find(y => y.name === appState.year);
 
@@ -864,7 +917,7 @@
         try {
             await deletePaper(subjDoc.id, yearDoc.id, p.id);
             toast('Deleted');
-            await refreshPapers();
+            await refreshPapers(); // This will clear the viewer
         } catch (e) {
             toast('Delete failed');
             console.error(e);
@@ -939,6 +992,8 @@
         
         // Static Listeners
         dom.logoutButton.onclick = logout;
+        // dom.homeButton.onclick = () => location.reload(); // REMOVED
+        // dom.mobileHomeButton.onclick = () => location.reload(); // REMOVED
         dom.themeToggleButton.onclick = toggleTheme;
         dom.clearFiltersButton.onclick = clearFilters;
         dom.randomPaperButton.onclick = randomPaper;
@@ -1021,6 +1076,8 @@
         dom.displayName = document.getElementById('displayName');
         dom.userRole = document.getElementById('userRole');
         dom.logoutButton = document.getElementById('logoutButton');
+        // dom.homeButton = document.getElementById('homeButton'); // REMOVED
+        // dom.mobileHomeButton = document.getElementById('mobileHomeButton'); // REMOVED
         dom.teacherControls = document.getElementById('teacherControls');
         dom.desktopSubjectNav = document.getElementById('desktopSubjectNav');
         dom.mobileSubjectNav = document.getElementById('mobileSubjectNav');
