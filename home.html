@@ -16,6 +16,17 @@
         --accent-red: #ef4444; /* A modern, sharp red for destructive actions */
         --border-color: #333333; /* Subtle border color */
         --focus-ring-color: rgba(245, 245, 245, 0.5); /* Semi-transparent white for focus rings */
+
+        /* Finder Window Specific Variables */
+        --finder-bg-primary: #1c1c1c;
+        --finder-bg-secondary: #0a0a0a;
+        --finder-text-primary: #f5f5f5;
+        --finder-text-secondary: #a3a3a3;
+        --finder-border-color: #333333;
+        --finder-titlebar-bg: #2a2a2a;
+        --finder-hover-bg: #333333;
+        --finder-active-bg: var(--accent-primary);
+        --finder-active-text: #0a0a0a;
     }
 
     /* --- LIGHT THEME OVERRIDES --- */
@@ -28,6 +39,17 @@
         --accent-primary: #0a0a0a;
         --border-color: #d4d4d4;
         --focus-ring-color: rgba(10, 10, 10, 0.5);
+
+        /* Finder Window Light Theme */
+        --finder-bg-primary: #ffffff;
+        --finder-bg-secondary: #f5f5f5;
+        --finder-text-primary: #0a0a0a;
+        --finder-text-secondary: #737373;
+        --finder-border-color: #d4d4d4;
+        --finder-titlebar-bg: #e5e5e5;
+        --finder-hover-bg: #e5e5e5;
+        --finder-active-bg: var(--accent-primary);
+        --finder-active-text: #ffffff;
     }
 
     * {
@@ -58,19 +80,36 @@
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 6px;
-        padding: 8px 12px;
+        padding: 8px 10px;
     }
     
-    input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        padding: 0;
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a3a3a3' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px;
+        padding-right: 30px;
     }
     
-    input:focus, textarea:focus, select:focus {
+    body.light-theme select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23737373' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    }
+
+    input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--focus-ring-color);
+        box-shadow: 0 0 0 3px var(--focus-ring-color);
+    }
+    
+    input[type="date"], input[type="time"] {
+        color-scheme: var(--bg-primary) == #0a0a0a ? dark : light;
+    }
+    
+    body.light-theme input[type="date"], body.light-theme input[type="time"] {
+        color-scheme: light;
     }
 
     button:disabled {
@@ -104,40 +143,72 @@
         height: 100vh;
         background-color: var(--bg-primary);
         z-index: 2000;
-        display: none; /* Hidden by default */
+        display: flex;
         justify-content: center;
         align-items: center;
-        opacity: 1;
-        transition: opacity 0.5s ease-out; /* For fade-out */
-    }
-
-    #animatedLogo {
-        color: var(--text-primary);
-        font-weight: 700;
-        /* Starting state (center) */
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        font-size: 10vw; /* Large font size, responsive */
-        transform: translate(-50%, -50%);
-        /* Transition for all properties */
-        transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth ease-in-out */
-    }
-
-    /* Final state (top-left corner, matching header) */
-    #startupAnimation.run-animation #animatedLogo {
-        top: 20px; /* Adjust to match header padding-top (approx) */
-        left: 24px; /* Adjust to match header padding-left */
-        font-size: 1.25rem; /* Match header h1 */
-        transform: translate(0, 0);
+        pointer-events: none;
+        opacity: 0; /* Starts hidden */
     }
     
-    /* State for fading out the overlay */
-    #startupAnimation.fade-out {
+    #animatedLogo {
+        font-size: 10vw; /* Starts large */
+        font-weight: 700;
+        color: var(--text-primary);
+        transform: translate(0, 0) scale(1);
         opacity: 0;
-        pointer-events: none;
+    }
+    
+    #startupAnimation.run-animation {
+        opacity: 1;
     }
 
+    #startupAnimation.run-animation #animatedLogo {
+        /*
+          Animation: 
+          1. Fade in and stay (0% to 20%)
+          2. Hold (20% to 50%)
+          3. Transform and fade (50% to 100%)
+        */
+        animation: shrinkToCorner 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+    }
+    
+    #startupAnimation.fade-out {
+        opacity: 0;
+        transition: opacity 0.5s ease-out;
+    }
+    
+    /* Make the real logo start as invisible */
+    header .logo-container h1 {
+        opacity: 0;
+    }
+
+    @keyframes shrinkToCorner {
+        0% {
+            transform: translate(0, 0) scale(1);
+            font-size: 10vw;
+            opacity: 0;
+        }
+        20% {
+            transform: translate(0, 0) scale(1);
+            font-size: 10vw;
+            opacity: 1;
+        }
+        50% {
+            transform: translate(0, 0) scale(1);
+            font-size: 10vw;
+            opacity: 1;
+        }
+        100% {
+            /* These transform values are approximations to get to the top left corner.
+              They might need fine-tuning based on your exact header layout.
+            */
+            transform: translate(calc(-50vw + 90px), calc(-50vh + 34px));
+            font-size: 1.25rem; /* Matches .logo-container h1 */
+            opacity: 1;
+        }
+    }
+
+    
     /* --- LOGIN PAGE --- */
     #authWrapper {
         display: flex;
@@ -267,6 +338,7 @@
         flex-direction: column;
         height: 100vh;
         background-color: var(--bg-primary);
+        animation: fadeIn .6s ease-out both;
     }
         
     /* --- HEADER --- */
@@ -290,7 +362,7 @@
     .logo-container h1 {
         font-size: 1.25rem;
         font-weight: 700;
-        opacity: 0;
+        transition: opacity 0.5s ease-out; /* For fade-in after animation */
     }
     .logo-container p {
         font-size: 0.8rem;
@@ -400,16 +472,16 @@
     main {
         flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: column; /* Changed to column for hero section */
         overflow-y: auto;
         padding: 32px;
         gap: 32px;
-        align-items: center;
+        align-items: center; /* Center content horizontally */
     }
 
     .hero {
         display: flex;
-        flex-wrap: wrap; 
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
         align-items: center;
         justify-content: center;
         gap: 4rem;
@@ -481,7 +553,7 @@
     .close-button:hover { color: var(--text-primary); }
     #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
     
-    #modalInput {
+    .modal-input {
         background-color: var(--bg-primary);
         border: 1px solid var(--border-color);
         color: var(--text-primary);
@@ -490,7 +562,7 @@
         width: 100%;
         margin-top: 10px;
     }
-    #modalInput:focus {
+    .modal-input:focus {
         outline: none;
         border-color: var(--accent-primary);
         box-shadow: 0 0 0 2px var(--focus-ring-color);
@@ -582,286 +654,279 @@
         color: var(--bg-primary);
     }
     
-    /* --- DASHBOARD (CALENDAR & TODO) --- */
+    /* --- DASHBOARD: CALENDAR & TODO --- */
     .dashboard-container {
-        display: flex;
-        flex-direction: row;
-        gap: 2rem;
         width: 100%;
         max-width: 1200px;
-        margin-top: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
     }
     
-    .dashboard-section {
+    .dashboard-calendar, .dashboard-todo {
+        flex: 1;
         background-color: var(--bg-secondary);
         border-radius: 12px;
         padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
+        min-width: 300px;
     }
 
-    .dashboard-section h3 {
+    .dashboard-calendar h3, .dashboard-todo h3 {
         font-size: 1.5rem;
         font-weight: 600;
         margin-bottom: 1.5rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 1rem;
     }
-    
-    /* Calendar Section */
-    #calendar-section {
-        flex-basis: 60%;
-    }
 
+    /* Calendar Styling */
     .calendar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        gap: 0.5rem;
     }
-    #calendar-month-year {
-        font-size: 1.25rem;
-        font-weight: 500;
+    .calendar-header select {
+        flex: 1;
+        padding: 8px;
+        font-weight: 600;
     }
-    .calendar-nav button {
-        background: var(--bg-tertiary);
-        border: none;
-        padding: 6px 10px;
+    .calendar-header .btn-secondary {
+        padding: 8px 16px;
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
         cursor: pointer;
     }
-    .calendar-nav button:hover {
-        background: var(--bg-primary);
+    .calendar-header .btn-secondary:hover {
+        background-color: var(--bg-primary);
     }
-    
-    .calendar-grid {
+
+    #calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 5px;
     }
-    .calendar-header-day {
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
+    .calendar-header-day, .calendar-day {
         text-align: center;
-        padding: 5px;
+        padding: 10px;
+        border-radius: 6px;
+    }
+    .calendar-header-day {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
     }
     .calendar-day {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 40px;
-        border-radius: 6px;
         cursor: pointer;
+        font-weight: 500;
         position: relative;
         transition: background-color 0.2s;
     }
-    .calendar-day.empty {
-        cursor: default;
-    }
-    .calendar-day:not(.empty):hover {
+    .calendar-day:not(.other-month):hover {
         background-color: var(--bg-tertiary);
     }
+    .calendar-day.other-month {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
     .calendar-day.today {
+        background-color: var(--bg-tertiary);
+        color: var(--accent-primary);
         font-weight: 700;
-        background-color: var(--bg-primary);
-        border: 1px solid var(--accent-primary);
     }
     .calendar-day.selected {
         background-color: var(--accent-primary);
         color: var(--bg-primary);
+        font-weight: 700;
     }
-    
-    /* Event Markers */
     .calendar-day .event-marker {
         position: absolute;
         bottom: 5px;
         left: 50%;
         transform: translateX(-50%);
-        width: 5px;
-        height: 5px;
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
-    }
-    .calendar-day .event-marker.personal {
         background-color: var(--text-secondary);
     }
     .calendar-day .event-marker.public {
         background-color: var(--accent-primary);
     }
-    .calendar-day.selected .event-marker.personal,
+    /* When selected, the public marker should be dark */
     .calendar-day.selected .event-marker.public {
-        background-color: var(--bg-primary); /* Keep contrast on selected day */
+        background-color: var(--bg-primary);
     }
 
-
-    #event-section {
-        margin-top: 1.5rem;
-    }
-    #event-section h4 {
+    /* Event List */
+    #event-list-container { margin-top: 1.5rem; }
+    #event-list-header {
         font-size: 1.1rem;
+        font-weight: 600;
         margin-bottom: 1rem;
     }
-    #events-list {
-        list-style: none;
-        max-height: 150px;
+    #event-list {
+        max-height: 200px;
         overflow-y: auto;
-        padding-right: 10px; /* for scrollbar */
+        padding-right: 10px; /* For scrollbar */
     }
     .event-item {
+        background-color: var(--bg-primary);
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: var(--bg-primary);
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 8px;
+        gap: 10px;
     }
-    .event-item.public {
-        border-left: 3px solid var(--accent-primary);
-    }
-    .event-item.personal {
-        border-left: 3px solid var(--text-secondary);
-    }
-    
-    .event-item .event-details {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .event-item .event-tag {
-        font-size: 0.7rem;
+    .event-item-details { flex: 1; }
+    .event-item-details span {
         font-weight: 600;
+        font-size: 0.9rem;
+        margin-right: 8px;
+    }
+    .event-item-details .tag {
+        font-size: 0.75rem;
+        font-weight: 700;
         padding: 2px 6px;
         border-radius: 4px;
-        flex-shrink: 0;
+        background-color: var(--text-secondary);
+        color: var(--bg-primary);
+        margin-right: 8px;
     }
-    .event-item.public .event-tag {
+    .event-item-details .tag.public {
         background-color: var(--accent-primary);
         color: var(--bg-primary);
     }
-    .event-item.personal .event-tag {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-    
-    .event-item .delete-event-btn {
-        background: transparent;
+    .event-item .delete-event {
+        background: none;
         border: none;
         color: var(--text-secondary);
         cursor: pointer;
         font-size: 1.1rem;
-        padding: 2px 4px;
-        display: none; /* Hide by default */
+        padding: 4px;
     }
-    .event-item .delete-event-btn:hover {
-        color: var(--accent-red);
-    }
-    
-    /* Show delete button only for personal events OR public events if user is a teacher */
-    .event-item.personal .delete-event-btn {
-        display: block;
-    }
-    .event-item.public.teacher-controls-visible .delete-event-btn {
-        display: block;
-    }
+    .event-item .delete-event:hover { color: var(--accent-red); }
 
-
+    /* Add Event Form */
     #add-event-form {
-        display: flex;
-        gap: 10px;
         margin-top: 1rem;
-        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
     }
-    #add-event-form input[type="date"],
-    #add-event-form input[type="time"] {
-        flex-basis: 150px;
+    #event-desc {
+        grid-column: 1 / -1; /* Span full width */
     }
-    #add-event-form input[type="text"] {
-        flex: 1;
-        min-width: 150px;
-    }
-    #add-event-form button {
-        flex-basis: 80px;
-    }
-    
-    #public-event-toggle {
-        display: none; /* Hidden by default, shown for teachers */
-        width: 100%;
-        align-items: center;
-        gap: 8px;
-        background-color: var(--bg-primary);
-        padding: 8px;
-        border-radius: 6px;
-        margin-top: 8px;
-    }
-    #public-event-toggle label {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
+    #add-event-btn {
+        grid-column: 1 / -1;
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        font-weight: 600;
+        padding: 10px;
         cursor: pointer;
     }
-
-
-    /* Todo List Section */
-    #todo-section {
-        flex-basis: 40%;
+    body.light-theme #add-event-btn { color: var(--bg-primary); }
+    #add-event-btn:hover { opacity: 0.85; }
+    
+    #public-event-container {
+        grid-column: 1 / -1;
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 8px;
     }
-
+    #public-event-container label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    /* Todo List Styling */
     #todo-list {
-        list-style: none;
         max-height: 400px;
         overflow-y: auto;
         padding-right: 10px;
+        margin-bottom: 1.5rem;
     }
     .todo-item {
+        background-color: var(--bg-primary);
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
         display: flex;
         align-items: center;
         gap: 10px;
-        background: var(--bg-primary);
-        padding: 12px;
-        border-radius: 6px;
-        margin-bottom: 8px;
     }
-    .todo-item input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
+    
+    .todo-item select.status-select {
+        flex-shrink: 0;
+        width: 120px;
+        padding: 6px;
+        font-size: 0.85rem;
     }
-    .todo-item span {
+    
+    .todo-item-details {
         flex: 1;
         font-size: 0.95rem;
-        transition: color 0.2s, text-decoration 0.2s;
     }
-    .todo-item.completed span {
+    .todo-item-details.status-half-done {
         text-decoration: line-through;
-        color: var(--text-secondary);
+        opacity: 0.8;
     }
-    .todo-item .delete-todo-btn {
-        background: transparent;
+    .todo-item-details.status-full-done {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
+    
+    .todo-item-details .todo-deadline {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    
+    .todo-item .delete-todo {
+        background: none;
         border: none;
         color: var(--text-secondary);
         cursor: pointer;
         font-size: 1.1rem;
-        padding: 2px 4px;
+        padding: 4px;
     }
-    .todo-item .delete-todo-btn:hover {
-        color: var(--accent-red);
-    }
-
+    .todo-item .delete-todo:hover { color: var(--accent-red); }
+    
     #add-todo-form {
-        display: flex;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        display: grid;
+        grid-template-columns: 1fr auto;
         gap: 10px;
-        margin-top: 1.5rem;
     }
-    #add-todo-form input {
-        flex: 1;
+    #todo-input {
+        grid-column: 1 / -1;
     }
-    #add-todo-form button {
-        flex-basis: 80px;
+    #add-todo-btn {
+        grid-column: 2 / 3;
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        font-weight: 600;
+        padding: 10px 20px;
+        cursor: pointer;
     }
+    body.light-theme #add-todo-btn { color: var(--bg-primary); }
+    #add-todo-btn:hover { opacity: 0.85; }
 
 
     /* Responsive Adjustments */
+    @media (max-width: 900px) {
+        .dashboard-container {
+            flex-direction: column;
+        }
+    }
+    
     @media (max-width: 768px) {
         #authWrapper { flex-direction: column; position: static; height: auto; }
         .login-left-panel, .login-right-panel { width: 100%; }
@@ -898,29 +963,12 @@
         .date-display {
             font-size: 1rem;
         }
-        
-        /* Adjust animation for mobile */
-        #animatedLogo {
-             font-size: 18vw; /* Larger on mobile to start */
+        .calendar-header { flex-wrap: wrap; }
+        #add-todo-form {
+            grid-template-columns: 1fr;
         }
-        #startupAnimation.run-animation #animatedLogo {
-            top: 16px; /* Match mobile header padding */
-            left: 16px; /* Match mobile header padding */
-        }
-        
-        /* Dashboard responsive */
-        .dashboard-container {
-            flex-direction: column;
-        }
-        #calendar-section, #todo-section {
-            flex-basis: 100%;
-        }
-        #add-event-form {
-            flex-direction: column;
-        }
-        #add-event-form input, #add-event-form button {
-            flex-basis: auto;
-            width: 100%;
+        #add-todo-btn {
+            grid-column: 1 / -1;
         }
     }
 
@@ -947,9 +995,9 @@
 </head>
 <body>
 
-  <!-- Startup Animation Overlay -->
+  <!-- Startup Animation -->
   <div id="startupAnimation">
-    <h1 id="animatedLogo">AI Marker</h1>
+      <div id="animatedLogo">AI Marker</div>
   </div>
 
   <!-- Auth Wrapper -->
@@ -1018,7 +1066,7 @@
             </div>
           </div>
           <div class="hero-image">
-            <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/eaakill.png" alt="Darren Ng demonstrating AI Marker">
+            <img src="https://raw.githubusercontent.com/darren6251/aimarking/refs/heads/main/eaakill.png" alt="Darren Ng demonstrating AI Marker" onerror="this.src='https://placehold.co/600x400/1a1a1a/f5f5f5?text=AI+Marker'">
           </div>
         </section>
         
@@ -1039,49 +1087,62 @@
                 <button id="set-countdown-btn">Set</button>
             </div>
         </section>
-
-        <!-- NEW: Dashboard Section -->
+        
+        <!-- Dashboard Section -->
         <section class="dashboard-container">
-            <!-- Calendar Section -->
-            <div id="calendar-section" class="dashboard-section">
-                <h3>My Calendar</h3>
+            <!-- Calendar -->
+            <div class="dashboard-calendar">
+                <h3>Calendar & Events</h3>
                 <div class="calendar-header">
-                    <div class="calendar-nav">
-                        <button id="calendar-prev-month">&lt;</button>
-                        <button id="calendar-next-month">&gt;</button>
+                    <button id="today-btn" class="btn-secondary">Today</button>
+                    <select id="month-select"></select>
+                    <select id="year-select"></select>
+                </div>
+                <div class="calendar-week-header">
+                    <div id="calendar-grid">
+                        <div class="calendar-header-day">Sun</div>
+                        <div class="calendar-header-day">Mon</div>
+                        <div class="calendar-header-day">Tue</div>
+                        <div class="calendar-header-day">Wed</div>
+                        <div class="calendar-header-day">Thu</div>
+                        <div class="calendar-header-day">Fri</div>
+                        <div class="calendar-header-day">Sat</div>
+                        <!-- Calendar days will be injected by JS -->
                     </div>
-                    <span id="calendar-month-year">Loading...</span>
                 </div>
-                <div class="calendar-grid" id="calendar-days-grid">
-                    <!-- Days will be generated by JS -->
-                </div>
-                <div id="event-section">
-                    <h4 id="event-section-title">Events for: </h4>
-                    <ul id="events-list">
-                        <!-- Events will be generated by JS -->
-                    </ul>
+                
+                <div id="event-list-container">
+                    <h4 id="event-list-header">Events for:</h4>
+                    <div id="event-list">
+                        <!-- Event items will be injected by JS -->
+                    </div>
+                    
                     <form id="add-event-form">
-                        <input type="date" id="event-date-input" required>
-                        <input type="time" id="event-time-input">
-                        <input type="text" id="event-desc-input" placeholder="Event description" required>
-                        <div id="public-event-toggle">
-                            <input type="checkbox" id="event-is-public-checkbox">
-                            <label for="event-is-public-checkbox">Add as Public Event (Visible to all)</label>
+                        <h5 style="grid-column: 1 / -1; margin-bottom: 5px; font-weight: 600;">Add Event</h5>
+                        <input type="date" id="event-date" required>
+                        <input type="time" id="event-time" required>
+                        <input type="text" id="event-desc" placeholder="Event description..." required>
+                        <div id="public-event-container">
+                            <input type="checkbox" id="public-event-checkbox" style="width: auto;">
+                            <label for="public-event-checkbox">Add as Public Event (Visible to all)</label>
                         </div>
-                        <button type="submit" class="btn-primary">Add</button>
+                        <button type="submit" id="add-event-btn">Add Event</button>
                     </form>
                 </div>
             </div>
-
-            <!-- Todo List Section -->
-            <div id="todo-section" class="dashboard-section">
+            
+            <!-- Today's List -->
+            <div class="dashboard-todo">
                 <h3>Today's List</h3>
-                <ul id="todo-list">
-                    <!-- Todo items will be generated by JS -->
-                </ul>
+                <div id="todo-list">
+                    <!-- Todo items will be injected by JS -->
+                </div>
+                
                 <form id="add-todo-form">
-                    <input type="text" id="todo-input" placeholder="Add a new task..." required>
-                    <button type="submit" class="btn-primary">Add</button>
+                    <h5 style="grid-column: 1 / -1; margin-bottom: 5px; font-weight: 600;">Add Task</h5>
+                    <input type="text" id="todo-input" placeholder="New task description..." required>
+                    <input type="date" id="todo-deadline" title="Optional deadline">
+                    <button type="submit"id="add-todo-btn">Add</button>
                 </form>
             </div>
         </section>
@@ -1111,15 +1172,15 @@
           <h3 id="profileModalTitle">Edit Profile</h3>
           <div id="profileModalMessage">
             <div class="form-group">
-                <label for="editUserName" class="modal-label">Display Name:</label>
+                <label for="editUserName">Display Name:</label>
                 <input type="text" id="editUserName" class="modal-input">
             </div>
             <div class="form-group">
-                <label class="modal-label">Email:</label>
+                <label>Email:</label>
                 <input type="text" id="editUserEmail" class="modal-input" disabled>
             </div>
             <div class="form-group">
-                <label class="modal-label">Role:</label>
+                <label>Role:</label>
                 <input type="text" id="editUserRole" class="modal-input" disabled>
             </div>
           </div>
@@ -1135,7 +1196,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // --- IMPORTANT CONFIGURATION ---
@@ -1160,20 +1221,25 @@
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
     let countdownInterval;
     
-    // Calendar state
-    let calendarDate = new Date();
-    let personalEventsCache = {}; // Cache for user's private events
-    let publicEventsCache = {};   // Cache for public (teacher) events
-    let selectedDateString = null;
-    let personalEventsListener = null;
-    let publicEventsListener = null;
-    let todosListener = null;
+    // State for dashboard
+    let currentSelectedDate = new Date();
+    let currentMonth = currentSelectedDate.getMonth();
+    let currentYear = currentSelectedDate.getFullYear();
+    let personalEvents = [];
+    let publicEvents = [];
+    let todoItems = [];
+    let unsubscribePersonalEvents = () => {};
+    let unsubscribePublicEvents = () => {};
+    let unsubscribeTodos = () => {};
+
 
     // --- AUTH & INITIALIZATION ---
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
     const userDisplayNameSpan = document.getElementById('userDisplayName');
+    const startupAnimation = document.getElementById('startupAnimation');
+    const headerLogo = document.querySelector('header .logo-container h1');
 
     const googleSignInTemplate = `
         <h2>Sign In</h2>
@@ -1203,9 +1269,6 @@
         console.error("Error initializing Firebase:", error);
         showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
     }
-    
-    const realLogoH1 = document.querySelector('.logo-container h1');
-    realLogoH1.style.opacity = '0'; // Ensure it's hidden initially
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -1236,12 +1299,13 @@
             currentUserName = null;
             
             // Detach listeners on logout
-            if (personalEventsListener) personalEventsListener();
-            if (publicEventsListener) publicEventsListener();
-            if (todosListener) todosListener();
-            personalEventsCache = {};
-            publicEventsCache = {};
-            
+            unsubscribePersonalEvents();
+            unsubscribePublicEvents();
+            unsubscribeTodos();
+            personalEvents = [];
+            publicEvents = [];
+            todoItems = [];
+
             showLogin();
         }
     });
@@ -1250,16 +1314,18 @@
         appSection.style.display = 'none';
         authWrapper.style.display = 'flex';
         authWrapper.style.opacity = '1';
+        startupAnimation.classList.remove('run-animation', 'fade-out');
+        headerLogo.style.opacity = '0';
         authContainer.innerHTML = googleSignInTemplate;
         document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
-        realLogoH1.style.opacity = '0'; // Hide real logo on logout
-        document.getElementById('public-event-toggle').style.display = 'none'; // Hide teacher controls
     }
 
     function showCodeEntry() {
         appSection.style.display = 'none';
         authWrapper.style.display = 'flex';
         authWrapper.style.opacity = '1';
+        startupAnimation.classList.remove('run-animation', 'fade-out');
+        headerLogo.style.opacity = '0';
         authContainer.innerHTML = codeEntryTemplate;
         const submitCodeBtn = document.getElementById('submitCodeButton');
         const accessCodeInput = document.getElementById('accessCodeInput');
@@ -1271,55 +1337,48 @@
             }
         });
         accessCodeInput?.focus();
-        realLogoH1.style.opacity = '0'; // Hide real logo
     }
 
     async function showApp() {
-        const startupAnimation = document.getElementById('startupAnimation');
-        
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
-        startupAnimation.style.display = 'flex';
-
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
         
-        // Show teacher-specific controls
+        // Show teacher controls for countdown if applicable
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'flex';
-            document.getElementById('public-event-toggle').style.display = 'flex';
+            document.getElementById('public-event-container').style.display = 'flex';
         } else {
-            document.getElementById('teacher-controls').style.display = 'none';
-            document.getElementById('public-event-toggle').style.display = 'none';
+             document.getElementById('teacher-controls').style.display = 'none';
+             document.getElementById('public-event-container').style.display = 'none';
         }
 
-        // Start clocks and public listeners
+        // --- Run Animation ---
+        startupAnimation.classList.add('run-animation');
+        
+        // Wait for animation to finish (2.5s)
+        setTimeout(() => {
+            // Fade out overlay
+            startupAnimation.classList.add('fade-out');
+            // Fade in real logo
+            headerLogo.style.opacity = '1';
+        }, 2500); // Must match animation duration
+        
+
+        // Start clocks and listen for countdown changes
         startClocks();
         listenForCountdownChanges();
         
-        // Start personal and public dashboard listeners
-        listenForPersonalEvents();
-        listenForPublicEvents();
-        listenForTodos();
+        // Init dashboard
+        initDashboard();
         
-        // Initial render of calendar
-        renderCalendar();
-        
-        // Select today by default
-        const todayStr = new Date().toISOString().split('T')[0];
-        selectDate(todayStr);
-
-        setTimeout(() => {
-            startupAnimation.classList.add('run-animation');
-            setTimeout(() => {
-                startupAnimation.classList.add('fade-out');
-                realLogoH1.style.opacity = '1';
-                setTimeout(() => {
-                    startupAnimation.style.display = 'none';
-                    startupAnimation.classList.remove('run-animation', 'fade-out');
-                }, 500); 
-            }, 1200); 
-        }, 100); 
+        // Attach listeners
+        if (currentUserId) {
+            listenForPersonalEvents();
+            listenForPublicEvents();
+            listenForTodos();
+        }
     }
 
     async function handleGoogleSignIn() {
@@ -1371,16 +1430,20 @@
             showModal('Error', 'Please log in to edit your profile.');
             return;
         }
+
         const profileEditModal = document.getElementById('profileEditModal');
         const editUserNameInput = document.getElementById('editUserName');
         const editUserEmailInput = document.getElementById('editUserEmail');
         const editUserRoleInput = document.getElementById('editUserRole');
         const saveProfileButton = document.getElementById('saveProfileButton');
         const cancelProfileButton = document.getElementById('cancelProfileButton');
+
         editUserNameInput.value = currentUserName || '';
         editUserEmailInput.value = currentUserEmail || '';
         editUserRoleInput.value = currentUserRole || '';
+
         profileEditModal.style.display = 'flex';
+
         const saveHandler = async () => {
             const newName = editUserNameInput.value.trim();
             if (!newName) {
@@ -1388,6 +1451,7 @@
                 editUserNameInput.focus();
                 return;
             }
+
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await updateDoc(userProfileRef, { name: newName });
@@ -1403,11 +1467,13 @@
             saveProfileButton.removeEventListener('click', saveHandler);
             cancelProfileButton.removeEventListener('click', cancelHandler);
         };
+
         const cancelHandler = () => {
             profileEditModal.style.display = 'none';
             saveProfileButton.removeEventListener('click', saveHandler);
             cancelProfileButton.removeEventListener('click', cancelHandler);
         };
+
         saveProfileButton.addEventListener('click', saveHandler);
         cancelProfileButton.addEventListener('click', cancelHandler);
         document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
@@ -1417,9 +1483,13 @@
     function startClocks() {
         const currentTimeEl = document.getElementById('currentTime');
         const currentDateEl = document.getElementById('currentDate');
+
         setInterval(() => {
             const now = new Date();
+            // Set Time with AM/PM
             currentTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            
+            // Set Date
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             currentDateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
         }, 1000);
@@ -1428,22 +1498,27 @@
     function updateCountdown(targetDate) {
         const countdownEl = document.getElementById('countdown');
         if (countdownInterval) clearInterval(countdownInterval);
+
         if (!targetDate) {
             countdownEl.textContent = "No Event";
             return;
         }
+
         countdownInterval = setInterval(() => {
             const now = new Date().getTime();
             const distance = targetDate - now;
+
             if (distance < 0) {
                 clearInterval(countdownInterval);
                 countdownEl.textContent = "EXPIRED";
                 return;
             }
+
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
             countdownEl.textContent = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }, 1000);
     }
@@ -1467,11 +1542,13 @@
             showModal('Error', 'Please select a date and time.');
             return;
         }
+
         const targetDate = new Date(datetimeInput);
         if (isNaN(targetDate)) {
             showModal('Error', 'Invalid date and time format.');
             return;
         }
+
         try {
             const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
             await setDoc(countdownRef, { target: targetDate });
@@ -1496,345 +1573,430 @@
         applyTheme(newTheme);
         localStorage.setItem('ai-marker-theme', newTheme);
     });
+    loadTheme(); // Apply theme on load
+
+    // --- DASHBOARD: CALENDAR & TODO LOGIC ---
     
-    // --- CALENDAR LOGIC ---
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const calendarMonthYear = document.getElementById('calendar-month-year');
-    const calendarGrid = document.getElementById('calendar-days-grid');
-    const eventSectionTitle = document.getElementById('event-section-title');
-    const eventDateInput = document.getElementById('event-date-input');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const eventListHeader = document.getElementById('event-list-header');
+    const eventList = document.getElementById('event-list');
+    const addEventForm = document.getElementById('add-event-form');
+    const eventDateInput = document.getElementById('event-date');
+    const eventTimeInput = document.getElementById('event-time');
+    const eventDescInput = document.getElementById('event-desc');
+    const publicEventCheckbox = document.getElementById('public-event-checkbox');
+    const todoList = document.getElementById('todo-list');
+    const addTodoForm = document.getElementById('add-todo-form');
+    const todoInput = document.getElementById('todo-input');
+    const todoDeadlineInput = document.getElementById('todo-deadline');
+    const monthSelect = document.getElementById('month-select');
+    const yearSelect = document.getElementById('year-select');
+    const todayBtn = document.getElementById('today-btn');
+    
+    const months = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    function initDashboard() {
+        // Populate Month Select
+        months.forEach((month, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = month;
+            monthSelect.appendChild(option);
+        });
+        
+        // Populate Year Select
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear - 10; i <= currentYear + 10; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            yearSelect.appendChild(option);
+        }
+        
+        // Set initial state
+        updateCalendarState(new Date());
+        
+        // Add event listeners
+        monthSelect.addEventListener('change', handleMonthYearChange);
+        yearSelect.addEventListener('change', handleMonthYearChange);
+        todayBtn.addEventListener('click', () => updateCalendarState(new Date()));
+        addEventForm.addEventListener('submit', handleAddEvent);
+        addTodoForm.addEventListener('submit', handleAddTodo);
+    }
+    
+    function handleMonthYearChange() {
+        currentMonth = parseInt(monthSelect.value);
+        currentYear = parseInt(yearSelect.value);
+        renderCalendar();
+    }
+
+    function updateCalendarState(date) {
+        currentSelectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        currentMonth = currentSelectedDate.getMonth();
+        currentYear = currentSelectedDate.getFullYear();
+        
+        monthSelect.value = currentMonth;
+        yearSelect.value = currentYear;
+        
+        eventDateInput.value = toISODate(currentSelectedDate);
+        
+        renderCalendar();
+        renderEventsForDay();
+    }
 
     function renderCalendar() {
-        calendarDate.setDate(1); // Start from the 1st of the month
-        const month = calendarDate.getMonth();
-        const year = calendarDate.getFullYear();
-        
-        calendarMonthYear.textContent = `${months[month]} ${year}`;
-        
-        const firstDayIndex = calendarDate.getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        calendarGrid.innerHTML = ''; // Clear previous grid
-        
-        // Add day headers
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
-            calendarGrid.innerHTML += `<div class="calendar-header-day">${day}</div>`;
-        });
-        
-        // Add empty cells for days before the 1st
-        for (let i = 0; i < firstDayIndex; i++) {
-            calendarGrid.innerHTML += `<div class="calendar-day empty"></div>`;
+        // Clear grid but keep headers
+        while (calendarGrid.children.length > 7) {
+            calendarGrid.removeChild(calendarGrid.lastChild);
         }
-        
+
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
 
-        // Add day cells
-        for (let i = 1; i <= daysInMonth; i++) {
-            const day = document.createElement('div');
-            day.className = 'calendar-day';
-            day.textContent = i;
-            
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            day.dataset.date = dateStr;
-
-            if (dateStr === todayStr) {
-                day.classList.add('today');
-            }
-            
-            if (dateStr === selectedDateString) {
-                day.classList.add('selected');
-            }
-            
-            // Add event marker (check public first, then personal)
-            const hasPublicEvent = publicEventsCache[dateStr] && publicEventsCache[dateStr].length > 0;
-            const hasPersonalEvent = personalEventsCache[dateStr] && personalEventsCache[dateStr].length > 0;
-            
-            if (hasPublicEvent) {
-                day.innerHTML += `<span class="event-marker public"></span>`;
-            } else if (hasPersonalEvent) {
-                day.innerHTML += `<span class="event-marker personal"></span>`;
-            }
-
-            day.addEventListener('click', () => selectDate(dateStr));
-            calendarGrid.appendChild(day);
+        // Add blank days
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const dayEl = document.createElement('div');
+            dayEl.className = 'calendar-day other-month';
+            calendarGrid.appendChild(dayEl);
         }
-    }
 
-    function selectDate(dateStr) {
-        selectedDateString = dateStr;
-        eventDateInput.value = dateStr;
-        eventSectionTitle.textContent = `Events for: ${new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-        
-        // Update selected class
-        document.querySelectorAll('.calendar-day').forEach(d => {
-            d.classList.remove('selected');
-            if (d.dataset.date === dateStr) {
-                d.classList.add('selected');
+        // Add month days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayEl = document.createElement('div');
+            const dayDate = new Date(currentYear, currentMonth, i);
+            const dateStr = toISODate(dayDate);
+            
+            dayEl.className = 'calendar-day';
+            dayEl.textContent = i;
+            dayEl.dataset.date = dateStr;
+
+            // Mark today
+            if (isSameDay(dayDate, today)) {
+                dayEl.classList.add('today');
             }
-        });
-        
-        renderEventsForDay(dateStr);
-    }
-    
-    document.getElementById('calendar-prev-month').addEventListener('click', () => {
-        calendarDate.setMonth(calendarDate.getMonth() - 1);
-        renderCalendar();
-    });
-    
-    document.getElementById('calendar-next-month').addEventListener('click', () => {
-        calendarDate.setMonth(calendarDate.getMonth() + 1);
-        renderCalendar();
-    });
-    
-    // --- EVENT (FIRESTORE) LOGIC ---
-    const addEventForm = document.getElementById('add-event-form');
-    const eventsList = document.getElementById('events-list');
+            
+            // Mark selected
+            if (isSameDay(dayDate, currentSelectedDate)) {
+                dayEl.classList.add('selected');
+            }
+            
+            // Check for events on this day
+            const hasPublicEvent = publicEvents.some(e => e.date === dateStr);
+            const hasPersonalEvent = personalEvents.some(e => e.date === dateStr);
 
-    // Listener for PERSONAL events
-    async function listenForPersonalEvents() {
-        if (!currentUserId) return;
-        if (personalEventsListener) personalEventsListener(); // Detach old listener
-        
-        const eventsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/events`);
-        personalEventsListener = onSnapshot(eventsRef, (snapshot) => {
-            personalEventsCache = {}; // Reset cache
-            snapshot.forEach(doc => {
-                const event = { ...doc.data(), id: doc.id };
-                if (!personalEventsCache[event.date]) {
-                    personalEventsCache[event.date] = [];
+            if (hasPublicEvent || hasPersonalEvent) {
+                const marker = document.createElement('div');
+                marker.className = 'event-marker';
+                if (hasPublicEvent) {
+                    marker.classList.add('public');
                 }
-                personalEventsCache[event.date].push(event);
+                dayEl.appendChild(marker);
+            }
+
+            dayEl.addEventListener('click', () => {
+                updateCalendarState(dayDate);
             });
             
-            // Sort events by time
-            for (const date in personalEventsCache) {
-                personalEventsCache[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            calendarGrid.appendChild(dayEl);
+        }
+    }
+    
+    function renderEventsForDay() {
+        eventList.innerHTML = '';
+        const selectedDateStr = toISODate(currentSelectedDate);
+        eventListHeader.textContent = `Events for: ${currentSelectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+        
+        const dayEvents = [
+            ...personalEvents.filter(e => e.date === selectedDateStr),
+            ...publicEvents.filter(e => e.date === selectedDateStr)
+        ];
+        
+        // Sort events by time
+        dayEvents.sort((a, b) => a.time.localeCompare(b.time));
+
+        if (dayEvents.length === 0) {
+            eventList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No events for this day.</p>`;
+            return;
+        }
+
+        dayEvents.forEach(event => {
+            // **FIX**: Changed `event.public` to `event.isPublic`
+            const isPublicEvent = event.isPublic; 
+            
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            eventItem.dataset.id = event.id;
+            eventItem.dataset.isPublic = isPublicEvent;
+
+            const details = document.createElement('div');
+            details.className = 'event-item-details';
+            
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = isPublicEvent ? 'PUBLIC' : 'MY EVENT';
+            if (isPublicEvent) tag.classList.add('public');
+
+            details.appendChild(tag);
+            details.innerHTML += `<span>${event.time}</span> ${event.description}`;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-event';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete event';
+            deleteBtn.addEventListener('click', handleDeleteEvent);
+            
+            // Hide delete button if it's a public event and user is not a teacher
+            if (isPublicEvent && currentUserRole !== 'teacher') {
+                deleteBtn.style.display = 'none';
             }
             
-            renderCalendar(); // Re-render calendar for markers
-            if (selectedDateString) {
-                renderEventsForDay(selectedDateString); // Re-render events list
+            eventItem.appendChild(details);
+            eventItem.appendChild(deleteBtn);
+            eventList.appendChild(eventItem);
+        });
+    }
+
+    function renderTodos() {
+        todoList.innerHTML = '';
+        
+        // Sort todos: not-started and half-done first, then full-done
+        const sortedTodos = [...todoItems].sort((a, b) => {
+            const statusOrder = { 'not-started': 1, 'half-done': 2, 'full-done': 3 };
+            return statusOrder[a.status] - statusOrder[b.status];
+        });
+        
+        if (sortedTodos.length === 0) {
+            todoList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No tasks added yet.</p>`;
+            return;
+        }
+
+        sortedTodos.forEach(todo => {
+            const todoItem = document.createElement('div');
+            todoItem.className = 'todo-item';
+            todoItem.dataset.id = todo.id;
+
+            // Status Select
+            const statusSelect = document.createElement('select');
+            statusSelect.className = 'status-select';
+            const statuses = [
+                { value: 'not-started', text: 'Not Started' },
+                { value: 'half-done', text: 'Half Done' },
+                { value: 'full-done', text: 'Full Done' }
+            ];
+            statuses.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.value;
+                option.textContent = s.text;
+                if (s.value === todo.status) option.selected = true;
+                statusSelect.appendChild(option);
+            });
+            statusSelect.addEventListener('change', (e) => handleUpdateTodoStatus(todo.id, e.target.value));
+            
+            // Details
+            const details = document.createElement('div');
+            details.className = 'todo-item-details';
+            details.textContent = todo.description;
+            if (todo.status === 'half-done') details.classList.add('status-half-done');
+            if (todo.status === 'full-done') details.classList.add('status-full-done');
+
+            // Deadline
+            if (todo.deadline) {
+                const deadlineEl = document.createElement('span');
+                deadlineEl.className = 'todo-deadline';
+                deadlineEl.textContent = `Deadline: ${todo.deadline}`;
+                details.appendChild(deadlineEl);
             }
+
+            // Delete Button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-todo';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete task';
+            deleteBtn.addEventListener('click', () => handleDeleteTodo(todo.id));
+
+            todoItem.appendChild(statusSelect);
+            todoItem.appendChild(details);
+            todoItem.appendChild(deleteBtn);
+            todoList.appendChild(todoItem);
         });
     }
     
-    // Listener for PUBLIC events
-    async function listenForPublicEvents() {
+    // --- Firestore Listeners ---
+    function listenForPersonalEvents() {
         if (!currentUserId) return;
-        if (publicEventsListener) publicEventsListener(); // Detach old listener
+        unsubscribePersonalEvents(); // Detach old listener
+        
+        const personalEventsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/events`);
+        const q = query(personalEventsRef);
+        
+        unsubscribePersonalEvents = onSnapshot(q, (snapshot) => {
+            personalEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderCalendar();
+            renderEventsForDay();
+        }, (error) => {
+            console.error("Error listening to personal events:", error);
+            showModal("Error", "Could not load personal events.");
+        });
+    }
+    
+    function listenForPublicEvents() {
+        unsubscribePublicEvents(); // Detach old listener
         
         const publicEventsRef = collection(db, `artifacts/${appId}/public/data/public_events`);
-        publicEventsListener = onSnapshot(publicEventsRef, (snapshot) => {
-            publicEventsCache = {}; // Reset cache
-            snapshot.forEach(doc => {
-                const event = { ...doc.data(), id: doc.id };
-                if (!publicEventsCache[event.date]) {
-                    publicEventsCache[event.date] = [];
-                }
-                publicEventsCache[event.date].push(event);
-            });
-            
-            // Sort events by time
-            for (const date in publicEventsCache) {
-                publicEventsCache[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-            }
-            
-            renderCalendar(); // Re-render calendar for markers
-            if (selectedDateString) {
-                renderEventsForDay(selectedDateString); // Re-render events list
-            }
+        const q = query(publicEventsRef);
+        
+        unsubscribePublicEvents = onSnapshot(q, (snapshot) => {
+            publicEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderCalendar();
+            renderEventsForDay();
+        }, (error) => {
+            console.error("Error listening to public events:", error);
+            showModal("Error", "Could not load public events.");
         });
     }
 
-
-    function renderEventsForDay(dateStr) {
-        eventsList.innerHTML = '';
-        
-        const personalEvents = (personalEventsCache[dateStr] || []).map(e => ({...e, type: 'personal'}));
-        const publicEvents = (publicEventsCache[dateStr] || []).map(e => ({...e, type: 'public'}));
-        
-        const allEvents = [...publicEvents, ...personalEvents]; // Show public events first
-        
-        // Sort all merged events by time
-        allEvents.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
-        
-        if (allEvents.length === 0) {
-            eventsList.innerHTML = `<li><span style="color: var(--text-secondary);">No events for this day.</span></li>`;
-            return;
-        }
-        
-        allEvents.forEach(event => {
-            const li = document.createElement('li');
-            li.className = `event-item ${event.type}`;
-            
-            // Only add 'teacher-controls-visible' if user is a teacher AND event is public
-            if (currentUserRole === 'teacher' && event.type === 'public') {
-                li.classList.add('teacher-controls-visible');
-            }
-            
-            li.innerHTML = `
-                <span class="event-details">
-                    <span class="event-tag">${event.type === 'public' ? 'PUBLIC' : 'MY EVENT'}</span>
-                    <strong>${event.time || 'All Day'}</strong> - ${event.description}
-                </span>
-                <button class="delete-event-btn" data-id="${event.id}" data-type="${event.type}">&times;</button>
-            `;
-            li.querySelector('.delete-event-btn').addEventListener('click', () => deleteEvent(event.id, event.type));
-            eventsList.appendChild(li);
-        });
-    }
-
-    addEventForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    function listenForTodos() {
         if (!currentUserId) return;
+        unsubscribeTodos(); // Detach old listener
         
-        const date = eventDateInput.value;
-        const time = document.getElementById('event-time-input').value;
-        const description = document.getElementById('event-desc-input').value.trim();
-        const isPublic = document.getElementById('event-is-public-checkbox').checked;
+        const todosRef = collection(db, `artifacts/${appId}/users/${currentUserId}/todos`);
+        const q = query(todosRef); // Add orderBy('createdAt', 'desc') if you add timestamps
         
-        if (!date || !description) {
-            showModal('Error', 'Please fill in at least a date and description.');
+        unsubscribeTodos = onSnapshot(q, (snapshot) => {
+            todoItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTodos();
+        }, (error) => {
+            console.error("Error listening to todos:", error);
+            showModal("Error", "Could not load tasks.");
+        });
+    }
+
+    // --- Firestore Handlers (Write, Update, Delete) ---
+    async function handleAddEvent(e) {
+        e.preventDefault();
+        const eventDesc = eventDescInput.value.trim();
+        const eventTime = eventTimeInput.value;
+        const selectedDateStr = eventDateInput.value;
+        const isPublic = publicEventCheckbox.checked && currentUserRole === 'teacher';
+
+        if (!eventDesc || !eventTime || !selectedDateStr) {
+            showModal('Error', 'Please fill in all event fields.');
             return;
         }
-        
-        let collectionPath;
-        if (isPublic && currentUserRole === 'teacher') {
-            collectionPath = `artifacts/${appId}/public/data/public_events`;
-        } else {
-            collectionPath = `artifacts/${appId}/users/${currentUserId}/events`;
-        }
-        
+
         try {
-            const eventsRef = collection(db, collectionPath);
-            await addDoc(eventsRef, {
-                date: date,
-                time: time,
-                description: description,
-                createdAt: serverTimestamp()
-            });
-            document.getElementById('event-time-input').value = '';
-            document.getElementById('event-desc-input').value = '';
-            document.getElementById('event-is-public-checkbox').checked = false;
+            const newEvent = {
+                date: selectedDateStr,
+                time: eventTime,
+                description: eventDesc,
+                isPublic: isPublic, // **FIX**: Changed from `public` to `isPublic`
+                createdAt: serverTimestamp(),
+                userId: currentUserId // Store creator ID even for public events
+            };
+
+            const collectionPath = isPublic 
+                ? `artifacts/${appId}/public/data/public_events`
+                : `artifacts/${appId}/users/${currentUserId}/events`;
+            
+            await addDoc(collection(db, collectionPath), newEvent);
+            
+            // Clear form
+            eventDescInput.value = '';
+            eventTimeInput.value = '';
+            publicEventCheckbox.checked = false;
+            
         } catch (error) {
             console.error("Error adding event:", error);
             showModal('Error', `Could not add event: ${error.message}`);
         }
-    });
+    }
+    
+    async function handleDeleteEvent(e) {
+        const eventEl = e.target.closest('.event-item');
+        const eventId = eventEl.dataset.id;
+        const isPublicEvent = eventEl.dataset.isPublic === 'true';
 
-    async function deleteEvent(eventId, eventType) {
-        if (!currentUserId || !eventId) return;
-        
-        let collectionPath;
-        
-        if (eventType === 'public') {
-            // Permission check: Only teachers can delete public events
-            if (currentUserRole !== 'teacher') {
-                showModal('Permission Denied', 'Only teachers can delete public events.');
-                return;
-            }
-            collectionPath = `artifacts/${appId}/public/data/public_events`;
-        } else {
-            // Personal event, path is user-specific
-            collectionPath = `artifacts/${appId}/users/${currentUserId}/events`;
-        }
-        
-        try {
-            const eventRef = doc(db, collectionPath, eventId);
-            await deleteDoc(eventRef);
-        } catch (error) {
-            console.error("Error deleting event:", error);
-            showModal('Error', `Could not delete event: ${error.message}`);
-        }
+        if (!eventId) return;
+
+        // Confirmation
+        showModal(
+            'Delete Event', 
+            'Are you sure you want to delete this event?', 
+            [
+                { 
+                    text: 'Cancel', 
+                    className: 'logout-btn' 
+                },
+                { 
+                    text: 'Delete', 
+                    className: 'btn-primary', 
+                    onClick: async () => {
+                        try {
+                            const collectionPath = isPublicEvent
+                                ? `artifacts/${appId}/public/data/public_events`
+                                : `artifacts/${appId}/users/${currentUserId}/events`;
+                            
+                            await deleteDoc(doc(db, collectionPath, eventId));
+                        } catch (error) {
+                            console.error("Error deleting event:", error);
+                            showModal('Error', `Could not delete event: ${error.message}`);
+                        }
+                    }
+                }
+            ]
+        );
     }
     
-    // --- TODO LIST (FIRESTORE) LOGIC ---
-    const addTodoForm = document.getElementById('add-todo-form');
-    const todoInput = document.getElementById('todo-input');
-    const todoList = document.getElementById('todo-list');
-    
-    async function listenForTodos() {
-        if (!currentUserId) return;
-        if (todosListener) todosListener();
+    async function handleAddTodo(e) {
+        e.preventDefault();
+        const description = todoInput.value.trim();
+        const deadline = todoDeadlineInput.value || null; // Store as null if empty
         
-        const todosRef = collection(db, `artifacts/${appId}/users/${currentUserId}/todos`);
-        todosListener = onSnapshot(todosRef, (snapshot) => {
-            let todos = [];
-            snapshot.forEach(doc => {
-                todos.push({ ...doc.data(), id: doc.id });
-            });
-            
-            todos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-            renderTodos(todos);
-        });
-    }
-    
-    function renderTodos(todos) {
-        todoList.innerHTML = '';
-        if (todos.length === 0) {
-            todoList.innerHTML = `<li><span style="color: var(--text-secondary);">No tasks for today.</span></li>`;
+        if (!description) {
+            showModal('Error', 'Please enter a task description.');
             return;
         }
-        
-        todos.forEach(todo => {
-            const li = document.createElement('li');
-            li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-            li.innerHTML = `
-                <input type="checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
-                <span>${todo.text}</span>
-                <button class="delete-todo-btn" data-id="${todo.id}" style="display: block;">&times;</button>
-            `;
-            
-            li.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
-                toggleTodo(todo.id, e.target.checked);
-            });
-            li.querySelector('.delete-todo-btn').addEventListener('click', () => {
-                deleteTodo(todo.id);
-            });
-            
-            todoList.appendChild(li);
-        });
-    }
-    
-    addTodoForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!currentUserId) return;
-        const text = todoInput.value.trim();
-        
-        if (!text) return;
-        
+
         try {
+            const newTodo = {
+                description: description,
+                status: 'not-started', // Default status
+                deadline: deadline,
+                createdAt: serverTimestamp(),
+                userId: currentUserId
+            };
+            
             const todosRef = collection(db, `artifacts/${appId}/users/${currentUserId}/todos`);
-            await addDoc(todosRef, {
-                text: text,
-                completed: false,
-                createdAt: serverTimestamp()
-            });
+            await addDoc(todosRef, newTodo);
+            
             todoInput.value = '';
+            todoDeadlineInput.value = '';
+
         } catch (error) {
             console.error("Error adding todo:", error);
             showModal('Error', `Could not add task: ${error.message}`);
         }
-    });
+    }
     
-    async function toggleTodo(todoId, completed) {
-        if (!currentUserId || !todoId) return;
+    async function handleUpdateTodoStatus(docId, newStatus) {
         try {
-            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todoId);
-            await updateDoc(todoRef, {
-                completed: completed
-            });
+            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId);
+            await updateDoc(todoRef, { status: newStatus });
         } catch (error) {
-            console.error("Error updating todo:", error);
+            console.error("Error updating todo status:", error);
             showModal('Error', `Could not update task: ${error.message}`);
         }
     }
 
-    async function deleteTodo(todoId) {
-        if (!currentUserId || !todoId) return;
+    async function handleDeleteTodo(docId) {
+        if (!docId) return;
+
         try {
-            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todoId);
+            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId);
             await deleteDoc(todoRef);
         } catch (error) {
             console.error("Error deleting todo:", error);
@@ -1842,6 +2004,17 @@
         }
     }
 
+    // --- UTILITY FUNCTIONS ---
+    function toISODate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    function isSameDay(date1, date2) {
+        return date1.getFullYear() === date2.getFullYear() &&
+               date1.getMonth() === date2.getMonth() &&
+               date1.getDate() === date2.getDate();
+    }
+    
     // --- MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
         const messageModal = document.getElementById('messageModal');
@@ -1849,6 +2022,7 @@
         document.getElementById('modalMessage').innerHTML = message;
         const modalButtons = document.getElementById('modalButtons');
         modalButtons.innerHTML = '';
+
         if (buttons.length === 0) {
              const okButton = document.createElement('button');
              okButton.textContent = 'OK';
@@ -1873,9 +2047,10 @@
     function showInputModal(title, label, callback) {
         const messageModal = document.getElementById('messageModal');
         document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = `<label for="modalInput" class="modal-label" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" class="modal-input" style="width: 100%;" required>`;
+        document.getElementById('modalMessage').innerHTML = `<label for="modalInput" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" class="modal-input" required>`;
         const modalButtons = document.getElementById('modalButtons');
         modalButtons.innerHTML = ''; 
+
         const modalInput = document.getElementById('modalInput');
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Save';
@@ -1891,11 +2066,13 @@
             }
         };
         modalButtons.appendChild(saveButton);
+
         const cancelButton = document.createElement('button');
         cancelButton.textContent = 'Cancel';
         cancelButton.className = 'logout-btn';
         cancelButton.onclick = () => { messageModal.style.display = 'none'; };
         modalButtons.appendChild(cancelButton);
+
         messageModal.style.display = 'flex';
         modalInput.focus();
         modalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } });
@@ -1905,10 +2082,6 @@
         const modal = btn.closest('.modal');
         modal.style.display = 'none'; 
     });
-    
-    // --- INITIAL LOAD ---
-    loadTheme(); // Load theme on initial script run
-
   </script>
 </body>
 </html>
