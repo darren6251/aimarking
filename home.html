@@ -100,6 +100,49 @@
         }
     }
     
+    /* --- STARTUP ANIMATION --- */
+    #startupAnimation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: var(--bg-primary);
+        z-index: 2000;
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        opacity: 1;
+        transition: opacity 0.5s ease-out; /* For fade-out */
+    }
+
+    #animatedLogo {
+        color: var(--text-primary);
+        font-weight: 700;
+        /* Starting state (center) */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        font-size: 10vw; /* Large font size, responsive */
+        transform: translate(-50%, -50%);
+        /* Transition for all properties */
+        transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth ease-in-out */
+    }
+
+    /* Final state (top-left corner, matching header) */
+    #startupAnimation.run-animation #animatedLogo {
+        top: 20px; /* Adjust to match header padding-top (approx) */
+        left: 24px; /* Adjust to match header padding-left */
+        font-size: 1.25rem; /* Match header h1 */
+        transform: translate(0, 0);
+    }
+    
+    /* State for fading out the overlay */
+    #startupAnimation.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+
     /* --- LOGIN PAGE --- */
     #authWrapper {
         display: flex;
@@ -229,7 +272,8 @@
         flex-direction: column;
         height: 100vh;
         background-color: var(--bg-primary);
-        animation: fadeIn .6s ease-out both;
+        /* The animation is now handled by the startup overlay */
+        /* animation: fadeIn .6s ease-out both; */
     }
         
     /* --- HEADER --- */
@@ -243,6 +287,7 @@
         height: 64px;
         border-bottom: 1px solid var(--border-color);
         flex-shrink: 0;
+        /* The header itself is now always visible, but will be covered by the animation overlay */
     }
 
     .logo-container {
@@ -253,6 +298,9 @@
     .logo-container h1 {
         font-size: 1.25rem;
         font-weight: 700;
+        /* We make the real logo invisible while the animation runs */
+        /* This will be toggled by JS, but safer to start hidden and show after */
+        opacity: 0;
     }
     .logo-container p {
         font-size: 0.8rem;
@@ -583,6 +631,15 @@
         .date-display {
             font-size: 1rem;
         }
+        
+        /* Adjust animation for mobile */
+        #animatedLogo {
+             font-size: 18vw; /* Larger on mobile to start */
+        }
+        #startupAnimation.run-animation #animatedLogo {
+            top: 16px; /* Match mobile header padding */
+            left: 16px; /* Match mobile header padding */
+        }
     }
 
     /* --- FOOTER --- */
@@ -607,6 +664,11 @@
   </style>
 </head>
 <body>
+
+  <!-- Startup Animation Overlay -->
+  <div id="startupAnimation">
+    <h1 id="animatedLogo">AI Marker</h1>
+  </div>
 
   <!-- Auth Wrapper -->
   <div id="authWrapper" style="display: none;">
@@ -804,6 +866,11 @@
         console.error("Error initializing Firebase:", error);
         showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
     }
+    
+    // Make the real logo visible at the start (it's hidden by CSS)
+    // We will make it visible again *after* the animation.
+    const realLogoH1 = document.querySelector('.logo-container h1');
+    realLogoH1.style.opacity = '0'; // Ensure it's hidden initially
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -842,6 +909,7 @@
         authWrapper.style.opacity = '1';
         authContainer.innerHTML = googleSignInTemplate;
         document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
+        realLogoH1.style.opacity = '0'; // Hide real logo on logout
     }
 
     function showCodeEntry() {
@@ -859,22 +927,54 @@
             }
         });
         accessCodeInput?.focus();
+        realLogoH1.style.opacity = '0'; // Hide real logo
     }
 
     async function showApp() {
+        // Get animation elements
+        const startupAnimation = document.getElementById('startupAnimation');
+        
+        // 1. Hide auth, show app section (it will be *behind* the overlay)
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
+        
+        // 2. Show the startup overlay
+        startupAnimation.style.display = 'flex';
+
+        // 3. Update user-specific text (can be done now)
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
         
-        // Show teacher controls for countdown if applicable
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'flex';
         }
 
-        // Start clocks and listen for countdown changes
+        // 4. Start clocks and listeners
         startClocks();
         listenForCountdownChanges();
+
+        // 5. Run the animation
+        // Use a short timeout to ensure the element is rendered before applying the transition class
+        setTimeout(() => {
+            startupAnimation.classList.add('run-animation');
+            
+            // 6. Wait for the shrink/move animation to finish (1.2s)
+            setTimeout(() => {
+                // 7. Fade out the overlay (0.5s)
+                startupAnimation.classList.add('fade-out');
+                // Make the *real* header logo visible now
+                realLogoH1.style.opacity = '1';
+                
+                // 8. Hide the overlay completely after the fade-out
+                setTimeout(() => {
+                    startupAnimation.style.display = 'none';
+                    // Clean up classes for next time (if needed)
+                    startupAnimation.classList.remove('run-animation', 'fade-out');
+                }, 500); // This matches the 0.5s opacity transition
+                
+            }, 1200); // This matches the 1.2s transition duration
+            
+        }, 100); // 100ms delay to trigger transition
     }
 
     async function handleGoogleSignIn() {
@@ -1069,7 +1169,7 @@
             applyTheme(newTheme);
             localStorage.setItem('ai-marker-theme', newTheme);
         });
-
+        
     // --- MODAL FUNCTIONS ---
     function showModal(title, message, buttons = []) {
         const messageModal = document.getElementById('messageModal');
@@ -1137,6 +1237,10 @@
         const modal = btn.closest('.modal');
         modal.style.display = 'none'; 
     });
+    
+    // --- INITIAL LOAD ---
+    loadTheme(); // Load theme on initial script run
+
   </script>
 </body>
 </html>
