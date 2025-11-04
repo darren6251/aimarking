@@ -136,8 +136,12 @@
             </button>
           </div>
 
-          <nav id="desktopSubjectNav" class="hidden md:flex items-center gap-4" aria-label="Subjects">
-            <!-- Subjects load here -->
+          <nav class="hidden md:flex items-center gap-4" aria-label="Main navigation">
+            <a href="home.html" class="text-white/90 glow-btn px-4 py-2 rounded-full text-sm font-medium focus-ring transition-colors duration-200 hover:bg-white/10">Home</a>
+            <div class="w-px h-6 bg-white/10"></div>
+            <div id="desktopSubjectNavContainer" class="flex items-center gap-4" aria-label="Subjects">
+              <!-- Subjects load here -->
+            </div>
           </nav>
 
           <div class="flex items-center gap-3">
@@ -166,8 +170,12 @@
         <!-- Sidebar -->
         <aside class="lg:col-span-1 space-y-6">
           <div class="md:hidden glass p-4 rounded-xl">
-            <div id="mobileSubjectNav" class="flex gap-3 overflow-x-auto py-2 -mx-2 px-2">
+            <div class="flex gap-3 overflow-x-auto py-2 -mx-2 px-2">
+              <a href="home.html" class="bg-white/10 text-white shrink-0 px-3 py-2 rounded-full text-sm font-medium glow-btn">Home</a>
               <!-- Mobile subjects load here -->
+              <div id="mobileSubjectNavContainer" class="flex gap-3">
+                <!-- Mobile subjects will be injected here -->
+              </div>
             </div>
           </div>
 
@@ -263,7 +271,6 @@
 
               <div class="flex items-center gap-2">
                 <a id="openNewTabLink" href="#" target="_blank" class="glass px-3 py-2 rounded-md text-sm border border-white/10">Open in new tab</a>
-                <button id="downloadButton" class="glass px-3 py-2 rounded-md text-sm">Download</button>
                 <button id="shareButton" class="glass px-3 py-2 rounded-md text-sm">Share</button>
 
                 <!-- Teacher edit/delete for current paper -->
@@ -539,16 +546,9 @@
               <button data-subject="${s.name}" class="${appState.subject === s.name ? 'bg-white text-black scale-105' : 'bg-white/4 text-white/90'} glow-btn px-4 py-2 rounded-full text-sm font-medium focus-ring transition-colors duration-200">
                 <span>${s.name}</span>
               </button>
-              ${appState.subject === s.name ? '<div class="absolute left-0 right-0 mt-2 flex justify-center"><div class="nav-underline w-16"></div></div>' : ''}
-            </div>
         `).join('');
-        const mobileHtml = appState.subjects.map(s => `
-            <button data-subject="${s.name}" class="${appState.subject === s.name ? 'bg-white text-black' : 'bg-white/6 text-white/90'} shrink-0 px-3 py-2 rounded-full text-sm font-medium glow-btn">
-              <span>${s.name}</span>
-            </button>
-        `).join('');
-        dom.desktopSubjectNav.innerHTML = desktopHtml;
-        dom.mobileSubjectNav.innerHTML = mobileHtml;
+        dom.desktopSubjectNavContainer.innerHTML = desktopHtml;
+        dom.mobileSubjectNavContainer.innerHTML = mobileHtml;
         dom.subjectSelect.innerHTML = '<option value="">Select subject</option>' + appState.subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
     }
 
@@ -763,14 +763,6 @@
         renderViewer();
     }
     
-    function downloadPdf() {
-        const paper = appState.papers[appState.currentIndex];
-        if (!paper) return;
-        const url = (paper.link ||'').replace('/preview','/view');
-        window.open(url,'_blank');
-        toast('Opening...');
-    }
-
     function sharePaper() {
         const paper = appState.papers[appState.currentIndex];
         if (!paper || !paper.link) return;
@@ -947,7 +939,6 @@
         dom.prevPaperButton.onclick = prevPaper;
         dom.nextPaperButton.onclick = nextPaper;
         dom.favoriteButton.onclick = favoriteCurrent;
-        dom.downloadButton.onclick = downloadPdf;
         dom.shareButton.onclick = sharePaper;
         dom.editPaperButton.onclick = openEditPaper;
         dom.deletePaperButton.onclick = deleteCurrentPaper;
@@ -1021,8 +1012,8 @@
         dom.userRole = document.getElementById('userRole');
         dom.logoutButton = document.getElementById('logoutButton');
         dom.teacherControls = document.getElementById('teacherControls');
-        dom.desktopSubjectNav = document.getElementById('desktopSubjectNav');
-        dom.mobileSubjectNav = document.getElementById('mobileSubjectNav');
+        dom.desktopSubjectNavContainer = document.getElementById('desktopSubjectNavContainer');
+        dom.mobileSubjectNavContainer = document.getElementById('mobileSubjectNavContainer');
         dom.searchInput = document.getElementById('searchInput');
         dom.randomPaperButton = document.getElementById('randomPaperButton');
         dom.themeToggleButton = document.getElementById('themeToggleButton');
@@ -1047,7 +1038,6 @@
         dom.favoriteButton = document.getElementById('favoriteButton');
         dom.currentPaperTitleLabel = document.getElementById('currentPaperTitleLabel');
         dom.openNewTabLink = document.getElementById('openNewTabLink');
-        dom.downloadButton = document.getElementById('downloadButton');
         dom.shareButton = document.getElementById('shareButton');
         dom.teacherPaperControls = document.getElementById('teacherPaperControls');
         dom.editPaperButton = document.getElementById('editPaperButton');
@@ -1095,4 +1085,5 @@
 
 </body>
 </html>
+
 
