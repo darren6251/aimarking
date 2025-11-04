@@ -1,370 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PastPaperZone — Past Papers</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lottie -->
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Marker - Login</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom styles for countdown to match the new theme -->
   <style>
-    :root{
-      --glass-bg: rgba(255,255,255,0.06);
-      --accent: #7dd3fc;
+    .datetime-container {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: var(--bg-secondary); /* Using theme variable */
+        border-radius: 10px;
+        border: 1px solid var(--border-color); /* Using theme variable */
+        width: 100%;
+        max-width: 380px;
     }
-    html,body{height:100%;}
-    body{
-      background: radial-gradient(1200px 600px at 10% 10%, rgba(125,211,252,0.05), transparent),
-                  radial-gradient(1000px 500px at 90% 90%, rgba(255,255,255,0.03), transparent),
-                  #0b0b0b;
-      color:#e6eef8;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+
+    #datetime {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+        color: var(--text-secondary); /* Using theme variable */
     }
-    .particle{position:absolute;border-radius:999px;opacity:0.08;filter:blur(6px);}
-    .glow-btn{transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s;}
-    .glow-btn:hover{transform: translateY(-5px) scale(1.02); box-shadow:0 10px 30px rgba(125,211,252,0.10),0 2px 6px rgba(0,0,0,0.6);}
-    .tilt {transform-style:preserve-3d; perspective:1000px;}
-    .fade-in {animation: fadeUp .5s ease both}
-    .stagger>*>*{animation: slideUp .45s cubic-bezier(.15,.85,.3,1) both}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-    @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-    .viewer-enter{opacity:0;transform:scale(.995) translateY(6px)}
-    .viewer-enter-active{transition:all .45s cubic-bezier(.2,.9,.3,1);opacity:1;transform:none}
-    .glass{background:var(--glass-bg);backdrop-filter: blur(8px);-webkit-backdrop-filter: blur(8px)}
-    .nav-underline{height:3px;background:linear-gradient(90deg,var(--accent),#fff);border-radius:3px;transition:transform .28s,opacity .28s}
-    .focus-ring:focus{outline:none;box-shadow:0 0 0 3px rgba(125,211,252,0.18)}
 
-    /* Auth overlay */
-    #authWrapper{
-        position:fixed;
-        inset:0;
-        display:flex; /* Changed from none to flex */
-        z-index:1000;
-        background:rgba(0,0,0,0.6);
-        align-items: center;
-        justify-content: center;
+    #countdown-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        color: var(--text-primary); /* Using theme variable */
     }
-    #authCard{max-width:420px;width:92%;}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000}
-    .modal-content{background:rgba(255,255,255,0.06);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:20px;max-width:520px;width:92%}
-    .close-button{position:absolute;top:10px;right:14px;font-size:22px;color:#cbd5e1;cursor:pointer}
-    .close-button:hover{color:#fff}
-
-    /* Cards & inputs */
-    .input{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#e6eef8;padding:10px;border-radius:10px;width:100%}
-    .input::placeholder{color:#94a3b8}
-    .btn{border-radius:10px;padding:10px 14px}
-    .btn-primary{background:#7dd3fc;color:#111827;font-weight:600}
-    .btn-ghost{background:rgba(255,255,255,0.08);color:#e6eef8;border:1px solid rgba(255,255,255,0.14)}
-    .btn-danger{background:#ef4444;color:#111827;font-weight:600}
-    .error{color:#ef4444;font-size:.9rem; min-height: 1.25rem;} /* Added min-height */
-    .label{font-size:.85rem;color:#cbd5e1}
-    .pill{border-radius:9999px;background:rgba(255,255,255,0.08);padding:6px 10px;font-size:.8rem}
+    #countdown {
+        font-size: 1.5em;
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: 700;
+        color: var(--text-primary); /* Using theme variable */
+        background-color: var(--bg-primary); /* Using theme variable */
+        padding: 10px 15px;
+        border-radius: 8px;
+        display: inline-block;
+    }
   </style>
+
+  <!-- PDF.js library (in case you preview PDFs on login screen later) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
 <body>
-
-  <!-- Floating particles -->
-  <div aria-hidden="true">
-    <div class="particle" style="width:360px;height:360px;left:-80px;top:-40px;background:linear-gradient(45deg,#0ea5e9,#8b5cf6);filter:blur(80px);opacity:0.06"></div>
-    <div class="particle" style="width:220px;height:220px;right:-30px;bottom:60px;background:linear-gradient(45deg,#f97316,#f43f5e);filter:blur(60px);opacity:0.04"></div>
-  </div>
-
-  <!-- Auth gate -->
+  <!-- LOGIN WRAPPER -->
   <div id="authWrapper">
-    <div class="w-full h-full flex items-center justify-center px-4">
-      <div id="authCard" class="glass p-6 rounded-2xl">
-        <div class="flex items-center gap-3 mb-4">
-          <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_ysas1x0v.json" background="transparent" speed="1" style="width:48px;height:48px" loop autoplay></lottie-player>
-          <div>
-            <div class="text-xl font-semibold">PastPaperZone</div>
-            <div class="text-xs text-white/70 -mt-0.5">Animated • Fast • Study</div>
-          </div>
-        </div>
+    <div class="login-left-panel">
+      <h1>AI Marker</h1>
+      <p>Mark with AI, learn better.</p>
+      
+      <!-- Added Date, Time, and Countdown Section -->
+      <div class="datetime-container">
+        <div id="datetime">Loading date and time...</div>
+        <div id="countdown-title">2026DSE FROM NOW</div>
+        <div id="countdown">Calculating...</div>
+      </div>
+    </div>
 
-        <!-- Auth States -->
-        <div id="authLoading">
-          <div class="flex flex-col items-center justify-center py-8">
-            <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json" background="transparent" speed="1" style="width:120px;height:120px" loop autoplay></lottie-player>
-            <div class="text-sm text-white/70 mt-2">Initializing...</div>
-          </div>
-        </div>
-
-        <div id="authLogin" style="display: none;">
-          <div>
-            <h3 class="text-lg font-semibold mb-2">Sign in with Google</h3>
-            <p class="text-sm text-white/70 mb-4">Access past papers with role-based features.</p>
-            <button id="googleSignInButton" class="btn btn-primary w-full glow-btn">Continue with Google</button>
-          </div>
-        </div>
-
-        <div id="authCode" style="display: none;">
-          <div class="mt-4">
-            <h3 class="text-lg font-semibold mb-2">Enter access code</h3>
-            <p class="text-sm text-white/70 mb-3">Teacher or Student code to unlock features.</p>
-            <input type="text" id="accessCodeInput" class="input" placeholder="Enter code"/>
-            <button id="submitCodeButton" class="btn btn-primary w-full mt-3 glow-btn">Submit</button>
-          </div>
-        </div>
-
-        <div id="authError" class="error mt-3"></div>
+    <div class="login-right-panel">
+      <div id="authContainer">
+        <!-- Google Sign-in will be injected by JS -->
       </div>
     </div>
   </div>
 
-  <!-- Main Application Content (hidden by default) -->
-  <div id="mainContent" style="display: none;">
-    <!-- NAVBAR -->
-    <header class="sticky top-0 z-50 glass border-b border-white/10 backdrop-blur-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-          <div class="flex items-center gap-3">
-            <button aria-label="logo" class="flex items-center gap-2 focus-ring">
-              <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_ysas1x0v.json" background="transparent" speed="1" style="width:44px;height:44px" loop autoplay></lottie-player>
-              <div>
-                <div class="text-lg font-semibold tracking-wide">PastPaperZone</div>
-                <div class="text-xs text-white/60 -mt-0.5">Animated • Fast • Study</div>
-              </div>
-            </button>
-          </div>
-
-          <nav id="desktopSubjectNav" class="hidden md:flex items-center gap-4" aria-label="Subjects">
-            <!-- Subjects load here -->
-          </nav>
-
-          <div class="flex items-center gap-3">
-            <div class="relative">
-              <input id="searchInput" placeholder="Search topic or keyword..." class="glass px-3 py-2 rounded-full w-48 sm:w-64 placeholder-white/40 text-sm focus-ring transition-all" />
-              <button id="randomPaperButton" title="Random paper" class="ml-2 glass p-2 rounded-full focus-ring">🎲</button>
-            </div>
-
-            <button id="themeToggleButton" class="glass p-2 rounded-full focus-ring" title="Toggle theme">
-              <span id="themeIcon">🌙</span>
-            </button>
-
-            <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full glass">
-              <span id="displayName" class="text-xs text-white/70">User</span>
-              <span id="userRole" class="pill">Role</span>
-              <button id="logoutButton" class="btn btn-ghost">Log out</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- BODY -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Sidebar -->
-        <aside class="lg:col-span-1 space-y-6">
-          <div class="md:hidden glass p-4 rounded-xl">
-            <div id="mobileSubjectNav" class="flex gap-3 overflow-x-auto py-2 -mx-2 px-2">
-              <!-- Mobile subjects load here -->
-            </div>
-          </div>
-
-          <div class="glass p-4 rounded-xl space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-semibold">Filters</h3>
-              <button id="clearFiltersButton" class="text-xs text-white/60">Clear</button>
-            </div>
-
-            <div class="space-y-2">
-              <label class="text-xs text-white/70">Paper type</label>
-              <div id="paperTypeContainer" class="flex gap-2 flex-wrap">
-                <!-- Paper types load here -->
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <label class="text-xs text-white/70">Years</label>
-              <div id="yearContainer" class="flex gap-2 overflow-x-auto py-1">
-                <!-- Years load here -->
-              </div>
-            </div>
-
-            <div>
-              <label class="text-xs text-white/70">Difficulty</label>
-              <input type="range" min="1" max="5" value="3" id="difficultySlider" class="w-full" />
-              <div class="text-xs text-white/60">Level: <span id="difficultyLabel">3</span></div>
-            </div>
-          </div>
-
-          <div class="glass p-4 rounded-xl">
-            <h4 class="text-sm font-semibold">Your progress</h4>
-            <div class="mt-3">
-              <div class="w-full bg-white/6 rounded-full h-3 overflow-hidden">
-                <div id="progressFill" style="width:0%" class="h-3 bg-gradient-to-r from-cyan-400 to-white"></div>
-              </div>
-              <div id="progressText" class="text-xs text-white/60 mt-2">Viewed 0/20 papers</div>
-            </div>
-          </div>
-
-          <div class="glass p-4 rounded-xl">
-            <h4 class="text-sm font-semibold">Quick tips</h4>
-            <ul class="mt-2 text-xs space-y-2 text-white/70">
-              <li>🔍 Search topics like "electrolysis".</li>
-              <li>⭐ Favorite papers for quick access.</li>
-              <li>↗ Open in new tab if preview is blocked.</li>
-            </ul>
-          </div>
-
-          <!-- Teacher controls -->
-          <div id="teacherControls" class="glass p-4 rounded-xl" style="display: none;">
-            <h4 class="text-sm font-semibold">Manage content</h4>
-            <p class="text-xs text-white/60 mt-2">Add subjects and years once. Then add paper entries with a Drive preview link.</p>
-            <div class="mt-3 space-y-2">
-              <button id="addSubjectButton" class="btn btn-primary w-full glow-btn">Add subject</button>
-              <button id="addYearButton" class="btn btn-primary w-full glow-btn">Add year</button>
-              <button id="addPaperButton" class="btn btn-primary w-full glow-btn">Add paper</button>
-            </div>
-          </div>
-        </aside>
-
-        <!-- Main -->
-        <section class="lg:col-span-3 space-y-6">
-          <div class="glass p-4 rounded-xl flex items-center justify-between gap-4">
-            <div>
-              <div class="text-sm text-white/70">Selected</div>
-              <div class="text-2xl font-bold" id="selectionHeader">...</div>
-            </div>
-
-            <div class="flex-1 px-4">
-              <div id="paperTypeTabs" class="flex gap-3 justify-center">
-                <!-- Main paper type tabs load here -->
-              </div>
-            </div>
-
-            <div class="text-right">
-              <div class="text-sm text-white/60">Papers available</div>
-              <div class="text-2xl font-semibold" id="papersCount">0</div>
-            </div>
-          </div>
-
-          <!-- Viewer -->
-          <div class="glass rounded-xl overflow-hidden">
-            <div class="flex items-center justify-between p-3 border-b border-white/10">
-              <div class="flex items-center gap-2">
-                <button id="prevPaperButton" class="glass p-2 rounded-md focus-ring">◀</button>
-                <button id="nextPaperButton" class="glass p-2 rounded-md focus-ring">▶</button>
-                <button id="favoriteButton" class="text-white/70 glass p-2 rounded-md" title="Favorite">★</button>
-                <div class="ml-3 text-xs text-white/60">
-                  <span id="currentPaperTitleLabel">No paper selected</span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <a id="openNewTabLink" href="#" target="_blank" class="glass px-3 py-2 rounded-md text-sm border border-white/10">Open in new tab</a>
-                <button id="downloadButton" class="glass px-3 py-2 rounded-md text-sm">Download</button>
-                <button id="shareButton" class="glass px-3 py-2 rounded-md text-sm">Share</button>
-
-                <!-- Teacher edit/delete for current paper -->
-                <div id="teacherPaperControls" style="display: none;" class="flex items-center gap-2 ml-2">
-                  <button id="editPaperButton" class="btn btn-ghost text-xs">Edit</button>
-                  <button id="deletePaperButton" class="btn btn-danger text-xs">Delete</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-4 relative">
-              <div id="viewerLoading" class="w-full h-72 flex items-center justify-center" style="display: none;">
-                <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json" background="transparent" speed="1" style="width:120px;height:120px" loop autoplay></lottie-player>
-              </div>
-
-              <div id="viewerContent">
-                <div class="relative">
-                  <!-- Google Drive file preview embed -->
-                  <iframe id="pdfIframe" src="about:blank" class="w-full min-h-[64vh] rounded-md border border-white/10" allowfullscreen></iframe>
-                  <div id="pdfEmbedTip" class="absolute right-4 bottom-4 glass px-3 py-2 rounded-full text-xs">Tip • Use “Open in new tab” if preview fails</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Grid -->
-          <div id="papersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Papers load here -->
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <!-- Toasts -->
-    <div id="toastContainer" class="fixed right-6 bottom-6 z-50 space-y-2">
-      <!-- Toasts inject here -->
-    </div>
-
-    <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-white/70">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="text-sm">© <span id="footerYear">2024</span> PastPaperZone — Made by Darren</div>
-        <div class="flex items-center gap-3 text-sm">
-          <a class="hover:underline" href="#">Privacy</a>
-          <a class="hover:underline" href="#">Terms</a>
-          <a href="mailto:darren_0625@mc-zero.com" class="hover:underline">Contact</a>
-        </div>
-      </div>
-    </footer>
-  </div> <!-- End #mainContent -->
-
-
-  <!-- Modals: Add/Edit Paper -->
-  <div id="paperModal" class="modal">
-    <div class="modal-content relative">
-      <span id="paperModalClose" class="close-button">&times;</span>
-      <h3 id="modalTitle" class="text-lg font-semibold mb-3">Add paper</h3>
-      <div class="space-y-3">
-        <div>
-          <div class="label mb-1">Subject</div>
-          <select class="input" id="subjectSelect">
-            <!-- Subjects load here -->
-          </select>
-        </div>
-        <div>
-          <div class="label mb-1">Year</div>
-          <select class="input" id="yearSelect">
-            <!-- Years load here -->
-          </select>
-        </div>
-        <div>
-          <div class="label mb-1">Paper type</div>
-          <select class="input" id="typeSelect">
-            <!-- Types load here -->
-          </select>
-        </div>
-        <div>
-          <div class="label mb-1">Title</div>
-          <input class="input" type="text" placeholder="e.g. Paper 1 Section A" id="titleInput">
-        </div>
-        <div>
-          <div class="label mb-1">Google Drive preview link</div>
-          <input class="input" type="url" placeholder="https://drive.google.com/file/d/FILE_ID/preview" id="linkInput">
-          <p class="text-xs text-white/60 mt-1">Use a Google Drive file link in “file/d/ID/preview” format. Folder links cannot be embedded.</p>
-        </div>
-        <div class="flex justify-end gap-2 mt-2">
-          <button id="modalCancelButton" class="btn btn-ghost">Cancel</button>
-          <button id="modalSaveButton" class="btn btn-primary">Save</button>
-        </div>
-        <div id="modalError" class="error"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase + App -->
+  <!-- Firebase + Login Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-    // --- Firebase Config ---
+    // --- New Clock and Countdown Logic ---
+    const datetimeEl = document.getElementById('datetime');
+    const countdownEl = document.getElementById('countdown');
+
+    // Function to update the current time and date
+    function updateTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        datetimeEl.textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    // Function to update the countdown
+    function updateCountdown() {
+        const countDownDate = new Date("April 9, 2026 00:00:00").getTime();
+        const now = new Date().getTime();
+        const distance = countDownDate - now;
+
+        // Time calculations for days, hours, minutes and seconds
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // Display the result in the element with id="countdown"
+        countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+        // If the count down is finished, write some text
+        if (distance < 0) {
+            clearInterval(countdownInterval);
+            countdownEl.innerHTML = "DSE HAS BEGUN!";
+        }
+    }
+
+    // Initial calls to display immediately on load
+    updateTime();
+    updateCountdown();
+
+    // Update the time and countdown every second
+    setInterval(updateTime, 1000);
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    // --- End of New Logic ---
+
+
+    // --- Firebase Config (yours) ---
     const firebaseConfig = {
       apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -375,724 +132,39 @@
       measurementId: "G-CHKLKSM17S"
     };
 
-    // --- App Config ---
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
-    
-    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
-    const TEACHER_CODE = "Derren0625";
-    const STUDENT_CODE = "STUDENT456";
-    const PAPER_TYPES = ['Paper 1','Paper 2','MC','Mock'];
-    const TARGET_VIEW_COUNT = 20;
 
-    // --- PDF.js Worker ---
-    window.pdfjsLib && (window.pdfjsLib.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js');
+    const authContainer = document.getElementById("authContainer");
 
-    // --- Application State ---
-    const appState = {
-        role: null,
-        dark: false,
-        subjects: [], // {id, name}
-        subject: '', // name
-        years: [], // {id, name}
-        year: '', // name
-        selectedTypes: [],
-        difficulty: 3,
-        query: '',
-        loading: false,
-        favorite: false,
-        currentType: 'Paper 1',
-        papers: [], // full paper objects
-        currentIndex: 0,
-        viewed: 0,
-        modalTitle: 'Add paper',
-        form: { id: null, subject:'', year:'', type:'Paper 1', title:'', link:'' },
-    };
+    // Inject sign-in button
+    authContainer.innerHTML = `
+      <h2>Welcome Back</h2>
+      <button id="googleSignIn" class="google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+        Sign in with Google
+      </button>
+    `;
 
-    // --- DOM References ---
-    const dom = {};
-
-    // --- Auth UI Functions ---
-    function showLoadingState() {
-        dom.authWrapper.style.display = 'flex';
-        dom.mainContent.style.display = 'none';
-        dom.authLoading.style.display = 'block';
-        dom.authLogin.style.display = 'none';
-        dom.authCode.style.display = 'none';
-        dom.authError.textContent = '';
-    }
-
-    function showLoginState() {
-        dom.authWrapper.style.display = 'flex';
-        dom.mainContent.style.display = 'none';
-        dom.authLoading.style.display = 'none';
-        dom.authLogin.style.display = 'block';
-        dom.authCode.style.display = 'none';
-        dom.authError.textContent = '';
-        dom.googleSignInButton.onclick = googleSignIn;
-    }
-
-    function showCodeInputState(user) {
-        dom.authWrapper.style.display = 'flex';
-        dom.mainContent.style.display = 'none';
-        dom.authLoading.style.display = 'none';
-        dom.authLogin.style.display = 'none';
-        dom.authCode.style.display = 'block';
-        dom.authError.textContent = '';
-        dom.submitCodeButton.onclick = () => submitCode(user);
-    }
-
-    function showMainApp(user, role) {
-        appState.role = role;
-        dom.authWrapper.style.display = 'none';
-        dom.mainContent.style.display = 'block';
-        dom.displayName.textContent = user.displayName || 'User';
-        dom.userRole.textContent = role;
-        if (role === 'teacher') {
-            dom.teacherControls.style.display = 'block';
-        } else {
-            dom.teacherControls.style.display = 'none';
-        }
-        initUI();
-    }
-
-    // --- Auth Action Functions ---
-    async function googleSignIn() {
-        dom.authError.textContent = '';
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (e) {
-            console.error("Sign-in failed: ", e);
-            dom.authError.textContent = 'Sign-in failed. Please try again.';
-        }
-    }
-
-    async function submitCode(user) {
-        dom.authError.textContent = '';
-        const code = dom.accessCodeInput.value.trim();
-        let roleToSet = (code === TEACHER_CODE) ? 'teacher' : (code === STUDENT_CODE) ? 'student' : null;
-        if (!roleToSet) {
-            dom.authError.textContent = 'Invalid access code.';
-            return;
-        }
-        try {
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-            await setDoc(userProfileRef, { role: roleToSet, name: user.displayName }, { merge: true });
-            showMainApp(user, roleToSet);
-        } catch (e) {
-            console.error("Failed to set role: ", e);
-            dom.authError.textContent = 'Failed to save role. Please try again.';
-        }
-    }
-
-    async function logout() {
-        await signOut(auth);
-    }
-
-    // --- Firebase Helper Functions ---
-    function papersCollectionPath() {
-      return `artifacts/${appId}/public/data/pastPapers`;
-    }
-    async function loadSubjects() {
-      const qRef = query(collection(db, papersCollectionPath()), orderBy('name','asc'));
-      const snap = await getDocs(qRef);
-      return snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-    }
-    async function loadYears(subjectId) {
-      const qRef = query(collection(db, `${papersCollectionPath()}/${subjectId}/years`), orderBy('name','desc'));
-      const snap = await getDocs(qRef);
-      return snap.docs.map(d => ({ id: d.id, name: d.data().name }));
-    }
-    async function loadPapers(subjectId, yearId) {
-      if (!subjectId || !yearId) return [];
-      const qRef = query(collection(db, `${papersCollectionPath()}/${subjectId}/years/${yearId}/papers`), orderBy('name','asc'));
-      const snap = await getDocs(qRef);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    }
-    async function addSubject(name) {
-      if (!name?.trim()) return;
-      await addDoc(collection(db, papersCollectionPath()), { name: name.trim() });
-    }
-    async function addYear(subjectId, yearName) {
-      if (!subjectId || !yearName?.trim()) return;
-      await addDoc(collection(db, `${papersCollectionPath()}/${subjectId}/years`), { name: yearName.trim() });
-    }
-    async function addPaper(subjectId, yearId, payload) {
-      if (!subjectId || !yearId) return;
-      await addDoc(collection(db, `${papersCollectionPath()}/${subjectId}/years/${yearId}/papers`), payload);
-    }
-    async function updatePaper(subjectId, yearId, paperId, payload) {
-      const docRef = doc(db, `${papersCollectionPath()}/${subjectId}/years/${yearId}/papers/${paperId}`);
-      await updateDoc(docRef, payload);
-    }
-    async function deletePaper(subjectId, yearId, paperId) {
-      const docRef = doc(db, `${papersCollectionPath()}/${subjectId}/years/${yearId}/papers/${paperId}`);
-      await deleteDoc(docRef);
-    }
-
-    // --- UI Render Functions ---
-    function renderSubjects() {
-        const desktopHtml = appState.subjects.map(s => `
-            <div class="relative">
-              <button data-subject="${s.name}" class="${appState.subject === s.name ? 'bg-white text-black scale-105' : 'bg-white/4 text-white/90'} glow-btn px-4 py-2 rounded-full text-sm font-medium focus-ring transition-colors duration-200">
-                <span>${s.name}</span>
-              </button>
-              ${appState.subject === s.name ? '<div class="absolute left-0 right-0 mt-2 flex justify-center"><div class="nav-underline w-16"></div></div>' : ''}
-            </div>
-        `).join('');
-        const mobileHtml = appState.subjects.map(s => `
-            <button data-subject="${s.name}" class="${appState.subject === s.name ? 'bg-white text-black' : 'bg-white/6 text-white/90'} shrink-0 px-3 py-2 rounded-full text-sm font-medium glow-btn">
-              <span>${s.name}</span>
-            </button>
-        `).join('');
-        dom.desktopSubjectNav.innerHTML = desktopHtml;
-        dom.mobileSubjectNav.innerHTML = mobileHtml;
-        dom.subjectSelect.innerHTML = '<option value="">Select subject</option>' + appState.subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-    }
-
-    function renderYears() {
-        const yearHtml = appState.years.map(y => `
-            <button data-year="${y.name}" class="${appState.year === y.name ? 'bg-white text-black scale-105' : 'bg-white/6 text-white/90'} px-3 py-1 rounded-md text-sm glow-btn focus-ring">
-              <span>${y.name}</span>
-            </button>
-        `).join('');
-        dom.yearContainer.innerHTML = yearHtml;
-        dom.yearSelect.innerHTML = '<option value="">Select year</option>' + appState.years.map(y => `<option value="${y.name}">${y.name}</option>`).join('');
-    }
-
-    function renderFilterTypes() {
-        const typesHtml = PAPER_TYPES.map(t => `
-            <button data-type="${t}" class="${appState.selectedTypes.includes(t) ? 'bg-white text-black' : 'bg-white/6 text-white/90'} px-3 py-1 rounded-full text-xs font-medium focus-ring">
-              <span>${t}</span>
-            </button>
-        `).join('');
-        dom.paperTypeContainer.innerHTML = typesHtml;
-    }
-    
-    function renderPaperTypeTabs() {
-        const tabsHtml = PAPER_TYPES.map(t => `
-            <button data-type="${t}" class="${appState.currentType === t ? 'bg-white text-black scale-105' : 'bg-white/6 text-white/90'} px-4 py-2 rounded-full glow-btn text-sm">
-              <span>${t}</span>
-            </button>
-        `).join('');
-        dom.paperTypeTabs.innerHTML = tabsHtml;
-    }
-
-    function renderPapersGrid() {
-        let list = [...appState.papers];
-        if (appState.currentType) list = list.filter(p => p.type === appState.currentType);
-        if (appState.query) list = list.filter(p => (p.title + ' ' + (p.desc||'')).toLowerCase().includes(appState.query.toLowerCase()));
-        if (appState.selectedTypes.length) list = list.filter(p => appState.selectedTypes.includes(p.type));
-        list = list.filter(p => (p.diff || 3) <= appState.difficulty + 1);
-
-        const gridHtml = list.slice(0, 9).map(p => `
-            <article data-paper-id="${p.id}" class="glass p-4 rounded-xl cursor-pointer hover:scale-105 transition-transform tilt shadow-sm">
-              <div class="flex items-start justify-between">
-                <div>
-                  <div class="text-sm text-white/60">${p.year} • ${p.type}</div>
-                  <h3 class="text-lg font-semibold mt-1">${p.title}</h3>
-                  <p class="text-xs text-white/60 mt-2 line-clamp-3">${p.desc || ''}</p>
-                </div>
-                <div class="ml-3 text-right">
-                  <div class="text-sm font-semibold">${(p.pages || 0)}p</div>
-                  <div class="text-xs text-white/60">Difficulty ${p.diff || 3}</div>
-                </div>
-              </div>
-            </article>
-        `).join('');
-        dom.papersGrid.innerHTML = gridHtml || '<p class="text-white/70 text-sm glass p-4 rounded-xl">No papers match your filters.</p>';
-        dom.papersCount.textContent = appState.papers.length;
-    }
-
-    function renderViewer() {
-        const paper = appState.papers[appState.currentIndex] || null;
-        if (paper) {
-            dom.viewerLoading.style.display = 'none';
-            dom.viewerContent.style.display = 'block';
-            dom.currentPaperTitleLabel.textContent = `${paper.year} • ${paper.title}`;
-            dom.pdfIframe.src = paper.link;
-            dom.openNewTabLink.href = paper.link;
-            dom.favoriteButton.style.color = appState.favorite ? '#facc15' : '#cbd5e1';
-            dom.pdfEmbedTip.style.display = 'block';
-            if (appState.role === 'teacher') {
-                dom.teacherPaperControls.style.display = 'flex';
-            }
-        } else {
-            dom.viewerLoading.style.display = 'none';
-            dom.viewerContent.style.display = 'block';
-            dom.currentPaperTitleLabel.textContent = 'No paper selected';
-            dom.pdfIframe.src = 'about:blank';
-            dom.openNewTabLink.href = '#';
-            dom.pdfEmbedTip.style.display = 'none';
-            dom.teacherPaperControls.style.display = 'none';
-        }
-        dom.selectionHeader.textContent = `${appState.subject} • ${appState.year}`;
-    }
-
-    function renderProgress() {
-        const progress = Math.round((appState.viewed / TARGET_VIEW_COUNT) * 100);
-        dom.progressFill.style.width = `${progress}%`;
-        dom.progressText.textContent = `Viewed ${appState.viewed}/${TARGET_VIEW_COUNT} papers`;
-    }
-
-    // --- UI Action Functions ---
-    async function refreshSubjectsYears() {
-        appState.subjects = await loadSubjects();
-        if (!appState.subject && appState.subjects.length) {
-            appState.subject = appState.subjects[0].name;
-        }
-        
-        const subjDoc = appState.subjects.find(s => s.name === appState.subject);
-        appState.years = subjDoc ? await loadYears(subjDoc.id) : [];
-        if (!appState.year && appState.years.length) {
-            appState.year = appState.years[0].name;
-        }
-        
-        renderSubjects();
-        renderYears();
-    }
-
-    async function refreshPapers() {
-        setLoading(true);
-        const subjDoc = appState.subjects.find(s => s.name === appState.subject);
-        const yearDoc = appState.years.find(y => y.name === appState.year);
-        
-        const list = await loadPapers(subjDoc?.id, yearDoc?.id);
-        
-        appState.papers = list.map(item => ({
-          id: item.id,
-          title: item.name || item.title || 'Untitled',
-          year: appState.year,
-          type: item.type || 'Paper 1',
-          desc: item.desc || '',
-          pages: item.pages || 0,
-          diff: item.diff || 3,
-          link: item.link || ''
-        }));
-        appState.currentIndex = 0;
-        
-        renderPapersGrid();
-        renderViewer();
-        setLoading(false);
-    }
-    
-    function setLoading(isLoading) {
-        appState.loading = isLoading;
-        dom.viewerLoading.style.display = isLoading ? 'flex' : 'none';
-        dom.viewerContent.style.display = isLoading ? 'none' : 'block';
-    }
-
-    async function selectSubject(name) {
-        if (appState.subject === name) return;
-        appState.subject = name;
-        toast(`${name} selected`);
-        animateBurst();
-        await refreshSubjectsYears();
-        await refreshPapers();
-        renderSubjects(); // re-render for selection style
-    }
-
-    async function selectYear(name) {
-        if (appState.year === name) return;
-        appState.year = name;
-        toast(`Year ${name}`);
-        await refreshPapers();
-        renderYears(); // re-render for selection style
-    }
-
-    function toggleChipType(name) {
-        if (appState.selectedTypes.includes(name)) {
-            appState.selectedTypes = appState.selectedTypes.filter(x => x !== name);
-        } else {
-            appState.selectedTypes.push(name);
-        }
-        renderFilterTypes();
-        renderPapersGrid();
-    }
-
-    function setCurrentType(name) {
-        appState.currentType = name;
-        renderPaperTypeTabs();
-        renderPapersGrid();
-    }
-    
-    function clearFilters() {
-        appState.selectedTypes = [];
-        appState.difficulty = 3;
-        appState.query = '';
-        dom.difficultySlider.value = 3;
-        dom.difficultyLabel.textContent = 3;
-        dom.searchInput.value = '';
-        toast('Filters cleared');
-        renderFilterTypes();
-        renderPapersGrid();
-    }
-
-    function openPaper(paper) {
-        setLoading(true);
-        setTimeout(() => {
-          const idx = appState.papers.findIndex(x => x.id === paper.id);
-          if(idx >= 0) appState.currentIndex = idx;
-          appState.viewed = Math.min(TARGET_VIEW_COUNT, appState.viewed + 1);
-          renderViewer();
-          renderProgress();
-          setLoading(false);
-          toast('Opened paper');
-        }, 600);
-    }
-    
-    function nextPaper() {
-        if (!appState.papers.length) return;
-        appState.currentIndex = (appState.currentIndex + 1) % appState.papers.length;
-        renderViewer();
-        toast('Next');
-    }
-
-    function prevPaper() {
-        if (!appState.papers.length) return;
-        appState.currentIndex = (appState.currentIndex - 1 + appState.papers.length) % appState.papers.length;
-        renderViewer();
-        toast('Prev');
-    }
-
-    function favoriteCurrent() {
-        appState.favorite = !appState.favorite;
-        toast(appState.favorite ? 'Added to favorites' : 'Removed from favorites');
-        renderViewer();
-    }
-    
-    function downloadPdf() {
-        const paper = appState.papers[appState.currentIndex];
-        if (!paper) return;
-        const url = (paper.link ||'').replace('/preview','/view');
-        window.open(url,'_blank');
-        toast('Opening...');
-    }
-
-    function sharePaper() {
-        const paper = appState.papers[appState.currentIndex];
-        if (!paper || !paper.link) return;
-        navigator.clipboard?.writeText(paper.link).then(() => toast('Link copied to clipboard'));
-    }
-
-    function randomPaper() {
-        const p = appState.papers[Math.floor(Math.random() * appState.papers.length)];
-        if (p) openPaper(p);
-    }
-
-    function initTheme() {
-        const savedTheme = localStorage.getItem('ppz-theme') || 'dark';
-        appState.dark = savedTheme === 'dark';
-        document.documentElement.classList.toggle('dark', appState.dark);
-        dom.themeIcon.textContent = appState.dark ? '☀️' : '🌙';
-    }
-
-    function toggleTheme() {
-        appState.dark = !appState.dark;
-        document.documentElement.classList.toggle('dark', appState.dark);
-        localStorage.setItem('ppz-theme', appState.dark ? 'dark' : 'light');
-        dom.themeIcon.textContent = appState.dark ? '☀️' : '🌙';
-        toast(appState.dark ? 'Dark mode' : 'Light mode');
-    }
-
-    function animateBurst() {
-        const el = document.createElement('div');
-        el.innerHTML = `<lottie-player src="https://assets2.lottiefiles.com/packages/lf20_touohxv0.json" background="transparent" speed="1" style="width:120px;height:120px;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;" autoplay></lottie-player>`;
-        document.body.appendChild(el);
-        setTimeout(() => document.body.removeChild(el), 1100);
-    }
-
-    function toast(msg) {
-        const el = document.createElement('div');
-        el.className = 'glass px-4 py-2 rounded-md shadow-md';
-        el.textContent = msg;
-        dom.toastContainer.appendChild(el);
-        setTimeout(() => el.remove(), 2500);
-    }
-
-    // --- Modal Functions ---
-    function openModal() {
-        dom.modalError.textContent = '';
-        dom.subjectSelect.value = appState.form.subject;
-        dom.yearSelect.value = appState.form.year;
-        dom.typeSelect.value = appState.form.type;
-        dom.titleInput.value = appState.form.title;
-        dom.linkInput.value = appState.form.link;
-        dom.modalTitle.textContent = appState.modalTitle;
-        dom.paperModal.style.display = 'flex';
-    }
-    
-    function closeModal() {
-        dom.paperModal.style.display = 'none';
-    }
-
-    function openAddSubject() {
-        appState.modalTitle = 'Add subject';
-        appState.form = { subject: '', year: '', type: 'Paper 1', title: '', link: '', id: null };
-        openModal();
-    }
-    function openAddYear() {
-        appState.modalTitle = 'Add year';
-        appState.form = { subject: appState.subject, year: '', type: 'Paper 1', title: '', link: '', id: null };
-        openModal();
-    }
-    function openAddPaper() {
-        appState.modalTitle = 'Add paper';
-        appState.form = { subject: appState.subject, year: appState.year, type: appState.currentType, title: '', link: '', id: null };
-        openModal();
-    }
-    function openEditPaper() {
-        const p = appState.papers[appState.currentIndex];
-        if (!p) return;
-        appState.modalTitle = 'Edit paper';
-        appState.form = { subject: appState.subject, year: appState.year, type: p.type, title: p.title, link: p.link, id: p.id };
-        openModal();
-    }
-
-    async function deleteCurrentPaper() {
-        if (appState.role !== 'teacher') { toast('Teacher only'); return; }
-        
-        const p = appState.papers[appState.currentIndex];
-        const subjDoc = appState.subjects.find(s => s.name === appState.subject);
-        const yearDoc = appState.years.find(y => y.name === appState.year);
-
-        if (!subjDoc || !yearDoc || !p?.id) { toast('Delete failed: context not found'); return; }
-        
-        try {
-            await deletePaper(subjDoc.id, yearDoc.id, p.id);
-            toast('Deleted');
-            await refreshPapers();
-        } catch (e) {
-            toast('Delete failed');
-            console.error(e);
-        }
-    }
-
-    async function savePaper() {
-        dom.modalError.textContent = '';
-        if (appState.role !== 'teacher') { dom.modalError.textContent = 'Teacher only'; return; }
-
-        const formSubject = dom.subjectSelect.value;
-        const formYear = dom.yearSelect.value;
-        const formTitle = dom.titleInput.value;
-        const formLink = dom.linkInput.value;
-        const formType = dom.typeSelect.value;
-        
-        if (appState.modalTitle === 'Add subject') {
-            if (!formSubject.trim()) { dom.modalError.textContent = 'Enter a subject name'; return; }
-            await addSubject(formSubject.trim());
-            toast('Subject added');
-            closeModal();
-            await refreshSubjectsYears();
-            return;
-        }
-
-        const subjDoc = appState.subjects.find(s => s.name === formSubject);
-        if (!subjDoc) { dom.modalError.textContent = 'Subject not found'; return; }
-
-        if (appState.modalTitle === 'Add year') {
-            if (!formYear.trim()) { dom.modalError.textContent = 'Enter a year'; return; }
-            await addYear(subjDoc.id, formYear.trim());
-            toast('Year added');
-            closeModal();
-            await refreshSubjectsYears();
-            return;
-        }
-
-        // For paper add/edit:
-        const yearDoc = appState.years.find(y => y.name === formYear);
-        if (!yearDoc) { dom.modalError.textContent = 'Year not found'; return; }
-        if (!formTitle.trim()) { dom.modalError.textContent = 'Enter a title'; return; }
-        if (!formLink.trim()) { dom.modalError.textContent = 'Enter a Google Drive preview link'; return; }
-
-        const payload = {
-          name: formTitle.trim(),
-          type: formType || 'Paper 1',
-          link: formLink.trim(),
-          pages: 0,
-          diff: 3,
-          timestamp: Date.now()
-        };
-
-        try {
-          if (appState.modalTitle === 'Edit paper' && appState.form.id) {
-            await updatePaper(subjDoc.id, yearDoc.id, appState.form.id, payload);
-            toast('Paper updated');
-          } else {
-            await addPaper(subjDoc.id, yearDoc.id, payload);
-            toast('Paper added');
-          }
-          closeModal();
-          await refreshPapers();
-        } catch(e){
-          dom.modalError.textContent = 'Save failed';
-          console.error(e);
-        }
-    }
-
-    // --- Main UI Initialization ---
-    async function initUI() {
-        console.log(`Main UI initialized for role: ${appState.role}`);
-        
-        // Static Listeners
-        dom.logoutButton.onclick = logout;
-        dom.themeToggleButton.onclick = toggleTheme;
-        dom.clearFiltersButton.onclick = clearFilters;
-        dom.randomPaperButton.onclick = randomPaper;
-        dom.addSubjectButton.onclick = openAddSubject;
-        dom.addYearButton.onclick = openAddYear;
-        dom.addPaperButton.onclick = openAddPaper;
-        dom.prevPaperButton.onclick = prevPaper;
-        dom.nextPaperButton.onclick = nextPaper;
-        dom.favoriteButton.onclick = favoriteCurrent;
-        dom.downloadButton.onclick = downloadPdf;
-        dom.shareButton.onclick = sharePaper;
-        dom.editPaperButton.onclick = openEditPaper;
-        dom.deletePaperButton.onclick = deleteCurrentPaper;
-        dom.paperModalClose.onclick = closeModal;
-        dom.modalCancelButton.onclick = closeModal;
-        dom.modalSaveButton.onclick = savePaper;
-
-        // Input listeners
-        dom.searchInput.oninput = () => { appState.query = dom.searchInput.value; renderPapersGrid(); };
-        dom.difficultySlider.oninput = () => { 
-            appState.difficulty = parseInt(dom.difficultySlider.value, 10); 
-            dom.difficultyLabel.textContent = appState.difficulty; 
-            renderPapersGrid(); 
-        };
-
-        // Event Delegation for dynamic content
-        dom.desktopSubjectNav.onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (btn && btn.dataset.subject) selectSubject(btn.dataset.subject);
-        };
-        dom.mobileSubjectNav.onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (btn && btn.dataset.subject) selectSubject(btn.dataset.subject);
-        };
-        dom.yearContainer.onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (btn && btn.dataset.year) selectYear(btn.dataset.year);
-        };
-        dom.paperTypeContainer.onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (btn && btn.dataset.type) toggleChipType(btn.dataset.type);
-        };
-        dom.paperTypeTabs.onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (btn && btn.dataset.type) setCurrentType(btn.dataset.type);
-        };
-        dom.papersGrid.onclick = (e) => {
-            const card = e.target.closest('article');
-            if (card && card.dataset.paperId) {
-                const paper = appState.papers.find(p => p.id === card.dataset.paperId);
-                if (paper) openPaper(paper);
-            }
-        };
-
-        // Initial setup
-        document.getElementById('footerYear').textContent = new Date().getFullYear();
-        dom.typeSelect.innerHTML = PAPER_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
-        initTheme();
-        renderFilterTypes();
-        renderPaperTypeTabs();
-        
-        // Load data
-        await refreshSubjectsYears();
-        await refreshPapers();
-    }
-
-
-    // --- App Entry Point ---
-    document.addEventListener("DOMContentLoaded", () => {
-        // --- Populate DOM object ---
-        dom.authWrapper = document.getElementById('authWrapper');
-        dom.authLoading = document.getElementById('authLoading');
-        dom.authLogin = document.getElementById('authLogin');
-        dom.authCode = document.getElementById('authCode');
-        dom.authError = document.getElementById('authError');
-        dom.googleSignInButton = document.getElementById('googleSignInButton');
-        dom.accessCodeInput = document.getElementById('accessCodeInput');
-        dom.submitCodeButton = document.getElementById('submitCodeButton');
-        dom.mainContent = document.getElementById('mainContent');
-        dom.displayName = document.getElementById('displayName');
-        dom.userRole = document.getElementById('userRole');
-        dom.logoutButton = document.getElementById('logoutButton');
-        dom.teacherControls = document.getElementById('teacherControls');
-        dom.desktopSubjectNav = document.getElementById('desktopSubjectNav');
-        dom.mobileSubjectNav = document.getElementById('mobileSubjectNav');
-        dom.searchInput = document.getElementById('searchInput');
-        dom.randomPaperButton = document.getElementById('randomPaperButton');
-        dom.themeToggleButton = document.getElementById('themeToggleButton');
-        dom.themeIcon = document.getElementById('themeIcon');
-        dom.clearFiltersButton = document.getElementById('clearFiltersButton');
-        dom.paperTypeContainer = document.getElementById('paperTypeContainer');
-        dom.yearContainer = document.getElementById('yearContainer');
-        dom.difficultySlider = document.getElementById('difficultySlider');
-        dom.difficultyLabel = document.getElementById('difficultyLabel');
-        dom.progressFill = document.getElementById('progressFill');
-        dom.progressText = document.getElementById('progressText');
-        dom.addSubjectButton = document.getElementById('addSubjectButton');
-        dom.addYearButton = document.getElementById('addYearButton');
-        dom.addPaperButton = document.getElementById('addPaperButton');
-        dom.selectionHeader = document.getElementById('selectionHeader');
-        dom.paperTypeTabs = document.getElementById('paperTypeTabs');
-        dom.papersCount = document.getElementById('papersCount');
-        dom.viewerLoading = document.getElementById('viewerLoading');
-        dom.viewerContent = document.getElementById('viewerContent');
-        dom.prevPaperButton = document.getElementById('prevPaperButton');
-        dom.nextPaperButton = document.getElementById('nextPaperButton');
-        dom.favoriteButton = document.getElementById('favoriteButton');
-        dom.currentPaperTitleLabel = document.getElementById('currentPaperTitleLabel');
-        dom.openNewTabLink = document.getElementById('openNewTabLink');
-        dom.downloadButton = document.getElementById('downloadButton');
-        dom.shareButton = document.getElementById('shareButton');
-        dom.teacherPaperControls = document.getElementById('teacherPaperControls');
-        dom.editPaperButton = document.getElementById('editPaperButton');
-        dom.deletePaperButton = document.getElementById('deletePaperButton');
-        dom.pdfIframe = document.getElementById('pdfIframe');
-        dom.pdfEmbedTip = document.getElementById('pdfEmbedTip');
-        dom.papersGrid = document.getElementById('papersGrid');
-        dom.toastContainer = document.getElementById('toastContainer');
-        dom.paperModal = document.getElementById('paperModal');
-        dom.paperModalClose = document.getElementById('paperModalClose');
-        dom.modalTitle = document.getElementById('modalTitle');
-        dom.subjectSelect = document.getElementById('subjectSelect');
-        dom.yearSelect = document.getElementById('yearSelect');
-        dom.typeSelect = document.getElementById('typeSelect');
-        dom.titleInput = document.getElementById('titleInput');
-        dom.linkInput = document.getElementById('linkInput');
-        dom.modalCancelButton = document.getElementById('modalCancelButton');
-        dom.modalSaveButton = document.getElementById('modalSaveButton');
-        dom.modalError = document.getElementById('modalError');
-
-        // Start the auth flow
-        showLoadingState();
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-                    const snap = await getDoc(userProfileRef);
-                    if (snap.exists() && snap.data().role) {
-                        showMainApp(user, snap.data().role);
-                    } else {
-                        showCodeInputState(user);
-                    }
-                } catch (e) {
-                    console.error("Error fetching user profile: ", e);
-                    dom.authError.textContent = "Error loading your profile.";
-                    showLoginState();
-                }
-            } else {
-                showLoginState();
-            }
-        });
+    document.getElementById("googleSignIn").addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        // Using console.error is better than alert for debugging
+        console.error("Login failed: ", error);
+        // You could also show a user-friendly message on the page itself
+      }
     });
-  </script>
 
+    // Redirect when logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "home.html";
+      }
+    });
+
+  </script>
 </body>
 </html>
 
