@@ -271,6 +271,7 @@
 
               <div class="flex items-center gap-2">
                 <a id="openNewTabLink" href="#" target="_blank" class="glass px-3 py-2 rounded-md text-sm border border-white/10">Open in new tab</a>
+                <button id="downloadButton" class="glass px-3 py-2 rounded-md text-sm">Download</button>
                 <button id="shareButton" class="glass px-3 py-2 rounded-md text-sm">Share</button>
 
                 <!-- Teacher edit/delete for current paper -->
@@ -763,6 +764,15 @@
         renderViewer();
     }
     
+    function downloadPdf() {
+        const paper = appState.papers[appState.currentIndex];
+        if (!paper) return;
+        // Replace /preview with /view for Drive file.
+        const url = (paper.link ||'').replace('/preview','/view');
+        window.open(url,'_blank');
+        toast('Opening...');
+    }
+
     function sharePaper() {
         const paper = appState.papers[appState.currentIndex];
         if (!paper || !paper.link) return;
@@ -939,6 +949,7 @@
         dom.prevPaperButton.onclick = prevPaper;
         dom.nextPaperButton.onclick = nextPaper;
         dom.favoriteButton.onclick = favoriteCurrent;
+        dom.downloadButton.onclick = downloadPdf;
         dom.shareButton.onclick = sharePaper;
         dom.editPaperButton.onclick = openEditPaper;
         dom.deletePaperButton.onclick = deleteCurrentPaper;
@@ -1038,6 +1049,7 @@
         dom.favoriteButton = document.getElementById('favoriteButton');
         dom.currentPaperTitleLabel = document.getElementById('currentPaperTitleLabel');
         dom.openNewTabLink = document.getElementById('openNewTabLink');
+        dom.downloadButton = document.getElementById('downloadButton');
         dom.shareButton = document.getElementById('shareButton');
         dom.teacherPaperControls = document.getElementById('teacherPaperControls');
         dom.editPaperButton = document.getElementById('editPaperButton');
@@ -1085,5 +1097,6 @@
 
 </body>
 </html>
+
 
 
