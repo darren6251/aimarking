@@ -9,6 +9,416 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lottie -->
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <!-- REMOVED: PDF.js -->
+
+  <style>
+    :root{
+      --glass-bg: rgba(255,255,255,0.06);
+      --accent: #7dd3fc;
+    }
+    html,body{height:100%;}
+    body{
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(125,211,252,0.05), transparent),
+                  radial-gradient(1000px 500px at 90% 90%, rgba(255,255,252,0.03), transparent),
+                  #0b0b0b;
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display: flex; /* ADDED */
+      flex-direction: column; /* ADDED */
+    }
+    .particle{position:absolute;border-radius:999px;opacity:0.08;filter:blur(6px);}
+    .glow-btn{transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s;}
+    .glow-btn:hover{transform: translateY(-5px) scale(1.02); box-shadow:0 10px 30px rgba(125,211,252,0.10),0 2px 6px rgba(0,0,0,0.6);}
+    .glass{background:var(--glass-bg);backdrop-filter: blur(8px);-webkit-backdrop-filter: blur(8px)}
+    .focus-ring:focus{outline:none;box-shadow:0 0 0 3px rgba(125,211,252,0.18)}
+
+    /* Auth overlay */
+    #authWrapper{
+        position:fixed;
+        inset:0;
+        display:flex;
+        z-index:1000;
+        background:rgba(0,0,0,0.6);
+        align-items: center;
+        justify-content: center;
+    }
+    #authCard{max-width:420px;width:92%;}
+
+    /* REMOVED: Modal */
+
+    /* Cards & inputs */
+    .input{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#e6eef8;padding:10px;border-radius:10px;width:100%}
+    .input::placeholder{color:#94a3b8}
+    .btn{border-radius:10px;padding:10px 14px}
+    .btn-primary{background:#7dd3fc;color:#111827;font-weight:600}
+    .btn-ghost{background:rgba(255,255,255,0.08);color:#e6eef8;border:1px solid rgba(255,255,255,0.14)}
+    .error{color:#ef4444;font-size:.9rem; min-height: 1.25rem;}
+    .pill{border-radius:9999px;background:rgba(255,255,255,0.08);padding:6px 10px;font-size:.8rem}
+
+    /* REMOVED: PDF Canvas */
+    
+    /* ADDED: Full height main content */
+    #mainContent {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* This makes it fill the height */
+    }
+    main {
+        flex-grow: 1; /* This makes the main area fill the space */
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Floating particles -->
+  <div aria-hidden="true">
+    <div class="particle" style="width:360px;height:360px;left:-80px;top:-40px;background:linear-gradient(45deg,#0ea5e9,#8b5cf6);filter:blur(80px);opacity:0.06"></div>
+    <div class="particle" style="width:220px;height:220px;right:-30px;bottom:60px;background:linear-gradient(45deg,#f97316,#f43f5e);filter:blur(60px);opacity:0.04"></div>
+  </div>
+
+  <!-- Auth gate -->
+  <div id="authWrapper">
+    <div class="w-full h-full flex items-center justify-center px-4">
+      <div id="authCard" class="glass p-6 rounded-2xl">
+        <div class="flex items-center gap-3 mb-4">
+          <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_ysas1x0v.json" background="transparent" speed="1" style="width:48px;height:48px" loop autoplay></lottie-player>
+          <div>
+            <div class="text-xl font-semibold">PastPaperZone</div>
+            <div class="text-xs text-white/70 -mt-0.5">Animated • Fast • Study</div>
+          </div>
+        </div>
+
+        <!-- Auth States -->
+        <div id="authLoading">
+          <div class="flex flex-col items-center justify-center py-8">
+            <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_usmfx6bp.json" background="transparent" speed="1" style="width:120px;height:120px" loop autoplay></lottie-player>
+            <div class="text-sm text-white/70 mt-2">Initializing...</div>
+          </div>
+        </div>
+
+        <div id="authLogin" style="display: none;">
+          <div>
+            <h3 class="text-lg font-semibold mb-2">Sign in with Google</h3>
+            <p class="text-sm text-white/70 mb-4">Access past papers with role-based features.</p>
+            <button id="googleSignInButton" class="btn btn-primary w-full glow-btn">Continue with Google</button>
+          </div>
+        </div>
+
+        <div id="authCode" style="display: none;">
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold mb-2">Enter access code</h3>
+            <p class="text-sm text-white/70 mb-3">Teacher or Student code to unlock features.</p>
+            <input type="text" id="accessCodeInput" class="input" placeholder="Enter code"/>
+            <button id="submitCodeButton" class="btn btn-primary w-full mt-3 glow-btn">Submit</button>
+          </div>
+        </div>
+
+        <div id="authError" class="error mt-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Content (hidden by default) -->
+  <div id="mainContent" style="display: none;">
+    <!-- NAVBAR -->
+    <header class="sticky top-0 z-50 glass border-b border-white/10 backdrop-blur-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-3">
+            <button aria-label="logo" class="flex items-center gap-2 focus-ring">
+              <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_ysas1x0v.json" background="transparent" speed="1" style="width:44px;height:44px" loop autoplay></lottie-player>
+              <div>
+                <div class="text-lg font-semibold tracking-wide">PastPaperZone</div>
+                <div class="text-xs text-white/60 -mt-0.5">Animated • Fast • Study</div>
+              </div>
+            </button>
+          </div>
+
+          <a id="homeButton" href="home.html" class="hidden md:flex items-center gap-2 glow-btn px-4 py-2 rounded-full text-sm font-medium focus-ring bg-white/4 text-white/90">
+            <span>🏠 Home</span>
+          </a>
+
+          <!-- REMOVED: Subject Nav -->
+
+          <div class="flex items-center gap-3">
+            <!-- REMOVED: Search Input & Random Button -->
+
+            <button id="themeToggleButton" class="glass p-2 rounded-full focus-ring" title="Toggle theme">
+              <span id="themeIcon">🌙</span>
+            </button>
+
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full glass">
+              <span id="displayName" class="text-xs text-white/70">User</span>
+              <span id="userRole" class="pill">Role</span>
+              <button id="logoutButton" class="btn btn-ghost">Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <!-- CHANGED: Replaced entire main content with Google Drive Embed -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <iframe 
+            src="https://drive.google.com/embeddedfolderview?id=1GTacSV8XirEWFnTk-Oz380AiWwXgIWNz#list" 
+            style="width:100%; height: 100%; min-height: 75vh; border:1px solid rgba(255,255,255,0.12); border-radius: 12px;"
+            allow="fullscreen"
+        ></iframe>
+    </main>
+
+    <!-- Toasts -->
+    <div id="toastContainer" class="fixed right-6 bottom-6 z-50 space-y-2">
+      <!-- Toasts inject here -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-white/70">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="text-sm">© <span id="footerYear">2024</span> PastPaperZone — Made by Darren</div>
+        <div class="flex items-center gap-3 text-sm">
+          <a class="hover:underline" href="#">Privacy</a>
+          <a class="hover:underline" href="#">Terms</a>
+          <a href="mailto:darren_0625@mc-zero.com" class="hover:underline">Contact</a>
+        </div>
+      </div>
+    </footer>
+  </div> <!-- End #mainContent -->
+
+
+  <!-- REMOVED: Modals -->
+
+
+  <!-- Firebase + App -->
+  <script type="module">
+    // CHANGED: Simplified imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    // REMOVED: Firebase Storage imports
+
+    // --- Firebase Config ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
+      authDomain: "ai-grading-9bb30.firebaseapp.com",
+      projectId: "ai-grading-9bb30",
+      storageBucket: "ai-grading-9bb30.appspot.com",
+      messagingSenderId: "298162112230",
+      appId: "1:298162112230:web:529d3f95536991be685d27",
+      measurementId: "G-CHKLKSM17S"
+    };
+
+    // --- App Config ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    // REMOVED: Storage service
+    const provider = new GoogleAuthProvider();
+    
+    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+    const TEACHER_CODE = "Derren0625";
+    const STUDENT_CODE = "STUDENT456";
+    // REMOVED: Unused constants
+
+    // REMOVED: PDF.js Worker
+
+    // --- Application State ---
+    const appState = {
+        role: null,
+        dark: false,
+        // REMOVED: All state related to papers, subjects, etc.
+    };
+
+    // --- DOM References ---
+    const dom = {};
+
+    // --- Auth UI Functions ---
+    // (These functions are unchanged)
+    function showLoadingState() {
+        dom.authWrapper.style.display = 'flex';
+        dom.mainContent.style.display = 'none';
+        dom.authLoading.style.display = 'block';
+        dom.authLogin.style.display = 'none';
+        dom.authCode.style.display = 'none';
+        dom.authError.textContent = '';
+    }
+
+    function showLoginState() {
+        dom.authWrapper.style.display = 'flex';
+        dom.mainContent.style.display = 'none';
+        dom.authLoading.style.display = 'none';
+        dom.authLogin.style.display = 'block';
+        dom.authCode.style.display = 'none';
+        dom.authError.textContent = '';
+        dom.googleSignInButton.onclick = googleSignIn;
+    }
+
+    function showCodeInputState(user) {
+        dom.authWrapper.style.display = 'flex';
+        dom.mainContent.style.display = 'none';
+        dom.authLoading.style.display = 'none';
+        dom.authLogin.style.display = 'none';
+        dom.authCode.style.display = 'block';
+        dom.authError.textContent = '';
+        dom.submitCodeButton.onclick = () => submitCode(user);
+    }
+
+    function showMainApp(user, role) {
+        appState.role = role;
+        dom.authWrapper.style.display = 'none';
+        dom.mainContent.style.display = 'flex'; // CHANGED: Use flex for layout
+        dom.displayName.textContent = user.displayName || 'User';
+        dom.userRole.textContent = role;
+        // Teacher controls are removed from HTML
+        initUI();
+    }
+
+    // --- Auth Action Functions ---
+    // (These functions are unchanged)
+    async function googleSignIn() {
+        dom.authError.textContent = '';
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (e) {
+            console.error("Sign-in failed: ", e);
+            dom.authError.textContent = 'Sign-in failed. Please try again.';
+        }
+    }
+
+    async function submitCode(user) {
+        dom.authError.textContent = '';
+        const code = dom.accessCodeInput.value.trim();
+        let roleToSet = (code === TEACHER_CODE) ? 'teacher' : (code === STUDENT_CODE) ? 'student' : null;
+        if (!roleToSet) {
+            dom.authError.textContent = 'Invalid access code.';
+            return;
+        }
+        try {
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+            await setDoc(userProfileRef, { role: roleToSet, name: user.displayName }, { merge: true });
+            showMainApp(user, roleToSet);
+        } catch (e) {
+            console.error("Failed to set role: ", e);
+            dom.authError.textContent = 'Failed to save role. Please try again.';
+        }
+    }
+
+    async function logout() {
+        await signOut(auth);
+    }
+
+    // --- REMOVED: All Firebase Helper Functions for papers ---
+    
+    // --- REMOVED: All UI Render Functions ---
+    
+    // --- REMOVED: PDF.js Logic ---
+
+    // --- REMOVED: All UI Action Functions ---
+
+    // --- Utility Functions (Kept) ---
+    function initTheme() {
+        const savedTheme = localStorage.getItem('ppz-theme') || 'dark';
+        appState.dark = savedTheme === 'dark';
+        document.documentElement.classList.toggle('dark', appState.dark);
+        dom.themeIcon.textContent = appState.dark ? '☀️' : '🌙';
+    }
+
+    function toggleTheme() {
+        appState.dark = !appState.dark;
+        document.documentElement.classList.toggle('dark', appState.dark);
+        localStorage.setItem('ppz-theme', appState.dark ? 'dark' : 'light');
+        dom.themeIcon.textContent = appState.dark ? '☀️' : '🌙';
+        toast(appState.dark ? 'Dark mode' : 'Light mode');
+    }
+
+    function toast(msg) {
+        const el = document.createElement('div');
+        el.className = 'glass px-4 py-2 rounded-md shadow-md';
+        el.textContent = msg;
+        dom.toastContainer.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
+    }
+
+    // --- REMOVED: Modal Functions ---
+
+    // --- Main UI Initialization ---
+    async function initUI() {
+        console.log(`Main UI initialized for role: ${appState.role}`);
+        
+        // CHANGED: Simplified listeners
+        dom.logoutButton.onclick = logout;
+        dom.themeToggleButton.onclick = toggleTheme;
+
+        // Initial setup
+        document.getElementById('footerYear').textContent = new Date().getFullYear();
+        initTheme();
+        
+        // No data to load
+    }
+
+
+    // --- App Entry Point ---
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- Populate DOM object (Simplified) ---
+        dom.authWrapper = document.getElementById('authWrapper');
+        dom.authLoading = document.getElementById('authLoading');
+        dom.authLogin = document.getElementById('authLogin');
+        dom.authCode = document.getElementById('authCode');
+        dom.authError = document.getElementById('authError');
+        dom.googleSignInButton = document.getElementById('googleSignInButton');
+        dom.accessCodeInput = document.getElementById('accessCodeInput');
+        dom.submitCodeButton = document.getElementById('submitCodeButton');
+        dom.mainContent = document.getElementById('mainContent');
+        dom.displayName = document.getElementById('displayName');
+        dom.userRole = document.getElementById('userRole');
+        dom.logoutButton = document.getElementById('logoutButton');
+        dom.themeToggleButton = document.getElementById('themeToggleButton');
+        dom.themeIcon = document.getElementById('themeIcon');
+        dom.toastContainer = document.getElementById('toastContainer');
+        
+        // REMOVED: All other DOM references
+
+        // Start the auth flow
+        showLoadingState();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+                    const snap = await getDoc(userProfileRef);
+                    if (snap.exists() && snap.data().role) {
+                        showMainApp(user, snap.data().role);
+                    } else {
+                        showCodeInputState(user);
+                    }
+                } catch (e) {
+                    console.error("Error fetching user profile: ", e);
+                    dom.authError.textContent = "Error loading your profile.";
+                    showLoginState();
+                }
+            } else {
+                showLoginState();
+            }
+        });
+    });
+  </script>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PastPaperZone — Past Papers</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
   <style>
     :root{
