@@ -967,7 +967,7 @@
         color: var(--text-secondary);
     }
     .xp-form-container input[type="number"] {
-        width: 100px;
+        width: 80px; /* Reduced width to fit hours and minutes */
     }
     .xp-redeem-container {
         display: flex;
@@ -1008,6 +1008,20 @@
     .log-points { font-weight: 600; }
     .log-points.positive { color: #4ade80; } /* Green */
     .log-points.negative { color: var(--accent-red); } /* Red */
+
+    /* Style for the new delete log button */
+    .delete-log-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0 4px;
+        line-height: 1;
+    }
+    .delete-log-btn:hover {
+        color: var(--accent-red);
+    }
 
 
     /* Responsive Adjustments */
@@ -1250,8 +1264,10 @@
             <div class="xp-form-container">
                 <label for="study-date">Date:</label>
                 <input type="date" id="study-date" required>
-                <label for="study-hours">Hours Studied:</label>
-                <input type="number" id="study-hours" min="0" step="0.5" placeholder="e.g., 2.5">
+                <label for="study-hours-input">Hours:</label>
+                <input type="number" id="study-hours-input" min="0" step="1" placeholder="e.g., 1" style="width: 70px;">
+                <label for="study-minutes-input">Minutes:</label>
+                <input type="number" id="study-minutes-input" min="0" max="59" step="1" placeholder="e.g., 30" style="width: 70px;">
                 <button id="log-study-btn" class="btn-primary">Log Study Time</button>
             </div>
             <div class="xp-redeem-container">
@@ -1316,8 +1332,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    // Added 'limit' for XP system query
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, where, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    // Added 'limit' and 'increment' for XP system query and updates
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, where, serverTimestamp, limit, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // --- IMPORTANT CONFIGURATION ---
@@ -1783,6 +1799,8 @@
         document.getElementById('log-study-btn').addEventListener('click', handleLogStudy);
         document.getElementById('redeemHalfDayBtn').addEventListener('click', handleRedeemPoints);
         document.getElementById('redeemFullDayBtn').addEventListener('click', handleRedeemPoints);
+        // *** NEW: Add listener for deleting study logs
+        document.getElementById('study-history-list').addEventListener('click', handleDeleteStudyLog);
     }
     
     function handleMonthYearChange() {
@@ -2262,20 +2280,21 @@
             const itemEl = document.createElement('div');
             itemEl.className = 'study-log-item';
             
-            const description = log.description || `Studied for ${log.hours} hours`;
+            const isRedemption = log.description;
             const pointsClass = log.pointsEarned > 0 ? 'positive' : 'negative';
+            const displayHours = log.hours ? log.hours.toFixed(2) : '0';
+            const displayPoints = log.pointsEarned ? log.pointsEarned.toFixed(1) : '0';
 
             itemEl.innerHTML = `
                 <div>
-                    <span class="log-date">${log.date}</span>
-                    <span class="log-hours">${log.description ? '' : `(${log.hours} hrs)`}</span>
+                    <span class="log-date">${log.date} ${isRedemption ? '- ' + log.description : ''}</span>
+                    <span class="log-hours">${isRedemption ? '' : `(${displayHours} hrs)`}</span>
                 </div>
-                <span class="log-points ${pointsClass}">${log.pointsEarned > 0 ? '+' : ''}${log.pointsEarned} XP</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="log-points ${pointsClass}">${log.pointsEarned > 0 ? '+' : ''}${displayPoints} XP</span>
+                    ${isRedemption ? '' : `<button class="delete-log-btn" data-id="${log.id}" data-points="${log.pointsEarned}">&times;</button>`}
+                </div>
             `;
-            // Add description for redemptions
-            if(log.description) {
-                itemEl.querySelector('.log-date').textContent = `${log.date} - ${log.description}`;
-            }
 
             listEl.appendChild(itemEl);
         });
@@ -2288,10 +2307,20 @@
 
     async function handleLogStudy() {
         const date = document.getElementById('study-date').value;
-        const hours = parseFloat(document.getElementById('study-hours').value);
+        const hoursInput = parseInt(document.getElementById('study-hours-input').value) || 0;
+        const minutesInput = parseInt(document.getElementById('study-minutes-input').value) || 0;
+
+        if (hoursInput < 0 || minutesInput < 0 || minutesInput > 59) {
+            showModal('Error', 'Please enter valid hours (0 or more) and minutes (0-59).');
+            return;
+        }
+
+        // Convert to decimal hours and round to 2 places
+        const totalDecimalHours = hoursInput + (minutesInput / 60);
+        const hours = parseFloat(totalDecimalHours.toFixed(2));
 
         if (!date || isNaN(hours) || hours <= 0) {
-            showModal('Error', 'Please enter a valid date and a number of hours greater than 0.');
+            showModal('Error', 'Please enter a valid date and a total time greater than 0 minutes.');
             return;
         }
 
@@ -2303,35 +2332,46 @@
         }
 
         try {
-            const pointsEarned = hours * 10;
+            // Calculate points from hours, rounded to 1 decimal place
+            const pointsFromHours = parseFloat((hours * 10).toFixed(1));
+            
+            // Create a temporary log to pass to the bonus checker
+            const tempLogForBonusCheck = {
+                date: date,
+                hours: hours,
+                pointsEarned: pointsFromHours // This is temporary, just for the check
+            };
+
+            // Check for bonus. Pass the new log and the *current* history.
+            const bonusPoints = await checkConsecutiveBonus(tempLogForBonusCheck, studyHistory);
+            const totalPointsForThisLog = pointsFromHours + bonusPoints;
+
+            // This is the final log object to be saved
             const newLog = {
                 date: date,
                 hours: hours,
-                pointsEarned: pointsEarned,
+                pointsEarned: totalPointsForThisLog, // Store the total (hours + bonus)
                 createdAt: serverTimestamp(),
                 userId: currentUserId
             };
 
-            // Check for bonus. Pass the new log and the *current* history.
-            const bonusPoints = await checkConsecutiveBonus(newLog, studyHistory);
-            const totalPointsToAdd = pointsEarned + bonusPoints;
-
             // Update profile balance
             const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            // Use the global xpBalance which is kept in sync by the listener
-            await updateDoc(profileRef, { xpBalance: xpBalance + totalPointsToAdd });
+            // Use increment for safer concurrent updates
+            await updateDoc(profileRef, { xpBalance: increment(totalPointsForThisLog) });
 
             // Add the new log to history (this will trigger the listener to update the UI)
             await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), newLog);
 
-            let successMessage = `Logged ${hours} hours and earned ${pointsEarned} XP!`;
+            let successMessage = `Logged ${hours.toFixed(2)} hours and earned ${pointsFromHours.toFixed(1)} XP!`;
             if (bonusPoints > 0) {
-                successMessage = `Logged ${hours} hours, earned ${pointsEarned} XP + ${bonusPoints} bonus for a 5-day streak!`;
+                successMessage = `Logged ${hours.toFixed(2)} hours, earned ${pointsFromHours.toFixed(1)} XP + ${bonusPoints} bonus for a 5-day streak! Total: ${totalPointsForThisLog.toFixed(1)} XP`;
             }
             showModal('Success', successMessage);
             
-            // Clear input
-            document.getElementById('study-hours').value = '';
+            // Clear inputs
+            document.getElementById('study-hours-input').value = '';
+            document.getElementById('study-minutes-input').value = '';
 
         } catch (error) {
             console.error("Error logging study time:", error);
@@ -2403,7 +2443,8 @@
                         try {
                             // 1. Update profile balance
                             const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                            await updateDoc(profileRef, { xpBalance: xpBalance - cost });
+                            // Use increment (negative) for safer concurrent updates
+                            await updateDoc(profileRef, { xpBalance: increment(-cost) });
                             
                             // 2. Add a redemption log to history
                             const redemptionLog = {
@@ -2421,6 +2462,46 @@
                         } catch (error) {
                              console.error("Error redeeming points:", error);
                              showModal('Error', `Could not redeem item: ${error.message}`);
+                        }
+                    }
+                }
+            ]
+        );
+    }
+
+    // *** NEW: Function to delete a study log
+    function handleDeleteStudyLog(e) {
+        if (!e.target.classList.contains('delete-log-btn')) return;
+
+        const button = e.target;
+        const logId = button.dataset.id;
+        const pointsEarned = parseFloat(button.dataset.points);
+
+        if (!logId || isNaN(pointsEarned)) return;
+
+        showModal(
+            'Delete Study Log',
+            `Are you sure you want to delete this log? This will subtract ${pointsEarned.toFixed(1)} XP from your balance. This action cannot be undone.`,
+            [
+                { text: 'Cancel', className: 'logout-btn' },
+                {
+                    text: 'Delete',
+                    className: 'btn-primary',
+                    onClick: async () => {
+                        try {
+                            // 1. Remove the points from the user's profile
+                            const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                            await updateDoc(profileRef, { xpBalance: increment(-pointsEarned) });
+
+                            // 2. Delete the log document
+                            const logRef = doc(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`, logId);
+                            await deleteDoc(logRef);
+
+                            showModal('Success', 'Study log deleted and XP balance updated.');
+                            // The listeners will automatically update the UI
+                        } catch (error) {
+                            console.error("Error deleting study log:", error);
+                            showModal('Error', `Could not delete log: ${error.message}`);
                         }
                     }
                 }
