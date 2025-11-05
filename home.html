@@ -1817,7 +1817,7 @@
         monthSelect.value = currentMonth;
         yearSelect.value = currentYear;
         
-        eventDateInput.value = toISODate(currentSelectedDate);
+        eventDateInput.value = toLocalISODate(currentSelectedDate); // FIX: Use new local-aware function
         
         renderCalendar();
         renderEventsForDay();
@@ -1844,7 +1844,7 @@
         for (let i = 1; i <= daysInMonth; i++) {
             const dayEl = document.createElement('div');
             const dayDate = new Date(currentYear, currentMonth, i);
-            const dateStr = toISODate(dayDate);
+            const dateStr = toLocalISODate(dayDate); // FIX: Use new local-aware function
             
             dayEl.className = 'calendar-day';
             dayEl.textContent = i;
@@ -1883,7 +1883,7 @@
     
     function renderEventsForDay() {
         eventList.innerHTML = '';
-        const selectedDateStr = toISODate(currentSelectedDate);
+        const selectedDateStr = toLocalISODate(currentSelectedDate); // FIX: Use new local-aware function
         eventListHeader.textContent = `Events for: ${currentSelectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
         
         const dayEvents = [
@@ -2448,7 +2448,7 @@
                             
                             // 2. Add a redemption log to history
                             const redemptionLog = {
-                                date: toISODate(new Date()),
+                                date: toLocalISODate(new Date()), // FIX: Use new local-aware function
                                 hours: 0,
                                 pointsEarned: -cost, // Negative points
                                 description: `Redeemed ${itemName}`,
@@ -2511,8 +2511,14 @@
 
 
     // --- UTILITY FUNCTIONS ---
-    function toISODate(date) {
-        return date.toISOString().split('T')[0];
+    
+    // FIX: Replaced toISODate with a new function that correctly handles local dates
+    // to avoid timezone conversion errors.
+    function toLocalISODate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     function isSameDay(date1, date2) {
