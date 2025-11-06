@@ -1447,7 +1447,9 @@
             
             if (item.videoType === 'vimeo') {
                 // MODIFIED: Removed inline style
-                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}?autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                // MODIFIED: Handle query parameters for autoplay
+                const separator = videoId.includes('?') ? '&' : '?';
+                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}${separator}autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
                 playerContainer.innerHTML = embedHtml;
             } else if (item.videoType === 'direct') {
                 // MODIFIED: Removed inline width/height style
@@ -1698,21 +1700,31 @@
                         return { type: 'youtube', id: srcMatch[1] };
                     }
                     // Vimeo embed
-                    srcMatch = url.match(/src="https:\/\/player\.vimeo\.com\/video\/([^"?]+)/);
+                    srcMatch = url.match(/src="https:\/\/player\.vimeo\.com\/video\/([^"]+)"/); // Grab full src
                     if (srcMatch && srcMatch[1]) {
-                        return { type: 'vimeo', id: srcMatch[1].split('?')[0] }; // Get ID before query params
+                        // The src content is "https://player.vimeo.com/video/12345?h=abc"
+                        // We need the part after /video/
+                        const vimeoUrl = srcMatch[1];
+                        const idMatch = vimeoUrl.match(/video\/([^"]+)/);
+                        if (idMatch && idMatch[1]) {
+                             return { type: 'vimeo', id: idMatch[1] }; // This ID is "12345?h=abc"
+                        }
                     }
                 }
                 
-                // Standard URL patterns
-                // YouTube URL
-                let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                let match = url.match(regEx);
+                let match = url.match(regExp);
                 if (match && match[2].length === 11) {
                     return { type: 'youtube', id: match[2] };
                 }
+
+                // NEW: Direct Vimeo Player URL (e.g., from user)
+                regExp = /https:\/\/player\.vimeo\.com\/video\/([^"]+)/;
+                match = url.match(regExp);
+                if (match && match[1]) {
+                    return { type: 'vimeo', id: match[1] }; // ID is "1110325191?h=bd63332304"
+                }
                 
-                // Vimeo URL (handles https://vimeo.com/12345)
+                // Standard Vimeo URL (handles https://vimeo.com/12345)
                 regExp = /^.*(vimeo\.com\/)([^#\&\?\/]+).*/;
                 match = url.match(regExp);
                 if (match && match[2]) {
