@@ -284,6 +284,12 @@
             color: var(--accent-primary);
             font-weight: 600;
         }
+        
+        /* Make tab buttons look like tabs */
+        #materialsButton, #progressTabButton {
+             display: inline-flex;
+             align-items: center;
+        }
 
         .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
         #userDisplayName { font-weight: 500; cursor: pointer; }
@@ -339,7 +345,7 @@
             justify-content: center;
         }
         
-        #tutorialSection {
+        #tutorialSection, #progressSection {
             display: none;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
@@ -411,6 +417,19 @@
         .form-container { max-width: 100%; margin-bottom: 2rem; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
+        /* --- FILTERS --- */
+        .filters-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .filters-container select {
+            margin-bottom: 0;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
         /* --- MATERIAL CARDS (Tutorials, Papers, Exercises) --- */
         .material-card { background-color: var(--bg-secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
         .material-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
@@ -418,7 +437,13 @@
         .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
         .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
         .material-card-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
-        .completion-status { position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.7); color: var(--accent-green); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;}
+        
+        .completion-status { 
+            position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.7); color: var(--accent-green); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
+        }
+        .difficulty-badge {
+            position: absolute; top: 10px; left: 10px; background-color: rgba(0,0,0,0.7); color: var(--text-primary); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;
+        }
         
         /* --- TEACHER CONTENT MANAGEMENT --- */
         .content-item { 
@@ -455,6 +480,12 @@
         .sub-item:hover { background-color: var(--bg-tertiary); }
         .sub-item a { color: var(--text-primary); text-decoration: none; }
         .sub-item a:hover { text-decoration: underline; }
+        .sub-item .difficulty-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-right: 1rem;
+        }
 
         .collapse-arrow {
             margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0;
@@ -480,6 +511,48 @@
         .completion-control button.mark-incomplete { background-color: var(--accent-green); color: var(--bg-primary); }
         .completion-control button:hover { opacity: 0.9; }
 
+        /* --- STUDENT PROGRESS SECTION --- */
+        .student-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .student-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .student-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .student-card h3 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+        .student-card p { font-size: 0.875rem; color: var(--text-secondary); }
+
+        .progress-list { list-style-type: none; margin-top: 1.5rem; }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .progress-item:last-child { border-bottom: none; }
+        .progress-item-title { font-weight: 500; }
+        .progress-item-status {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        .progress-item-status.completed { color: var(--accent-green); background-color: rgba(40, 200, 64, 0.1); }
+        .progress-item-status.incomplete { color: var(--text-secondary); background-color: var(--bg-tertiary); }
+
+
         /* --- MODALS --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
         .modal-content { background-color: var(--bg-secondary); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; }
@@ -487,6 +560,16 @@
         .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         .close-button:hover { color: var(--text-primary); }
         #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+
+        /* Progress Modal */
+        #progressModal .modal-content {
+             max-width: 700px;
+        }
+        #progressDetailContainer {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px; /* for scrollbar */
+        }
 
         #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
@@ -532,6 +615,7 @@
             .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
             main { flex-direction: column; padding: 16px; }
             .finder-window-wrapper { display: none !important; }
+            .filters-container { flex-direction: column; }
         }
     </style>
 </head>
@@ -570,6 +654,9 @@
                     </div>
                 </div>
 
+                <!-- New Student Progress Tab (Teacher Only) -->
+                <button id="progressTabButton" class="tab" style="display: none;">Student Progress</button>
+
                 <div class="user-info">
                      <span id="userDisplayName"></span>
                      <button id="switchRoleButton">Switch Role</button>
@@ -582,11 +669,19 @@
             <!-- Generic Material Section Template -->
             <div id="tutorialSection"></div>
             
+            <!-- Student Progress Section -->
+            <div id="progressSection">
+                 <h2 class="section-title">Student Progress</h2>
+                 <div id="studentListContainer" class="student-list-container">
+                     <!-- Student cards will be injected here -->
+                 </div>
+            </div>
+
             <!-- Enhanced Video Player Section -->
             <div id="videoPlayerSection">
                 <div class="video-main-content">
                     <div class="video-player-header">
-                        <button class="back-button" id="backToTutorialsBtn">← Back to Tutorials</button>
+                        <button class="back-button" id="backToTutorialsBtn">← Back to Materials</button>
                     </div>
                     <div id="videoPlayerContainer">
                         <!-- YouTube Iframe will be injected here -->
@@ -633,9 +728,11 @@
     </div>
 
     <!-- Modals and other hidden elements -->
-    <footer >
+    <footer>
         <a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng
     </footer>
+
+    <!-- Generic Message Modal -->
     <div id="messageModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -644,6 +741,8 @@
             <div id="modalButtons"></div>
         </div>
     </div>
+
+    <!-- Add Video Modal (with Difficulty) -->
     <div id="addVideoModal" class="modal">
         <div class="modal-content">
              <span class="close-button">&times;</span>
@@ -660,6 +759,21 @@
                      <label for="tutorialTitle">Video Title</label>
                      <input type="text" id="tutorialTitle" required>
                  </div>
+                 <!-- New Difficulty Dropdown -->
+                 <div style="margin-bottom: 1.5rem;">
+                     <label for="tutorialDifficulty">Difficulty</label>
+                     <select id="tutorialDifficulty" required>
+                         <option value="">-- Select Difficulty --</option>
+                         <option value="U">U</option>
+                         <option value="1">1</option>
+                         <option value="2">2</option>
+                         <option value="3">3</option>
+                         <option value="4">4</option>
+                         <option value="5">5</option>
+                         <option value="5*">5*</option>
+                         <option value="5**">5**</option>
+                     </select>
+                 </div>
                  <div class="modal-form-buttons">
                     <button type="submit" class="btn-primary">Add Video</button>
                  </div>
@@ -667,12 +781,24 @@
         </div>
     </div>
 
+    <!-- Student Progress Detail Modal -->
+    <div id="progressModal" class="modal">
+         <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3 id="progressModalTitle">Student Progress</h3>
+             <div id="progressDetailContainer">
+                 <!-- Progress list will be injected here -->
+             </div>
+         </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
+        // DO NOT EDIT - Firebase Config
         const firebaseConfig = {
           apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
           authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -683,18 +809,23 @@
           measurementId: "G-CHKLKSM17S"
         };
         
+        // Use environment variables if available, otherwise fallback
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
         const TEACHER_CODE = "Derren0625";
         const STUDENT_CODE = "STUDENT456";
 
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
         let currentMaterialViewMode = 'card';
+        let unsubscribeListeners = []; // To manage snapshot listeners
 
         const authWrapper = document.getElementById('authWrapper');
         const appSection = document.getElementById('appSection');
         const authContainer = document.getElementById('authContainer');
 
+        // --- Templates ---
         const googleSignInTemplate = `
             <h2>Sign In</h2>
             <button id="googleSignInButton" class="google-btn">
@@ -712,6 +843,7 @@
             <p id="codeError" class="error-message"></p>
         `;
 
+        // --- Initialization ---
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -723,21 +855,42 @@
             showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
         }
 
+        // --- Auth Handling (Unchanged) ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // User is signed in.
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
+                
+                // Use token if provided (Canvas environment)
+                if (initialAuthToken && !user.email) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                        // Re-fetch user data after token sign-in
+                        const tokenUser = auth.currentUser;
+                        currentUserId = tokenUser.uid;
+                        currentUserEmail = tokenUser.email || 'token.user@example.com';
+                    } catch (tokenError) {
+                        console.error("Custom token sign-in error:", tokenError);
+                        // Fallback to anonymous
+                        if (!auth.currentUser) await signInAnonymously(auth);
+                        currentUserId = auth.currentUser.uid;
+                        currentUserEmail = 'anonymous@example.com';
+                    }
+                }
+                
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 try {
                     const userProfileDoc = await getDoc(userProfileRef);
                     if (userProfileDoc.exists() && userProfileDoc.data().role) {
                         const profileData = userProfileDoc.data();
                         currentUserRole = profileData.role;
-                        currentUserName = profileData.name || user.displayName;
+                        currentUserName = profileData.name || user.displayName || 'User';
                         await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                         showApp();
                     } else {
-                        currentUserName = user.displayName;
+                        currentUserName = user.displayName || 'New User';
                         currentUserRole = 'unassigned';
                         showCodeEntry();
                     }
@@ -747,14 +900,28 @@
                      showLogin();
                 }
             } else {
+                // User is signed out.
                 currentUserId = null;
                 currentUserRole = null;
                 currentUserName = null;
-                showLogin();
+                
+                // If token exists, try to sign in. Otherwise, show Google Login.
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (tokenError) {
+                        console.error("Custom token sign-in failed, showing login:", tokenError);
+                        showLogin();
+                    }
+                } else if (authWrapper.style.display !== 'flex') {
+                    // Only show login if it's not already displayed
+                    showLogin();
+                }
             }
         });
 
         function showLogin() {
+            cleanupListeners();
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
@@ -763,6 +930,7 @@
         }
 
         function showCodeEntry() {
+            cleanupListeners();
             appSection.style.display = 'none';
             authWrapper.style.display = 'flex';
             authWrapper.style.opacity = '1';
@@ -783,8 +951,23 @@
             authWrapper.style.display = 'none';
             appSection.style.display = 'flex';
             document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
+            
+            // Show/Hide Teacher-only elements
+            const progressTab = document.getElementById('progressTabButton');
+            if (currentUserRole === 'teacher') {
+                progressTab.style.display = 'inline-flex';
+            } else {
+                progressTab.style.display = 'none';
+            }
+
             initializeAllMaterialSections();
             showSection('tutorialSection');
+            loadTheme(); // Load theme after app is shown
+        }
+        
+        function cleanupListeners() {
+             unsubscribeListeners.forEach(unsub => unsub());
+             unsubscribeListeners = [];
         }
 
         async function handleGoogleSignIn() {
@@ -822,13 +1005,41 @@
             }
         }
 
-        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        document.getElementById('logoutButton').addEventListener('click', () => {
+             cleanupListeners();
+             signOut(auth);
+        });
         document.getElementById('switchRoleButton').addEventListener('click', () => {
             showInputModal('Switch Role', 'Enter new access code:', async (code) => {
                 await handleSubmitCode(code);
             });
         });
 
+        // --- Tab Navigation ---
+        document.getElementById('materialsButton').addEventListener('click', (e) => {
+             // This is a dropdown, but we also make it act like a tab
+             showSection('tutorialSection');
+             setActiveTab(e.currentTarget);
+        });
+        
+        document.getElementById('progressTabButton').addEventListener('click', (e) => {
+            showSection('progressSection');
+            loadStudentProgress();
+            setActiveTab(e.currentTarget);
+        });
+
+        function setActiveTab(activeButton) {
+            document.querySelectorAll('.header-actions .tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeButton.classList.add('active');
+            // Handle the dropdown case
+            if (activeButton.closest('.dropdown-menu')) {
+                 activeButton.closest('.dropdown-menu').querySelector('button').classList.add('active');
+            }
+        }
+        
+        // --- Material & Content Logic ---
         const materialsConfig = {
             tutorials: {
                 sectionId: 'tutorialSection',
@@ -836,17 +1047,17 @@
                 title: 'Tutorial Videos',
                 level1: 'Subject',
                 level2: 'Topic',
-                level3: 'Video',
+                level3: 'Video', // This is the base name
+                level3Collection: 'videos', // This is the collection name
                 modalId: 'addVideoModal',
             }
         };
 
         function getPath(type, ids = []) {
             const config = materialsConfig[type];
-            const collection = config.collectionName;
-            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
+            let pathParts = [`artifacts/${appId}/public/data/${config.collectionName}`];
             if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
-            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            if (ids[1]) pathParts.push(ids[1], config.level3Collection);
             return pathParts.join('/');
         }
 
@@ -855,11 +1066,24 @@
         }
         
         function showSection(sectionId) {
-             document.querySelectorAll('main > div').forEach(div => div.style.display = 'none');
+             document.querySelectorAll('main > div').forEach(div => {
+                if (div.id !== 'finderMaterialsSection') { // Don't hide the finder window
+                    div.style.display = 'none';
+                    div.style.opacity = '0';
+                }
+             });
              const target = document.getElementById(sectionId);
              if(target) {
                 target.style.display = (sectionId === 'videoPlayerSection') ? 'flex' : 'block';
-                target.style.opacity = 1;
+                // Trigger reflow for animation
+                setTimeout(() => target.style.opacity = 1, 10);
+             }
+             
+             // Update active tab in header
+             if (sectionId === 'tutorialSection') {
+                 setActiveTab(document.getElementById('materialsButton'));
+             } else if (sectionId === 'progressSection') {
+                 setActiveTab(document.getElementById('progressTabButton'));
              }
         }
 
@@ -879,6 +1103,17 @@
                     <div class="filters-container">
                         <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
                         <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
+                        <!-- New Difficulty Filter -->
+                        <select id="difficulty-${type}-filter" disabled><option value="">-- All Difficulties --</option>
+                            <option value="U">U</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="5*">5*</option>
+                            <option value="5**">5**</option>
+                        </select>
                     </div>
                     <div id="level3-${type}-grid" class="grid-container"></div>
                 </div>`;
@@ -905,46 +1140,60 @@
             const collectionRef = collection(db, getPath(type, parentIds));
             const q = query(collectionRef, orderBy('name', 'asc'));
             
-            try {
-                const snapshot = await getDocs(q);
-                if (snapshot.empty) {
-                    container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
-                    return;
-                }
-                
-                container.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    item.id = doc.id;
-                    const el = document.createElement(level < 3 ? 'div' : 'div');
-                    el.className = level < 3 ? 'content-item' : 'sub-item';
+            // Clean up old listeners
+            cleanupListeners();
 
-                    let headerHtml;
-                    if (level < 3) {
-                        const nextLevel = level + 1;
-                        const newParentIds = [...parentIds, doc.id];
-                        headerHtml = `
-                            <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
-                                <h3>${item.name} <span class="collapse-arrow"></span></h3>
-                                <div class="item-actions">
-                                    <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
-                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
-                                </div>
-                            </div>
-                            <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>`;
-                    } else {
-                        headerHtml = `
-                            <span>${item.name || item.title}</span>
-                            <div class="item-actions">
-                                <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
-                                <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
-                            </div>`;
+            try {
+                // Use onSnapshot for real-time updates
+                const unsub = onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
+                        return;
                     }
-                    el.innerHTML = headerHtml;
-                    container.appendChild(el);
+                    
+                    container.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        item.id = doc.id;
+                        const el = document.createElement('div');
+                        el.className = level < 3 ? 'content-item' : 'sub-item';
+
+                        let headerHtml;
+                        if (level < 3) {
+                            const nextLevel = level + 1;
+                            const newParentIds = [...parentIds, doc.id];
+                            headerHtml = `
+                                <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                                    <h3>${item.name} <span class="collapse-arrow"></span></h3>
+                                    <div class="item-actions">
+                                        <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                        <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                    </div>
+                                </div>
+                                <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>`;
+                        } else {
+                            // Level 3 (Video)
+                            headerHtml = `
+                                <span>${item.title || item.name}</span>
+                                <div>
+                                    <span class="difficulty-label">Diff: ${item.difficulty || 'N/A'}</span>
+                                    <div class="item-actions" style="display: inline-flex;">
+                                        <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
+                                        <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                    </div>
+                                </div>`;
+                        }
+                        el.innerHTML = headerHtml;
+                        container.appendChild(el);
+                    });
+                }, (error) => {
+                     console.error(`Error rendering level ${level} for ${type}:`, error);
+                     container.innerHTML = `<p class="error-message">Error loading content. ${error.message}</p>`;
                 });
+                unsubscribeListeners.push(unsub); // Store listener to clean up later
+
             } catch (error) {
-                console.error(`Error rendering level ${level} for ${type}:`, error);
+                console.error(`Error setting up snapshot for ${level} ${type}:`, error);
                 container.innerHTML = `<p class="error-message">Error loading content.</p>`;
             }
         }
@@ -963,6 +1212,7 @@
                     if (nextLevel < 3) {
                         showAddItemModal(type, nextLevel, parentIdsArray);
                     } else {
+                        // This is "Add Video"
                         showAddFinalItemModal(type, parentIdsArray);
                     }
                 } else if (button.matches('.delete-item-btn')) {
@@ -995,6 +1245,7 @@
             const config = materialsConfig[type];
             const level1Filter = document.getElementById(`level1-${type}-filter`);
             const level2Filter = document.getElementById(`level2-${type}-filter`);
+            const difficultyFilter = document.getElementById(`difficulty-${type}-filter`);
             const grid = document.getElementById(`level3-${type}-grid`);
 
             await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
@@ -1003,13 +1254,18 @@
                 const level1Id = level1Filter.value;
                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
                 level2Filter.disabled = true;
+                difficultyFilter.disabled = true;
                 grid.innerHTML = '';
                 if (level1Id) {
                     populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
                     level2Filter.disabled = false;
                 }
             };
-            level2Filter.onchange = () => renderStudentItems(type);
+            level2Filter.onchange = () => {
+                 difficultyFilter.disabled = !level2Filter.value;
+                 renderStudentItems(type);
+            };
+            difficultyFilter.onchange = () => renderStudentItems(type);
         }
 
         async function renderStudentItems(type) {
@@ -1017,45 +1273,68 @@
              const grid = document.getElementById(`level3-${type}-grid`);
              const level1Id = document.getElementById(`level1-${type}-filter`).value;
              const level2Id = document.getElementById(`level2-${type}-filter`).value;
+             const difficulty = document.getElementById(`difficulty-${type}-filter`).value;
 
              grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
              if (!level1Id || !level2Id) {
                  grid.innerHTML = ''; return;
              }
 
-             const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
-             const q = query(itemsRef, orderBy('name', 'asc'));
+             // Build query dynamically
+             let itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
+             let q;
+             if (difficulty) {
+                 q = query(itemsRef, where("difficulty", "==", difficulty), orderBy('title', 'asc'));
+             } else {
+                 q = query(itemsRef, orderBy('title', 'asc'));
+             }
              
              let videoStatuses = {};
-             if(type === 'tutorials') {
-                 const videoStatusRef = collection(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`);
-                 const snapshot = await getDocs(videoStatusRef);
-                 snapshot.forEach(doc => videoStatuses[doc.id] = doc.data().completed);
+             if(type === 'tutorials' && currentUserId) {
+                 try {
+                     const videoStatusRef = collection(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`);
+                     const snapshot = await getDocs(videoStatusRef);
+                     snapshot.forEach(doc => videoStatuses[doc.id] = doc.data().completed);
+                 } catch (e) {
+                     console.error("Error fetching video statuses:", e);
+                 }
              }
+             
+             // Clean up old listeners
+             cleanupListeners();
 
              try {
-                const snapshot = await getDocs(q);
-                grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    item.id = doc.id;
-                    const card = document.createElement('div');
-                    card.className = 'material-card';
-                    card.addEventListener('click', () => handlePreview(type, item));
-                    
-                    const isCompleted = videoStatuses[item.id];
-                    card.innerHTML = `
-                        <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
-                            <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
-                            <div class="play-button-overlay">▶</div>
-                            ${isCompleted ? '<div class="completion-status">✓</div>' : ''}
-                        </div>
-                        <div class="material-card-content"><h3>${item.title}</h3></div>
-                    `;
-                    grid.appendChild(card);
+                const unsub = onSnapshot(q, (snapshot) => {
+                    grid.innerHTML = snapshot.empty ? `<p>No ${config.level3.toLowerCase()}s found.</p>` : '';
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        item.id = doc.id;
+                        const card = document.createElement('div');
+                        card.className = 'material-card';
+                        card.addEventListener('click', () => handlePreview(type, item));
+                        
+                        const isCompleted = videoStatuses[item.id];
+                        const difficultyLabel = item.difficulty || 'U';
+
+                        card.innerHTML = `
+                            <div class="material-card-thumbnail" data-youtube-id="${item.youtubeId}">
+                                <img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
+                                <!-- <div class="play-button-overlay">▶</div> -->
+                                <div class="difficulty-badge">Diff: ${difficultyLabel}</div>
+                                ${isCompleted ? '<div class="completion-status">✓</div>' : ''}
+                            </div>
+                            <div class="material-card-content"><h3>${item.title}</h3></div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }, (error) => {
+                     console.error("Error loading student items:", error);
+                     grid.innerHTML = `<p class='error-message'>Error loading items. ${error.message}</p>`
                 });
+                unsubscribeListeners.push(unsub);
+
              } catch(e) {
-                console.error("Error loading student items:", e);
+                console.error("Error setting up student items snapshot:", e);
                 grid.innerHTML = "<p class='error-message'>Error loading items.</p>"
              }
         }
@@ -1080,14 +1359,7 @@
             }
         }
         
-        // --- Modals, Theme, and other helpers...
-        function showModal(title, message) { /* ... implementation from original ... */ }
-        function showInputModal(title, label, callback) { /* ... implementation from original ... */ }
-        // ... include other helper functions from original file
-
-        // Paste the full modal, theme, and other helper functions here
-        
-        // --- VIDEO PLAYER LOGIC ---
+        // --- VIDEO PLAYER LOGIC (Unchanged from original) ---
         let currentVideoItem = null;
 
         async function showVideoPlayer(item) {
@@ -1102,8 +1374,14 @@
         }
 
         document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
-            showSection('tutorialSection');
+            // Go back to the correct tab (either materials or progress)
+            if (document.getElementById('progressSection').style.display === 'block') {
+                showSection('progressSection');
+            } else {
+                showSection('tutorialSection');
+            }
             document.getElementById('videoPlayerContainer').innerHTML = ''; // Stop video
+            renderStudentItems('tutorials'); // Re-render to show completion status
         });
 
         document.getElementById('completionToggleButton').addEventListener('click', async () => {
@@ -1114,14 +1392,19 @@
             if (docSnap.exists() && docSnap.data().completed) {
                 await deleteDoc(statusRef);
             } else {
-                await setDoc(statusRef, { completed: true, timestamp: Date.now() });
+                await setDoc(statusRef, { 
+                    completed: true, 
+                    timestamp: Date.now(),
+                    videoTitle: currentVideoItem.title, // Store title for teacher view
+                    videoId: videoId
+                });
             }
             await updateCompletionButtonUI(videoId);
-            await renderStudentItems('tutorials');
         });
 
         async function updateCompletionButtonUI(videoId) {
             const button = document.getElementById('completionToggleButton');
+            if (!currentUserId) return;
             const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
             const docSnap = await getDoc(statusRef);
             if (docSnap.exists() && docSnap.data().completed) {
@@ -1133,6 +1416,297 @@
             }
         }
         
+        // --- MODAL, FORM, and HELPER LOGIC ---
+
+        function showAddFinalItemModal(type, parentIds) {
+             const config = materialsConfig[type];
+             const modal = document.getElementById(config.modalId);
+             
+             if (type === 'tutorials') {
+                 modal.querySelector('#videoParentId1').value = parentIds[0] || '';
+                 modal.querySelector('#videoParentId2').value = parentIds[1] || '';
+                 modal.querySelector('form').reset();
+                 document.getElementById('tutorialThumbnailPreview').style.display = 'none';
+             }
+             
+             modal.style.display = 'flex';
+        }
+
+        // Add Video Form Submission
+        document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const config = materialsConfig.tutorials;
+            const parentId1 = document.getElementById('videoParentId1').value;
+            const parentId2 = document.getElementById('videoParentId2').value;
+            const link = document.getElementById('tutorialLink').value;
+            const title = document.getElementById('tutorialTitle').value;
+            const difficulty = document.getElementById('tutorialDifficulty').value;
+            
+            if (!parentId1 || !parentId2) {
+                 showModal("Error", "Could not find parent folder. Please try again.");
+                 return;
+            }
+            
+            const youtubeId = extractYouTubeId(link);
+            if (!youtubeId) {
+                showModal("Error", "Invalid YouTube link. Please paste a valid YouTube URL or embed code.");
+                return;
+            }
+            
+            const newVideo = {
+                 title: title,
+                 name: title, // for ordering
+                 youtubeId: youtubeId,
+                 difficulty: difficulty,
+                 createdAt: Date.now()
+            };
+            
+            try {
+                const collectionPath = getPath('tutorials', [parentId1, parentId2]);
+                await addDoc(collection(db, collectionPath), newVideo);
+                showModal("Success", "Video added successfully!");
+                document.getElementById('addVideoModal').style.display = 'none';
+                // No need to manually refresh, onSnapshot will handle it.
+            } catch (error) {
+                 console.error("Error adding video:", error);
+                 showModal("Error", `Could not add video: ${error.message}`);
+            }
+        });
+
+        // Auto-preview thumbnail from YouTube link
+        document.getElementById('tutorialLink').addEventListener('input', (e) => {
+             const youtubeId = extractYouTubeId(e.target.value);
+             const previewImg = document.getElementById('tutorialThumbnailPreview');
+             if (youtubeId) {
+                 previewImg.src = `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`;
+                 previewImg.style.display = 'block';
+             } else {
+                 previewImg.style.display = 'none';
+             }
+        });
+
+        function extractYouTubeId(input) {
+            let videoId = null;
+            // Standard URL: https://www.youtube.com/watch?v=VIDEO_ID
+            const urlMatch = input.match(/(?:watch\?v=|\/embed\/|\.be\/)([\w\-]+)/);
+            if (urlMatch && urlMatch[1]) {
+                videoId = urlMatch[1];
+            } else {
+                // Iframe embed code: <iframe ... src=".../embed/VIDEO_ID" ...></iframe>
+                const iframeMatch = input.match(/src="[^"]*(?:embed\/)([\w\-]+)[^"]*"/);
+                if (iframeMatch && iframeMatch[1]) {
+                    videoId = iframeMatch[1];
+                }
+            }
+            return videoId;
+        }
+
+        // Generic modal functions
+        function showModal(title, message, buttons = [{ text: 'OK' }]) {
+             const modal = document.getElementById('messageModal');
+             modal.querySelector('#modalTitle').textContent = title;
+             modal.querySelector('#modalMessage').innerHTML = `<p>${message}</p>`; // Use innerHTML for simple text
+             const buttonsContainer = modal.querySelector('#modalButtons');
+             buttonsContainer.innerHTML = '';
+             buttons.forEach(btnInfo => {
+                 const button = document.createElement('button');
+                 button.textContent = btnInfo.text;
+                 button.className = btnInfo.class || (buttons.length > 1 ? 'logout-btn' : 'btn-primary');
+                 button.onclick = () => {
+                     if (btnInfo.callback) btnInfo.callback();
+                     modal.style.display = 'none';
+                 };
+                 buttonsContainer.appendChild(button);
+             });
+             modal.style.display = 'flex';
+        }
+
+        function showInputModal(title, label, callback) {
+            const modal = document.getElementById('messageModal');
+            modal.querySelector('#modalTitle').textContent = title;
+            modal.querySelector('#modalMessage').innerHTML = `
+                <label for="modalInput">${label}</label>
+                <input type="text" id="modalInput" style="width: 100%;">
+            `;
+            const buttonsContainer = modal.querySelector('#modalButtons');
+            buttonsContainer.innerHTML = '';
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.textContent = 'Submit';
+            submitBtn.className = 'btn-primary';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.className = 'logout-btn';
+            
+            const inputEl = modal.querySelector('#modalInput');
+            
+            const submitAction = () => {
+                const value = inputEl.value;
+                if (value) {
+                    callback(value);
+                    modal.style.display = 'none';
+                }
+            };
+
+            submitBtn.onclick = submitAction;
+            inputEl.onkeydown = (e) => {
+                 if(e.key === 'Enter') submitAction();
+            };
+            cancelBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+            
+            buttonsContainer.appendChild(cancelBtn);
+            buttonsContainer.appendChild(submitBtn);
+            modal.style.display = 'flex';
+            inputEl.focus();
+        }
+        
+        function showAddItemModal(type, level, parentIds = []) {
+            const config = materialsConfig[type];
+            const levelName = config[`level${level}`];
+            
+            showInputModal(`Add New ${levelName}`, `Enter the name for the new ${levelName.toLowerCase()}:`, async (name) => {
+                try {
+                    const collectionPath = getPath(type, parentIds);
+                    await addDoc(collection(db, collectionPath), {
+                        name: name,
+                        createdAt: Date.now()
+                    });
+                    showModal("Success", `${levelName} added successfully.`);
+                    // onSnapshot will handle the UI update
+                } catch (error) {
+                    console.error(`Error adding ${levelName}:`, error);
+                    showModal("Error", `Could not add ${levelName}: ${error.message}`);
+                }
+            });
+        }
+        
+        async function handleDeleteItem(type, level, id, parentIds = []) {
+             const config = materialsConfig[type];
+             const levelName = config[`level${level}`];
+             
+             // Simple confirmation for now. 
+             // TODO: Replace with a custom modal as alert/confirm are blocked.
+             showModal(
+                 `Delete ${levelName}?`,
+                 `Are you sure you want to delete this ${levelName.toLowerCase()}? This action cannot be undone.`,
+                 [
+                     { text: 'Cancel' },
+                     { text: 'Delete', class: 'logout-btn', callback: async () => {
+                         try {
+                             const docPath = getPath(type, parentIds);
+                             await deleteDoc(doc(db, docPath, id));
+                             showModal("Success", `${levelName} deleted.`);
+                             // onSnapshot will handle the UI update.
+                         } catch (error) {
+                             console.error(`Error deleting ${levelName}:`, error);
+                             showModal("Error", `Could not delete ${levelName}: ${error.message}`);
+                         }
+                     }}
+                 ]
+             );
+        }
+
+        // Close modals when close button is clicked
+        document.querySelectorAll('.modal .close-button').forEach(btn => {
+            btn.onclick = () => {
+                btn.closest('.modal').style.display = 'none';
+            };
+        });
+        
+        // --- NEW STUDENT PROGRESS ---
+        
+        async function loadStudentProgress() {
+            const container = document.getElementById('studentListContainer');
+            container.innerHTML = `<p class="loading-indicator">Loading students...</p>`;
+            
+            try {
+                const usersRef = collection(db, `artifacts/${appId}/users`);
+                const q = query(usersRef, where("role", "==", "student"));
+                
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    container.innerHTML = `<p>No students found.</p>`;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const student = doc.data().profile;
+                    const studentId = doc.id;
+                    const card = document.createElement('div');
+                    card.className = 'student-card';
+                    card.innerHTML = `
+                        <h3>${student.name || 'Unnamed Student'}</h3>
+                        <p>${student.email || 'No email'}</p>
+                    `;
+                    card.onclick = () => showProgressForStudent(studentId, student.name || 'Student');
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                 console.error("Error loading students:", error);
+                 container.innerHTML = `<p class="error-message">Could not load students. ${error.message}</p>`;
+            }
+        }
+        
+        async function showProgressForStudent(studentId, studentName) {
+            const modal = document.getElementById('progressModal');
+            const title = modal.querySelector('#progressModalTitle');
+            const container = modal.querySelector('#progressDetailContainer');
+            
+            title.textContent = `Progress for ${studentName}`;
+            container.innerHTML = `<p class="loading-indicator">Loading progress...</p>`;
+            modal.style.display = 'flex';
+            
+            try {
+                // 1. Get all videos in the system
+                const allVideosRef = collectionGroup(db, 'videos'); // 'videos' is level3Collection
+                const allVideosSnap = await getDocs(allVideosRef);
+                
+                if (allVideosSnap.empty) {
+                    container.innerHTML = `<p>No tutorial videos have been added to the system yet.</p>`;
+                    return;
+                }
+                
+                // 2. Get this student's completed videos
+                const completedRef = collection(db, `artifacts/${appId}/users/${studentId}/videoStatus`);
+                const completedSnap = await getDocs(completedRef);
+                
+                const completedSet = new Set();
+                completedSnap.forEach(doc => completedSet.add(doc.id));
+                
+                // 3. Combine and render
+                let progressHtml = '<ul class="progress-list">';
+                let allVideos = [];
+                allVideosSnap.forEach(doc => allVideos.push(doc.data()));
+                
+                // Sort videos by title
+                allVideos.sort((a, b) => (a.title || a.name).localeCompare(b.title || b.name));
+                
+                allVideos.forEach(video => {
+                     const videoId = allVideosSnap.docs[allVideos.indexOf(video)].id; // Get original doc ID
+                     const isCompleted = completedSet.has(videoId);
+                     progressHtml += `
+                         <li class="progress-item">
+                             <span class="progress-item-title">${video.title || video.name} (Diff: ${video.difficulty || 'U'})</span>
+                             <span class="progress-item-status ${isCompleted ? 'completed' : 'incomplete'}">
+                                 ${isCompleted ? '✓ Completed' : 'Not Started'}
+                             </span>
+                         </li>
+                     `;
+                });
+                progressHtml += '</ul>';
+                container.innerHTML = progressHtml;
+                
+            } catch (error) {
+                console.error("Error loading student progress:", error);
+                container.innerHTML = `<p class="error-message">Could not load progress. ${error.message}</p>`;
+            }
+        }
+
          // --- THEME TOGGLE ---
         const themeToggleButton = document.getElementById('themeToggleButton');
         function applyTheme(theme) { 
@@ -1147,6 +1721,38 @@
             applyTheme(newTheme);
             localStorage.setItem('ai-marker-theme', newTheme);
         });
+        
+        // --- Finder Window Logic (Unchanged) ---
+        // Basic drag functionality
+        const finderWindow = document.getElementById('finderMaterialsSection');
+        const dragBar = document.getElementById('finderDragBar');
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
+        
+        if (dragBar && finderWindow) {
+             dragBar.addEventListener('mousedown', (e) => {
+                 isDragging = true;
+                 offset.x = e.clientX - finderWindow.offsetLeft;
+                 offset.y = e.clientY - finderWindow.offsetTop;
+                 dragBar.style.cursor = 'grabbing';
+             });
+             
+             document.addEventListener('mouseup', () => {
+                 isDragging = false;
+                 if (dragBar) dragBar.style.cursor = 'grab';
+             });
+             
+             document.addEventListener('mousemove', (e) => {
+                 if (!isDragging) return;
+                 finderWindow.style.left = `${e.clientX - offset.x}px`;
+                 finderWindow.style.top = `${e.clientY - offset.y}px`;
+             });
+             
+             // Fullscreen toggle
+             document.getElementById('finderFullscreenToggle').addEventListener('click', () => {
+                 finderWindow.classList.toggle('fullscreen');
+             });
+        }
     </script>
 </body>
 </html>
