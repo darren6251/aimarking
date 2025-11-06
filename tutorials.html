@@ -54,7 +54,8 @@
             font-family: inherit;
         }
 
-        button:disabled {
+        button:disabled,
+        select:disabled {
             opacity: .5;
             cursor: not-allowed;
         }
@@ -434,7 +435,13 @@
             border-radius: 16px; /* NEW */
             border: 1px solid var(--border-color); /* NEW */
         }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 1.5rem; 
+            /* NEW: Added transition for animation */
+            transition: opacity 0.5s ease-out;
+        }
 
         /* --- MATERIAL CARDS (STYLED) --- */
         .material-card { 
@@ -484,27 +491,84 @@
             margin-left: 8px;
         }
         
-        /* --- Student Filters Container (STYLED) --- */
+        /* --- Student Filters Container (OLD) --- */
+        /* HIDDEN: Replaced by new .viewer-filters-container */
         .filters-container {
-            margin-bottom: 2rem;
+            display: none;
+        }
+        
+        /* --- NEW: Teacher Tabs --- */
+        .tab-btn-container {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        .filters-container select {
-            background-color: transparent; /* NEW */
-            border: 2px solid var(--accent-primary); /* NEW */
-            color: var(--text-primary);
-            padding: 12px 18px; /* NEW */
-            border-radius: 30px; /* NEW */
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
             font-size: 1rem;
-            flex-grow: 1;
-            min-width: 200px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: -1px; /* Align with border */
         }
-        .filters-container select:focus {
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* --- NEW: Viewer Filters (replaces .filters-container) --- */
+        .viewer-filters-container {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            animation: slideInUp 0.5s ease-out;
+        }
+        .filter-step {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.5s ease;
+        }
+        .filter-step label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            padding-left: 1rem; /* Indent label */
+        }
+        .viewer-filters-container select {
+            width: 100%;
+            background-color: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 18px;
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .viewer-filters-container select:focus {
             outline: none;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 10px var(--accent-primary); /* NEW */
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+        /* Disabled select style */
+        .viewer-filters-container select:disabled {
+            background: rgba(0,0,0,0.2);
+            color: var(--text-secondary);
         }
         
         /* --- Teacher Sort (STYLED) --- */
@@ -535,9 +599,19 @@
             border-radius: 16px; /* NEW */
             margin-bottom: 1rem; 
             background: rgba(255,255,255,0.03); /* NEW */
+            transition: all 0.3s ease; /* Add transition */
+        }
+        .content-item:hover {
+            border-color: var(--text-secondary); /* Add hover highlight */
         }
         
-        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
+        .content-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            padding: 0.5rem; 
+        }
         .content-header h3, .content-header h4 { margin: 0; }
         .item-actions button { 
             margin-left: 0.5rem; 
@@ -556,10 +630,16 @@
             margin-top: 0.5rem;
             border-left: 2px solid var(--border-color); 
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.4s ease-out, padding-top 0.4s ease-out, padding-bottom 0.4s ease-out; /* Enhanced transition */
             max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
         }
-        .nested-container.expanded { max-height: 1000px; }
+        .nested-container.expanded { 
+            max-height: 1500px; /* Increased max-height */
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
 
         .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; }
         .sub-item:hover { background-color: var(--bg-tertiary); }
@@ -676,7 +756,9 @@
             header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
             .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
             main { flex-direction: column; padding: 16px; }
-            .filters-container select { min-width: 100%; }
+            /* MODIFIED: Make new filter steps stack vertically */
+            .viewer-filters-container { flex-direction: column; gap: 1rem; }
+            .filter-step { min-width: 100%; }
         }
     </style>
 </head>
@@ -1033,55 +1115,98 @@
              }
         }
 
-        // --- Material Section Setup (Unchanged) ---
+        // --- MODIFIED: Material Section Setup (to include new unified viewer) ---
         function setupMaterialSection(type) {
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
             if (!section) return;
 
-            // HTML template for the tutorial section
+            // NEW: HTML template with tabs for teacher and a unified viewer
             section.innerHTML = `
                 <h2 class="section-title">${config.title}</h2>
+
+                <!-- NEW: Tabbed interface for Teachers -->
+                <div id="teacher-tabs-${type}" class="tab-btn-container" style="display:none;">
+                    <button class="tab-btn active" data-tab="viewer">View Materials</button>
+                    <button class="tab-btn" data-tab="manager">Manage Content</button>
+                </div>
+
+                <!-- NEW: Unified Viewer (for both roles) -->
+                <div id="viewer-${type}-view" style="display:none;">
+                    <div class="viewer-filters-container">
+                        <div class="filter-step">
+                            <label for="level1-${type}-filter">1. Select ${config.level1}</label>
+                            <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
+                        </div>
+                        <div class="filter-step" id="filter-step-2-${type}" style="opacity: 0.5; pointer-events: none;">
+                            <label for="level2-${type}-filter">2. Select ${config.level2}</label>
+                            <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
+                        </div>
+                        <div class="filter-step" id="filter-step-3-${type}" style="opacity: 0.5; pointer-events: none;">
+                            <label for="sort-${type}-filter">3. Sort By</label>
+                            <select id="sort-${type}-filter" disabled>
+                                <option value="name-asc">Sort by Name (A-Z)</option>
+                                <option value="name-desc">Sort by Name (Z-A)</option>
+                                <option value="diff-asc">Difficulty (Low to High)</option>
+                                <option value="diff-desc">Difficulty (High to Low)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="level3-${type}-grid" class="grid-container" style="display: none; opacity: 0;">
+                        <!-- Video cards will be injected here -->
+                    </div>
+                </div>
                 
-                <!-- Teacher View -->
-                <div id="teacher-${type}-view" style="display:none;">
+                <!-- EXISTING: Teacher Management View (now hidden by default) -->
+                <div id="manager-${type}-view" style="display:none;">
                      <div class="form-container" style="max-width: initial;">
                         <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
                     </div>
                     <div id="level1-${type}-container"></div>
-                </div>
-                
-                <!-- Student View -->
-                <div id="student-${type}-view" style="display:none;">
-                    <div class="filters-container">
-                        <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
-                        <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
-                        <select id="sort-${type}-filter">
-                            <option value="name-asc">Sort by Name (A-Z)</option>
-                            <option value="name-desc">Sort by Name (Z-A)</option>
-                            <option value="diff-asc">Difficulty (Low to High)</option>
-                            <option value="diff-desc">Difficulty (High to Low)</option>
-                        </select>
-                    </div>
-                    <div id="level3-${type}-grid" class="grid-container"></div>
                 </div>`;
 
             const isTeacher = currentUserRole === 'teacher';
-            document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
-            document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+            const viewerSection = document.getElementById(`viewer-${type}-view`);
+            const managerSection = document.getElementById(`manager-${type}-view`);
+            const teacherTabs = document.getElementById(`teacher-tabs-${type}`);
 
             if (isTeacher) {
+                teacherTabs.style.display = 'flex';
+                viewerSection.style.display = 'block'; // Show viewer by default
+                managerSection.style.display = 'none';
+
+                // Setup tab listeners
+                teacherTabs.addEventListener('click', (e) => {
+                    if (e.target.matches('.tab-btn')) {
+                        teacherTabs.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        if (e.target.dataset.tab === 'viewer') {
+                            viewerSection.style.display = 'block';
+                            managerSection.style.display = 'none';
+                        } else {
+                            viewerSection.style.display = 'none';
+                            managerSection.style.display = 'block';
+                        }
+                    }
+                });
+                
+                // Setup manager view (existing teacher logic)
                 renderContent(type, `level1-${type}-container`, 1);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
-                // NEW: Added event listener for sort dropdown
                 document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
                 document.getElementById(`level1-${type}-container`).addEventListener('change', (e) => handleTeacherSort(e, type));
+
             } else {
-                setupStudentFilters(type);
+                teacherTabs.style.display = 'none';
+                viewerSection.style.display = 'block';
+                managerSection.style.display = 'none';
             }
+            
+            // Setup viewer for BOTH roles
+            setupViewerFilters(type);
         }
         
-        // --- UPDATED: Teacher Content Rendering (to include sort dropdown) ---
+        // --- Teacher Content Rendering (Unchanged) ---
         async function renderContent(type, containerId, level, parentIds = [], sortBy = 'name-asc') {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -1208,7 +1333,7 @@
             }
         }
         
-        // --- UPDATED: Teacher Click Handler (to show/hide sort) ---
+        // --- Teacher Click Handler (Unchanged) ---
         function handleTeacherClick(e, type) {
             const header = e.target.closest('.content-header');
             const button = e.target.closest('button');
@@ -1257,7 +1382,7 @@
             }
         }
         
-        // --- NEW: Teacher Sort Handler ---
+        // --- Teacher Sort Handler (Unchanged) ---
         function handleTeacherSort(e, type) {
             const select = e.target.closest('select.teacher-sort-filter');
             if (select) {
@@ -1282,13 +1407,17 @@
             }
         }
         
-        // --- Student Filter Setup (Unchanged) ---
-        async function setupStudentFilters(type) {
+        // --- RENAMED & MODIFIED: Student Filter Setup -> setupViewerFilters ---
+        async function setupViewerFilters(type) {
             const config = materialsConfig[type];
             const level1Filter = document.getElementById(`level1-${type}-filter`);
             const level2Filter = document.getElementById(`level2-${type}-filter`);
             const sortFilter = document.getElementById(`sort-${type}-filter`);
             const grid = document.getElementById(`level3-${type}-grid`);
+            
+            // NEW: Get filter step containers for animation
+            const step2 = document.getElementById(`filter-step-2-${type}`);
+            const step3 = document.getElementById(`filter-step-3-${type}`);
 
             await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
 
@@ -1296,19 +1425,48 @@
                 const level1Id = level1Filter.value;
                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
                 level2Filter.disabled = true;
+                sortFilter.disabled = true;
+                grid.style.display = 'none'; // Hide grid
+                grid.style.opacity = 0;
                 grid.innerHTML = '';
+                
+                // NEW: Animate next step
+                step2.style.opacity = '0.5';
+                step2.style.pointerEvents = 'none';
+                step3.style.opacity = '0.5';
+                step3.style.pointerEvents = 'none';
+                
                 if (level1Id) {
                     populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
                     level2Filter.disabled = false;
+                    // NEW: Animate next step
+                    step2.style.opacity = '1';
+                    step2.style.pointerEvents = 'auto';
                 }
             };
             
-            level2Filter.onchange = () => renderStudentItems(type);
-            sortFilter.onchange = () => renderStudentItems(type);
+            level2Filter.onchange = () => {
+                const level2Id = level2Filter.value;
+                // NEW: Animate next step
+                if(level2Id) {
+                    sortFilter.disabled = false;
+                    step3.style.opacity = '1';
+                    step3.style.pointerEvents = 'auto';
+                    renderViewerItems(type);
+                } else {
+                    sortFilter.disabled = true;
+                    step3.style.opacity = '0.5';
+                    step3.style.pointerEvents = 'none';
+                    grid.style.display = 'none'; // Hide grid
+                    grid.style.opacity = 0;
+                    grid.innerHTML = '';
+                }
+            };
+            sortFilter.onchange = () => renderViewerItems(type);
         }
 
-        // --- Student Item Rendering (with Sorting - Unchanged) ---
-        async function renderStudentItems(type) {
+        // --- RENAMED: Student Item Rendering -> renderViewerItems (with Sorting) ---
+        async function renderViewerItems(type) {
              const config = materialsConfig[type];
              const grid = document.getElementById(`level3-${type}-grid`);
              const level1Id = document.getElementById(`level1-${type}-filter`).value;
@@ -1316,8 +1474,13 @@
              const sortValue = document.getElementById(`sort-${type}-filter`).value;
 
              grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+             grid.style.display = 'grid'; // Show loading indicator
+             grid.style.opacity = 1;
+             
              if (!level1Id || !level2Id) {
                  grid.innerHTML = '';
+                 grid.style.display = 'none';
+                 grid.style.opacity = 0;
                  return;
              }
 
@@ -1360,11 +1523,13 @@
                     }
                 });
 
-                grid.innerHTML = '';
+                grid.innerHTML = ''; // Clear loading
                 
                 items.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'material-card';
+                    // NEW: Add animation delay
+                    card.style.animation = 'slideInUp 0.5s ease-out both';
                     card.addEventListener('click', () => handlePreview(type, item));
                     
                     const isCompleted = videoStatuses[item.id];
@@ -1495,8 +1660,15 @@
             }
             
             currentVideoItem = null; 
+            // MODIFIED: Check role before re-rendering
             if (currentUserRole !== 'teacher') {
-                renderStudentItems('tutorials');
+                // Re-render student items to update completion status
+                renderViewerItems('tutorials');
+            } else {
+                // For teacher, just re-render the viewer
+                // Note: This assumes the teacher was on the 'viewer' tab
+                // A more complex solution would save the tab state
+                renderViewerItems('tutorials');
             }
         });
 
@@ -1718,7 +1890,7 @@
                 // 3. Check for direct Vimeo Player URL (e.g., https://player.vimeo.com/video/12345?h=abc)
                 // This regex will capture "12345?h=abc"
                 regExp = /https:\/\/player\.vimeo\.com\/video\/([^#\&\?\/]+(?:[?][^ ]*)?)/;
-                match = url.match(regExp);
+                match = url.match(regBExp);
                 if (match && match[1]) {
                     return { type: 'vimeo', id: match[1].trim() };
                 }
