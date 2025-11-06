@@ -980,9 +980,569 @@
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
-                // MODIFIED: Restored the correct error handling for this function
                 if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
                 console.error("Submit Code Error:", error);
+            }
+        }
+
+        // --- HEADER BUTTONS (Unchanged) ---
+        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        document.getElementById('switchRoleButton').addEventListener('click', () => {
+            showInputModal('Switch Role', 'Enter new access code:', async (code) => {
+                await handleSubmitCode(code);
+            });
+        });
+
+        // --- MATERIALS CONFIGURATION (Unchanged) ---
+        const materialsConfig = {
+            tutorials: {
+                sectionId: 'tutorialSection',
+                collectionName: 'tutorials',
+                title: 'Tutorial Videos',
+                level1: 'Subject',
+                level2: 'Topic',
+                level3: 'Video',
+                modalId: 'addVideoModal',
+            }
+        };
+
+        function getPath(type, ids = []) {
+            const config = materialsConfig[type];
+            const collection = config.collectionName;
+            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
+            if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
+            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            return pathParts.join('/');
+        }
+
+        function initializeAllMaterialSections() {
+            setupMaterialSection('tutorials');
+        }
+        
+        function showSection(sectionId) {
+             document.querySelectorAll('main > div').forEach(div => {
+                 if (div.id !== 'finderMaterialsSection') {
+                     div.style.display = 'none';
+                 }
+             });
+             
+             const target = document.getElementById(sectionId);
+             if(target) {
+                target.style.display = (sectionId === 'videoPlayerSection') ? 'flex' : 'block';
+                setTimeout(() => target.style.opacity = 1, 50);
+             }
+        }
+
+        // --- Material Section Setup (Unchanged) ---
+        function setupMaterialSection(type) {
+            const config = materialsConfig[type];
+            const section = document.getElementById(config.sectionId);
+            if (!section) return;
+
+            // HTML template for the tutorial section
+            section.innerHTML = `
+                <h2 class="section-title">${config.title}</h2>
+                
+                <!-- Teacher View -->
+                <div id="teacher-${type}-view" style="display:none;">
+                     <div class="form-container" style="max-width: initial;">
+                        <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                    </div>
+                    <div id="level1-${type}-container"></div>
+                </div>
+                
+                <!-- Student View -->
+                <div id="student-${type}-view" style="display:none;">
+                    <div class="filters-container">
+                        <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
+                        <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
+                        <select id="sort-${type}-filter">
+                            <option value="name-asc">Sort by Name (A-Z)</option>
+                            <option value="name-desc">Sort by Name (Z-A)</option>
+                            <option value="diff-asc">Difficulty (Low to High)</option>
+                            <option value="diff-desc">Difficulty (High to Low)</option>
+                        </select>
+                    </div>
+                    <div id="level3-${type}-grid" class="grid-container"></div>
+                </div>`;
+
+            const isTeacher = currentUserRole === 'teacher';
+            document.getElementById(`teacher-${type}-view`).style.display = isTeacher ? 'block' : 'none';
+            document.getElementById(`student-${type}-view`).style.display = isTeacher ? 'none' : 'block';
+
+            if (isTeacher) {
+                renderContent(type, `level1-${type}-container`, 1);
+                document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
+                // NEW: Added event listener for sort dropdown
+                document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
+                document.getElementById(`level1-${type}-container`).addEventListener('change', (e) => handleTeacherSort(e, type));
+            } else {
+                setupStudentFilters(type);
+            }
+        }
+        
+        // --- UPDATED: Teacher Content Rendering (to include sort dropdown) ---
+        async function renderContent(type, containerId, level, parentIds = [], sortBy = 'name-asc') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const config = materialsConfig[type];
+            const levelName = config[`level${level}`];
+            
+            // Show loading message only if we are not sorting
+            if (container.innerHTML.includes('loading') || container.innerHTML === '') {
+                 container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
+            } else if (level === 3) {
+                // If it's a sort, show a temp message
+                container.innerHTML = `<p class="loading-indicator">Sorting...</p>`;
+            }
+
+            const collectionRef = collection(db, getPath(type, parentIds));
+            
+            // Sorting logic for Level 3 (Videos)
+            if (level === 3) {
+                 try {
+                    const q = query(collectionRef); // Query without ordering
+                    const snapshot = await getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
+                        return;
+                    }
+                    
+                    let items = [];
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        item.id = doc.id;
+                        items.push(item);
+                    });
+
+                    // Copied Sorting Logic
+                    const difficultySortOrder = { 'U': 0, '1/5': 1, '2/5': 2, '3/5': 3, '4/5': 4, '5/5': 5, '5/5*': 6, '5/5**': 7 };
+                    items.sort((a, b) => {
+                        const diffA = difficultySortOrder[a.difficulty] ?? 0;
+                        const diffB = difficultySortOrder[b.difficulty] ?? 0;
+                        const titleA = a.title || a.name || '';
+                        const titleB = b.title || b.name || '';
+                        switch (sortBy) {
+                            case 'name-desc': return titleB.localeCompare(titleA);
+                            case 'diff-asc': return diffA - diffB;
+                            case 'diff-desc': return diffB - diffA;
+                            case 'name-asc': default: return titleA.localeCompare(titleB);
+                        }
+                    });
+
+                    // Render sorted items
+                    container.innerHTML = '';
+                    items.forEach(item => {
+                        const el = document.createElement('div');
+                        el.className = 'sub-item';
+                        el.innerHTML = `
+                            <span>
+                                ${item.name || item.title} 
+                                <span class="difficulty-badge-teacher">(${item.difficulty || 'U'})</span>
+                            </span>
+                            <div class="item-actions">
+                                <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
+                                <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                            </div>`;
+                        container.appendChild(el);
+                    });
+
+                 } catch (error) {
+                    console.error(`Error rendering level ${level} for ${type}:`, error);
+                    container.innerHTML = `<p class="error-message">Error loading content.</p>`;
+                 }
+            
+            } else {
+                // Logic for Level 1 and 2 (Folders)
+                const q = query(collectionRef, orderBy('name', 'asc'));
+                try {
+                    const snapshot = await getDocs(q);
+                    if (snapshot.empty) {
+                        container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`;
+                        return;
+                    }
+                    
+                    container.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        item.id = doc.id;
+                        const el = document.createElement('div');
+                        el.className = 'content-item';
+                        
+                        const nextLevel = level + 1;
+                        const newParentIds = [...parentIds, doc.id];
+                        
+                        // NEW: Add sort dropdown HTML if this is a Level 2 (Topic) item
+                        let sortDropdownHtml = '';
+                        if (nextLevel === 3) {
+                            sortDropdownHtml = `
+                            <div class="teacher-sort-container">
+                                <select id="sort-teacher-${type}-${doc.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(newParentIds)}'>
+                                    <option value="name-asc">Sort by Name (A-Z)</option>
+                                    <option value="name-desc">Sort by Name (Z-A)</option>
+                                    <option value="diff-asc">Difficulty (Low to High)</option>
+                                    <option value="diff-desc">Difficulty (High to Low)</option>
+                                </select>
+                            </div>`;
+                        }
+
+                        el.innerHTML = `
+                            <div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false">
+                                <h3>${item.name} <span class="collapse-arrow"></span></h3>
+                                <div class="item-actions">
+                                    <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                    <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
+                                </div>
+                            </div>
+                            ${sortDropdownHtml}
+                            <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>`;
+                        
+                        container.appendChild(el);
+                    });
+                } catch (error) {
+                    console.error(`Error rendering level ${level} for ${type}:`, error);
+                    container.innerHTML = `<p class="error-message">Error loading content.</p>`;
+                }
+            }
+        }
+        
+        // --- UPDATED: Teacher Click Handler (to show/hide sort) ---
+        function handleTeacherClick(e, type) {
+            const header = e.target.closest('.content-header');
+            const button = e.target.closest('button');
+
+            if(button) {
+                e.stopPropagation();
+                const { level, parentIds } = button.dataset;
+                const parentIdsArray = JSON.parse(parentIds || '[]');
+
+                if(button.matches('.add-item-btn')) {
+                    const nextLevel = parseInt(level);
+                    if (nextLevel < 3) {
+                        showAddItemModal(type, nextLevel, parentIdsArray);
+                    } else {
+                        showAddFinalItemModal(type, parentIdsArray);
+                    }
+                } else if (button.matches('.delete-item-btn')) {
+                    handleDeleteItem(type, parseInt(level), button.dataset.id, parentIdsArray);
+                } else if(button.matches('.preview-item-btn')) {
+                    handlePreview(type, JSON.parse(button.dataset.item));
+                }
+
+            } else if (header) {
+                const { level, id, parentIds } = header.dataset;
+                const container = document.getElementById(`container-level${parseInt(level) + 1}-${type}-${id}`);
+                if (!container) return;
+                
+                // NEW: Find the sort container
+                const sortContainer = header.parentElement.querySelector('.teacher-sort-container');
+                
+                const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                header.setAttribute('aria-expanded', !isExpanded);
+                container.classList.toggle('expanded', !isExpanded);
+                
+                // NEW: Show/hide sort container
+                if (sortContainer) {
+                    sortContainer.style.display = !isExpanded ? 'block' : 'none';
+                }
+                
+                if (!isExpanded && !container.dataset.loaded) {
+                    // NEW: Get sort value and pass it to renderContent
+                    const sortBy = sortContainer ? sortContainer.querySelector('select').value : 'name-asc';
+                    renderContent(type, container.id, parseInt(level) + 1, [...JSON.parse(parentIds), id], sortBy);
+                    container.dataset.loaded = 'true';
+                }
+            }
+        }
+        
+        // --- NEW: Teacher Sort Handler ---
+        function handleTeacherSort(e, type) {
+            const select = e.target.closest('select.teacher-sort-filter');
+            if (select) {
+                e.stopPropagation();
+                const { level, parentIds } = select.dataset;
+                const parentIdsArray = JSON.parse(parentIds || '[]');
+                
+                // Find the container ID this sort corresponds to
+                const containerId = `container-level${level}-${type}-${parentIdsArray[parentIdsArray.length - 1]}`;
+                const sortBy = select.value;
+                
+                // Re-render the content of that container with the new sort
+                renderContent(type, containerId, parseInt(level), parentIdsArray, sortBy);
+            }
+        }
+
+
+        // --- Preview Handler (Unchanged) ---
+        function handlePreview(type, item) {
+            if (type === 'tutorials') {
+                showVideoPlayer(item);
+            }
+        }
+        
+        // --- Student Filter Setup (Unchanged) ---
+        async function setupStudentFilters(type) {
+            const config = materialsConfig[type];
+            const level1Filter = document.getElementById(`level1-${type}-filter`);
+            const level2Filter = document.getElementById(`level2-${type}-filter`);
+            const sortFilter = document.getElementById(`sort-${type}-filter`);
+            const grid = document.getElementById(`level3-${type}-grid`);
+
+            await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+
+            level1Filter.onchange = () => {
+                const level1Id = level1Filter.value;
+                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                level2Filter.disabled = true;
+                grid.innerHTML = '';
+                if (level1Id) {
+                    populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
+                    level2Filter.disabled = false;
+                }
+            };
+            
+            level2Filter.onchange = () => renderStudentItems(type);
+            sortFilter.onchange = () => renderStudentItems(type);
+        }
+
+        // --- Student Item Rendering (with Sorting - Unchanged) ---
+        async function renderStudentItems(type) {
+             const config = materialsConfig[type];
+             const grid = document.getElementById(`level3-${type}-grid`);
+             const level1Id = document.getElementById(`level1-${type}-filter`).value;
+             const level2Id = document.getElementById(`level2-${type}-filter`).value;
+             const sortValue = document.getElementById(`sort-${type}-filter`).value;
+
+             grid.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+             if (!level1Id || !level2Id) {
+                 grid.innerHTML = '';
+                 return;
+             }
+
+             const itemsRef = collection(db, getPath(type, [level1Id, level2Id]));
+             const q = query(itemsRef);
+             
+             let videoStatuses = {};
+             if(type === 'tutorials' && currentUserId) {
+                 const videoStatusRef = collection(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`);
+                 const snapshot = await getDocs(videoStatusRef);
+                 snapshot.forEach(doc => videoStatuses[doc.id] = doc.data().completed);
+             }
+
+             try {
+                const snapshot = await getDocs(q);
+                
+                if (snapshot.empty) {
+                    grid.innerHTML = `<p>No ${config.level3.toLowerCase()}s found.</p>`;
+                    return;
+                }
+                
+                let items = [];
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    item.id = doc.id;
+                    items.push(item);
+                });
+
+                const difficultySortOrder = { 'U': 0, '1/5': 1, '2/5': 2, '3/5': 3, '4/5': 4, '5/5': 5, '5/5*': 6, '5/5**': 7 };
+                items.sort((a, b) => {
+                    const diffA = difficultySortOrder[a.difficulty] ?? 0;
+                    const diffB = difficultySortOrder[b.difficulty] ?? 0;
+                    const titleA = a.title || a.name || '';
+                    const titleB = b.title || b.name || '';
+                    switch (sortValue) {
+                        case 'name-desc': return titleB.localeCompare(titleA);
+                        case 'diff-asc': return diffA - diffB;
+                        case 'diff-desc': return diffB - diffA;
+                        case 'name-asc': default: return titleA.localeCompare(titleB);
+                    }
+                });
+
+                grid.innerHTML = '';
+                
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'material-card';
+                    card.addEventListener('click', () => handlePreview(type, item));
+                    
+                    const isCompleted = videoStatuses[item.id];
+                    
+                    // NEW: Thumbnail logic for YouTube vs Vimeo
+                    let thumbnailUrl;
+                    const videoId = item.videoId || item.youtubeId; // Handle old and new data
+
+                    if (item.videoType === 'vimeo') {
+                        // Use a placeholder for Vimeo
+                        thumbnailUrl = `https://placehold.co/480x360/0a0a0a/888888?text=Vimeo+Video`;
+                    } else if (item.videoType === 'direct') {
+                        // NEW: Use a placeholder for Direct links
+                        thumbnailUrl = `https://placehold.co/480x360/0a0a0a/888888?text=Direct+Video`;
+                    } else {
+                        // Default to YouTube
+                        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="material-card-thumbnail" data-video-id="${videoId}">
+                            <img src="${thumbnailUrl}" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">
+                            ${isCompleted ? '<div class="completion-status">✓</div>' : ''}
+                        </div>
+                        <div class="material-card-content">
+                            <h3>${item.title || 'Untitled Video'}</h3>
+                            <span class="difficulty-badge">${item.difficulty || 'U'}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+             } catch(e) {
+                console.error("Error loading student items:", e);
+                grid.innerHTML = "<p class='error-message'>Error loading items.</p>"
+             }
+        }
+        
+        // --- Populate Filter Dropdown (Unchanged) ---
+        async function populateFilter(selectElement, collectionRef, levelName) {
+            selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+            try {
+                const q = query(collectionRef, orderBy('name', 'asc'));
+                const snapshot = await getDocs(q);
+                selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
+                if(snapshot.empty) {
+                    selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    selectElement.add(new Option(doc.data().name, doc.id));
+                });
+            }
+            catch (e) {
+                console.error(`Error loading ${levelName}s:`, e);
+                selectElement.innerHTML = `<option value="">-- Error --</option>`;
+            }
+        }
+        
+        // --- VIDEO PLAYER LOGIC (MODIFIED) ---
+        let currentVideoItem = null;
+        let hls = null; // NEW: To keep track of the HLS.js instance
+
+        async function showVideoPlayer(item) {
+            currentVideoItem = item;
+            showSection('videoPlayerSection');
+            document.getElementById('videoInfoTitle').textContent = item.title;
+            // MODIFIED: Use new 'notes' field and provide a default message
+            document.getElementById('videoInfoDescription').textContent = item.notes || 'No notes for this video.';
+            const playerContainer = document.getElementById('videoPlayerContainer');
+            
+            // NEW: Clear any existing HLS instance
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            
+            // NEW: Player logic for YouTube vs Vimeo vs Direct
+            let embedHtml;
+            const videoId = item.videoId || item.youtubeId; // Handle old/new data
+            
+            if (item.videoType === 'vimeo') {
+                // MODIFIED: Removed inline style
+                // MODIFIED: Handle query parameters for autoplay
+                const separator = videoId.includes('?') ? '&' : '?';
+                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}${separator}autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                playerContainer.innerHTML = embedHtml;
+            } else if (item.videoType === 'direct') {
+                // MODIFIED: Removed inline width/height style
+                embedHtml = `<video id="directVideoPlayer" controls autoplay style="background-color: #000;"></video>`;
+                playerContainer.innerHTML = embedHtml; // Set HTML first
+
+                // NOW, run the JS for this player
+                const videoPlayer = document.getElementById('directVideoPlayer');
+                const videoUrl = item.videoId; // The full URL is stored in videoId for 'direct' type
+
+                if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
+                    // Use HLS.js for .m3u8 streams
+                    hls = new Hls();
+                    hls.loadSource(videoUrl);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Native HLS support (Safari)
+                    videoPlayer.src = videoUrl;
+                    videoPlayer.addEventListener('loadedmetadata', () => videoPlayer.play());
+                } else {
+                    // Assume it's a direct file like .mp4, .webm, etc.
+                    videoPlayer.src = videoUrl;
+                    videoPlayer.play();
+                }
+            } else {
+                // Default to YouTube
+                embedHtml = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                playerContainer.innerHTML = embedHtml;
+            }
+            
+            await updateCompletionButtonUI(item.id);
+        }
+
+        document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
+            showSection('tutorialSection');
+            document.getElementById('videoPlayerContainer').innerHTML = ''; // Stop video
+            
+            // NEW: Destroy HLS.js instance if it exists
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            
+            currentVideoItem = null; 
+            if (currentUserRole !== 'teacher') {
+                renderStudentItems('tutorials');
+            }
+        });
+
+        // This logic appears correct for toggling completion. No changes needed.
+        document.getElementById('completionToggleButton').addEventListener('click', async () => {
+            if (!currentVideoItem || !currentUserId) return;
+            const videoId = currentVideoItem.id;
+            const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
+            try {
+                const docSnap = await getDoc(statusRef);
+                if (docSnap.exists() && docSnap.data().completed) {
+                    await deleteDoc(statusRef);
+                } else {
+                    await setDoc(statusRef, { 
+                        completed: true, 
+                        timestamp: Date.now(),
+                        videoTitle: currentVideoItem.title,
+                        videoId: currentVideoItem.id
+                    });
+                }
+                await updateCompletionButtonUI(videoId);
+            } catch (error) {
+                console.error("Error updating completion status:", error);
+                showModal("Error", "Could not update completion status.");
+            }
+        });
+
+        // This logic appears correct. No changes needed.
+        async function updateCompletionButtonUI(videoId) {
+            if (!currentUserId) return;
+            const button = document.getElementById('completionToggleButton');
+            const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
+            try {
+                const docSnap = await getDoc(statusRef);
+                if (docSnap.exists() && docSnap.data().completed) {
+                    button.textContent = "✓ Completed";
+                    button.className = 'mark-incomplete';
+                } else {
+                    button.textContent = "Mark as Complete";
+                    button.className = 'mark-complete';
+                }
+            } catch (error) {
+                console.error("Error checking completion status:", error);
+                button.textContent = "Status Error";
+                button.className = 'mark-complete';
+                button.disabled = true;
             }
         }
         
@@ -1130,9 +1690,6 @@
         // --- UPDATED: YouTube ID Parser to Video Link Parser (YouTube & Vimeo) ---
         function parseVideoLink(url) {
             if (!url) return null;
-            
-            // NEW: Clean up HTML entities like &amp; before parsing
-            url = url.replace(/&amp;/g, '&');
             
             try {
                 // Check for <iframe> embed code
