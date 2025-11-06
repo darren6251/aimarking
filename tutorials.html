@@ -246,7 +246,7 @@
         
         .logo-container { display: flex; align-items: center; gap: 1rem; }
         .logo-container h1 { 
-            font-size: 1.4rem; /* NEW */
+            font-size: 2rem; /* MODIFIED: Was 1.4rem */
             font-weight: 700; 
             letter-spacing: 1px; /* NEW */
         }
@@ -576,7 +576,19 @@
         #videoPlayerSection { display: none; flex-direction: row; height: calc(100vh - 64px); }
         .video-main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: #000; }
         #videoPlayerContainer { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        #videoPlayerContainer iframe { width: 100%; height: 100%; border: none; }
+        
+        /* MODIFIED: Constrain video player size */
+        #videoPlayerContainer iframe,
+        #videoPlayerContainer video {
+            width: 100%;
+            height: auto; /* Let aspect-ratio control height */
+            max-width: 1280px; /* Set a max-width */
+            max-height: 80vh; /* Set a max-height */
+            aspect-ratio: 16/9; /* Enforce 16:9 ratio */
+            border: none;
+            border-radius: 8px; /* Add a slight radius */
+        }
+
         .video-player-header { padding: 1rem; background: var(--bg-primary); }
         .video-player-header .back-button { /* Uses .btn-primary style now */ }
         
@@ -587,7 +599,7 @@
             padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; 
         }
         #videoInfoTitle { font-size: 1.5rem; font-weight: 600; }
-        #videoInfoDescription { color: var(--text-secondary); line-height: 1.6; }
+        #videoInfoDescription { color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; /* To respect newlines in notes */ }
         .completion-control button { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 600; border-radius: 30px; cursor: pointer; border: 2px solid; }
         .completion-control button.mark-complete { 
             background-color: transparent; 
@@ -774,6 +786,12 @@
                  <div style="margin-bottom: 1rem;">
                      <label for="tutorialTitle">Video Title</label>
                      <input type="text" id="tutorialTitle" required>
+                 </div>
+                 
+                 <!-- NEW: Added Notes field -->
+                 <div style="margin-bottom: 1rem;">
+                     <label for="tutorialNotes">Notes (Optional)</label>
+                     <textarea id="tutorialNotes" placeholder="Add any notes for this video..."></textarea>
                  </div>
                  
                  <div style="margin-bottom: 1.5rem;">
@@ -1399,7 +1417,7 @@
             }
         }
         
-        // --- VIDEO PLAYER LOGIC (Unchanged) ---
+        // --- VIDEO PLAYER LOGIC (MODIFIED) ---
         let currentVideoItem = null;
         let hls = null; // NEW: To keep track of the HLS.js instance
 
@@ -1407,7 +1425,8 @@
             currentVideoItem = item;
             showSection('videoPlayerSection');
             document.getElementById('videoInfoTitle').textContent = item.title;
-            document.getElementById('videoInfoDescription').textContent = item.description || '';
+            // MODIFIED: Use new 'notes' field and provide a default message
+            document.getElementById('videoInfoDescription').textContent = item.notes || 'No notes for this video.';
             const playerContainer = document.getElementById('videoPlayerContainer');
             
             // NEW: Clear any existing HLS instance
@@ -1421,11 +1440,12 @@
             const videoId = item.videoId || item.youtubeId; // Handle old/new data
             
             if (item.videoType === 'vimeo') {
-                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}?autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width:100%; height:100%;"></iframe>`;
+                // MODIFIED: Removed inline style
+                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}?autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
                 playerContainer.innerHTML = embedHtml;
             } else if (item.videoType === 'direct') {
-                // NEW: Use HTML5 <video> tag
-                embedHtml = `<video id="directVideoPlayer" controls autoplay style="width:100%; height:100%; background-color: #000;"></video>`;
+                // MODIFIED: Removed inline width/height style
+                embedHtml = `<video id="directVideoPlayer" controls autoplay style="background-color: #000;"></video>`;
                 playerContainer.innerHTML = embedHtml; // Set HTML first
 
                 // NOW, run the JS for this player
@@ -1472,6 +1492,7 @@
             }
         });
 
+        // This logic appears correct for toggling completion. No changes needed.
         document.getElementById('completionToggleButton').addEventListener('click', async () => {
             if (!currentVideoItem || !currentUserId) return;
             const videoId = currentVideoItem.id;
@@ -1495,6 +1516,7 @@
             }
         });
 
+        // This logic appears correct. No changes needed.
         async function updateCompletionButtonUI(videoId) {
             if (!currentUserId) return;
             const button = document.getElementById('completionToggleButton');
@@ -1532,7 +1554,7 @@
         document.body.classList.remove('light-theme');
 
 
-        // --- MODALS AND HELPER FUNCTIONS (Unchanged) ---
+        // --- MODALS AND HELPER FUNCTIONS (MODIFIED) ---
         function showModal(title, message, buttons = [{ text: 'OK' }]) {
             const modal = document.getElementById('messageModal');
             document.getElementById('modalTitle').textContent = title;
@@ -1599,6 +1621,7 @@
                     const link = document.getElementById('tutorialLink').value;
                     const title = document.getElementById('tutorialTitle').value;
                     const difficulty = document.getElementById('tutorialDifficulty').value;
+                    const notes = document.getElementById('tutorialNotes').value; // MODIFIED: Get notes
                     
                     const videoInfo = parseVideoLink(link); // UPDATED
                     
@@ -1607,6 +1630,7 @@
                         return;
                     }
                     
+                    // MODIFIED: Add notes field
                     const newItem = {
                         title: title, 
                         name: title, 
@@ -1614,6 +1638,7 @@
                         videoId: videoInfo.id,     // NEW (for 'direct', this is the full URL)
                         link: link, 
                         difficulty: difficulty, 
+                        notes: notes || '', // NEW
                         createdAt: Date.now()
                     };
 
@@ -1676,7 +1701,7 @@
                 // Standard URL patterns
                 // YouTube URL
                 let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                let match = url.match(regExp);
+                let match = url.match(regEx);
                 if (match && match[2].length === 11) {
                     return { type: 'youtube', id: match[2] };
                 }
