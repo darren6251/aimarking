@@ -903,6 +903,54 @@
         </div>
     </div>
 
+    <!-- NEW: Edit Video Modal -->
+    <div id="editVideoModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+             <h3>Edit Tutorial Video</h3>
+             <form id="editVideoForm">
+                <input type="hidden" id="editVideoParentId1">
+                <input type="hidden" id="editVideoParentId2">
+                <input type="hidden" id="editVideoId">
+                 
+                 <div style="margin-bottom: 1rem;">
+                     <label for="editTutorialLink">YouTube Link or Embed Code</label>
+                     <textarea id="editTutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
+                     <img id="editTutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
+                 </div>
+                 
+                 <div style="margin-bottom: 1rem;">
+                     <label for="editTutorialTitle">Video Title</label>
+                     <input type="text" id="editTutorialTitle" required>
+                 </div>
+                 
+                 <div style="margin-bottom: 1rem;">
+                     <label for="editTutorialNotes">Notes (Optional)</label>
+                     <textarea id="editTutorialNotes" placeholder="Add any notes for this video..."></textarea>
+                 </div>
+                 
+                 <div style="margin-bottom: 1.5rem;">
+                     <label for="editTutorialDifficulty">Difficulty Level</label>
+                     <select id="editTutorialDifficulty">
+                         <option value="U">Unspecified</option>
+                         <option value="1/5">1/5</option>
+                         <option value="2/5">2/5</option>
+                         <option value="3/5">3/5</option>
+                         <option value="4/5">4/5</option>
+                         <option value="5/5">5/5</option>
+                         <option value="5/5*">5/5*</option>
+                         <option value="5/5**">5/5**</option>
+                     </select>
+                 </div>
+                 
+                 <div class="modal-form-buttons">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                 </div>
+             </form>
+        </div>
+    </div>
+
+
     <!-- Firebase and App Logic -->
     <script type="module">
         // Import Firebase modules
@@ -1268,6 +1316,8 @@
                                 <span class="difficulty-badge-teacher">(${item.difficulty || 'U'})</span>
                             </span>
                             <div class="item-actions">
+                                <!-- MODIFIED: Added Edit Button -->
+                                <button class="edit-item-btn btn-primary" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}' data-item='${JSON.stringify(item)}'>Edit</button>
                                 <button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button>
                                 <button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button>
                             </div>`;
@@ -1350,6 +1400,10 @@
                     } else {
                         showAddFinalItemModal(type, parentIdsArray);
                     }
+                // MODIFIED: Added handler for Edit button
+                } else if (button.matches('.edit-item-btn')) {
+                    const { id, parentIds, item } = button.dataset;
+                    showEditFinalItemModal(type, JSON.parse(parentIds), id, JSON.parse(item));
                 } else if (button.matches('.delete-item-btn')) {
                     handleDeleteItem(type, parseInt(level), button.dataset.id, parentIdsArray);
                 } else if(button.matches('.preview-item-btn')) {
@@ -1859,6 +1913,22 @@
             });
         }
         
+        // NEW: Event listener for Edit modal's link input
+        const editTutorialLinkInput = document.getElementById('editTutorialLink');
+        if (editTutorialLinkInput) {
+            editTutorialLinkInput.addEventListener('input', () => {
+                const videoInfo = parseVideoLink(editTutorialLinkInput.value);
+                const previewImg = document.getElementById('editTutorialThumbnailPreview');
+                
+                if (videoInfo && videoInfo.type === 'youtube') {
+                    previewImg.src = `https://img.youtube.com/vi/${videoInfo.id}/mqdefault.jpg`;
+                    previewImg.style.display = 'block';
+                } else {
+                    previewImg.style.display = 'none';
+                }
+            });
+        }
+
         // --- UPDATED: YouTube ID Parser to Video Link Parser (YouTube & Vimeo) ---
         function parseVideoLink(url) {
             if (!url) return null;
@@ -1953,6 +2023,91 @@
                     }
                 }
             }, 50);
+        }
+
+        // NEW: Show Edit Video Modal
+        function showEditFinalItemModal(type, parentIds, id, item) {
+            const config = materialsConfig[type];
+            const modal = document.getElementById('editVideoModal'); // Use the new modal
+            if (!modal) return;
+            
+            // Pre-populate the form
+            document.getElementById('editVideoParentId1').value = parentIds[0] || '';
+            document.getElementById('editVideoParentId2').value = parentIds[1] || '';
+            document.getElementById('editVideoId').value = id || '';
+            document.getElementById('editTutorialLink').value = item.link || '';
+            document.getElementById('editTutorialTitle').value = item.title || '';
+            document.getElementById('editTutorialNotes').value = item.notes || '';
+            document.getElementById('editTutorialDifficulty').value = item.difficulty || 'U';
+
+            // Trigger thumbnail preview
+            const videoInfo = parseVideoLink(item.link || '');
+            const previewImg = document.getElementById('editTutorialThumbnailPreview');
+            if (videoInfo && videoInfo.type === 'youtube') {
+                previewImg.src = `https://img.youtube.com/vi/${videoInfo.id}/mqdefault.jpg`;
+                previewImg.style.display = 'block';
+            } else {
+                previewImg.style.display = 'none';
+            }
+            
+            modal.style.display = 'flex';
+            modal.querySelector('.close-button').onclick = () => closeModal(modal.id);
+            
+            const form = modal.querySelector('form');
+            if (!form.dataset.listenerAttached) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    // Get all the new values
+                    const parentId1 = document.getElementById('editVideoParentId1').value;
+                    const parentId2 = document.getElementById('editVideoParentId2').value;
+                    const videoId = document.getElementById('editVideoId').value;
+                    const link = document.getElementById('editTutorialLink').value;
+                    const title = document.getElementById('editTutorialTitle').value;
+                    const difficulty = document.getElementById('editTutorialDifficulty').value;
+                    const notes = document.getElementById('editTutorialNotes').value;
+                    
+                    const videoInfo = parseVideoLink(link);
+                    
+                    if (!videoInfo) {
+                        showModal("Invalid Link", "Please paste a valid YouTube, Vimeo, or direct video link (.mp4, .m3u8, etc.).");
+                        return;
+                    }
+                    
+                    // Create the updated item object
+                    // Note: We don't update createdAt, we preserve it.
+                    const updatedItem = {
+                        title: title,
+                        name: title, // Keep name and title in sync
+                        videoType: videoInfo.type,
+                        videoId: videoInfo.id,
+                        link: link,
+                        difficulty: difficulty,
+                        notes: notes || '',
+                        // We don't touch createdAt, updateDoc only changes specified fields
+                    };
+
+                    try {
+                        const itemPath = getPath(type, [parentId1, parentId2]);
+                        const docRef = doc(db, itemPath, videoId); // Get reference to the specific doc
+                        
+                        await updateDoc(docRef, updatedItem); // Use updateDoc
+                        
+                        const containerId = `container-level3-${type}-${parentId2}`;
+                        
+                        const sortSelect = document.getElementById(`sort-teacher-${type}-${parentId2}`);
+                        const sortBy = sortSelect ? sortSelect.value : 'name-asc';
+                        
+                        renderContent(type, containerId, 3, [parentId1, parentId2], sortBy);
+                        closeModal(modal.id);
+                        showModal('Success', 'Video updated successfully.');
+                    } catch (error) {
+                        console.error("Error updating video:", error);
+                        showModal('Error', `Failed to update video. ${error.message}`);
+                    }
+                });
+                form.dataset.listenerAttached = 'true';
+            }
         }
 
         function closeModal(modalId) {
