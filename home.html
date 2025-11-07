@@ -654,6 +654,78 @@
         color: var(--bg-primary);
     }
     
+    /* --- NEW: Stopwatch & Timer Section --- */
+    .study-tools-section {
+        width: 100%;
+        max-width: 1200px;
+        padding: 2rem;
+        background-color: var(--bg-secondary);
+        border-radius: 12px;
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+        justify-content: center;
+        gap: 2rem;
+    }
+    .study-tool-box {
+        background-color: var(--bg-primary);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    .study-tool-box h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    .study-tool-display {
+        font-size: 2.75rem; /* Slightly smaller than main clock */
+        font-weight: 600;
+        letter-spacing: -1px;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+        margin: 0.5rem 0;
+    }
+    .timer-inputs {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+    }
+    .timer-inputs input {
+        width: 60px;
+        text-align: center;
+        font-size: 1rem;
+        padding: 8px;
+    }
+    .timer-inputs input:disabled {
+        background-color: var(--bg-tertiary);
+        opacity: 0.7;
+    }
+    .timer-inputs span {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+    .study-tool-controls {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    .study-tool-btn {
+        padding: 8px 16px;
+        font-weight: 600;
+    }
+
     /* --- DASHBOARD: CALENDAR & TODO --- */
     .dashboard-container {
         width: 100%;
@@ -1064,6 +1136,9 @@
         .time-display, .countdown-display {
             font-size: 2.5rem;
         }
+        .study-tool-display { /* NEW: Responsive font size */
+            font-size: 2.2rem;
+        }
         .date-display {
             font-size: 1rem;
         }
@@ -1199,6 +1274,38 @@
             </div>
         </section>
         
+        <!-- === NEW STOPWATCH & TIMER SECTION === -->
+        <section class="study-tools-section">
+            <!-- Stopwatch Box -->
+            <div class="study-tool-box">
+                <h3>Stopwatch</h3>
+                <div id="stopwatchDisplay" class="study-tool-display">00:00:00.000</div>
+                <div class="study-tool-controls">
+                    <button id="startStopwatchBtn" class="btn-primary study-tool-btn">Start</button>
+                    <button id="stopStopwatchBtn" class="logout-btn study-tool-btn" style="display: none;">Stop</button>
+                    <button id="resetStopwatchBtn" class="logout-btn study-tool-btn">Reset</button>
+                </div>
+            </div>
+            
+            <!-- Timer Box -->
+            <div class="study-tool-box">
+                <h3>Timer</h3>
+                <div id="timerDisplay" class="study-tool-display">00:00:00</div>
+                <div id="timerInputs" class="timer-inputs">
+                    <input type="number" id="timerHours" min="0" placeholder="HH" value="0">
+                    <span>:</span>
+                    <input type="number" id="timerMinutes" min="0" max="59" placeholder="MM" value="0">
+                    <span>:</span>
+                    <input type="number" id="timerSeconds" min="0" max="59" placeholder="SS" value="0">
+                </div>
+                <div class="study-tool-controls">
+                    <button id="startTimerBtn" class="btn-primary study-tool-btn">Start</button>
+                    <button id="stopTimerBtn" class="logout-btn study-tool-btn" style="display: none;">Stop</button>
+                    <button id="resetTimerBtn" class="logout-btn study-tool-btn">Reset</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Dashboard Section -->
         <section class="dashboard-container">
             <!-- Calendar -->
@@ -1374,6 +1481,19 @@
     let studyHistory = [];
     let unsubscribeProfile = () => {};
     let unsubscribeStudyHistory = () => {};
+
+    // --- NEW: Stopwatch & Timer State ---
+    let stopwatchInterval = null;
+    let stopwatchStartTime = 0;
+    let stopwatchElapsedTime = 0;
+    let stopwatchRunning = false;
+    
+    let timerInterval = null;
+    let timerTotalTime = 0; // in seconds
+    let timerTimeRemaining = 0; // in seconds
+    let timerRunning = false;
+    let timerAudioContext = null; // For beep sound
+    let timerBeepNode = null;
 
 
     // --- AUTH & INITIALIZATION ---
@@ -1801,6 +1921,26 @@
         document.getElementById('redeemFullDayBtn').addEventListener('click', handleRedeemPoints);
         // *** NEW: Add listener for deleting study logs
         document.getElementById('study-history-list').addEventListener('click', handleDeleteStudyLog);
+
+        // --- NEW: Stopwatch & Timer Listeners ---
+        document.getElementById('startStopwatchBtn').addEventListener('click', startStopwatch);
+        document.getElementById('stopStopwatchBtn').addEventListener('click', stopStopwatch);
+        document.getElementById('resetStopwatchBtn').addEventListener('click', resetStopwatch);
+        
+        document.getElementById('startTimerBtn').addEventListener('click', startTimer);
+        document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
+        document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+        
+        // Initialize timer audio context on user interaction
+        const initAudio = () => {
+            if (!timerAudioContext) {
+                timerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            document.body.removeEventListener('click', initAudio);
+        };
+        // Use 'click' or 'keydown' as robust ways to ensure user interaction
+        document.body.addEventListener('click', initAudio, { once: true });
+        document.body.addEventListener('keydown', initAudio, { once: true });
     }
     
     function handleMonthYearChange() {
@@ -2507,6 +2647,175 @@
                 }
             ]
         );
+    }
+
+    // --- NEW: STOPWATCH FUNCTIONS ---
+    
+    function startStopwatch() {
+        if (stopwatchRunning) return;
+        stopwatchRunning = true;
+        stopwatchStartTime = Date.now() - stopwatchElapsedTime;
+        stopwatchInterval = setInterval(updateStopwatchDisplay, 10); // Update every 10ms
+        
+        document.getElementById('startStopwatchBtn').style.display = 'none';
+        document.getElementById('stopStopwatchBtn').style.display = 'inline-block';
+    }
+    
+    function stopStopwatch() {
+        if (!stopwatchRunning) return;
+        stopwatchRunning = false;
+        clearInterval(stopwatchInterval);
+        stopwatchElapsedTime = Date.now() - stopwatchStartTime;
+        
+        document.getElementById('startStopwatchBtn').style.display = 'inline-block';
+        document.getElementById('stopStopwatchBtn').style.display = 'none';
+    }
+    
+    function resetStopwatch() {
+        stopStopwatch();
+        stopwatchElapsedTime = 0;
+        document.getElementById('stopwatchDisplay').textContent = '00:00:00.000';
+    }
+    
+    function updateStopwatchDisplay() {
+        if (!stopwatchRunning) return;
+        const elapsed = Date.now() - stopwatchStartTime;
+        
+        let totalMilliseconds = elapsed;
+        let hours = Math.floor(totalMilliseconds / 3600000);
+        totalMilliseconds %= 3600000;
+        let minutes = Math.floor(totalMilliseconds / 60000);
+        totalMilliseconds %= 60000;
+        let seconds = Math.floor(totalMilliseconds / 1000);
+        let milliseconds = totalMilliseconds % 1000;
+        
+        document.getElementById('stopwatchDisplay').textContent = 
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+    }
+
+    // --- NEW: TIMER FUNCTIONS ---
+    
+    function startTimer() {
+        if (timerRunning) return;
+
+        // Try to initialize audio context if it hasn't been already
+        if (!timerAudioContext) {
+             try {
+                timerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+             } catch (e) {
+                console.warn("Could not initialize AudioContext for timer beep.");
+             }
+        }
+
+        const hours = parseInt(document.getElementById('timerHours').value) || 0;
+        const minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
+        const seconds = parseInt(document.getElementById('timerSeconds').value) || 0;
+        
+        timerTotalTime = (hours * 3600) + (minutes * 60) + seconds;
+        
+        if (timerTotalTime <= 0) {
+            showModal('Timer Error', 'Please set a time greater than 0 seconds.');
+            return;
+        }
+        
+        // If timer was stopped, resume. Otherwise, start from total.
+        timerTimeRemaining = timerTimeRemaining > 0 ? timerTimeRemaining : timerTotalTime;
+        
+        timerRunning = true;
+        toggleTimerInputs(false); // Disable inputs
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+        
+        document.getElementById('startTimerBtn').style.display = 'none';
+        document.getElementById('stopTimerBtn').style.display = 'inline-block';
+    }
+    
+    function stopTimer() {
+        if (!timerRunning) return;
+        timerRunning = false;
+        clearInterval(timerInterval);
+        
+        document.getElementById('startTimerBtn').style.display = 'inline-block';
+        document.getElementById('stopTimerBtn').style.display = 'none';
+    }
+    
+    function resetTimer() {
+        stopTimer();
+        timerTimeRemaining = 0;
+        timerTotalTime = 0;
+        document.getElementById('timerDisplay').textContent = '00:00:00';
+        toggleTimerInputs(true); // Enable inputs
+        
+        // Reset input fields
+        document.getElementById('timerHours').value = '0';
+        document.getElementById('timerMinutes').value = '0';
+        document.getElementById('timerSeconds').value = '0';
+    }
+    
+    function updateTimerDisplay() {
+        if (!timerRunning) return;
+        
+        if (timerTimeRemaining <= 0) {
+            stopTimer();
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+            toggleTimerInputs(true);
+            showModal('Timer Finished!', 'Your study timer has ended.');
+            playTimerBeep();
+            
+            // Reset timer values after it finishes
+            timerTimeRemaining = 0;
+            timerTotalTime = 0;
+            document.getElementById('timerHours').value = '0';
+            document.getElementById('timerMinutes').value = '0';
+            document.getElementById('timerSeconds').value = '0';
+            return;
+        }
+        
+        timerTimeRemaining--;
+        
+        let remaining = timerTimeRemaining;
+        let hours = Math.floor(remaining / 3600);
+        remaining %= 3600;
+        let minutes = Math.floor(remaining / 60);
+        let seconds = remaining % 60;
+        
+        document.getElementById('timerDisplay').textContent = 
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    function toggleTimerInputs(enabled) {
+        document.getElementById('timerHours').disabled = !enabled;
+        document.getElementById('timerMinutes').disabled = !enabled;
+        document.getElementById('timerSeconds').disabled = !enabled;
+    }
+    
+    function playTimerBeep() {
+        if (!timerAudioContext) {
+            console.warn("AudioContext not initialized. Click anywhere on the page first.");
+            return;
+        }
+
+        // Stop any previous beep
+        if (timerBeepNode) {
+            try {
+                timerBeepNode.stop();
+            } catch (e) {} // Ignore error if already stopped
+        }
+
+        // Create an oscillator
+        timerBeepNode = timerAudioContext.createOscillator();
+        const gainNode = timerAudioContext.createGain();
+
+        timerBeepNode.connect(gainNode);
+        gainNode.connect(timerAudioContext.destination);
+
+        // Set beep properties
+        timerBeepNode.type = 'sine';
+        timerBeepNode.frequency.setValueAtTime(880, timerAudioContext.currentTime); // A5 note
+        gainNode.gain.setValueAtTime(0.5, timerAudioContext.currentTime); // Volume
+
+        // Start and stop the beep
+        timerBeepNode.start(timerAudioContext.currentTime);
+        timerBeepNode.stop(timerAudioContext.currentTime + 0.5); // 500ms beep
     }
 
 
