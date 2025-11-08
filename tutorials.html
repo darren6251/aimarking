@@ -1247,60 +1247,9 @@
             const section = document.getElementById(config.sectionId);
             if (!section) return;
 
-            // --- *** NEW FIX: DEFINE THE FUNCTION HERE *** ---
-            // By defining the function *inside* setupMaterialSection, it is
-            // 100% guaranteed to be in scope for the event listener.
-            function showUnlockTeacherModal(type) {
-                showInputModal('Unlock Teacher Content', 'Enter the teacher\'s access code:', async (code) => {
-                    if (!code) return;
-                    
-                    try {
-                        // MODIFIED: Query the public 'teacherAccessCodes' collection
-                        const publicCodesRef = collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`);
-                        const q = query(publicCodesRef, where("code", "==", code.trim()));
-                        const snapshot = await getDocs(q);
-
-                        if (snapshot.empty) {
-                            showModal('Invalid Code', 'That access code was not found. Please check the code and try again.');
-                            return;
-                        }
-
-                        const teacherDoc = snapshot.docs[0];
-                        const teacherId = teacherDoc.id; // This is the teacher's User ID
-                        const teacherName = teacherDoc.data().teacherName;
-
-                        // Add this teacherId to the student's 'unlockedTeachers' array
-                        const studentProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                        
-                        // Get current unlocked list, or init
-                        let unlocked = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
-                        
-                        if (unlocked.includes(teacherId)) {
-                            showModal('Already Unlocked', `You have already unlocked content from ${teacherName}.`);
-                            return;
-                        }
-
-                        unlocked.push(teacherId);
-                        
-                        await updateDoc(studentProfileRef, { unlockedTeachers: unlocked });
-                        currentUserProfile.unlockedTeachers = unlocked; // Update cache
-
-                        showModal('Success!', `You have unlocked content from ${teacherName}. Their subjects will now appear.`);
-                        
-                        // Refresh the filters to show the new teacher
-                        setupViewerFilters(type);
-
-                    } catch (error) {
-                        console.error("Error unlocking teacher:", error);
-                        // NEW: Better error message
-                        if (error.code === 'failed-precondition') {
-                            showModal('Error: Missing Index', `The app is missing a required database index. Please ask your administrator to check the browser console for a link to create it.`);
-                        } else {
-                            showModal('Error', `An error occurred: ${error.message}.`);
-                        }
-                    }
-                });
-            }
+            // --- *** NEW FIX: DELETE THE FUNCTION HERE *** ---
+            // The showUnlockTeacherModal function is no longer defined here.
+            // Its code will be pasted directly into the click listener.
             // --- *** END OF NEW FIX *** ---
 
 
@@ -1393,13 +1342,63 @@
 
             // --- THIS IS THE FIX ---
             // Add the click listener to the "Unlock" button
-            // unlockTeacherBtn.onclick = () => showUnlockTeacherModal(type); // OLD METHOD
             
-            // --- NEW FIX: Use addEventListener and add a console log ---
             if (unlockTeacherBtn) {
+                // --- NEW FIX: PASTE ALL THE LOGIC INLINE ---
                 unlockTeacherBtn.addEventListener('click', () => {
                     console.log("Unlock button clicked! Opening modal..."); // For debugging
-                    showUnlockTeacherModal(type);
+                    
+                    // --- START OF INLINED showUnlockTeacherModal ---
+                    showInputModal('Unlock Teacher Content', 'Enter the teacher\'s access code:', async (code) => {
+                        if (!code) return;
+                        
+                        try {
+                            // MODIFIED: Query the public 'teacherAccessCodes' collection
+                            const publicCodesRef = collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`);
+                            const q = query(publicCodesRef, where("code", "==", code.trim()));
+                            const snapshot = await getDocs(q);
+
+                            if (snapshot.empty) {
+                                showModal('Invalid Code', 'That access code was not found. Please check the code and try again.');
+                                return;
+                            }
+
+                            const teacherDoc = snapshot.docs[0];
+                            const teacherId = teacherDoc.id; // This is the teacher's User ID
+                            const teacherName = teacherDoc.data().teacherName;
+
+                            // Add this teacherId to the student's 'unlockedTeachers' array
+                            const studentProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                            
+                            // Get current unlocked list, or init
+                            let unlocked = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+                            
+                            if (unlocked.includes(teacherId)) {
+                                showModal('Already Unlocked', `You have already unlocked content from ${teacherName}.`);
+                                return;
+                            }
+
+                            unlocked.push(teacherId);
+                            
+                            await updateDoc(studentProfileRef, { unlockedTeachers: unlocked });
+                            currentUserProfile.unlockedTeachers = unlocked; // Update cache
+
+                            showModal('Success!', `You have unlocked content from ${teacherName}. Their subjects will now appear.`);
+                            
+                            // Refresh the filters to show the new teacher
+                            setupViewerFilters(type);
+
+                        } catch (error) {
+                            console.error("Error unlocking teacher:", error);
+                            // NEW: Better error message
+                            if (error.code === 'failed-precondition') {
+                                showModal('Error: Missing Index', `The app is missing a required database index. Please ask your administrator to check the browser console for a link to create it.`);
+                            } else {
+                                showModal('Error', `An error occurred: ${error.message}.`);
+                            }
+                        }
+                    });
+                    // --- END OF INLINED showUnlockTeacherModal ---
                 });
             } else {
                 console.error("Could not find the unlock button to attach listener.");
