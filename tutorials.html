@@ -1280,6 +1280,8 @@
                             <!-- Current teacher's subjects go here -->
                         </div>
                         <button id="add-level1-${type}-btn" class="btn-primary" style="margin-top: 1rem;">Add New ${config.level1}</button>
+                        <!-- NEW: Migration button -->
+                        <button id="migrate-data-btn" class="btn-primary" style="margin-top: 1rem; margin-left: 1rem; background-color: var(--accent-red); border-color: var(--accent-red); display: none;">Fix My Old Subjects</button>
                     </div>
                     
                     <div id="other-subjects-container-${type}">
@@ -1319,6 +1321,9 @@
                 managerSection.addEventListener('click', (e) => handleTeacherClick(e, type));
                 managerSection.addEventListener('change', (e) => handleTeacherSort(e, type));
 
+                // NEW: Add listener for migration button
+                document.getElementById(`migrate-data-btn`).onclick = () => runMigration(type);
+
             } else {
                 teacherTabs.style.display = 'none';
                 viewerSection.style.display = 'block';
@@ -1343,7 +1348,9 @@
 
             try {
                 // Query all subjects, ordered by teacher name, then subject name
-                const q = query(collection(db, getPath(type)), orderBy('teacherName', 'asc'), orderBy('name', 'asc'));
+                // MODIFIED: Changed query to be more robust. Order by name first.
+                // This avoids errors if 'teacherName' field is missing on some documents.
+                const q = query(collection(db, getPath(type)), orderBy('name', 'asc'));
                 const snapshot = await getDocs(q);
 
                 if (snapshot.empty) {
@@ -1351,11 +1358,20 @@
                     return;
                 }
 
+                // NEW: Check if any subjects are missing teacher info, and show the migration button
+                let showMigrationButton = false;
+
                 // Group subjects by teacher
                 const groupedSubjects = {};
                 snapshot.forEach(doc => {
                     const item = doc.data();
                     item.id = doc.id;
+                    
+                    // NEW: Check for migration
+                    if (!item.teacherId || !item.teacherName) {
+                        showMigrationButton = true;
+                    }
+
                     const teacherId = item.teacherId || 'unknown'; // Group items without a teacher
                     if (!groupedSubjects[teacherId]) {
                         groupedSubjects[teacherId] = {
@@ -1415,6 +1431,16 @@
 
                 myContainer.innerHTML = myHtml || `<p>You have not added any ${config.level1.toLowerCase()}s yet.</p>`;
                 othersContainer.innerHTML = othersHtml;
+
+                // NEW: Show migration button if needed
+                const migrateBtn = document.getElementById('migrate-data-btn');
+                if (showMigrationButton) {
+                    migrateBtn.style.display = 'inline-block';
+                    showModal('Action Required', 'We found some subjects that were created before the new Teacher update. Please click the red "Fix My Old Subjects" button to assign them to your account.');
+                } else {
+                    migrateBtn.style.display = 'none';
+                }
+
 
             } catch (error) {
                 console.error(`Error rendering teacher manager view for ${type}:`, error);
@@ -1609,6 +1635,58 @@
             }
         }
         
+        // --- NEW: Migration function ---
+        async function runMigration(type) {
+            if (!currentUserId || !currentUserName) {
+                showModal('Error', 'You must be logged in to do this.');
+                return;
+            }
+
+            showModal('Migrating...', 'Please wait, updating your existing subjects...');
+
+            try {
+                const config = materialsConfig[type];
+                const collectionRef = collection(db, getPath(type));
+                const q = query(collectionRef); // Get all subjects
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    showModal('Complete', 'No subjects found to migrate.');
+                    return;
+                }
+
+                const batch = writeBatch(db);
+                let migrationCount = 0;
+
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    // If a subject is missing teacher info, add it to the batch
+                    if (!item.teacherId || !item.teacherName) {
+                        batch.update(doc.ref, {
+                            teacherId: currentUserId,
+                            teacherName: currentUserName
+                        });
+                        migrationCount++;
+                    }
+                });
+
+                if (migrationCount > 0) {
+                    await batch.commit();
+                    showModal('Success!', `Successfully updated ${migrationCount} subjects and assigned them to you. The page will now reload.`);
+                } else {
+                    showModal('All Set!', 'All your subjects are already up to date. No migration was needed.');
+                }
+
+                // Refresh both teacher and student views
+                renderTeacherManagerView(type);
+                setupViewerFilters(type); // This will re-populate the teacher dropdown
+
+            } catch (error) {
+                console.error("Error during migration:", error);
+                showModal('Migration Error', `An error occurred: ${error.message}`);
+            }
+        }
+
         // --- Teacher Sort Handler (Unchanged) ---
         function handleTeacherSort(e, type) {
             const select = e.target.closest('select.teacher-sort-filter');
