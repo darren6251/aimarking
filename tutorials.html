@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Custom styles -->
+    <!-- Custom styles (No changes) -->
     <style>
         /* --- NEW THEME (from tutorial_video_demo) --- */
         :root {
@@ -1033,6 +1033,7 @@
         // Firebase and App State Variables
         let app, db, auth, storage;
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
+        let currentUserProfile = null; // NEW: To store the user's profile data
         let currentMaterialViewMode = 'card';
 
         // DOM Element References
@@ -1058,7 +1059,7 @@
             <p id="codeError" class="error-message"></p>
         `;
 
-        // --- FIREBASE INITIALIZATION & AUTH (Unchanged) ---
+        // --- FIREBASE INITIALIZATION & AUTH (MODIFIED) ---
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -1079,6 +1080,7 @@
                     const userProfileDoc = await getDoc(userProfileRef);
                     if (userProfileDoc.exists() && userProfileDoc.data().role) {
                         const profileData = userProfileDoc.data();
+                        currentUserProfile = profileData; // NEW: Store the whole profile
                         currentUserRole = profileData.role;
                         currentUserName = profileData.name || user.displayName;
                         await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
@@ -1086,6 +1088,7 @@
                     } else {
                         currentUserName = user.displayName;
                         currentUserRole = 'unassigned';
+                        currentUserProfile = {}; // NEW: Init empty profile
                         showCodeEntry();
                     }
                 } catch (e) {
@@ -1097,6 +1100,7 @@
                 currentUserId = null;
                 currentUserRole = null;
                 currentUserName = null;
+                currentUserProfile = null; // NEW: Clear profile on log out
                 showLogin();
             }
         });
@@ -1160,8 +1164,22 @@
             
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await setDoc(userProfileRef, { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                // NEW: Initialize an empty profile for the new user
+                const profileData = { 
+                    role: roleToSet, 
+                    name: currentUserName, 
+                    email: currentUserEmail, 
+                    lastLogin: Date.now() 
+                };
+                
+                // NEW: Add empty unlocked array for students
+                if (roleToSet === 'student') {
+                    profileData.unlockedTeachers = [];
+                }
+
+                await setDoc(userProfileRef, profileData, { merge: true });
                 currentUserRole = roleToSet;
+                currentUserProfile = profileData; // NEW: Store new profile
                 showModal('Success!', `Your role has been set to ${roleToSet}.`);
                 showApp();
             } catch (error) {
@@ -1241,11 +1259,16 @@
                 <!-- NEW: Unified Viewer (for both roles) with 4 filter steps -->
                 <div id="viewer-${type}-view" style="display:none;">
                     <div class="viewer-filters-container">
-                        <!-- NEW: Step 1 - Teacher Filter -->
-                        <div class="filter-step">
-                            <label for="teacher-${type}-filter">1. Select Teacher</label>
-                            <select id="teacher-${type}-filter"><option value="">-- Select Teacher --</option></select>
+                        
+                        <!-- NEW: Step 1 - Teacher Filter with Unlock Button -->
+                        <div class="filter-step" style="flex-direction: row; align-items: center; gap: 1rem;">
+                            <div style="flex-grow: 1;"> <!-- Wrapper for select -->
+                                <label for="teacher-${type}-filter">1. Select Teacher</label>
+                                <select id="teacher-${type}-filter"><option value="">-- Unlock a Teacher --</option></select>
+                            </div>
+                            <button id="unlock-teacher-btn-${type}" class="btn-primary" style="padding: 12px 18px; margin-top: 1.5rem;">Unlock</button>
                         </div>
+                        
                         <!-- MODIFIED: Step 2 - Subject Filter -->
                         <div class="filter-step" id="filter-step-1-${type}" style="opacity: 0.5; pointer-events: none;">
                             <label for="level1-${type}-filter">2. Select ${config.level1}</label>
@@ -1274,6 +1297,18 @@
                 
                 <!-- NEW: Teacher Management View (with grouping) -->
                 <div id="manager-${type}-view" style="display:none;">
+                
+                     <!-- NEW: Teacher Access Code Manager -->
+                     <div class="form-container" id="teacher-code-manager">
+                        <h3 class="teacher-group-heading">My Teacher Access Code</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Students will use this code to unlock your content. (e.g., ${currentUserName.split(' ')[0]}123)</p>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="text" id="teacherAccessCodeInput" placeholder="Enter your code..." style="margin-bottom: 0;">
+                            <button id="saveTeacherAccessCodeBtn" class="btn-primary">Save Code</button>
+                        </div>
+                        <p id="teacherAccessCodeStatus" style="margin-top: 1rem;"></p>
+                    </div>
+
                      <div class="form-container" style="max-width: initial;">
                         <h3 id="my-subjects-heading-${type}" class="teacher-group-heading">My Subjects</h3>
                         <div id="level1-${type}-container-mine">
@@ -1293,11 +1328,15 @@
             const viewerSection = document.getElementById(`viewer-${type}-view`);
             const managerSection = document.getElementById(`manager-${type}-view`);
             const teacherTabs = document.getElementById(`teacher-tabs-${type}`);
+            const teacherCodeManager = document.getElementById(`teacher-code-manager`); // NEW
+            const unlockTeacherBtn = document.getElementById(`unlock-teacher-btn-${type}`); // NEW
 
             if (isTeacher) {
                 teacherTabs.style.display = 'flex';
                 viewerSection.style.display = 'block'; // Show viewer by default
                 managerSection.style.display = 'none';
+                teacherCodeManager.style.display = 'block'; // NEW: Show code manager
+                unlockTeacherBtn.style.display = 'none'; // NEW: Hide unlock button for teachers
 
                 // Setup tab listeners
                 teacherTabs.addEventListener('click', (e) => {
@@ -1324,10 +1363,23 @@
                 // NEW: Add listener for migration button
                 document.getElementById(`migrate-data-btn`).onclick = () => runMigration(type);
 
+                // NEW: Add listener for teacher code
+                document.getElementById('saveTeacherAccessCodeBtn').onclick = () => saveTeacherAccessCode();
+                // NEW: Load existing code
+                if (currentUserProfile && currentUserProfile.contentAccessCode) {
+                    document.getElementById('teacherAccessCodeInput').value = currentUserProfile.contentAccessCode;
+                }
+
             } else {
+                // Student View
                 teacherTabs.style.display = 'none';
                 viewerSection.style.display = 'block';
                 managerSection.style.display = 'none';
+                teacherCodeManager.style.display = 'none'; // NEW: Hide code manager
+                unlockTeacherBtn.style.display = 'inline-block'; // NEW: Show unlock button
+                
+                // NEW: Add listener for student unlock button
+                unlockTeacherBtn.onclick = () => showUnlockTeacherModal(type);
             }
             
             // Setup viewer for BOTH roles
@@ -1726,11 +1778,14 @@
             const step1 = document.getElementById(`filter-step-1-${type}`);
             const step2 = document.getElementById(`filter-step-2-${type}`);
             const step3 = document.getElementById(`filter-step-3-${type}`);
+            
+            // NEW: Get student's unlocked teacher list
+            const unlockedTeacherIds = (currentUserProfile && currentUserProfile.unlockedTeachers) ? currentUserProfile.unlockedTeachers : [];
 
             // --- NEW LOGIC: Fetch all subjects ONCE ---
             let allSubjects = [];
-            let teacherMap = new Map();
-            teacherFilter.innerHTML = `<option value="">-- Loading Teachers --</option>`;
+            let teacherIdToNameMap = new Map();
+            teacherFilter.innerHTML = `<option value="">-- Loading... --</option>`;
             
             try {
                 // Get all subjects, ordered by name. This query works without a special index.
@@ -1740,36 +1795,42 @@
                 snapshot.forEach(doc => {
                     const subject = doc.data();
                     subject.id = doc.id;
-                    allSubjects.push(subject); // Store the subject data locally
+                    allSubjects.push(subject); // Store the subject data
                     
-                    // Build a unique list of teachers
-                    if (subject.teacherName) {
-                        teacherMap.set(subject.teacherName, true);
+                    // Build a map of teacher IDs to Names
+                    if (subject.teacherId && subject.teacherName) {
+                        teacherIdToNameMap.set(subject.teacherId, subject.teacherName);
                     }
                 });
 
             } catch (e) {
                 console.error("Error loading subjects for filters:", e);
-                teacherFilter.innerHTML = `<option value="">-- Error Loading --</option>`;
-                level1Filter.innerHTML = `<option value="">-- Error --</option>`;
+                teacherFilter.innerHTML = `<option value="">-- Error --</option>`;
                 return; // Stop if subjects can't be loaded
             }
             
-            // 1. Populate Teacher Filter from the map
+            // 1. Populate Teacher Filter from the student's unlocked list
             teacherFilter.innerHTML = `<option value="">-- Select a Teacher --</option>`;
-            if (teacherMap.size === 0) {
-                teacherFilter.innerHTML += `<option value="" disabled>-- No Teachers Available --</option>`;
+            if (unlockedTeacherIds.length === 0) {
+                teacherFilter.innerHTML += `<option value="" disabled>-- Use 'Unlock' to add a teacher --</option>`;
             } else {
-                const sortedTeachers = [...teacherMap.keys()].sort();
+                let unlockedNames = new Set();
+                unlockedTeacherIds.forEach(id => {
+                    if (teacherIdToNameMap.has(id)) {
+                        unlockedNames.add(teacherIdToNameMap.get(id));
+                    }
+                });
+                
+                const sortedTeachers = [...unlockedNames].sort();
                 sortedTeachers.forEach(name => {
-                    teacherFilter.add(new Option(name, name));
+                    teacherFilter.add(new Option(name, name)); // Value is the name, e.g., "Darren Ng"
                 });
             }
             // --- END OF NEW LOGIC ---
 
             // MODIFIED: Step 2 - Teacher filter onchange
             teacherFilter.onchange = async () => {
-                const selectedTeacher = teacherFilter.value;
+                const selectedTeacher = teacherFilter.value; // This is the teacher's NAME
                 
                 // Reset all subsequent filters
                 level1Filter.innerHTML = `<option value="">-- Select ${config.level1} --</option>`;
@@ -1968,41 +2029,8 @@
              }
         }
         
-        // --- NEW: Populate Teacher Filter Dropdown (REMOVED) ---
+        // --- Populate Teacher Filter Dropdown (REMOVED) ---
         // This function is no longer needed, logic is moved into setupViewerFilters
-        /*
-        async function populateTeacherFilter(selectElement, collectionRef, levelName) {
-            selectElement.innerHTML = `<option value="">-- Loading Teachers --</option>`;
-            try {
-                // We query all subjects just to get the teacher names
-                const snapshot = await getDocs(collectionRef);
-                const teachers = new Set();
-                
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.teacherName) {
-                        teachers.add(data.teacherName);
-                    }
-                });
-
-                selectElement.innerHTML = `<option value="">-- Select a Teacher --</option>`;
-                if(teachers.size === 0) {
-                    selectElement.innerHTML += `<option value="" disabled>-- No Teachers Available --</option>`;
-                    return;
-                }
-                
-                // Sort and add teachers to the dropdown
-                const sortedTeachers = [...teachers].sort();
-                sortedTeachers.forEach(name => {
-                    selectElement.add(new Option(name, name));
-                });
-            }
-            catch (e) {
-                console.error(`Error loading teachers:`, e);
-                selectElement.innerHTML = `<option value="">-- Error --</option>`;
-            }
-        }
-        */
         
         // --- MODIFIED: Populate Filter Dropdown (to accept a query) ---
         async function populateFilter(selectElement, queryOrRef, levelName) {
@@ -2235,57 +2263,118 @@
 
 
         // --- MODALS AND HELPER FUNCTIONS (MODIFIED) ---
-        function showModal(title, message, buttons = [{ text: 'OK' }]) {
-            const modal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').innerHTML = message;
-            const modalButtons = document.getElementById('modalButtons');
-            modalButtons.innerHTML = '';
-            buttons.forEach(btnInfo => {
-                const button = document.createElement('button');
-                button.textContent = btnInfo.text;
-                // NEW: Apply correct classes for styling
-                button.className = btnInfo.class || (btnInfo.text === 'Cancel' ? 'logout-btn' : 'btn-primary');
-                button.onclick = () => {
-                    if (btnInfo.callback) btnInfo.callback();
-                    closeModal(modal.id);
-                };
-                modalButtons.appendChild(button);
-            });
-            modal.style.display = 'flex';
-            modal.querySelector('.close-button').onclick = () => closeModal(modal.id);
+        
+        // --- NEW: saveTeacherAccessCode ---
+        async function saveTeacherAccessCode() {
+            const input = document.getElementById('teacherAccessCodeInput');
+            const status = document.getElementById('teacherAccessCodeStatus');
+            const newCode = input.value.trim();
+            
+            if (!newCode) {
+                status.textContent = "Please enter a code.";
+                status.style.color = "var(--accent-red)";
+                return;
+            }
+            status.textContent = "Checking code...";
+            status.style.color = "var(--text-secondary)";
+
+            try {
+                // 1. Check if code is already taken by another teacher
+                // MODIFIED: Check the new public collection
+                const publicCodesRef = collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`);
+                const q = query(publicCodesRef, where("code", "==", newCode));
+                const snapshot = await getDocs(q);
+                
+                let codeTaken = false;
+                snapshot.forEach(doc => {
+                    if (doc.id !== currentUserId) {
+                        codeTaken = true;
+                    }
+                });
+
+                if (codeTaken) {
+                    status.textContent = "This code is already taken by another teacher. Please choose a new one.";
+                    status.style.color = "var(--accent-red)";
+                    return;
+                }
+
+                // 2. Save the code
+                status.textContent = "Saving...";
+                // BATCH WRITE: Save to both private profile and public collection
+                const batch = writeBatch(db);
+
+                // Path 1: Private user profile
+                const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                batch.update(profileRef, { contentAccessCode: newCode });
+                
+                // Path 2: Public code collection
+                const publicCodeDocRef = doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, currentUserId);
+                batch.set(publicCodeDocRef, { 
+                    code: newCode, 
+                    teacherName: currentUserName 
+                });
+                
+                await batch.commit(); // Commit both writes at once
+
+                currentUserProfile.contentAccessCode = newCode; // Update local cache
+                status.textContent = "Access code saved successfully!";
+                status.style.color = "var(--accent-green)";
+
+            } catch (error) {
+                console.error("Error saving access code:", error);
+                status.textContent = `Error: ${error.message}. This may be a Firestore Index issue. Please check the console.`;
+                status.style.color = "var(--accent-red)";
+            }
         }
 
-        // --- MODIFIED: showAddItemModal (to add teacher fields and refresh manager view) ---
-        function showAddItemModal(type, level, parentIds = []) {
-            const config = materialsConfig[type];
-            const levelName = config[`level${level}`];
-            showInputModal(`Add New ${levelName}`, `Enter the name for the new ${levelName.toLowerCase()}:`, async (name) => {
-                if (name) {
-                    try {
-                        const collectionRef = collection(db, getPath(type, parentIds));
-                        
-                        if (level === 1) {
-                            // NEW: Add teacher info when creating a new Subject
-                            await addDoc(collectionRef, { 
-                                name: name, 
-                                createdAt: Date.now(),
-                                teacherId: currentUserId,
-                                teacherName: currentUserName
-                            });
-                            // NEW: Refresh the entire manager view
-                            renderTeacherManagerView(type);
-                        } else {
-                            // This is for Level 2 (Topics), which is unchanged
-                            await addDoc(collectionRef, { name: name, createdAt: Date.now() });
-                            const containerId = `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
-                            renderContent(type, containerId, level, parentIds);
-                        }
-                        
-                        showModal('Success', `${levelName} '${name}' added successfully.`);
-                    } catch (error) {
-                        console.error(`Error adding ${levelName}:`, error);
-                        showModal('Error', `Failed to add ${levelName}. Error: ${error.message}`);
+        // --- NEW: showUnlockTeacherModal ---
+        function showUnlockTeacherModal(type) {
+            showInputModal('Unlock Teacher Content', 'Enter the teacher\'s access code:', async (code) => {
+                if (!code) return;
+                
+                try {
+                    // MODIFIED: Query the public 'teacherAccessCodes' collection
+                    const publicCodesRef = collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`);
+                    const q = query(publicCodesRef, where("code", "==", code.trim()));
+                    const snapshot = await getDocs(q);
+
+                    if (snapshot.empty) {
+                        showModal('Invalid Code', 'That access code was not found. Please check the code and try again.');
+                        return;
+                    }
+
+                    const teacherDoc = snapshot.docs[0];
+                    const teacherId = teacherDoc.id; // This is the teacher's User ID
+                    const teacherName = teacherDoc.data().teacherName;
+
+                    // Add this teacherId to the student's 'unlockedTeachers' array
+                    const studentProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                    
+                    // Get current unlocked list, or init
+                    let unlocked = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+                    
+                    if (unlocked.includes(teacherId)) {
+                        showModal('Already Unlocked', `You have already unlocked content from ${teacherName}.`);
+                        return;
+                    }
+
+                    unlocked.push(teacherId);
+                    
+                    await updateDoc(studentProfileRef, { unlockedTeachers: unlocked });
+                    currentUserProfile.unlockedTeachers = unlocked; // Update cache
+
+                    showModal('Success!', `You have unlocked content from ${teacherName}. Their subjects will now appear.`);
+                    
+                    // Refresh the filters to show the new teacher
+                    setupViewerFilters(type);
+
+                } catch (error) {
+                    console.error("Error unlocking teacher:", error);
+                    // NEW: Better error message
+                    if (error.code === 'failed-precondition') {
+                         showModal('Error: Missing Index', `The app is missing a required database index. Please ask your administrator to check the browser console for a link to create it.`);
+                    } else {
+                        showModal('Error', `An error occurred: ${error.message}.`);
                     }
                 }
             });
