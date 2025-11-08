@@ -2449,6 +2449,53 @@
             modal.style.display = 'flex'; // Show the modal
         }
         // --- *** END OF THE FIX *** ---
+
+        // --- *** NEWLY ADDED: Missing function to add Subjects and Topics *** ---
+        async function showAddItemModal(type, level, parentIds = []) {
+            const config = materialsConfig[type];
+            const levelName = config[`level${level}`]; // e.g., 'Subject' or 'Topic'
+
+            showInputModal(`Add New ${levelName}`, `${levelName} Name:`, async (name) => {
+                if (!name) return;
+
+                const newItem = {
+                    name: name,
+                    createdAt: Date.now()
+                };
+
+                // NEW: If this is a Level 1 item (Subject), tag it with the teacher's ID and Name
+                if (level === 1) {
+                    newItem.teacherId = currentUserId;
+                    newItem.teacherName = currentUserName;
+                }
+
+                try {
+                    const itemPath = getPath(type, parentIds);
+                    await addDoc(collection(db, itemPath), newItem);
+                    
+                    showModal('Success', `${levelName} added successfully.`);
+
+                    // Refresh the correct part of the UI
+                    if (level === 1) {
+                        // Refresh the whole "My Subjects" list
+                        renderTeacherManagerView(type);
+                    } else {
+                        // Refresh the nested container for this topic
+                        const containerId = `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                        
+                        // Find current sort to re-render correctly
+                        const sortSelect = document.getElementById(`sort-teacher-${type}-${parentIds[parentIds.length - 1]}`);
+                        const sortBy = sortSelect ? sortSelect.value : 'name-asc';
+
+                        renderContent(type, containerId, level, parentIds, sortBy);
+                    }
+                } catch (error) {
+                    console.error(`Error adding ${levelName}:`, error);
+                    showModal('Error', `Failed to add ${levelName}. ${error.message}`);
+                }
+            });
+        }
+        // --- *** END OF NEWLY ADDED FUNCTION *** ---
         
         // --- AddFinalItemModal (Unchanged) ---
         function showAddFinalItemModal(type, parentIds = []) {
