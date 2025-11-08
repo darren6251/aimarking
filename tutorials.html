@@ -1319,9 +1319,11 @@
                         <button id="migrate-data-btn" class="btn-primary" style="margin-top: 1rem; margin-left: 1rem; background-color: var(--accent-red); border-color: var(--accent-red); display: none;">Fix My Old Subjects</button>
                     </div>
                     
+                    <!-- REMOVED: This container is no longer needed as teachers can't see other subjects -->
+                    <!--
                     <div id="other-subjects-container-${type}">
-                        <!-- Other teachers' grouped subjects go here -->
                     </div>
+                    -->
                 </div>`;
 
             const isTeacher = currentUserRole === 'teacher';
@@ -1336,7 +1338,7 @@
                 viewerSection.style.display = 'block'; // Show viewer by default
                 managerSection.style.display = 'none';
                 teacherCodeManager.style.display = 'block'; // NEW: Show code manager
-                unlockTeacherBtn.style.display = 'none'; // NEW: Hide unlock button for teachers
+                // unlockTeacherBtn.style.display = 'none'; // REMOVED: Teachers can now unlock content too
 
                 // Setup tab listeners
                 teacherTabs.addEventListener('click', (e) => {
@@ -1376,12 +1378,12 @@
                 viewerSection.style.display = 'block';
                 managerSection.style.display = 'none';
                 teacherCodeManager.style.display = 'none'; // NEW: Hide code manager
-                unlockTeacherBtn.style.display = 'inline-block'; // NEW: Show unlock button
-                
-                // NEW: Add listener for student unlock button
-                unlockTeacherBtn.onclick = () => showUnlockTeacherModal(type);
+                // unlockTeacherBtn.style.display = 'inline-block'; // REMOVED: Now set globally
             }
             
+            // NEW: Unlock button is visible to EVERYONE (students and teachers)
+            unlockTeacherBtn.style.display = 'inline-block';
+
             // Setup viewer for BOTH roles
             setupViewerFilters(type);
         }
@@ -1390,65 +1392,50 @@
         async function renderTeacherManagerView(type) {
             const config = materialsConfig[type];
             const myContainer = document.getElementById(`level1-${type}-container-mine`);
-            const othersContainer = document.getElementById(`other-subjects-container-${type}`);
+            // const othersContainer = document.getElementById(`other-subjects-container-${type}`); // REMOVED
             
-            if (!myContainer || !othersContainer) return;
+            if (!myContainer) return;
 
             myContainer.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            othersContainer.innerHTML = '';
+            // othersContainer.innerHTML = ''; // REMOVED
             document.getElementById(`my-subjects-heading-${type}`).textContent = `My Subjects (${currentUserName})`;
 
             try {
-                // Query all subjects, ordered by teacher name, then subject name
-                // MODIFIED: Changed query to be more robust. Order by name first.
-                // This avoids errors if 'teacherName' field is missing on some documents.
-                const q = query(collection(db, getPath(type)), orderBy('name', 'asc'));
-                const snapshot = await getDocs(q);
+                // --- NEW, ROBUST QUERY ---
+                // We run two queries in parallel:
+                // 1. Get all subjects that belong to this teacher.
+                // 2. Get all "orphaned" subjects (teacherId is null) to see if migration is needed.
+                
+                const subjectsRef = collection(db, getPath(type));
+                
+                // Query 1: My Subjects
+                const mySubjectsQuery = query(subjectsRef, 
+                    where('teacherId', '==', currentUserId), 
+                    orderBy('name', 'asc')
+                );
+                
+                // Query 2: Orphaned Subjects (for migration check)
+                const orphanSubjectsQuery = query(subjectsRef, 
+                    where('teacherId', '==', null)
+                );
 
-                if (snapshot.empty) {
+                const [mySubjectsSnapshot, orphanSubjectsSnapshot] = await Promise.all([
+                    getDocs(mySubjectsQuery),
+                    getDocs(orphanSubjectsQuery)
+                ]);
+                // --- END OF NEW QUERY ---
+
+
+                if (mySubjectsSnapshot.empty) {
                     myContainer.innerHTML = `<p>No ${config.level1.toLowerCase()}s created yet.</p>`;
-                    return;
-                }
-
-                // NEW: Check if any subjects are missing teacher info, and show the migration button
-                let showMigrationButton = false;
-
-                // Group subjects by teacher
-                const groupedSubjects = {};
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    item.id = doc.id;
-                    
-                    // NEW: Check for migration
-                    if (!item.teacherId || !item.teacherName) {
-                        showMigrationButton = true;
-                    }
-
-                    const teacherId = item.teacherId || 'unknown'; // Group items without a teacher
-                    if (!groupedSubjects[teacherId]) {
-                        groupedSubjects[teacherId] = {
-                            teacherName: item.teacherName || 'Unknown Teacher',
-                            subjects: []
-                        };
-                    }
-                    groupedSubjects[teacherId].subjects.push(item);
-                });
-
-                let myHtml = '';
-                let othersHtml = '';
-
-                // Loop through the groups and build HTML
-                for (const teacherId in groupedSubjects) {
-                    const group = groupedSubjects[teacherId];
-                    let groupHtml = '';
-
-                    // Create the HTML for each subject item
-                    group.subjects.forEach(item => {
+                } else {
+                    let myHtml = '';
+                    mySubjectsSnapshot.forEach(doc => {
+                        const item = doc.data();
+                        item.id = doc.id;
                         const newParentIds = [item.id];
                         const nextLevel = 2; // The level *inside* this item is Level 2 (Topic)
                         
-                        // This HTML is copied from the old renderContent Level 1 logic
-                        // to ensure it looks and works exactly the same.
                         let sortDropdownHtml = `
                             <div class="teacher-sort-container">
                                 <select id="sort-teacher-${type}-${item.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(newParentIds)}'>
@@ -1459,7 +1446,7 @@
                                 </select>
                             </div>`;
 
-                        groupHtml += `
+                        myHtml += `
                             <div class="content-item">
                                 <div class="content-header" data-level="1" data-id="${item.id}" data-parent-ids='[]' aria-expanded="false">
                                     <h3>${item.name} <span class="collapse-arrow"></span></h3>
@@ -1469,34 +1456,24 @@
                                     </div>
                                 </div>
                                 ${sortDropdownHtml}
-                                <div class="nested-container" id="container-level${nextLevel}-${type}-${item.id}"></div>
+                                <div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>
                             </div>`;
                     });
-
-                    // Assign this group's HTML to either "mine" or "others"
-                    if (teacherId === currentUserId) {
-                        myHtml = groupHtml;
-                    } else {
-                        othersHtml += `<h3 class="teacher-group-heading">${group.teacherName}</h3>` + groupHtml;
-                    }
+                    myContainer.innerHTML = myHtml;
                 }
 
-                myContainer.innerHTML = myHtml || `<p>You have not added any ${config.level1.toLowerCase()}s yet.</p>`;
-                othersContainer.innerHTML = othersHtml;
-
-                // NEW: Show migration button if needed
+                // NEW: Show migration button if we found any orphaned subjects
                 const migrateBtn = document.getElementById('migrate-data-btn');
-                if (showMigrationButton) {
+                if (!orphanSubjectsSnapshot.empty) {
                     migrateBtn.style.display = 'inline-block';
                     showModal('Action Required', 'We found some subjects that were created before the new Teacher update. Please click the red "Fix My Old Subjects" button to assign them to your account.');
                 } else {
                     migrateBtn.style.display = 'none';
                 }
 
-
             } catch (error) {
                 console.error(`Error rendering teacher manager view for ${type}:`, error);
-                myContainer.innerHTML = `<p class="error-message">Error loading content.</p>`;
+                myContainer.innerHTML = `<p class="error-message">Error loading content. You may need to create a Firestore Index. Please check the console for a link.</p>`;
             }
         }
         
@@ -1779,9 +1756,9 @@
             const step2 = document.getElementById(`filter-step-2-${type}`);
             const step3 = document.getElementById(`filter-step-3-${type}`);
             
-            // NEW: Get student's unlocked teacher list
-            const unlockedTeacherIds = (currentUserProfile && currentUserProfile.unlockedTeachers) ? currentUserProfile.unlockedTeachers : [];
-
+            // NEW: Get unlocked teacher list (modified for teachers)
+            let unlockedTeacherIds = [];
+            
             // --- NEW LOGIC: Fetch all subjects ONCE ---
             let allSubjects = [];
             let teacherIdToNameMap = new Map();
@@ -1809,10 +1786,27 @@
                 return; // Stop if subjects can't be loaded
             }
             
-            // 1. Populate Teacher Filter from the student's unlocked list
+            // --- MODIFIED LOGIC FOR TEACHER PRIVACY ---
+            // Get the student's personal unlocked list
+            unlockedTeacherIds = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+            
+            // If the user is a teacher, ALSO add their own ID to the list
+            if (currentUserRole === 'teacher') {
+                if (!unlockedTeacherIds.includes(currentUserId)) {
+                    unlockedTeacherIds.push(currentUserId);
+                }
+            }
+            // --- END OF MODIFIED LOGIC ---
+            
+            // 1. Populate Teacher Filter from the unlocked list
             teacherFilter.innerHTML = `<option value="">-- Select a Teacher --</option>`;
             if (unlockedTeacherIds.length === 0) {
-                teacherFilter.innerHTML += `<option value="" disabled>-- Use 'Unlock' to add a teacher --</option>`;
+                // NEW: Show a different message for teachers vs students
+                if (currentUserRole === 'teacher') {
+                    teacherFilter.innerHTML += `<option value="" disabled>-- No subjects exist yet --</option>`;
+                } else {
+                    teacherFilter.innerHTML += `<option value="" disabled>-- Use 'Unlock' to add a teacher --</option>`;
+                }
             } else {
                 let unlockedNames = new Set();
                 unlockedTeacherIds.forEach(id => {
