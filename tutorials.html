@@ -593,6 +593,22 @@
         }
 
         /* --- TEACHER CONTENT MANAGEMENT (STYLED) --- */
+        
+        /* NEW: Teacher Group Heading */
+        .teacher-group-heading {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        /* Style for the first heading (My Subjects) */
+        .form-container .teacher-group-heading {
+            margin-top: 0;
+        }
+
         .content-item { 
             padding: 1rem; 
             border: 1px solid var(--border-color); 
@@ -1163,6 +1179,8 @@
         });
 
         // --- MATERIALS CONFIGURATION (Unchanged) ---
+        // This config is still for 3 levels, the "Teacher" is a *field* on Level 1 (Subject),
+        // not a new level in the config.
         const materialsConfig = {
             tutorials: {
                 sectionId: 'tutorialSection',
@@ -1178,6 +1196,8 @@
         function getPath(type, ids = []) {
             const config = materialsConfig[type];
             const collection = config.collectionName;
+            // The path logic remains the same. Subjects are still at the top level.
+            // e.g., /tutorials/{subjectId}/topics/{topicId}/videos/{videoId}
             let pathParts = [`artifacts/${appId}/public/data/${collection}`];
             if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
             if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
@@ -1202,7 +1222,7 @@
              }
         }
 
-        // --- MODIFIED: Material Section Setup (to include new unified viewer) ---
+        // --- MODIFIED: Material Section Setup (to include new filters and teacher grouping) ---
         function setupMaterialSection(type) {
             const config = materialsConfig[type];
             const section = document.getElementById(config.sectionId);
@@ -1218,19 +1238,27 @@
                     <button class="tab-btn" data-tab="manager">Manage Content</button>
                 </div>
 
-                <!-- NEW: Unified Viewer (for both roles) -->
+                <!-- NEW: Unified Viewer (for both roles) with 4 filter steps -->
                 <div id="viewer-${type}-view" style="display:none;">
                     <div class="viewer-filters-container">
+                        <!-- NEW: Step 1 - Teacher Filter -->
                         <div class="filter-step">
-                            <label for="level1-${type}-filter">1. Select ${config.level1}</label>
-                            <select id="level1-${type}-filter"><option value="">-- Select ${config.level1} --</option></select>
+                            <label for="teacher-${type}-filter">1. Select Teacher</label>
+                            <select id="teacher-${type}-filter"><option value="">-- Select Teacher --</option></select>
                         </div>
+                        <!-- MODIFIED: Step 2 - Subject Filter -->
+                        <div class="filter-step" id="filter-step-1-${type}" style="opacity: 0.5; pointer-events: none;">
+                            <label for="level1-${type}-filter">2. Select ${config.level1}</label>
+                            <select id="level1-${type}-filter" disabled><option value="">-- Select ${config.level1} --</option></select>
+                        </div>
+                        <!-- MODIFIED: Step 3 - Topic Filter -->
                         <div class="filter-step" id="filter-step-2-${type}" style="opacity: 0.5; pointer-events: none;">
-                            <label for="level2-${type}-filter">2. Select ${config.level2}</label>
+                            <label for="level2-${type}-filter">3. Select ${config.level2}</label>
                             <select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select>
                         </div>
+                        <!-- MODIFIED: Step 4 - Sort Filter -->
                         <div class="filter-step" id="filter-step-3-${type}" style="opacity: 0.5; pointer-events: none;">
-                            <label for="sort-${type}-filter">3. Sort By</label>
+                            <label for="sort-${type}-filter">4. Sort By</label>
                             <select id="sort-${type}-filter" disabled>
                                 <option value="name-asc">Sort by Name (A-Z)</option>
                                 <option value="name-desc">Sort by Name (Z-A)</option>
@@ -1244,12 +1272,19 @@
                     </div>
                 </div>
                 
-                <!-- EXISTING: Teacher Management View (now hidden by default) -->
+                <!-- NEW: Teacher Management View (with grouping) -->
                 <div id="manager-${type}-view" style="display:none;">
                      <div class="form-container" style="max-width: initial;">
-                        <button id="add-level1-${type}-btn" class="btn-primary">Add New ${config.level1}</button>
+                        <h3 id="my-subjects-heading-${type}" class="teacher-group-heading">My Subjects</h3>
+                        <div id="level1-${type}-container-mine">
+                            <!-- Current teacher's subjects go here -->
+                        </div>
+                        <button id="add-level1-${type}-btn" class="btn-primary" style="margin-top: 1rem;">Add New ${config.level1}</button>
                     </div>
-                    <div id="level1-${type}-container"></div>
+                    
+                    <div id="other-subjects-container-${type}">
+                        <!-- Other teachers' grouped subjects go here -->
+                    </div>
                 </div>`;
 
             const isTeacher = currentUserRole === 'teacher';
@@ -1277,11 +1312,12 @@
                     }
                 });
                 
-                // Setup manager view (existing teacher logic)
-                renderContent(type, `level1-${type}-container`, 1);
+                // NEW: Setup manager view (with grouping)
+                renderTeacherManagerView(type);
                 document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
-                document.getElementById(`level1-${type}-container`).addEventListener('click', (e) => handleTeacherClick(e, type));
-                document.getElementById(`level1-${type}-container`).addEventListener('change', (e) => handleTeacherSort(e, type));
+                // NEW: Attach listeners to the parent manager view
+                managerSection.addEventListener('click', (e) => handleTeacherClick(e, type));
+                managerSection.addEventListener('change', (e) => handleTeacherSort(e, type));
 
             } else {
                 teacherTabs.style.display = 'none';
@@ -1292,8 +1328,102 @@
             // Setup viewer for BOTH roles
             setupViewerFilters(type);
         }
+
+        // --- NEW: Render Teacher Manager View (with Grouping) ---
+        async function renderTeacherManagerView(type) {
+            const config = materialsConfig[type];
+            const myContainer = document.getElementById(`level1-${type}-container-mine`);
+            const othersContainer = document.getElementById(`other-subjects-container-${type}`);
+            
+            if (!myContainer || !othersContainer) return;
+
+            myContainer.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+            othersContainer.innerHTML = '';
+            document.getElementById(`my-subjects-heading-${type}`).textContent = `My Subjects (${currentUserName})`;
+
+            try {
+                // Query all subjects, ordered by teacher name, then subject name
+                const q = query(collection(db, getPath(type)), orderBy('teacherName', 'asc'), orderBy('name', 'asc'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    myContainer.innerHTML = `<p>No ${config.level1.toLowerCase()}s created yet.</p>`;
+                    return;
+                }
+
+                // Group subjects by teacher
+                const groupedSubjects = {};
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    item.id = doc.id;
+                    const teacherId = item.teacherId || 'unknown'; // Group items without a teacher
+                    if (!groupedSubjects[teacherId]) {
+                        groupedSubjects[teacherId] = {
+                            teacherName: item.teacherName || 'Unknown Teacher',
+                            subjects: []
+                        };
+                    }
+                    groupedSubjects[teacherId].subjects.push(item);
+                });
+
+                let myHtml = '';
+                let othersHtml = '';
+
+                // Loop through the groups and build HTML
+                for (const teacherId in groupedSubjects) {
+                    const group = groupedSubjects[teacherId];
+                    let groupHtml = '';
+
+                    // Create the HTML for each subject item
+                    group.subjects.forEach(item => {
+                        const newParentIds = [item.id];
+                        const nextLevel = 2; // The level *inside* this item is Level 2 (Topic)
+                        
+                        // This HTML is copied from the old renderContent Level 1 logic
+                        // to ensure it looks and works exactly the same.
+                        let sortDropdownHtml = `
+                            <div class="teacher-sort-container">
+                                <select id="sort-teacher-${type}-${item.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(newParentIds)}'>
+                                    <option value="name-asc">Sort by Name (A-Z)</option>
+                                    <option value="name-desc">Sort by Name (Z-A)</option>
+                                    <option value="diff-asc">Difficulty (Low to High)</option>
+                                    <option value="diff-desc">Difficulty (High to Low)</option>
+                                </select>
+                            </div>`;
+
+                        groupHtml += `
+                            <div class="content-item">
+                                <div class="content-header" data-level="1" data-id="${item.id}" data-parent-ids='[]' aria-expanded="false">
+                                    <h3>${item.name} <span class="collapse-arrow"></span></h3>
+                                    <div class="item-actions">
+                                        <button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button>
+                                        <button class="delete-item-btn logout-btn" data-level="1" data-id="${item.id}" data-parent-ids='[]'>Delete</button>
+                                    </div>
+                                </div>
+                                ${sortDropdownHtml}
+                                <div class="nested-container" id="container-level${nextLevel}-${type}-${item.id}"></div>
+                            </div>`;
+                    });
+
+                    // Assign this group's HTML to either "mine" or "others"
+                    if (teacherId === currentUserId) {
+                        myHtml = groupHtml;
+                    } else {
+                        othersHtml += `<h3 class="teacher-group-heading">${group.teacherName}</h3>` + groupHtml;
+                    }
+                }
+
+                myContainer.innerHTML = myHtml || `<p>You have not added any ${config.level1.toLowerCase()}s yet.</p>`;
+                othersContainer.innerHTML = othersHtml;
+
+            } catch (error) {
+                console.error(`Error rendering teacher manager view for ${type}:`, error);
+                myContainer.innerHTML = `<p class="error-message">Error loading content.</p>`;
+            }
+        }
         
         // --- Teacher Content Rendering (Unchanged) ---
+        // This function is now only used for Level 2 (Topics) and Level 3 (Videos)
         async function renderContent(type, containerId, level, parentIds = [], sortBy = 'name-asc') {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -1372,7 +1502,7 @@
                  }
             
             } else {
-                // Logic for Level 1 and 2 (Folders)
+                // Logic for Level 2 (Topics)
                 const q = query(collectionRef, orderBy('name', 'asc'));
                 try {
                     const snapshot = await getDocs(q);
@@ -1426,6 +1556,7 @@
         }
         
         // --- Teacher Click Handler (Unchanged) ---
+        // This logic is still valid as it's attached to the parent and finds items by class
         function handleTeacherClick(e, type) {
             const header = e.target.closest('.content-header');
             const button = e.target.closest('button');
@@ -1503,20 +1634,55 @@
             }
         }
         
-        // --- RENAMED & MODIFIED: Student Filter Setup -> setupViewerFilters ---
+        // --- MODIFIED: setupViewerFilters (now 4 steps) ---
         async function setupViewerFilters(type) {
             const config = materialsConfig[type];
+            // NEW: Get all 4 filters
+            const teacherFilter = document.getElementById(`teacher-${type}-filter`);
             const level1Filter = document.getElementById(`level1-${type}-filter`);
             const level2Filter = document.getElementById(`level2-${type}-filter`);
             const sortFilter = document.getElementById(`sort-${type}-filter`);
             const grid = document.getElementById(`level3-${type}-grid`);
             
             // NEW: Get filter step containers for animation
+            const step1 = document.getElementById(`filter-step-1-${type}`);
             const step2 = document.getElementById(`filter-step-2-${type}`);
             const step3 = document.getElementById(`filter-step-3-${type}`);
 
-            await populateFilter(level1Filter, collection(db, getPath(type)), config.level1);
+            // NEW: Step 1 - Populate Teacher filter
+            await populateTeacherFilter(teacherFilter, collection(db, getPath(type)), config.level1);
 
+            // NEW: Step 2 - Teacher filter onchange
+            teacherFilter.onchange = async () => {
+                const selectedTeacher = teacherFilter.value;
+                
+                // Reset all subsequent filters
+                level1Filter.innerHTML = `<option value="">-- Select ${config.level1} --</option>`;
+                level1Filter.disabled = true;
+                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                level2Filter.disabled = true;
+                sortFilter.disabled = true;
+                grid.style.display = 'none'; // Hide grid
+                grid.style.opacity = 0;
+                grid.innerHTML = '';
+                
+                // Animate next steps
+                step1.style.opacity = '0.5'; step1.style.pointerEvents = 'none';
+                step2.style.opacity = '0.5'; step2.style.pointerEvents = 'none';
+                step3.style.opacity = '0.5'; step3.style.pointerEvents = 'none';
+                
+                if (selectedTeacher) {
+                    // Populate Subject filter based on selected teacher
+                    const subjectsQuery = query(collection(db, getPath(type)), where('teacherName', '==', selectedTeacher), orderBy('name', 'asc'));
+                    await populateFilter(level1Filter, subjectsQuery, config.level1);
+                    level1Filter.disabled = false;
+                    // Animate next step
+                    step1.style.opacity = '1';
+                    step1.style.pointerEvents = 'auto';
+                }
+            };
+
+            // MODIFIED: Step 3 - Subject filter onchange
             level1Filter.onchange = () => {
                 const level1Id = level1Filter.value;
                 level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
@@ -1526,30 +1692,31 @@
                 grid.style.opacity = 0;
                 grid.innerHTML = '';
                 
-                // NEW: Animate next step
-                step2.style.opacity = '0.5';
-                step2.style.pointerEvents = 'none';
-                step3.style.opacity = '0.5';
-                step3.style.pointerEvents = 'none';
+                // Animate next steps
+                step2.style.opacity = '0.5'; step2.style.pointerEvents = 'none';
+                step3.style.opacity = '0.5'; step3.style.pointerEvents = 'none';
                 
                 if (level1Id) {
+                    // This is unchanged: populate topics based on subject
                     populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2);
                     level2Filter.disabled = false;
-                    // NEW: Animate next step
+                    // Animate next step
                     step2.style.opacity = '1';
                     step2.style.pointerEvents = 'auto';
                 }
             };
             
+            // MODIFIED: Step 4 - Topic filter onchange
             level2Filter.onchange = () => {
                 const level2Id = level2Filter.value;
-                // NEW: Animate next step
                 if(level2Id) {
+                    // Enable sorting and render items
                     sortFilter.disabled = false;
                     step3.style.opacity = '1';
                     step3.style.pointerEvents = 'auto';
                     renderViewerItems(type);
                 } else {
+                    // Reset grid and sort
                     sortFilter.disabled = true;
                     step3.style.opacity = '0.5';
                     step3.style.pointerEvents = 'none';
@@ -1558,10 +1725,14 @@
                     grid.innerHTML = '';
                 }
             };
+
+            // UNCHANGED: Sort filter onchange
             sortFilter.onchange = () => renderViewerItems(type);
         }
 
         // --- RENAMED: Student Item Rendering -> renderViewerItems (with Sorting) ---
+        // This function remains unchanged as it just reads the filter values,
+        // which still have the same IDs.
         async function renderViewerItems(type) {
              const config = materialsConfig[type];
              const grid = document.getElementById(`level3-${type}-grid`);
@@ -1670,11 +1841,54 @@
              }
         }
         
-        // --- Populate Filter Dropdown (Unchanged) ---
-        async function populateFilter(selectElement, collectionRef, levelName) {
+        // --- NEW: Populate Teacher Filter Dropdown ---
+        async function populateTeacherFilter(selectElement, collectionRef, levelName) {
+            selectElement.innerHTML = `<option value="">-- Loading Teachers --</option>`;
+            try {
+                // We query all subjects just to get the teacher names
+                const snapshot = await getDocs(collectionRef);
+                const teachers = new Set();
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.teacherName) {
+                        teachers.add(data.teacherName);
+                    }
+                });
+
+                selectElement.innerHTML = `<option value="">-- Select a Teacher --</option>`;
+                if(teachers.size === 0) {
+                    selectElement.innerHTML += `<option value="" disabled>-- No Teachers Available --</option>`;
+                    return;
+                }
+                
+                // Sort and add teachers to the dropdown
+                const sortedTeachers = [...teachers].sort();
+                sortedTeachers.forEach(name => {
+                    selectElement.add(new Option(name, name));
+                });
+            }
+            catch (e) {
+                console.error(`Error loading teachers:`, e);
+                selectElement.innerHTML = `<option value="">-- Error --</option>`;
+            }
+        }
+        
+        // --- MODIFIED: Populate Filter Dropdown (to accept a query) ---
+        async function populateFilter(selectElement, queryOrRef, levelName) {
             selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
             try {
-                const q = query(collectionRef, orderBy('name', 'asc'));
+                // This function now accepts either a collection reference OR a pre-built query object.
+                // This allows us to pass a simple collection ref OR a filtered query (e.g., where('teacherName', '==', ...))
+                let q;
+                if (queryOrRef.type === 'collection') {
+                    // If it's a simple collection ref, add the default ordering
+                    q = query(queryOrRef, orderBy('name', 'asc'));
+                } else {
+                    // Otherwise, assume it's already a complete query object
+                    q = queryOrRef;
+                }
+                
                 const snapshot = await getDocs(q);
                 selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
                 if(snapshot.empty) {
@@ -1691,7 +1905,7 @@
             }
         }
         
-        // --- VIDEO PLAYER LOGIC (MODIFIED) ---
+        // --- VIDEO PLAYER LOGIC (Unchanged) ---
         let currentVideoItem = null;
         let hls = null; // NEW: To keep track of the HLS.js instance
         let currentTopicPlaylist = []; // NEW: Cache for playlist
@@ -1791,7 +2005,7 @@
             }
         });
 
-        // NEW: Function to load and display the topic playlist
+        // NEW: Function to load and display the topic playlist (Unchanged)
         async function loadTopicPlaylist(level1Id, level2Id, currentVideoId) {
             const container = document.getElementById('topicPlaylist');
             if (!container) return;
@@ -1882,19 +2096,11 @@
             }
         }
         
-         // --- THEME TOGGLE (Unchanged logic, just a button now) ---
+         // --- THEME TOGGLE (Unchanged) ---
         const themeToggleButton = document.getElementById('themeToggleButton');
-        
-        // This app is now dark-theme only, so we'll hide the button
-        // or just leave it. Let's just leave it, it won't do anything
-        // since .light-theme CSS is removed.
-        
-        // Let's modify it to be a NO-OP
         themeToggleButton.addEventListener('click', () => {
            showModal("Theme", "This application currently supports dark theme only.");
         });
-        
-        // Ensure dark theme is applied (by not adding 'light-theme' class)
         document.body.classList.remove('light-theme');
 
 
@@ -1920,6 +2126,7 @@
             modal.querySelector('.close-button').onclick = () => closeModal(modal.id);
         }
 
+        // --- MODIFIED: showAddItemModal (to add teacher fields and refresh manager view) ---
         function showAddItemModal(type, level, parentIds = []) {
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
@@ -1927,13 +2134,24 @@
                 if (name) {
                     try {
                         const collectionRef = collection(db, getPath(type, parentIds));
-                        await addDoc(collectionRef, { name: name, createdAt: Date.now() });
-                        const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                        
                         if (level === 1) {
-                            renderContent(type, containerId, 1);
+                            // NEW: Add teacher info when creating a new Subject
+                            await addDoc(collectionRef, { 
+                                name: name, 
+                                createdAt: Date.now(),
+                                teacherId: currentUserId,
+                                teacherName: currentUserName
+                            });
+                            // NEW: Refresh the entire manager view
+                            renderTeacherManagerView(type);
                         } else {
+                            // This is for Level 2 (Topics), which is unchanged
+                            await addDoc(collectionRef, { name: name, createdAt: Date.now() });
+                            const containerId = `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                             renderContent(type, containerId, level, parentIds);
                         }
+                        
                         showModal('Success', `${levelName} '${name}' added successfully.`);
                     } catch (error) {
                         console.error(`Error adding ${levelName}:`, error);
@@ -1943,6 +2161,7 @@
             });
         }
         
+        // --- AddFinalItemModal (Unchanged) ---
         function showAddFinalItemModal(type, parentIds = []) {
             const config = materialsConfig[type];
             const modal = document.getElementById(config.modalId);
@@ -2007,6 +2226,7 @@
             }
         }
         
+        // --- tutorialLinkInput Listener (Unchanged) ---
         const tutorialLinkInput = document.getElementById('tutorialLink');
         if (tutorialLinkInput) {
             tutorialLinkInput.addEventListener('input', () => {
@@ -2023,7 +2243,7 @@
             });
         }
         
-        // --- UPDATED: YouTube ID Parser to Video Link Parser (YouTube & Vimeo) ---
+        // --- parseVideoLink (Unchanged) ---
         function parseVideoLink(url) {
             if (!url) return null;
             
@@ -2085,6 +2305,7 @@
             return null;
         }
 
+        // --- showInputModal (Unchanged) ---
         function showInputModal(title, label, callback) {
             const inputId = 'dynamicInput';
             showModal(title, 
@@ -2124,7 +2345,7 @@
             }, 50);
         }
 
-        // NEW: Show Edit Video Modal
+        // --- showEditFinalItemModal (Unchanged) ---
         function showEditFinalItemModal(type, parentIds, id, item) {
             const config = materialsConfig[type];
             const modal = document.getElementById('editVideoModal'); // Use the new modal
@@ -2209,6 +2430,7 @@
             }
         }
 
+        // --- closeModal (Unchanged) ---
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.style.display = 'none';
@@ -2218,6 +2440,7 @@
             btn.onclick = () => closeModal(btn.closest('.modal').id);
         });
 
+        // --- MODIFIED: handleDeleteItem (to refresh manager view) ---
         async function handleDeleteItem(type, level, id, parentIds = []) {
             const config = materialsConfig[type];
             const levelName = config[`level${level}`];
@@ -2233,10 +2456,13 @@
                                 const docPath = getPath(type, parentIds);
                                 const docRef = doc(db, docPath, id);
                                 await deleteDoc(docRef);
-                                const containerId = level === 1 ? `level1-${type}-container` : `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
+                                
                                 if (level === 1) {
-                                    renderContent(type, containerId, 1);
+                                    // NEW: Refresh the entire manager view
+                                    renderTeacherManagerView(type);
                                 } else {
+                                    // This is for Level 2 or 3
+                                    const containerId = `container-level${level}-${type}-${parentIds[parentIds.length - 1]}`;
                                     // NEW: Find current sort to re-render correctly
                                     const sortSelect = document.getElementById(`sort-teacher-${type}-${parentIds[parentIds.length - 1]}`);
                                     const sortBy = sortSelect ? sortSelect.value : 'name-asc';
