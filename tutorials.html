@@ -1727,10 +1727,47 @@
             const step2 = document.getElementById(`filter-step-2-${type}`);
             const step3 = document.getElementById(`filter-step-3-${type}`);
 
-            // NEW: Step 1 - Populate Teacher filter
-            await populateTeacherFilter(teacherFilter, collection(db, getPath(type)), config.level1);
+            // --- NEW LOGIC: Fetch all subjects ONCE ---
+            let allSubjects = [];
+            let teacherMap = new Map();
+            teacherFilter.innerHTML = `<option value="">-- Loading Teachers --</option>`;
+            
+            try {
+                // Get all subjects, ordered by name. This query works without a special index.
+                const subjectsQuery = query(collection(db, getPath(type)), orderBy('name', 'asc'));
+                const snapshot = await getDocs(subjectsQuery);
+                
+                snapshot.forEach(doc => {
+                    const subject = doc.data();
+                    subject.id = doc.id;
+                    allSubjects.push(subject); // Store the subject data locally
+                    
+                    // Build a unique list of teachers
+                    if (subject.teacherName) {
+                        teacherMap.set(subject.teacherName, true);
+                    }
+                });
 
-            // NEW: Step 2 - Teacher filter onchange
+            } catch (e) {
+                console.error("Error loading subjects for filters:", e);
+                teacherFilter.innerHTML = `<option value="">-- Error Loading --</option>`;
+                level1Filter.innerHTML = `<option value="">-- Error --</option>`;
+                return; // Stop if subjects can't be loaded
+            }
+            
+            // 1. Populate Teacher Filter from the map
+            teacherFilter.innerHTML = `<option value="">-- Select a Teacher --</option>`;
+            if (teacherMap.size === 0) {
+                teacherFilter.innerHTML += `<option value="" disabled>-- No Teachers Available --</option>`;
+            } else {
+                const sortedTeachers = [...teacherMap.keys()].sort();
+                sortedTeachers.forEach(name => {
+                    teacherFilter.add(new Option(name, name));
+                });
+            }
+            // --- END OF NEW LOGIC ---
+
+            // MODIFIED: Step 2 - Teacher filter onchange
             teacherFilter.onchange = async () => {
                 const selectedTeacher = teacherFilter.value;
                 
@@ -1750,9 +1787,21 @@
                 step3.style.opacity = '0.5'; step3.style.pointerEvents = 'none';
                 
                 if (selectedTeacher) {
-                    // Populate Subject filter based on selected teacher
-                    const subjectsQuery = query(collection(db, getPath(type)), where('teacherName', '==', selectedTeacher), orderBy('name', 'asc'));
-                    await populateFilter(level1Filter, subjectsQuery, config.level1);
+                    // --- MODIFIED: Populate Subject filter from local 'allSubjects' array ---
+                    // This AVOIDS the composite query that was causing the error.
+                    level1Filter.innerHTML = `<option value="">-- Select a ${config.level1} --</option>`;
+                    const filteredSubjects = allSubjects.filter(s => s.teacherName === selectedTeacher);
+                    
+                    if (filteredSubjects.length === 0) {
+                        level1Filter.innerHTML += `<option value="" disabled>-- No ${config.level1}s Found --</option>`;
+                    } else {
+                        // We already sorted them by name in the initial query
+                        filteredSubjects.forEach(subject => {
+                            level1Filter.add(new Option(subject.name, subject.id));
+                        });
+                    }
+                    // --- END OF MODIFICATION ---
+
                     level1Filter.disabled = false;
                     // Animate next step
                     step1.style.opacity = '1';
@@ -1919,7 +1968,9 @@
              }
         }
         
-        // --- NEW: Populate Teacher Filter Dropdown ---
+        // --- NEW: Populate Teacher Filter Dropdown (REMOVED) ---
+        // This function is no longer needed, logic is moved into setupViewerFilters
+        /*
         async function populateTeacherFilter(selectElement, collectionRef, levelName) {
             selectElement.innerHTML = `<option value="">-- Loading Teachers --</option>`;
             try {
@@ -1951,6 +2002,7 @@
                 selectElement.innerHTML = `<option value="">-- Error --</option>`;
             }
         }
+        */
         
         // --- MODIFIED: Populate Filter Dropdown (to accept a query) ---
         async function populateFilter(selectElement, queryOrRef, levelName) {
