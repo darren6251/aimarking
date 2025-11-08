@@ -2404,6 +2404,51 @@
         // --- NEW: showUnlockTeacherModal (REMOVED FROM HERE) ---
         // MOVED TO TOP OF SCRIPT
 
+        // --- *** START OF THE FIX *** ---
+        // --- ADDED MISSING showModal FUNCTION ---
+        function showModal(title, message, buttons = []) {
+            const modal = document.getElementById('messageModal');
+            if (!modal) {
+                console.error("Fatal Error: messageModal not found in DOM.");
+                return;
+            }
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalButtons = document.getElementById('modalButtons');
+            const closeBtn = modal.querySelector('.close-button');
+
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalMessage) modalMessage.innerHTML = message; // Use innerHTML to allow for input fields
+            if (modalButtons) modalButtons.innerHTML = ''; // Clear old buttons
+
+            if (buttons.length === 0) {
+                // Default 'OK' button if none provided
+                const okButton = document.createElement('button');
+                okButton.textContent = 'OK';
+                okButton.className = 'btn-primary'; // Use theme's primary button style
+                okButton.onclick = () => closeModal(modal.id);
+                if (modalButtons) modalButtons.appendChild(okButton);
+            } else {
+                // Create buttons from the array
+                buttons.forEach(btnConfig => {
+                    const button = document.createElement('button');
+                    button.textContent = btnConfig.text;
+                    button.className = btnConfig.class || 'btn-primary'; // Use provided class or default
+                    button.onclick = () => {
+                        if (btnConfig.callback) {
+                            btnConfig.callback();
+                        }
+                        // All buttons close the modal after callback
+                        closeModal(modal.id);
+                    };
+                    if (modalButtons) modalButtons.appendChild(button);
+                });
+            }
+
+            if (closeBtn) closeBtn.onclick = () => closeModal(modal.id);
+            modal.style.display = 'flex'; // Show the modal
+        }
+        // --- *** END OF THE FIX *** ---
         
         // --- AddFinalItemModal (Unchanged) ---
         function showAddFinalItemModal(type, parentIds = []) {
