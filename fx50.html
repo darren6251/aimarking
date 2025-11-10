@@ -1,308 +1,1086 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Casio fx-50FII — Web Clone (approx.)</title>
-  <style>
-    /* Visual style inspired by fx-50FII (two-line display, SHIFT (orange) and ALPHA (red) keys) */
-    :root{--bg:#0b1220;--panel:#0f1724;--screen-top:#bfe6ff;--screen-bot:#081219;--key:#dfe6ee;--key-dark:#c7d2da;--func:#3b4250;--accent:#f59e0b;--alpha:#ef4444;--display-text:#07101a}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#081018,#061018);font-family:Inter,Segoe UI,Roboto,system-ui,-apple-system,Arial}
-    .wrap{max-width:420px;margin:10px auto;padding:14px;background:linear-gradient(180deg,#0b1220,#081018);border-radius:14px;border:1px solid rgba(255,255,255,.03);box-shadow:0 12px 30px rgba(0,0,0,.6)}
-    .device{background:linear-gradient(180deg,#0c1622,#071018);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.02)}
-    .top{display:flex;align-items:center;gap:12px}
-    .logo{color:#9fb7d6;font-weight:700}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator (fx-50F II)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom font for the display */
+        .font-display {
+            font-family: 'Orbitron', 'Inter', sans-serif;
+            letter-spacing: 1.5px;
+        }
 
-    /* Screen */
-    .screen{background:linear-gradient(180deg,var(--screen-top),#cfeeff);padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,.25);box-shadow:inset 0 -6px 12px rgba(0,0,0,.06);}
-    .lcd{background:linear-gradient(180deg,#eaf6ff,#d8eefb);border-radius:6px;padding:8px;display:flex;flex-direction:column;justify-content:center;min-height:84px}
-    .upper{font-family:monospace;font-size:12px;color:#08324a;min-height:18px;text-align:right}
-    .lower{font-family:monospace;font-size:28px;color:var(--display-text);text-align:right}
-    .lower small{font-size:12px;opacity:.6;display:block}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #dbe2ef; /* Light grey-blue background */
+        }
 
-    /* Keys grid matches fx-50FII layout more closely */
-    .keys{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:12px}
-    button{border:0;border-radius:6px;padding:10px 6px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.45);cursor:pointer}
-    .num{background:linear-gradient(180deg,#f8fafc,#e6eef6);color:#07101a}
-    .func{background:linear-gradient(180deg,#334155,#263044);color:#e6eef6}
-    .shift{background:linear-gradient(180deg,var(--accent),#d97706);color:#07101a}
-    .alpha{background:linear-gradient(180deg,var(--alpha),#ef4444);color:#07101a}
-    .op{background:linear-gradient(180deg,#c7d2da,#b9c4ce);color:#07101a}
-    .wide{grid-column:span 2}
-    .small{padding:6px;font-size:12px}
+        .calculator-body {
+            width: 100%;
+            max-width: 380px;
+            background: linear-gradient(145deg, #e6e6e6, #c4c4c4);
+            border: 2px solid #a0a0a0;
+            border-radius: 20px;
+            box-shadow: 10px 10px 20px #a9a9a9, -10px -10px 20px #ffffff;
+            padding: 24px;
+        }
 
-    footer{margin-top:10px;font-size:12px;color:#9fb7d6;text-align:center}
-    @media(max-width:420px){.wrap{margin:6px}}
-  </style>
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px 12px 4px;
+        }
+
+        .brand-name {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e3a8a; /* Dark blue */
+        }
+
+        .brand-model {
+            font-size: 0.8rem;
+            color: #4b5563;
+        }
+
+        .solar-panel {
+            width: 35%;
+            height: 30px;
+            background-color: #3a2a1a; /* Dark brown */
+            border-radius: 6px;
+            border: 2px solid #5a4a3a;
+        }
+
+        .display-area {
+            background-color: #d1e0d3; /* Classic calculator green-grey */
+            border: 3px solid #4a5568;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2);
+            text-align: right;
+            position: relative;
+        }
+        
+        #expression {
+            min-height: 24px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 4px;
+        }
+
+        #result {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1f2937;
+            min-height: 44px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        #degrad-indicator {
+            position: absolute;
+            top: 6px;
+            left: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        /* Use a 6-column grid for the top functions */
+        .button-grid-top {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px; /* Slightly reduced gap to match tighter packing */
+            margin-bottom: 10px;
+            position: relative; /* For replay pad positioning */
+        }
+        
+        /* Use a 5-column grid for the number pad */
+        .button-grid-bottom {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .calc-button {
+            height: 44px;
+            border: 2px solid #b0b0b0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c2c2c;
+            background: linear-gradient(145deg, #f0f0f0, #cacaca);
+            box-shadow: 3px 3px 6px #a6a6a6, -3px -3px 6px #ffffff;
+            transition: all 0.1s ease;
+            position: relative;
+            padding-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            line-height: 1.2;
+            padding-left: 2px;
+            padding-right: 2px;
+            text-align: center;
+        }
+
+        .calc-button:active {
+            background: linear-gradient(145deg, #cacaca, #f0f0f0);
+            box-shadow: inset 2px 2px 4px #a6a6a6, inset -2px -2px 4px #ffffff;
+            transform: translateY(1px);
+        }
+
+        /* Specific text sizes for dual functions */
+        .calc-button .main-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+        .calc-button .sub-text {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #4b5563;
+            line-height: 1;
+        }
+
+        /* Special Function Colors */
+        .button-shift { background: linear-gradient(145deg, #fde047, #f59e0b); border-color: #d97706; } /* Yellow */
+        .button-alpha { background: linear-gradient(145deg, #f9a8d4, #f472b6); border-color: #ec4899; } /* Pink */
+        .button-prog { background: linear-gradient(145deg, #fdba74, #f97316); border-color: #ea580c; } /* Orange */
+        .button-nav { background: #d1d5db; border-color: #9ca3af; } /* Grey */
+        .button-on { background: linear-gradient(145deg, #bbf7d0, #4ade80); border-color: #22c55e; } /* Green */
+        .button-del { background: linear-gradient(145deg, #fca5a5, #ef4444); border-color: #dc2626; color: #fff;} /* Red */
+        .button-ac { background: linear-gradient(145deg, #fca5a5, #ef4444); border-color: #dc2626; color: #fff;} /* Red */
+        .button-exe { background: linear-gradient(145deg, #93c5fd, #3b82f6); border-color: #2563eb; color: #fff;} /* Blue */
+
+        /* Span multiple columns */
+        .col-span-2 { grid-column: span 2 / span 2; }
+        
+        /* Secondary Function Text */
+        .shift-text { 
+            position: absolute; 
+            top: 2px; 
+            left: 4px; 
+            font-size: 0.6rem; 
+            font-weight: 700; 
+            color: #d97706; /* Orange-Yellow */
+            line-height: 1;
+        } 
+        .alpha-text { 
+            position: absolute; 
+            top: 2px; 
+            right: 4px; /* Right for alpha */
+            font-size: 0.6rem; 
+            font-weight: 700; 
+            color: #ec4899; /* Pink */
+            line-height: 1;
+        }
+        
+        .font-normal { font-weight: 400; }
+        .text-xs { font-size: 0.75rem; }
+
+        /* Replay Pad Styling */
+        .replay-pad-container {
+            grid-column: 3 / span 2; /* Center it in the middle columns */
+            grid-row: 2 / span 3; /* Spans multiple rows visually */
+            position: absolute;
+            top: 48px; /* Adjust based on grid-top padding and button height */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px; /* Adjust size as needed */
+            height: 100px; /* Adjust size as needed */
+            background-color: #b0b0b0;
+            border-radius: 50%;
+            border: 2px solid #909090;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10; /* Ensure it's above other buttons if needed */
+        }
+        .replay-pad-center {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(145deg, #d1d5db, #a0a0a0);
+            border-radius: 50%;
+            border: 2px solid #808080;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .replay-button {
+            position: absolute;
+            background: #d1d5db; /* Grey */
+            border: 1px solid #9ca3af;
+            color: #4b5563;
+            font-weight: 600;
+            font-size: 0.8rem;
+            width: 30px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px #a6a6a6, -2px -2px 4px #ffffff;
+        }
+        .replay-button:active {
+            box-shadow: inset 1px 1px 2px #a6a6a6, inset -1px -1px 2px #ffffff;
+            transform: translateY(0.5px);
+        }
+
+        .replay-up { top: 0px; }
+        .replay-down { bottom: 0px; }
+        .replay-left { left: 0px; }
+        .replay-right { right: 0px; }
+
+        /* Modal Styles */
+        .formula-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .formula-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .formula-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .formula-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .formula-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .formula-close:hover { color: #333; }
+
+        .formula-section {
+            margin-bottom: 20px;
+        }
+        
+        .formula-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .formula-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .formula-inputs label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            align-self: center;
+        }
+
+        .formula-inputs input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .formula-calc-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .formula-calc-button:hover { background-color: #2563eb; }
+
+        .formula-result {
+            margin-top: 15px;
+            font-weight: 500;
+            background-color: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 20px;
+            white-space: pre-wrap; /* To show newlines */
+        }
+    </style>
 </head>
-<body>
-  <div class="wrap">
-    <div class="device" role="application" aria-label="Casio fx-50FII clone">
-      <div class="top"><div class="logo">CASIO fx-50FII (web)</div><div style="margin-left:auto;color:#9fb7d6">Two-line LCD · SHIFT/ALPHA</div></div>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-      <div class="screen" id="screenWrap">
-        <div class="lcd">
-          <div class="upper" id="upperDisplay"> </div>
-          <div class="lower" id="mainDisplay">0 <small id="modeLabel">RDY</small></div>
+    <div class="calculator-body">
+        <!-- Header --><div class="brand-header">
+            <div>
+                <div class="brand-name">CASIO</div>
+                <div class="brand-model">fx-50F II</div>
+            </div>
+            <div class="solar-panel"></div>
         </div>
-      </div>
 
-      <div class="keys" id="keys">
-        <!-- Row order approximates fx-50FII keyboard -->
-        <button class="shift small" id="shiftBtn">SHIFT</button>
-        <button class="alpha small" id="alphaBtn">ALPHA</button>
-        <button class="func small" data-primary="MODE" data-shift="SETUP">MODE</button>
-        <button class="func small" data-primary="EXE">EXE</button>
-        <button class="func small" data-primary="ENG" data-shift="LOG">ENG</button>
-        <button class="func small" data-primary="DEL">DEL</button>
-        <button class="func small" data-primary="AC">AC</button>
-        <button class="func small" data-primary="Ans">Ans</button>
+        <!-- Display --><div class="display-area font-display">
+            <div id="degrad-indicator">DEG</div>
+            <div id="expression"></div>
+            <div id="result">0</div>
+        </div>
 
-        <!-- scientific functions -->
-        <button class="func" data-primary="x^2" data-shift="x^3">x^2</button>
-        <button class="func" data-primary="√" data-shift="³√">√</button>
-        <button class="func" data-primary="^" data-shift="root">^</button>
-        <button class="func" data-primary="(" data-shift=")">(</button>
-        <button class="func" data-primary=")" data-shift="(">)</button>
-        <button class="func" data-primary="," data-shift="," >,</button>
-        <button class="func" data-primary="%">%</button>
-        <button class="func" data-primary="π">π</button>
+        <!-- Formula Modal --><div id="formula-modal" class="formula-modal" style="display: none;">
+            <div class="formula-content">
+                <div class="formula-header">
+                    <h2 class="formula-title">Formulas (FMLA)</h2>
+                    <span id="formula-close-btn" class="formula-close">&times;</span>
+                </div>
 
-        <!-- trig/log etc -->
-        <button class="func" data-primary="sin(" data-shift="sin⁻¹(">sin</button>
-        <button class="func" data-primary="cos(" data-shift="cos⁻¹(">cos</button>
-        <button class="func" data-primary="tan(" data-shift="tan⁻¹(">tan</button>
-        <button class="func" data-primary="ln(" data-shift="e^">ln</button>
-        <button class="func" data-primary="log(" data-shift="10^">log</button>
-        <button class="func" data-primary="EXP(" data-shift="10^">EXP</button>
-        <button class="func" data-primary="ANS">ANS</button>
-        <button class="func" data-primary="Ans->M" data-shift="M->Ans">M+</button>
+                <!-- fm01: Quadratic Formula --><div class="formula-section">
+                    <h3>fm01: Quadratic Formula (ax² + bx + c = 0)</h3>
+                    <div class="formula-inputs">
+                        <label for="f-a">a (x²):</label>
+                        <input type="number" id="f-a" placeholder="a">
+                        <label for="f-b">b (x):</label>
+                        <input type="number" id="f-b" placeholder="b">
+                        <label for="f-c">c (const):</label>
+                        <input type="number" id="f-c" placeholder="c">
+                    </div>
+                    <button id="calc-quadratic" class="formula-calc-button">Calculate Roots</button>
+                    <div id="result-quadratic" class="formula-result"></div>
+                </div>
 
-        <!-- numbers and ops (matching layout) -->
-        <button class="num" data-primary="7">7</button>
-        <button class="num" data-primary="8">8</button>
-        <button class="num" data-primary="9">9</button>
-        <button class="op" data-primary="÷">÷</button>
-        <button class="func" data-primary="INV">x^-1</button>
-        <button class="func" data-primary="!">n!</button>
-        <button class="func" data-primary="S-VAR">S-VAR</button>
+                <!-- fm02: Law of Cosines --><div class="formula-section">
+                    <h3>fm02: Law of Cosines (c² = a² + b² - 2ab·cos(C))</h3>
+                    <div class="formula-inputs">
+                        <label for="f-side-a">Side a:</label>
+                        <input type="number" id="f-side-a" placeholder="a">
+                        <label for="f-side-b">Side b:</label>
+                        <input type="number" id="f-side-b" placeholder="b">
+                        <label for="f-angle-c">Angle C (deg):</label>
+                        <input type="number" id="f-angle-c" placeholder="C">
+                    </div>
+                    <button id="calc-loc" class="formula-calc-button">Calculate Side c</button>
+                    <div id="result-loc" class="formula-result"></div>
+                </div>
+                
+                <!-- fm03: Heron's Formula --><div class="formula-section">
+                    <h3>fm03: Heron's Formula (Area of Triangle)</h3>
+                    <div class="formula-inputs">
+                        <label for="f-side-h-a">Side a:</label>
+                        <input type="number" id="f-side-h-a" placeholder="a">
+                        <label for="f-side-h-b">Side b:</label>
+                        <input type="number" id="f-side-h-b" placeholder="b">
+                        <label for="f-side-h-c">Side c:</label>
+                        <input type="number" id="f-side-h-c" placeholder="c">
+                    </div>
+                    <button id="calc-heron" class="formula-calc-button">Calculate Area</button>
+                    <div id="result-heron" class="formula-result"></div>
+                </div>
+            </div>
+        </div>
 
-        <button class="num" data-primary="4">4</button>
-        <button class="num" data-primary="5">5</button>
-        <button class="num" data-primary="6">6</button>
-        <button class="op" data-primary="×">×</button>
-        <button class="func" data-primary=","> ,</button>
-        <button class="func" data-primary="x^-1">1/x</button>
-        <button class="func" data-primary="DRILL">DRILL</button>
+        <!-- Program Modal --><div id="program-modal" class="formula-modal" style="display: none;">
+            <div class="formula-content">
+                <div class="formula-header">
+                    <h2 class="formula-title">Programs (PROG)</h2>
+                    <span id="program-close-btn" class="formula-close">&times;</span>
+                </div>
 
-        <button class="num" data-primary="1">1</button>
-        <button class="num" data-primary="2">2</button>
-        <button class="num" data-primary="3">3</button>
-        <button class="op" data-primary="−">−</button>
-        <button class="func" data-primary="Ans">Ans</button>
-        <button class="func" data-primary="π/2">π/2</button>
-        <button class="func" data-primary="STAT">STAT</button>
+                <!-- P1: Simultaneous Equations --><div class="formula-section">
+                    <h3>P1: Simultaneous Eqns (2 vars)</h3>
+                    <p class="text-sm mb-2">a1·x + b1·y + c1 = 0<br>a2·x + b2·y + c2 = 0</p>
+                    <div class="formula-inputs" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;">
+                        <input type="number" id="s-a1" placeholder="a1">
+                        <input type="number" id="s-b1" placeholder="b1">
+                        <input type="number" id="s-c1" placeholder="c1">
+                        <input type="number" id="s-a2" placeholder="a2">
+                        <input type="number" id="s-b2" placeholder="b2">
+                        <input type="number" id="s-c2" placeholder="c2">
+                    </div>
+                    <button id="calc-simul" class="formula-calc-button">Calculate</button>
+                    <div id="result-simul" class="formula-result"></div>
+                </div>
 
-        <button class="num" data-primary="0" style="grid-column:span 2">0</button>
-        <button class="num" data-primary=".">.</button>
-        <button class="op" data-primary="+">+</button>
-        <button class="func" data-primary="=">=</button>
-        <button class="func" data-primary="SHIFT-Toggle">⇧</button>
-        <button class="func" data-primary="RAD/DEG">DEG</button>
+                <!-- P2: Quadratic Analysis --><div class="formula-section">
+                    <h3>P2: Quadratic Analysis (y = ax² + bx + c)</h3>
+                    <div class="formula-inputs">
+                        <label for="p-a">a (x²):</label>
+                        <input type="number" id="p-a" placeholder="a">
+                        <label for="p-b">b (x):</label>
+                        <input type="number" id="p-b" placeholder="b">
+                        <label for="p-c">c (const):</label>
+                        <input type="number" id="p-c" placeholder="c">
+                    </div>
+                    <button id="calc-quad-analysis" class="formula-calc-button">Calculate</button>
+                    <div id="result-quad-analysis" class="formula-result"></div>
+                </div>
 
-      </div>
+            </div>
+        </div>
 
-      <footer>Tap or use keyboard. Save as HTML on your phone to use offline.</footer>
+        <!-- Buttons --><!-- Top Function Grid (Meticulously 1:1 rebuilt based on Image 2) --><div class="button-grid-top">
+            <!-- Row 1: SHIFT ALPHA MODE ON --><button class="calc-button button-shift" data-value="SHIFT">SHIFT</button>
+            <button class="calc-button button-alpha" data-value="ALPHA">ALPHA</button>
+            <div class="col-span-2"></div><!-- Empty for replay pad position --><button class="calc-button col-span-2" data-base="MODE" data-value="MODE">MODE SETUP</button>
+            
+            <!-- Row 2: (Main function row above replay pad) --><button class="calc-button button-on" data-value="ON">ON</button>
+            <button class="calc-button button-prog" data-base="Prog" data-value="Prog"><span class="alpha-text">EXIT</span>Prog</button>
+            <button class="calc-button button-prog" data-base="FMLA" data-value="FMLA"><span class="alpha-text">LOOK</span>FMLA</button>
+            <div class="col-span-2"></div><!-- Empty for replay pad position --><button class="calc-button" data-base="LOGIC" data-shift="x!" data-value="x!"><span class="shift-text">x!</span>LOGIC</button>
+            <button class="calc-button" data-base="x^3" data-shift="x^-1" data-value="x^3">
+                <span class="shift-text">x<sup>-1</sup></span>x<sup>3</sup>
+            </button>
+            
+            <!-- Replay Pad Container (positioned absolutely to overlap grid) --><div class="replay-pad-container">
+                <button class="replay-button replay-up" data-value="REPLAY-U">▲</button>
+                <button class="replay-button replay-left" data-value="REPLAY-L">◀</button>
+                <div class="replay-pad-center">REPLAY</div>
+                <button class="replay-button replay-right" data-value="REPLAY-R">▶</button>
+                <button class="replay-button replay-down" data-value="REPLAY-D">▼</button>
+            </div>
+
+            <!-- Row 3: (Aligned with replay pad for visual consistency) --><button class="calc-button" data-base="ab/c" data-shift="d/c" data-value="ab/c">
+                <span class="shift-text">d/c</span>a<span class="font-normal">b/c</span>
+            </button>
+            <button class="calc-button" data-base="sqrt" data-shift="cbrt" data-value="sqrt">
+                <span class="shift-text">∛</span>√
+            </button>
+            <button class="calc-button" data-base="x^2" data-shift="x^" data-value="x^2">
+                <span class="shift-text">^</span>x<sup>2</sup>
+            </button>
+            <button class="calc-button" data-base="log" data-shift="10^x" data-value="log"><span class="shift-text">10<sup>x</sup></span>log</button>
+            <button class="calc-button" data-base="ln" data-shift="e^x" data-value="ln"><span class="shift-text">e<sup>x</sup></span>ln</button>
+            
+            <!-- Row 4: Angle conversions, hyp, trig functions --><button class="calc-button" data-base="(-)" data-value="(-)">(-)</button>
+            <button class="calc-button" data-base="o'" data-value="o'"><span class="shift-text">i</span>o ' ''</button>
+            <button class="calc-button" data-base="hyp" data-value="hyp">hyp</button>
+            <button class="calc-button" data-base="sin" data-shift="sin-1" data-value="sin">
+                <span class="shift-text">sin<sup>-1</sup></span>sin
+            </button>
+            <button class="calc-button" data-base="cos" data-shift="cos-1" data-value="cos">
+                <span class="shift-text">cos<sup>-1</sup></span>cos
+            </button>
+            <button class="calc-button" data-base="tan" data-shift="tan-1" data-value="tan">
+                <span class="shift-text">tan<sup>-1</sup></span>tan
+            </button>
+
+            <!-- Row 5: Memory, Engineering, Parentheses --><button class="calc-button" data-base="RCL" data-value="RCL">RCL</button>
+            <button class="calc-button" data-base="ENG" data-value="ENG">ENG</button>
+            <button class="calc-button" data-base="(" data-value="(">(</button>
+            <button class="calc-button" data-base=")" data-value=")">)</button>
+            <button class="calc-button" data-base="," data-value=",">,</button>
+            <button class="calc-button" data-base="M+" data-shift="M-" data-value="M+">
+                <span class="shift-text">M-</span>M+
+            </button>
+            
+            <!-- Row 6: Constants, CLR, INS, OFF (bottom-left area) --><button class="calc-button" data-base="CONST" data-value="CONST">CONST</button>
+            <div></div> <!-- Spacer --><button class="calc-button" data-base="CLR" data-value="CLR">CLR</button>
+            <div class="col-span-2"></div> <!-- Spacers --><button class="calc-button" data-base="INS" data-shift="DT-CL" data-value="INS">
+                <span class="shift-text text-xs">DT-CL</span>INS
+            </button>
+            <button class="calc-button" data-base="OFF" data-value="OFF">OFF</button>
+
+        </div>
+
+        <!-- Bottom 5-Column Grid for Number Pad --><div class="button-grid-bottom">
+            <!-- R7 (Number Pad) --><button class="calc-button" data-base="7" data-value="7">7</button>
+            <button class="calc-button" data-base="8" data-value="8">8</button>
+            <button class="calc-button" data-base="9" data-value="9">9</button>
+            <button class="calc-button button-del" data-base="DEL" data-value="DEL">DEL</button>
+            <button class="calc-button button-ac" data-base="AC" data-value="AC">AC</button>
+            
+            <!-- R8 --><button class="calc-button" data-base="4" data-value="4">4</button>
+            <button class="calc-button" data-base="5" data-value="5">5</button>
+            <button class="calc-button" data-base="6" data-value="6">6</button>
+            <button class="calc-button" data-base="*" data-shift="nPr" data-value="*">
+                <span class="shift-text text-xs">nPr</span>×
+            </button>
+            <button class="calc-button" data-base="/" data-shift="nCr" data-value="/">
+                <span class="shift-text text-xs">nCr</span>÷
+            </button>
+            
+            <!-- R9 --><button class="calc-button" data-base="1" data-value="1">1</button>
+            <button class="calc-button" data-base="2" data-value="2">2</button>
+            <button class="calc-button" data-base="3" data-value="3">3</button>
+            <button class="calc-button" data-base="+" data-value="+">+</button>
+            <button class="calc-button" data-base="-" data-value="-">-</button>
+            
+            <!-- R10 --><button class="calc-button" data-base="0" data-value="0">0</button>
+            <button class="calc-button" data-base="." data-value=".">.</button>
+            <button class="calc-button" data-base="EXP" data-shift="PI" data-value="EXP">
+                <span class="shift-text">π</span>EXP
+            </button>
+            <button class="calc-button" data-base="Ans" data-value="Ans">Ans</button>
+            <button class="calc-button button-exe" data-base="EXE" data-value="EXE">EXE</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // Engine: implements many fx-50FII-style operations, SHIFT/ALPHA toggles, DEG/RAD, STAT basics
-    const upper = document.getElementById('upperDisplay');
-    const main = document.getElementById('mainDisplay');
-    const modeLabel = document.getElementById('modeLabel');
-    const keys = document.getElementById('keys');
-    const shiftBtn = document.getElementById('shiftBtn');
-    const alphaBtn = document.getElementById('alphaBtn');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Display Elements
+            const expressionDisplay = document.getElementById('expression');
+            const resultDisplay = document.getElementById('result');
+            const degradIndicator = document.getElementById('degrad-indicator');
+            
+            // Formula Modal Elements
+            const formulaModal = document.getElementById('formula-modal');
+            const formulaCloseBtn = document.getElementById('formula-close-btn');
+            
+            // Program Modal Elements
+            const programModal = document.getElementById('program-modal');
+            const programCloseBtn = document.getElementById('program-close-btn');
 
-    let expr = '';
-    let lastAns = 0;
-    let memory = 0;
-    let shift=false, alpha=false;
-    let deg=true; // DEG default
+            // Calculator State
+            let expression = '';
+            let result = '0';
+            let ans = '0';
+            let memory = 0;
+            let isShiftActive = false;
+            let isAlphaActive = false;
+            let angleMode = 'DEG'; // DEG, RAD, GRAD
 
-    const statList = [];
+            // --- Core Calculation Logic ---
+            
+            function calculate(expr) {
+                try {
+                    // 1. Convert our display syntax to JS-friendly Math syntax
+                    let safeExpr = expr
+                        .replace(/π/g, 'Math.PI')
+                        .replace(/e/g, 'Math.E')
+                        .replace(/√\(/g, 'Math.sqrt(')
+                        .replace(/∛\(/g, 'Math.cbrt(')
+                        .replace(/log\(/g, 'Math.log10(')
+                        .replace(/ln\(/g, 'Math.log(') // Note: Math.log is natural log
+                        .replace(/sin\(/g, 'sinDeg(')
+                        .replace(/cos\(/g, 'cosDeg(')
+                        .replace(/tan\(/g, 'tanDeg(')
+                        .replace(/sin⁻¹\(/g, 'asinDeg(')
+                        .replace(/cos⁻¹\(/g, 'acosDeg(')
+                        .replace(/tan⁻¹\(/g, 'atanDeg(')
+                        .replace(/(\d+)!/g, (match, n) => `factorial(${n})`)
+                        .replace(/(\d+(\.\d+)?)_nCr_(\d+(\.\d+)?)/g, (match, n, _, k) => `nCr(${n}, ${k})`)
+                        .replace(/(\d+(\.\d+)?)_nPr_(\d+(\.\d+)?)/g, (match, n, _, k) => `nPr(${n}, ${k})`)
+                        .replace(/\^/g, '**');
 
-    function setMain(v){ main.childNodes[0].textContent = String(v); }
-    function setUpper(v){ upper.textContent = v; }
-    function setMode(v){ modeLabel.textContent = v; }
+                    // 2. Define our custom math functions (including angle handling)
+                    const sinDeg = (deg) => Math.sin(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
+                    const cosDeg = (deg) => Math.cos(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
+                    const tanDeg = (deg) => Math.tan(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
+                    
+                    const asinDeg = (val) => {
+                        const rad = Math.asin(val);
+                        return angleMode === 'DEG' ? rad * (180 / Math.PI) : (angleMode === 'RAD' ? rad : rad * (200 / Math.PI));
+                    };
+                    const acosDeg = (val) => {
+                        const rad = Math.acos(val);
+                        return angleMode === 'DEG' ? rad * (180 / Math.PI) : (angleMode === 'RAD' ? rad : rad * (200 / Math.PI));
+                    };
+                    const atanDeg = (val) => {
+                        const rad = Math.atan(val);
+                        return angleMode === 'DEG' ? rad * (180 / Math.PI) : (angleMode === 'RAD' ? rad : rad * (200 / Math.PI));
+                    };
 
-    function resetShiftAlpha(){ if(shift){ shift=false; shiftBtn.style.filter='brightness(1)'; } if(alpha){ alpha=false; alphaBtn.style.filter='brightness(1)'; }}
-    function toggleShift(){ shift=!shift; shiftBtn.style.filter=shift? 'brightness(1.3)':'brightness(1)'; }
-    function toggleAlpha(){ alpha=!alpha; alphaBtn.style.filter=alpha? 'brightness(1.3)':'brightness(1)'; }
+                    const factorial = (n) => {
+                        if (n < 0) return NaN;
+                        if (n === 0) return 1;
+                        let r = 1;
+                        for (let i = 2; i <= n; i++) r *= i;
+                        return r;
+                    };
+                    
+                    const nCr = (n, k) => {
+                        if (k < 0 || k > n) return 0;
+                        return factorial(n) / (factorial(k) * factorial(n - k));
+                    };
+                    
+                    const nPr = (n, k) => {
+                        if (k < 0 || k > n) return 0;
+                        return factorial(n) / factorial(n - k);
+                    };
 
-    // Helper safe eval with many replacements and helper functions
-    function safeEval(input){
-      if(!input) return 0;
-      let s = input.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/\s+/g,'');
-      s = s.replace(/ANS/g,`(${lastAns})`);
-      s = s.replace(/π/g,`(${Math.PI})`);
-      s = s.replace(/e/g,`(${Math.E})`);
-      s = s.replace(/\^/g,'**');
-      s = s.replace(/√\(/g,'Math.sqrt(');
-      s = s.replace(/EXP\(/g,'Math.exp(');
-      // factorial placeholder
-      s = s.replace(/(\d+)!/g,'fact($1)');
+                    // 3. Use Function constructor for safe evaluation
+                    const evalFunc = new Function('sinDeg', 'cosDeg', 'tanDeg', 'asinDeg', 'acosDeg', 'atanDeg', 'factorial', 'nCr', 'nPr', `return ${safeExpr}`);
+                    let evalResult = evalFunc(sinDeg, cosDeg, tanDeg, asinDeg, acosDeg, atanDeg, factorial, nCr, nPr);
 
-      // trig wrappers for DEG/RAD
-      function toRad(x){ return deg? x*Math.PI/180 : x; }
-      const helpers = {
-        fact: n => { n=Math.floor(n); if(n<0) return NaN; let r=1; for(let i=2;i<=n;i++) r*=i; return r; },
-        sin: x => Math.sin(toRad(x)),
-        cos: x => Math.cos(toRad(x)),
-        tan: x => Math.tan(toRad(x)),
-        asin: x => deg? Math.asin(x)*180/Math.PI : Math.asin(x),
-        acos: x => deg? Math.acos(x)*180/Math.PI : Math.acos(x),
-        atan: x => deg? Math.atan(x)*180/Math.PI : Math.atan(x),
-        log10: x => Math.log10(x),
-        ln: x => Math.log(x),
-        expf: x => Math.exp(x)
-      };
+                    // 4. Format and return
+                    return Number(evalResult.toPrecision(10)).toString(); // Fix floating point issues
+                
+                } catch (error) {
+                    console.error('Calculation Error:', error);
+                    return 'Error';
+                }
+            }
+            
+            // --- UI Update Function ---
+            function updateDisplay() {
+                expressionDisplay.innerText = expression.replace(/\*/g, '×').replace(/\//g, '÷');
+                resultDisplay.innerText = result;
+                
+                // Update SHIFT/ALPHA indicators
+                const shiftBtn = document.querySelector('.button-shift');
+                const alphaBtn = document.querySelector('.button-alpha');
+                shiftBtn.style.boxShadow = isShiftActive ? 'inset 2px 2px 4px #d97706' : '';
+                alphaBtn.style.boxShadow = isAlphaActive ? 'inset 2px 2px 4px #ec4899' : '';
+                
+                // Update DEG/RAD/GRAD indicator
+                degradIndicator.innerText = angleMode;
+            }
 
-      try{
-        const f = new Function('helpers','with(helpers){return ' + s + '}');
-        return f(helpers);
-      }catch(e){ return NaN; }
-    }
+            // --- Button Handlers ---
+            function handleButton(value) {
+                if (isShiftActive) {
+                    handleShiftButton(value);
+                    isShiftActive = false;
+                } else if (isAlphaActive) {
+                    handleAlphaButton(value);
+                    isAlphaActive = false;
+                } else {
+                    handleBaseButton(value);
+                }
+                updateDisplay();
+            }
 
-    // Click handling with SHIFT/ALPHA behaviour
-    keys.addEventListener('click', e=>{
-      const b = e.target.closest('button'); if(!b) return;
-      const primary = b.dataset.primary;
-      const shifted = b.dataset.shift;
-      // determine effective label/action
-      let action = primary;
-      if(shift && shifted) action = shifted;
-      if(alpha && b.textContent.trim()) action = 'ALPHA:'+b.textContent.trim();
+            function handleBaseButton(value) {
+                switch(value) {
+                    case 'ON':
+                        // Handled by AC
+                        break;
+                    case 'AC':
+                    case 'CLR': // Add CLR to AC
+                        expression = '';
+                        result = '0';
+                        break;
+                    case 'DEL':
+                        if (expression.length > 0) {
+                            expression = expression.slice(0, -1);
+                        }
+                        break;
+                    case 'EXE':
+                        if (expression) {
+                            result = calculate(expression);
+                            ans = result;
+                            expression = ''; // Clear expression for next calc
+                        }
+                        break;
+                    case 'SHIFT':
+                        isShiftActive = !isShiftActive;
+                        isAlphaActive = false;
+                        break;
+                    case 'ALPHA':
+                        isAlphaActive = !isAlphaActive;
+                        isShiftActive = false;
+                        break;
+                    case 'Ans':
+                        expression += ans;
+                        break;
+                    case 'M+':
+                        try {
+                            memory += parseFloat(result);
+                        } catch (e) { /* ignore error */ }
+                        break;
+                    case 'RCL':
+                        // In a real calc, this would be followed by a letter
+                        // For simplicity, we'll just use the main memory
+                        expression += memory.toString();
+                        break;
+                    case 'MODE':
+                        // Cycle through DEG -> RAD -> GRAD -> DEG
+                        if (angleMode === 'DEG') angleMode = 'RAD';
+                        else if (angleMode === 'RAD') angleMode = 'GRAD';
+                        else angleMode = 'DEG';
+                        break;
+                    
+                    // Functions that need parentheses
+                    case 'sqrt': handleAppend('√('); break;
+                    case 'sin': handleAppend('sin('); break;
+                    case 'cos': handleAppend('cos('); break;
+                    case 'tan': handleAppend('tan('); break;
+                    case 'log': handleAppend('log('); break;
+                    case 'ln': handleAppend('ln('); break;
+                    
+                    // Simple append
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                    case '.':
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '/':
+                    case '(':
+                    case ')':
+                    case ',':
+                    case '%':
+                    case '^': // direct power button
+                    case 'x!': // x! (LOGIC, shift on x^-1 / x^3)
+                        handleAppend(value);
+                        break;
+                    
+                    // Special operators
+                    case 'x^2': handleAppend('**2'); break;
+                    case 'x^3': handleAppend('**3'); break;
+                    case 'EXP': handleAppend('*10**'); break;
+                    case '(-)': handleAppend('-'); break; // Simple minus for now
 
-      // simple numeric entry
-      if(/^[0-9]$/.test(action)) { expr += action; setMain(expr); resetShiftAlpha(); return; }
-      if(action==='0'){ expr += '0'; setMain(expr); resetShiftAlpha(); return; }
-      if(action==='.') { expr += '.'; setMain(expr); resetShiftAlpha(); return; }
+                    // Non-functional UI buttons
+                    case 'Prog':
+                        programModal.style.display = 'flex';
+                        break;
+                    case 'FMLA':
+                        formulaModal.style.display = 'flex';
+                        break;
+                    case 'ab/c':
+                    case 'hyp':
+                    case 'ENG':
+                    case 'REPLAY-U':
+                    case 'REPLAY-L':
+                    case 'REPLAY-R':
+                    case 'REPLAY-D':
+                    case 'REPLAY-C':
+                    case 'o\'': // o ' ''
+                    case 'STO':
+                    case 'CONST':
+                    case 'INS':
+                    case 'OFF':
+                        // Not implemented
+                        break;
+                }
+            }
 
-      switch(action){
-        case 'SHIFT': toggleShift(); break;
-        case 'ALPHA': toggleAlpha(); break;
-        case 'AC': expr=''; setMain('0'); setUpper('Cleared'); resetShiftAlpha(); break;
-        case 'DEL': expr = expr.slice(0,-1); setMain(expr||'0'); resetShiftAlpha(); break;
-        case 'π': expr += 'π'; setMain(expr); resetShiftAlpha(); break;
-        case 'x^2': expr += '**2'; setMain(expr); resetShiftAlpha(); break;
-        case 'x^3': expr += '**3'; setMain(expr); resetShiftAlpha(); break;
-        case '√': expr += '√('; setMain(expr); resetShiftAlpha(); break;
-        case '³√': expr += 'Math.cbrt('; setMain(expr); resetShiftAlpha(); break;
-        case '^': expr += '^'; setMain(expr); resetShiftAlpha(); break;
-        case 'root': // SHIFT root: a root b
-          expr += 'root('; setMain(expr); resetShiftAlpha(); break;
-        case 'sin(': expr += 'sin('; setMain(expr); resetShiftAlpha(); break;
-        case 'sin⁻¹(': expr += 'asin('; setMain(expr); resetShiftAlpha(); break;
-        case 'cos(': expr += 'cos('; setMain(expr); resetShiftAlpha(); break;
-        case 'cos⁻¹(': expr += 'acos('; setMain(expr); resetShiftAlpha(); break;
-        case 'tan(': expr += 'tan('; setMain(expr); resetShiftAlpha(); break;
-        case 'tan⁻¹(': expr += 'atan('; setMain(expr); resetShiftAlpha(); break;
-        case 'ln(': expr += 'ln('; setMain(expr); resetShiftAlpha(); break;
-        case 'e^': expr += 'expf('; setMain(expr); resetShiftAlpha(); break;
-        case 'log(': expr += 'log10('; setMain(expr); resetShiftAlpha(); break;
-        case '10^': expr += '10**'; setMain(expr); resetShiftAlpha(); break;
-        case 'EXP(': expr += 'EXP('; setMain(expr); resetShiftAlpha(); break;
-        case '%': expr += '%'; setMain(expr); resetShiftAlpha(); break;
-        case '÷': expr += '÷'; setMain(expr); resetShiftAlpha(); break;
-        case '×': expr += '×'; setMain(expr); resetShiftAlpha(); break;
-        case '−': expr += '−'; setMain(expr); resetShiftAlpha(); break;
-        case '+': expr += '+'; setMain(expr); resetShiftAlpha(); break;
-        case '(':
-        case ')': expr += action; setMain(expr); resetShiftAlpha(); break;
-        case ',': expr += ','; setMain(expr); resetShiftAlpha(); break;
-        case 'Ans': expr += 'ANS'; setMain(expr); resetShiftAlpha(); break;
-        case 'ANS': expr += 'ANS'; setMain(expr); resetShiftAlpha(); break;
-        case 'Ans->M': memory += Number(expr||lastAns); setUpper('M+=' + memory); resetShiftAlpha(); break;
-        case 'M->Ans': expr = String(memory); setMain(expr); resetShiftAlpha(); break;
-        case 'x^-1': // reciprocal
-          {
-            const out = safeEval('1/(' + (expr||lastAns) + ')'); if(!isFinite(out)){ setMain('ERR'); setUpper('Domain'); } else { lastAns = out; expr = String(out); setMain(expr); setUpper('1/x'); }
-            resetShiftAlpha();
-          }
-          break;
-        case '!': expr += '!'; setMain(expr); resetShiftAlpha(); break;
-        case '=':
-          {
-            let res = computeExpression(expr);
-            if(res===null || !isFinite(res)){ setMain('ERR'); setUpper('Math Error'); }
-            else{ lastAns = res; setMain(res); setUpper('= ' + res); expr = String(res); }
-            resetShiftAlpha();
-          }
-          break;
-        case 'RAD/DEG': deg = !deg; setMode(deg? 'DEG':'RAD'); resetShiftAlpha(); break;
-        case 'STAT': setUpper('STAT mode - add numbers with DEL?'); resetShiftAlpha(); break;
-        case 'S-VAR': // add current expression value to stat list
-          {
-            const v = Number(expr||lastAns);
-            if(!isFinite(v)){ setUpper('Invalid'); } else { statList.push(v); setUpper('Added to STAT: ' + v); }
-            resetShiftAlpha();
-          }
-          break;
-        default:
-          if(action && action.startsWith('ALPHA:')){ // alpha typed label
-            // insert letter after ALPHA
-            const letter = action.split(':')[1]; expr += letter; setMain(expr); resetShiftAlpha();
-          } else {
-            setUpper('Unmapped: ' + action); resetShiftAlpha();
-          }
-          break;
-      }
-    });
+            function handleShiftButton(baseValue) {
+                // This function is called when SHIFT is active
+                switch(baseValue) {
+                    case 'ON': // SHIFT + ON = OFF
+                    case 'OFF':
+                        expression = '';
+                        result = '';
+                        expressionDisplay.innerText = '';
+                        resultDisplay.innerText = '';
+                        break;
+                    case 'DEL': // SHIFT + DEL = INS
+                        // Not implemented
+                        break;
+                    case 'M+': // SHIFT + M+ = M-
+                        try {
+                            memory -= parseFloat(result);
+                        } catch (e) { /* ignore error */ }
+                        break;
+                    case 'sqrt': // SHIFT + sqrt = cbrt (Cube root)
+                        handleAppend('∛(');
+                        break;
+                    case 'x^2': // SHIFT + x^2 = ^ (Generic power)
+                        handleAppend('^(');
+                        break;
+                    case 'x^3': // SHIFT + x^3 = x^-1 (Inverse)
+                        handleAppend('**(-1)');
+                        break;
+                    case 'log': // SHIFT + log = 10^x
+                        handleAppend('10^(');
+                        break;
+                    case 'ln': // SHIFT + ln = e^x
+                        handleAppend('e^(');
+                        break;
+                    case 'sin': handleAppend('sin⁻¹('); break;
+                    case 'cos': handleAppend('cos⁻¹('); break;
+                    case 'tan': handleAppend('tan⁻¹('); break;
+                    case 'EXP': handleAppend('π'); break;
+                    
+                    case '*': // SHIFT + * = nPr
+                        handleAppend('_nPr_');
+                        break;
+                    case '/': // SHIFT + / = nCr
+                        handleAppend('_nCr_');
+                        break;
+                    
+                    case 'INS': // SHIFT + INS = DT-CL
+                        // Not implemented
+                        break;
+                    case 'LOGIC': // SHIFT + LOGIC (x!) is now on the same button
+                         handleAppend('!');
+                         break;
+                    
+                    // Other shift functions not implemented
+                    default:
+                        // Do nothing if the shift function isn't mapped
+                        break;
+                }
+            }
+            
+            function handleAlphaButton(baseValue) {
+                // Not implemented
+            }
 
-    // computeExpression: handles percent, factorial, root, comma lists, trig etc
-    function computeExpression(e){
-      if(!e) return 0;
-      let s = e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/ANS/g,String(lastAns)).replace(/π/g,String(Math.PI)).replace(/EXP\(/g,'Math.exp(');
-      // percent: number% -> number/100
-      s = s.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');
-      // factorial n! -> fact(n)
-      s = s.replace(/(\d+)!/g,'fact($1)');
-      // root(a,b) not implemented: skip
-      // functions mapping
-      s = s.replace(/sin\(/g,'sin(').replace(/cos\(/g,'cos(').replace(/tan\(/g,'tan(');
-      s = s.replace(/asin\(/g,'asin(').replace(/acos\(/g,'acos(').replace(/atan\(/g,'atan(');
-      s = s.replace(/ln\(/g,'ln(').replace(/log10\(/g,'log10(');
-      s = s.replace(/expf\(/g,'Math.exp(');
+            function handleAppend(value) {
+                // If result is shown, start new expression
+                if (result !== '0' && expression === '') {
+                    // Don't start with an operator (unless it's minus or a prefix function)
+                    const isOperator = ['+', '*', '/', '^', '_nPr_', '_nCr_', '!', '%'].includes(value);
+                    const isPrefixFunction = ['sin(','cos(','log(','sqrt(','('].some(prefix => value.startsWith(prefix));
 
-      // implement helper functions
-      function fact(n){ n=Math.floor(n); if(n<0) return NaN; let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
-      function toRad(x){ return deg? x*Math.PI/180 : x; }
-      const helpers = {
-        sin: x=>Math.sin(toRad(x)), cos:x=>Math.cos(toRad(x)), tan:x=>Math.tan(toRad(x)),
-        asin:x=>deg? Math.asin(x)*180/Math.PI : Math.asin(x),
-        acos:x=>deg? Math.acos(x)*180/Math.PI : Math.acos(x),
-        atan:x=>deg? Math.atan(x)*180/Math.PI : Math.atan(x),
-        ln: x=>Math.log(x), log10: x=>Math.log10(x)
-      };
+                    if (!isOperator || isPrefixFunction || value === '-') { // Allow starting with minus or a function
+                         expression = value;
+                         result = '0'; // Clear result
+                    }
+                } else {
+                     // Prevent stacking power operators
+                    const lastChar = expression.slice(-1);
+                    if (value.startsWith('**') && (lastChar === '*' || lastChar === '/')) {
+                        return; // Don't allow 5***2
+                    }
+                    expression += value;
+                }
+            }
 
-      try{
-        const f = new Function('fact','helpers','with(helpers){return ' + s + '}');
-        return f(fact,helpers);
-      }catch(e){ console.error('eval err',e,s); return null; }
-    }
+            // --- Modal Logic ---
 
-    // initialize
-    setMain('0'); setUpper('Ready'); setMode('DEG');
+            // --- Formula Modal Logic ---
+            formulaCloseBtn.addEventListener('click', () => {
+                formulaModal.style.display = 'none';
+            });
+            programCloseBtn.addEventListener('click', () => {
+                programModal.style.display = 'none';
+            });
 
-    // keyboard support - basic
-    window.addEventListener('keydown', e=>{
-      if(e.key>='0' && e.key<='9'){ expr+=e.key; setMain(expr); }
-      if(e.key==='Enter') document.querySelector('[data-primary="="]').click();
-      if(e.key==='Backspace') document.querySelector('[data-primary="DEL"]').click();
-    });
+            // fm01: Quadratic
+            document.getElementById('calc-quadratic').addEventListener('click', () => {
+                const a = parseFloat(document.getElementById('f-a').value);
+                const b = parseFloat(document.getElementById('f-b').value);
+                const c = parseFloat(document.getElementById('f-c').value);
+                const resultEl = document.getElementById('result-quadratic');
+                
+                if (isNaN(a) || isNaN(b) || isNaN(c)) {
+                    resultEl.innerText = 'Error: Invalid input';
+                    return;
+                }
+                
+                const discriminant = b*b - 4*a*c;
+                
+                if (discriminant > 0) {
+                    const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                    const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                    resultEl.innerText = `x1 = ${x1.toPrecision(7)}\nx2 = ${x2.toPrecision(7)}`;
+                } else if (discriminant === 0) {
+                    const x1 = -b / (2 * a);
+                    resultEl.innerText = `x = ${x1.toPrecision(7)}`;
+                } else {
+                    const real = (-b / (2 * a)).toPrecision(7);
+                    const imag = (Math.sqrt(-discriminant) / (2 * a)).toPrecision(7);
+                    resultEl.innerText = `x1 = ${real} + ${imag}i\nx2 = ${real} - ${imag}i`;
+                }
+            });
 
-  </script>
+            // fm02: Law of Cosines
+            document.getElementById('calc-loc').addEventListener('click', () => {
+                const a = parseFloat(document.getElementById('f-side-a').value);
+                const b = parseFloat(document.getElementById('f-side-b').value);
+                const angleC = parseFloat(document.getElementById('f-angle-c').value);
+                const resultEl = document.getElementById('result-loc');
+                
+                if (isNaN(a) || isNaN(b) || isNaN(angleC)) {
+                    resultEl.innerText = 'Error: Invalid input';
+                    return;
+                }
+                
+                // Assuming angle is in degrees
+                const angleCRad = angleC * (Math.PI / 180);
+                const cSquared = a*a + b*b - 2*a*b*Math.cos(angleCRad);
+                const c = Math.sqrt(cSquared);
+                resultEl.innerText = `Side c = ${c.toPrecision(7)}`;
+            });
+            
+            // fm03: Heron's Formula
+            document.getElementById('calc-heron').addEventListener('click', () => {
+                const a = parseFloat(document.getElementById('f-side-h-a').value);
+                const b = parseFloat(document.getElementById('f-side-h-b').value);
+                const c = parseFloat(document.getElementById('f-side-h-c').value);
+                const resultEl = document.getElementById('result-heron');
+
+                if (isNaN(a) || isNaN(b) || isNaN(c)) {
+                    resultEl.innerText = 'Error: Invalid input';
+                    return;
+                }
+                
+                const s = (a + b + c) / 2;
+                if (s <= a || s <= b || s <= c) {
+                     resultEl.innerText = 'Error: Invalid triangle sides';
+                     return;
+                }
+                
+                const area = Math.sqrt(s * (s - a) * (s - b) * (s - c));
+                resultEl.innerText = `Area = ${area.toPrecision(7)}`;
+            });
+
+            // --- Program Modal Logic ---
+
+            // P1: Simultaneous Equations
+            document.getElementById('calc-simul').addEventListener('click', () => {
+                const a1 = parseFloat(document.getElementById('s-a1').value);
+                const b1 = parseFloat(document.getElementById('s-b1').value);
+                const c1 = parseFloat(document.getElementById('s-c1').value);
+                const a2 = parseFloat(document.getElementById('s-a2').value);
+                const b2 = parseFloat(document.getElementById('s-b2').value);
+                const c2 = parseFloat(document.getElementById('s-c2').value);
+                const resultEl = document.getElementById('result-simul');
+
+                if (isNaN(a1) || isNaN(b1) || isNaN(c1) || isNaN(a2) || isNaN(b2) || isNaN(c2)) {
+                    resultEl.innerText = 'Error: Invalid input';
+                    return;
+                }
+
+                // Using Cramer's Rule
+                // a1x + b1y = -c1
+                // a2x + b2y = -c2
+                const D = a1 * b2 - a2 * b1;
+                const Dx = (-c1) * b2 - (-c2) * b1;
+                const Dy = a1 * (-c2) - a2 * (-c1);
+
+                if (D === 0) {
+                    if (Dx === 0 && Dy === 0) {
+                        resultEl.innerText = 'Infinite solutions';
+                    } else {
+                        resultEl.innerText = 'No solution';
+                    }
+                } else {
+                    const x = Dx / D;
+                    const y = Dy / D;
+                    resultEl.innerText = `x = ${x.toPrecision(7)}, y = ${y.toPrecision(7)}`;
+                }
+            });
+
+            // P2: Quadratic Analysis
+            document.getElementById('calc-quad-analysis').addEventListener('click', () => {
+                const a = parseFloat(document.getElementById('p-a').value);
+                const b = parseFloat(document.getElementById('p-b').value);
+                const c = parseFloat(document.getElementById('p-c').value);
+                const resultEl = document.getElementById('result-quad-analysis');
+
+                if (isNaN(a) || isNaN(b) || isNaN(c)) {
+                    resultEl.innerText = 'Error: Invalid input';
+                    return;
+                }
+                if (a === 0) {
+                    resultEl.innerText = 'Not quadratic (a=0)';
+                    return;
+                }
+
+                // Vertex
+                const vertexX = -b / (2 * a);
+                const vertexY = a * (vertexX * vertexX) + b * vertexX + c;
+                
+                // Discriminant (Delta)
+                const discriminant = b * b - 4 * a * c;
+
+                let resultText = `Vertex: (x: ${vertexX.toPrecision(7)}, y: ${vertexY.toPrecision(7)})`;
+                resultText += `\nDelta: ${discriminant.toPrecision(7)}`;
+
+                // Roots
+                if (discriminant > 0) {
+                    const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                    const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                    resultText += `\nRoots: x1 = ${x1.toPrecision(7)}, x2 = ${x2.toPrecision(7)}`;
+                } else if (discriminant === 0) {
+                    const x1 = -b / (2 * a);
+                    resultText += `\nRoot: x = ${x1.toPrecision(7)}`;
+                } else {
+                    const realPart = (-b / (2 * a)).toPrecision(7);
+                    const imagPart = (Math.sqrt(-discriminant) / (2 * a)).toPrecision(7);
+                    resultText += `\nRoots: x1 = ${realPart} + ${imagPart}i, x2 = ${realPart} - ${imagPart}i`;
+                }
+                resultEl.innerText = resultText;
+            });
+
+
+            // Initial setup to assign base values
+            document.querySelectorAll('.calc-button[data-base]').forEach(btn => {
+                const baseValue = btn.getAttribute('data-base');
+                btn.addEventListener('click', () => {
+                    let valueToHandle = baseValue;
+                    
+                    if (isShiftActive) {
+                        // Check if a specific shift-value exists, otherwise use base
+                        valueToHandle = btn.getAttribute('data-shift') || baseValue;
+                    } else if (isAlphaActive) {
+                        // Check if a specific alpha-value exists, otherwise use base
+                        valueToHandle = btn.getAttribute('data-alpha') || baseValue;
+                    }
+                    
+                    // Special case: SHIFT/ALPHA keys just set state
+                    if (baseValue === 'SHIFT' || baseValue === 'ALPHA') {
+                        handleButton(baseValue);
+                    } 
+                    // Special case: SHIFT-mapped buttons
+                    else if (isShiftActive) {
+                        handleShiftButton(baseValue); // Pass the BASE value
+                        isShiftActive = false;
+                    }
+                    // Special case: ALPHA-mapped buttons
+                    else if (isAlphaActive) {
+                        handleAlphaButton(baseValue); // Pass the BASE value
+                        isAlphaActive = false;
+                    }
+                    // Normal button press
+                    else {
+                        handleButton(baseValue);
+                    }
+                    updateDisplay();
+                });
+            });
+
+            // Handle non-data-base buttons (SHIFT, ALPHA, ON)
+            document.querySelectorAll('.calc-button:not([data-base])').forEach(btn => {
+                const value = btn.getAttribute('data-value');
+                btn.addEventListener('click', () => {
+                    handleButton(value);
+                    updateDisplay();
+                });
+            });
+
+            // Initialize display
+            updateDisplay();
+        });
+    </script>
 </body>
 </html>
