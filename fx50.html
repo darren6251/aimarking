@@ -105,7 +105,7 @@
         .button-grid-bottom {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
+            gap: 8px; /* MODIFIED: Was 10px, now 8px to match top grid */
         }
 
         .calc-button {
@@ -188,11 +188,27 @@
         /* Replay Pad Styling */
         .replay-pad-container {
             grid-column: 3 / span 2; /* Center it in the middle columns */
-            grid-row: 2 / span 3; /* Spans multiple rows visually */
+            /* ***** MODIFIED POSITIONING ***** */
+            grid-row: 1 / span 2; /* Spans 2 rows */
             position: absolute;
-            top: 48px; /* Adjust based on grid-top padding and button height */
+            top: 8px; /* (1 * gap) */
             left: 50%;
             transform: translateX(-50%);
+            width: 100px; /* Adjust size as needed */
+            height: 96px; /* (2 * button_height) + (1 * gap) */
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Make container transparent */
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        
+        /* This is the visual circular pad */
+        .replay-pad-visual {
+            position: absolute;
             width: 100px; /* Adjust size as needed */
             height: 100px; /* Adjust size as needed */
             background-color: #b0b0b0;
@@ -202,8 +218,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10; /* Ensure it's above other buttons if needed */
         }
+
         .replay-pad-center {
             width: 48px;
             height: 48px;
@@ -234,16 +250,19 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 2px 2px 4px #a6a6a6, -2px -2px 4px #ffffff;
+            z-index: 11; /* Above visual pad */
         }
         .replay-button:active {
             box-shadow: inset 1px 1px 2px #a6a6a6, inset -1px -1px 2px #ffffff;
             transform: translateY(0.5px);
         }
 
-        .replay-up { top: 0px; }
-        .replay-down { bottom: 0px; }
+        /* Position buttons relative to the center */
+        .replay-up { top: -2px; } /* Adjusted for visual center */
+        .replay-down { bottom: -2px; } /* Adjusted for visual center */
         .replay-left { left: 0px; }
         .replay-right { right: 0px; }
+
 
         /* Modal Styles */
         .formula-modal {
@@ -350,7 +369,8 @@
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="calculator-body">
-        <!-- Header --><div class="brand-header">
+        <!-- Header -->
+        <div class="brand-header">
             <div>
                 <div class="brand-name">CASIO</div>
                 <div class="brand-model">fx-50F II</div>
@@ -358,20 +378,23 @@
             <div class="solar-panel"></div>
         </div>
 
-        <!-- Display --><div class="display-area font-display">
+        <!-- Display -->
+        <div class="display-area font-display">
             <div id="degrad-indicator">DEG</div>
             <div id="expression"></div>
             <div id="result">0</div>
         </div>
 
-        <!-- Formula Modal --><div id="formula-modal" class="formula-modal" style="display: none;">
+        <!-- Formula Modal -->
+        <div id="formula-modal" class="formula-modal" style="display: none;">
             <div class="formula-content">
                 <div class="formula-header">
                     <h2 class="formula-title">Formulas (FMLA)</h2>
                     <span id="formula-close-btn" class="formula-close">&times;</span>
                 </div>
 
-                <!-- fm01: Quadratic Formula --><div class="formula-section">
+                <!-- fm01: Quadratic Formula -->
+                <div class="formula-section">
                     <h3>fm01: Quadratic Formula (ax² + bx + c = 0)</h3>
                     <div class="formula-inputs">
                         <label for="f-a">a (x²):</label>
@@ -385,7 +408,8 @@
                     <div id="result-quadratic" class="formula-result"></div>
                 </div>
 
-                <!-- fm02: Law of Cosines --><div class="formula-section">
+                <!-- fm02: Law of Cosines -->
+                <div class="formula-section">
                     <h3>fm02: Law of Cosines (c² = a² + b² - 2ab·cos(C))</h3>
                     <div class="formula-inputs">
                         <label for="f-side-a">Side a:</label>
@@ -399,7 +423,8 @@
                     <div id="result-loc" class="formula-result"></div>
                 </div>
                 
-                <!-- fm03: Heron's Formula --><div class="formula-section">
+                <!-- fm03: Heron's Formula -->
+                <div class="formula-section">
                     <h3>fm03: Heron's Formula (Area of Triangle)</h3>
                     <div class="formula-inputs">
                         <label for="f-side-h-a">Side a:</label>
@@ -415,14 +440,16 @@
             </div>
         </div>
 
-        <!-- Program Modal --><div id="program-modal" class="formula-modal" style="display: none;">
+        <!-- Program Modal -->
+        <div id="program-modal" class="formula-modal" style="display: none;">
             <div class="formula-content">
                 <div class="formula-header">
                     <h2 class="formula-title">Programs (PROG)</h2>
                     <span id="program-close-btn" class="formula-close">&times;</span>
                 </div>
 
-                <!-- P1: Simultaneous Equations --><div class="formula-section">
+                <!-- P1: Simultaneous Equations -->
+                <div class="formula-section">
                     <h3>P1: Simultaneous Eqns (2 vars)</h3>
                     <p class="text-sm mb-2">a1·x + b1·y + c1 = 0<br>a2·x + b2·y + c2 = 0</p>
                     <div class="formula-inputs" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;">
@@ -437,7 +464,8 @@
                     <div id="result-simul" class="formula-result"></div>
                 </div>
 
-                <!-- P2: Quadratic Analysis --><div class="formula-section">
+                <!-- P2: Quadratic Analysis -->
+                <div class="formula-section">
                     <h3>P2: Quadratic Analysis (y = ax² + bx + c)</h3>
                     <div class="formula-inputs">
                         <label for="p-a">a (x²):</label>
@@ -454,41 +482,67 @@
             </div>
         </div>
 
-        <!-- Buttons --><!-- Top Function Grid (Meticulously 1:1 rebuilt based on Image 2) --><div class="button-grid-top">
-            <!-- Row 1: SHIFT ALPHA MODE ON --><button class="calc-button button-shift" data-value="SHIFT">SHIFT</button>
+        <!-- Buttons -->
+        <!-- ***** THIS GRID IS NOW 1:1 WITH THE REAL CALCULATOR PHOTO ***** -->
+        <div class="button-grid-top">
+            <!-- Row 1: SHIFT ALPHA (replay) MODE ON -->
+            <button class="calc-button button-shift" data-value="SHIFT">SHIFT</button>
             <button class="calc-button button-alpha" data-value="ALPHA">ALPHA</button>
-            <div class="col-span-2"></div><!-- Empty for replay pad position --><button class="calc-button col-span-2" data-base="MODE" data-value="MODE">MODE SETUP</button>
-            
-            <!-- Row 2: (Main function row above replay pad) --><button class="calc-button button-on" data-value="ON">ON</button>
-            <button class="calc-button button-prog" data-base="Prog" data-value="Prog"><span class="alpha-text">EXIT</span>Prog</button>
-            <button class="calc-button button-prog" data-base="FMLA" data-value="FMLA"><span class="alpha-text">LOOK</span>FMLA</button>
-            <div class="col-span-2"></div><!-- Empty for replay pad position --><button class="calc-button" data-base="LOGIC" data-shift="x!" data-value="x!"><span class="shift-text">x!</span>LOGIC</button>
-            <button class="calc-button" data-base="x^3" data-shift="x^-1" data-value="x^3">
-                <span class="shift-text">x<sup>-1</sup></span>x<sup>3</sup>
+            <div class="col-span-2"></div><!-- Spacer for Replay Pad -->
+            <button class="calc-button" data-base="MODE" data-value="MODE">
+                <span class="sub-text" style="font-size: 0.65rem;">MODE SETUP</span>
+            </button>
+            <button class="calc-button button-on" data-value="ON">ON</button>
+            <!-- Row 2: Prog FMLA (replay) x^-1 x^3 -->
+            <button class="calc-button button-prog" data-base="Prog" data-alpha="EXIT" data-value="Prog">
+                <span class="alpha-text">EXIT</span>Prog
+            </button>
+            <button class="calc-button button-prog" data-base="FMLA" data-alpha="LOOK" data-value="FMLA">
+                <span class="alpha-text">LOOK</span>FMLA
+            </button>
+            <div class="col-span-2"></div><!-- Spacer for Replay Pad -->
+            <!-- ***** MODIFIED THIS ROW ***** -->
+            <button class="calc-button" data-base="x^-1" data-shift="x!" data-value="x^-1">
+                <span class="shift-text">x!</span>x<sup>-1</sup>
+            </button>
+            <button class="calc-button" data-base="x^3" data-shift="cbrt" data-value="x^3">
+                <span class="shift-text">∛</span>x<sup>3</sup>
             </button>
             
-            <!-- Replay Pad Container (positioned absolutely to overlap grid) --><div class="replay-pad-container">
-                <button class="replay-button replay-up" data-value="REPLAY-U">▲</button>
-                <button class="replay-button replay-left" data-value="REPLAY-L">◀</button>
-                <div class="replay-pad-center">REPLAY</div>
-                <button class="replay-button replay-right" data-value="REPLAY-R">▶</button>
-                <button class="replay-button replay-down" data-value="REPLAY-D">▼</button>
+            <!-- Replay Pad Container (positioned absolutely to overlap grid) -->
+            <!-- This pad visually covers R1/R2, C3/C4 -->
+            <div class="replay-pad-container">
+                <div class="replay-pad-visual">
+                    <button class="replay-button replay-up" data-value="REPLAY-U">▲</button>
+                    <button class="replay-button replay-left" data-value="REPLAY-L">◀</button>
+                    <div class="replay-pad-center">REPLAY</div>
+                    <button class="replay-button replay-right" data-value="REPLAY-R">▶</button>
+                    <button class="replay-button replay-down" data-value="REPLAY-D">▼</button>
+                </div>
             </div>
 
-            <!-- Row 3: (Aligned with replay pad for visual consistency) --><button class="calc-button" data-base="ab/c" data-shift="d/c" data-value="ab/c">
+            <!-- Row 3: ab/c sqrt x^2 ^ log ln -->
+            <button class="calc-button" data-base="ab/c" data-shift="d/c" data-value="ab/c">
                 <span class="shift-text">d/c</span>a<span class="font-normal">b/c</span>
             </button>
             <button class="calc-button" data-base="sqrt" data-shift="cbrt" data-value="sqrt">
-                <span class="shift-text">∛</span>√
+                <!-- ***** MODIFIED THIS BUTTON ***** -->
+                <span class="shift-text" style="color: #d97706;"></span>√ <!-- Removed cbrt from here -->
             </button>
-            <button class="calc-button" data-base="x^2" data-shift="x^" data-value="x^2">
-                <span class="shift-text">^</span>x<sup>2</sup>
+            <button class="calc-button" data-base="x^2" data-value="x^2">
+                x<sup>2</sup>
+            </button>
+            <button class="calc-button" data-base="^" data-value="^">
+                ^
             </button>
             <button class="calc-button" data-base="log" data-shift="10^x" data-value="log"><span class="shift-text">10<sup>x</sup></span>log</button>
-            <button class="calc-button" data-base="ln" data-shift="e^x" data-value="ln"><span class="shift-text">e<sup>x</sup></span>ln</button>
+            <button class="calc-button" data-base="ln" data-shift="e^x" data-alpha="e" data-value="ln">
+                <span class="shift-text">e<sup>x</sup></span><span class="alpha-text">e</span>ln
+            </button>
             
-            <!-- Row 4: Angle conversions, hyp, trig functions --><button class="calc-button" data-base="(-)" data-value="(-)">(-)</button>
-            <button class="calc-button" data-base="o'" data-value="o'"><span class="shift-text">i</span>o ' ''</button>
+            <!-- Row 4: (-) o' hyp sin cos tan -->
+            <button class="calc-button" data-base="(-)" data-value="(-)">(-)</button>
+            <button class="calc-button" data-base="o'" data-alpha="i" data-value="o'"><span class="alpha-text" style="right: 5px;">i</span>o ' ''</button>
             <button class="calc-button" data-base="hyp" data-value="hyp">hyp</button>
             <button class="calc-button" data-base="sin" data-shift="sin-1" data-value="sin">
                 <span class="shift-text">sin<sup>-1</sup></span>sin
@@ -500,32 +554,50 @@
                 <span class="shift-text">tan<sup>-1</sup></span>tan
             </button>
 
-            <!-- Row 5: Memory, Engineering, Parentheses --><button class="calc-button" data-base="RCL" data-value="RCL">RCL</button>
+            <!-- Row 5: RCL ENG ( ) , M+ -->
+            <button class="calc-button" data-base="RCL" data-shift="STO" data-value="RCL">
+                <span class="shift-text">STO</span>RCL
+            </button>
             <button class="calc-button" data-base="ENG" data-value="ENG">ENG</button>
-            <button class="calc-button" data-base="(" data-value="(">(</button>
-            <button class="calc-button" data-base=")" data-value=")">)</button>
-            <button class="calc-button" data-base="," data-value=",">,</button>
-            <button class="calc-button" data-base="M+" data-shift="M-" data-value="M+">
-                <span class="shift-text">M-</span>M+
+            <button class="calc-button" data-base="(" data-shift="%" data-value="(">
+                <span class="shift-text">%</span>(
+            </button>
+            <button class="calc-button" data-base=")" data-alpha="Abs" data-value=")">
+                <span class="alpha-text">Abs</span>)
+            </button>
+            <button class="calc-button" data-base="," data-alpha="X" data-value=",">
+                <span class="alpha-text">X</span>,
+            </button>
+            <button class="calc-button" data-base="M+" data-shift="M-" data-alpha="Y" data-value="M+">
+                <span class="shift-text">M-</span><span class="alpha-text" style="top: 12px; right: 5px;">Y</span>M+
             </button>
             
-            <!-- Row 6: Constants, CLR, INS, OFF (bottom-left area) --><button class="calc-button" data-base="CONST" data-value="CONST">CONST</button>
-            <div></div> <!-- Spacer --><button class="calc-button" data-base="CLR" data-value="CLR">CLR</button>
-            <div class="col-span-2"></div> <!-- Spacers --><button class="calc-button" data-base="INS" data-shift="DT-CL" data-value="INS">
+            <!-- Row 6: CONST CLR INS OFF -->
+            <button class="calc-button" data-base="CONST" data-value="CONST">CONST</button>
+            <div></div> <!-- Spacer -->
+            <button class="calc-button" data-base="CLR" data-value="CLR">CLR</button>
+            <div></div> <!-- Spacer -->
+            <button class="calc-button" data-base="INS" data-shift="DT-CL" data-value="INS">
                 <span class="shift-text text-xs">DT-CL</span>INS
             </button>
-            <button class="calc-button" data-base="OFF" data-value="OFF">OFF</button>
+            <!-- Removed OFF button, it's now SHIFT+AC -->
+            <div></div> <!-- Spacer -->
 
         </div>
 
-        <!-- Bottom 5-Column Grid for Number Pad --><div class="button-grid-bottom">
-            <!-- R7 (Number Pad) --><button class="calc-button" data-base="7" data-value="7">7</button>
+        <!-- Bottom 5-Column Grid for Number Pad -->
+        <div class="button-grid-bottom">
+            <!-- R7 (Number Pad) -->
+            <button class="calc-button" data-base="7" data-value="7">7</button>
             <button class="calc-button" data-base="8" data-value="8">8</button>
             <button class="calc-button" data-base="9" data-value="9">9</button>
             <button class="calc-button button-del" data-base="DEL" data-value="DEL">DEL</button>
-            <button class="calc-button button-ac" data-base="AC" data-value="AC">AC</button>
+            <button class="calc-button button-ac" data-base="AC" data-shift="OFF" data-value="AC">
+                <span class="shift-text" style="color: #c00; font-weight: 600;">OFF</span>AC
+            </button>
             
-            <!-- R8 --><button class="calc-button" data-base="4" data-value="4">4</button>
+            <!-- R8 -->
+            <button class="calc-button" data-base="4" data-value="4">4</button>
             <button class="calc-button" data-base="5" data-value="5">5</button>
             <button class="calc-button" data-base="6" data-value="6">6</button>
             <button class="calc-button" data-base="*" data-shift="nPr" data-value="*">
@@ -535,13 +607,15 @@
                 <span class="shift-text text-xs">nCr</span>÷
             </button>
             
-            <!-- R9 --><button class="calc-button" data-base="1" data-value="1">1</button>
+            <!-- R9 -->
+            <button class="calc-button" data-base="1" data-value="1">1</button>
             <button class="calc-button" data-base="2" data-value="2">2</button>
             <button class="calc-button" data-base="3" data-value="3">3</button>
             <button class="calc-button" data-base="+" data-value="+">+</button>
             <button class="calc-button" data-base="-" data-value="-">-</button>
             
-            <!-- R10 --><button class="calc-button" data-base="0" data-value="0">0</button>
+            <!-- R10 -->
+            <button class="calc-button" data-base="0" data-value="0">0</button>
             <button class="calc-button" data-base="." data-value=".">.</button>
             <button class="calc-button" data-base="EXP" data-shift="PI" data-value="EXP">
                 <span class="shift-text">π</span>EXP
@@ -574,6 +648,8 @@
             let isShiftActive = false;
             let isAlphaActive = false;
             let angleMode = 'DEG'; // DEG, RAD, GRAD
+            let lastCalculatedExpression = ''; // To store the expression for d/c toggle
+            let isFractionDisplay = false; // To track if we're showing the fraction
 
             // --- Core Calculation Logic ---
             
@@ -581,29 +657,60 @@
                 try {
                     // 1. Convert our display syntax to JS-friendly Math syntax
                     let safeExpr = expr
+                        .replace(/Ans/g, `(${ans})`) // ADDED: Handle "Ans"
                         .replace(/π/g, 'Math.PI')
                         .replace(/e/g, 'Math.E')
-                        .replace(/√\(/g, 'Math.sqrt(')
-                        .replace(/∛\(/g, 'Math.cbrt(')
+                        .replace(/√\(/g, 'Math.sqrt(') // ADDED
+                        .replace(/∛\(/g, 'Math.cbrt(') // ADDED
                         .replace(/log\(/g, 'Math.log10(')
                         .replace(/ln\(/g, 'Math.log(') // Note: Math.log is natural log
-                        .replace(/sin\(/g, 'sinDeg(')
+                        .replace(/sin\(/g, 'sinDeg(') // ADDED
                         .replace(/cos\(/g, 'cosDeg(')
                         .replace(/tan\(/g, 'tanDeg(')
-                        .replace(/sin⁻¹\(/g, 'asinDeg(')
+                        .replace(/sin⁻¹\(/g, 'asinDeg(') // ADDED
                         .replace(/cos⁻¹\(/g, 'acosDeg(')
                         .replace(/tan⁻¹\(/g, 'atanDeg(')
                         .replace(/(\d+)!/g, (match, n) => `factorial(${n})`)
                         .replace(/(\d+(\.\d+)?)_nCr_(\d+(\.\d+)?)/g, (match, n, _, k) => `nCr(${n}, ${k})`)
                         .replace(/(\d+(\.\d+)?)_nPr_(\d+(\.\d+)?)/g, (match, n, _, k) => `nPr(${n}, ${k})`)
-                        .replace(/\^/g, '**');
+                        // .replace(/\^/g, '**'); // REMOVED: We will handle power manually
+
+                    // ***** MODIFIED: Replace ** with Math.pow() *****
+                    // This handles all power operations (x^y, x^2, x^3, 10^x, e^x)
+                    // Must be in order from most complex base to simplest.
+                    
+                    // Case 1: *10**Exponent (for EXP button, must be specific)
+                    safeExpr = safeExpr.replace(/(\*10)\*\*(\(.+?\))/g, '$1*Math.pow(10, $2)'); // *10**( ... ) - MODIFIED
+                    safeExpr = safeExpr.replace(/(\*10)\*\*(\-?\d+(?:\.\d+)?)/g, '$1*Math.pow(10, $2)'); // *10**N
+
+                    // Case 2: ( ... )**(...)  -- Simple parens
+                    safeExpr = safeExpr.replace(/(\(.+?\))\*\*(\(.+?\))/g, 'Math.pow($1, $2)'); // MODIFIED
+                    // Case 3: ( ... )**N
+                    safeExpr = safeExpr.replace(/(\(.+?\))\*\*(\-?\d+(?:\.\d+)?)/g, 'Math.pow($1, $2)'); // MODIFIED
+
+                    // Case 4: Ans**(...)
+                    safeExpr = safeExpr.replace(/(Ans)\*\*(\(.+?\))/g, 'Math.pow($1, $2)'); // MODIFIED
+                    // Case 5: Ans**N
+                    safeExpr = safeExpr.replace(/(Ans)\*\*(\-?\d+(?:\.\d+)?)/g, 'Math.pow($1, $2)');
+
+                    // Case 6: 10**(...) and e**(...)
+                    safeExpr = safeExpr.replace(/e\*\*(\(.+?\))/g, 'Math.pow(Math.E, $1)'); // MODIFIED
+                    safeExpr = safeExpr.replace(/10\*\*(\(.+?\))/g, 'Math.pow(10, $1)'); // MODIFIED
+
+                    // Case 7: N**(...)
+                    safeExpr = safeExpr.replace(/(\-?\d+(?:\.\d+)?)\*\*(\(.+?\))/g, 'Math.pow($1, $2)'); // MODIFIED
+                    // Case 8: N**N
+                    safeExpr = safeExpr.replace(/(\-?\d+(?:\.\d+)?)\*\*(\-?\d+(?:\.\d+)?)/g, 'Math.pow($1, $2)');
+
+                    // ***** END NEW SECTION *****
+
 
                     // 2. Define our custom math functions (including angle handling)
-                    const sinDeg = (deg) => Math.sin(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
+                    const sinDeg = (deg) => Math.sin(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200))); // ADDED
                     const cosDeg = (deg) => Math.cos(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
                     const tanDeg = (deg) => Math.tan(angleMode === 'DEG' ? deg * (Math.PI / 180) : (angleMode === 'RAD' ? deg : deg * (Math.PI / 200)));
                     
-                    const asinDeg = (val) => {
+                    const asinDeg = (val) => { // ADDED
                         const rad = Math.asin(val);
                         return angleMode === 'DEG' ? rad * (180 / Math.PI) : (angleMode === 'RAD' ? rad : rad * (200 / Math.PI));
                     };
@@ -635,8 +742,8 @@
                     };
 
                     // 3. Use Function constructor for safe evaluation
-                    const evalFunc = new Function('sinDeg', 'cosDeg', 'tanDeg', 'asinDeg', 'acosDeg', 'atanDeg', 'factorial', 'nCr', 'nPr', `return ${safeExpr}`);
-                    let evalResult = evalFunc(sinDeg, cosDeg, tanDeg, asinDeg, acosDeg, atanDeg, factorial, nCr, nPr);
+                    const evalFunc = new Function('sinDeg', 'cosDeg', 'tanDeg', 'asinDeg', 'acosDeg', 'atanDeg', 'factorial', 'nCr', 'nPr', `return ${safeExpr}`); // ADDED sinDeg, asinDeg
+                    let evalResult = evalFunc(sinDeg, cosDeg, tanDeg, asinDeg, acosDeg, atanDeg, factorial, nCr, nPr); // ADDED sinDeg, asinDeg
 
                     // 4. Format and return
                     return Number(evalResult.toPrecision(10)).toString(); // Fix floating point issues
@@ -685,6 +792,8 @@
                     case 'CLR': // Add CLR to AC
                         expression = '';
                         result = '0';
+                        lastCalculatedExpression = '';
+                        isFractionDisplay = false;
                         break;
                     case 'DEL':
                         if (expression.length > 0) {
@@ -693,8 +802,16 @@
                         break;
                     case 'EXE':
                         if (expression) {
+                            // Check for "Ans" usage
+                            if (expression.includes('Ans') && ans === '0' && result !== '0') {
+                                // A special case where user types "Ans" but 'ans' state is 0
+                                // (e.g., after 'AC'). Use the current result.
+                                ans = result;
+                            }
+                            lastCalculatedExpression = expression; // Store for d/c
+                            isFractionDisplay = false; // Reset display mode
                             result = calculate(expression);
-                            ans = result;
+                            ans = result; // Store the result in 'ans'
                             expression = ''; // Clear expression for next calc
                         }
                         break;
@@ -727,8 +844,8 @@
                         break;
                     
                     // Functions that need parentheses
-                    case 'sqrt': handleAppend('√('); break;
-                    case 'sin': handleAppend('sin('); break;
+                    case 'sqrt': handleAppend('√('); break; // ADDED
+                    case 'sin': handleAppend('sin('); break; // ADDED
                     case 'cos': handleAppend('cos('); break;
                     case 'tan': handleAppend('tan('); break;
                     case 'log': handleAppend('log('); break;
@@ -754,14 +871,16 @@
                     case ')':
                     case ',':
                     case '%':
-                    case '^': // direct power button
-                    case 'x!': // x! (LOGIC, shift on x^-1 / x^3)
                         handleAppend(value);
+                        break;
+                    case '^': // ADDED
+                        handleAppend('**');
                         break;
                     
                     // Special operators
-                    case 'x^2': handleAppend('**2'); break;
-                    case 'x^3': handleAppend('**3'); break;
+                    case 'x^2': handleAppend('**2'); break; // ADDED
+                    case 'x^3': handleAppend('**3'); break; // ADDED
+                    case 'x^-1': handleAppend('**(-1)'); break; // ADDED
                     case 'EXP': handleAppend('*10**'); break;
                     case '(-)': handleAppend('-'); break; // Simple minus for now
 
@@ -772,8 +891,26 @@
                     case 'FMLA':
                         formulaModal.style.display = 'flex';
                         break;
-                    case 'ab/c':
-                    case 'hyp':
+                    case 'ab/c': // CHANGED from d/c
+                        if (result === 'Error' || result === '0' || ans === '0') break; // Don't toggle on error or zero
+
+                        if (isFractionDisplay) {
+                            // Currently showing fraction, switch to decimal
+                            result = ans; // 'ans' always holds the decimal result
+                            isFractionDisplay = false;
+                        } else {
+                            // Currently showing decimal, try to switch to fraction
+                            if (lastCalculatedExpression.match(/^[\d\.]+\/[\d\.]+$/)) {
+                                result = lastCalculatedExpression.replace('/', ' / ');
+                                isFractionDisplay = true;
+                            } else {
+                                // Can't convert, just "flash" the display
+                                resultDisplay.style.transform = 'scale(1.05)';
+                                setTimeout(() => { resultDisplay.style.transform = 'scale(1)'; }, 150);
+                            }
+                        }
+                        break;
+                    case 'hyp': // ADDED
                     case 'ENG':
                     case 'REPLAY-U':
                     case 'REPLAY-L':
@@ -793,8 +930,7 @@
             function handleShiftButton(baseValue) {
                 // This function is called when SHIFT is active
                 switch(baseValue) {
-                    case 'ON': // SHIFT + ON = OFF
-                    case 'OFF':
+                    case 'AC': // SHIFT + AC = OFF
                         expression = '';
                         result = '';
                         expressionDisplay.innerText = '';
@@ -808,20 +944,20 @@
                             memory -= parseFloat(result);
                         } catch (e) { /* ignore error */ }
                         break;
-                    case 'sqrt': // SHIFT + sqrt = cbrt (Cube root)
+                    case 'sqrt': // SHIFT + sqrt = (nothing)
+                        // cbrt was moved
+                        break;
+                    case 'x^3': // SHIFT + x^3 = cbrt (Cube root)
                         handleAppend('∛(');
                         break;
-                    case 'x^2': // SHIFT + x^2 = ^ (Generic power)
-                        handleAppend('^(');
-                        break;
-                    case 'x^3': // SHIFT + x^3 = x^-1 (Inverse)
-                        handleAppend('**(-1)');
+                    case 'x^-1': // SHIFT + x^-1 = x!
+                        handleAppend('!');
                         break;
                     case 'log': // SHIFT + log = 10^x
-                        handleAppend('10^(');
+                        handleAppend('10**(');
                         break;
                     case 'ln': // SHIFT + ln = e^x
-                        handleAppend('e^(');
+                        handleAppend('e**(');
                         break;
                     case 'sin': handleAppend('sin⁻¹('); break;
                     case 'cos': handleAppend('cos⁻¹('); break;
@@ -838,8 +974,17 @@
                     case 'INS': // SHIFT + INS = DT-CL
                         // Not implemented
                         break;
-                    case 'LOGIC': // SHIFT + LOGIC (x!) is now on the same button
-                         handleAppend('!');
+                    case 'LOGIC': // SHIFT + LOGIC = x!
+                         // REMOVED, now on x^-1
+                         break;
+                    case 'ab/c': // SHIFT + ab/c = d/c
+                         // Not implemented
+                         break;
+                    case 'RCL': // SHIFT + RCL = STO
+                         // Not implemented
+                         break;
+                    case '(': // SHIFT + ( = %
+                         handleAppend('%');
                          break;
                     
                     // Other shift functions not implemented
@@ -850,21 +995,46 @@
             }
             
             function handleAlphaButton(baseValue) {
-                // Not implemented
+                // This function is called when ALPHA is active
+                switch(baseValue) {
+                    case 'ln': // ALPHA + ln = e
+                        handleAppend('e');
+                        break;
+                    // Other alpha functions not implemented
+                    default:
+                        break;
+                }
             }
 
             function handleAppend(value) {
-                // If result is shown, start new expression
-                if (result !== '0' && expression === '') {
-                    // Don't start with an operator (unless it's minus or a prefix function)
-                    const isOperator = ['+', '*', '/', '^', '_nPr_', '_nCr_', '!', '%'].includes(value);
-                    const isPrefixFunction = ['sin(','cos(','log(','sqrt(','('].some(prefix => value.startsWith(prefix));
+                isFractionDisplay = false; // Any new input resets the d/c toggle
 
-                    if (!isOperator || isPrefixFunction || value === '-') { // Allow starting with minus or a function
+                const isBinaryOperator = ['+', '-', '*', '/', '**', '_nPr_', '_nCr_'].includes(value); // Renamed
+                const isPrefixFunction = ['sin(','cos(','tan(','log(','ln(','sqrt(','cbrt(','sin⁻¹(','cos⁻¹(','tan⁻¹(','10**(',')e**('].includes(value);
+                const isPostfixOperator = ['**2', '**3', '**(-1)', '!'].includes(value); // NEW: Identify postfix ops
+
+                // If result is shown, expression is empty, AND user presses an operator or prefix function
+                if (result !== '0' && ans !== '0' && result === ans && expression === '' && (isBinaryOperator || isPrefixFunction || isPostfixOperator)) { // MODIFIED
+                    if (isBinaryOperator) {
+                        expression = 'Ans' + value; // e.g., "Ans+"
+                    } else if (isPrefixFunction) {
+                        // For functions, wrap "Ans"
+                        expression = value + 'Ans)'; // e.g., "sin⁻¹(Ans)"
+                    } else if (isPostfixOperator) { // NEW
+                        expression = 'Ans' + value; // e.g., "Ans**2"
+                    }
+                    result = '0'; // Clear result to show expression
+                } 
+                // Original logic for starting a new expression with a number
+                else if (result !== '0' && expression === '') {
+                     // Don't start with an operator (unless it's minus or a prefix function)
+                    if (!isBinaryOperator || isPrefixFunction || value === '-') { // MODIFIED
                          expression = value;
                          result = '0'; // Clear result
                     }
-                } else {
+                }
+                // Original logic for appending to existing expression
+                else {
                      // Prevent stacking power operators
                     const lastChar = expression.slice(-1);
                     if (value.startsWith('**') && (lastChar === '*' || lastChar === '/')) {
