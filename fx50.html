@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Casio fx-50FII — Web Clone (approx.)</title>
+  <style>
+    /* Visual style inspired by fx-50FII (two-line display, SHIFT (orange) and ALPHA (red) keys) */
+    :root{--bg:#0b1220;--panel:#0f1724;--screen-top:#bfe6ff;--screen-bot:#081219;--key:#dfe6ee;--key-dark:#c7d2da;--func:#3b4250;--accent:#f59e0b;--alpha:#ef4444;--display-text:#07101a}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#081018,#061018);font-family:Inter,Segoe UI,Roboto,system-ui,-apple-system,Arial}
+    .wrap{max-width:420px;margin:10px auto;padding:14px;background:linear-gradient(180deg,#0b1220,#081018);border-radius:14px;border:1px solid rgba(255,255,255,.03);box-shadow:0 12px 30px rgba(0,0,0,.6)}
+    .device{background:linear-gradient(180deg,#0c1622,#071018);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.02)}
+    .top{display:flex;align-items:center;gap:12px}
+    .logo{color:#9fb7d6;font-weight:700}
+
+    /* Screen */
+    .screen{background:linear-gradient(180deg,var(--screen-top),#cfeeff);padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,.25);box-shadow:inset 0 -6px 12px rgba(0,0,0,.06);}
+    .lcd{background:linear-gradient(180deg,#eaf6ff,#d8eefb);border-radius:6px;padding:8px;display:flex;flex-direction:column;justify-content:center;min-height:84px}
+    .upper{font-family:monospace;font-size:12px;color:#08324a;min-height:18px;text-align:right}
+    .lower{font-family:monospace;font-size:28px;color:var(--display-text);text-align:right}
+    .lower small{font-size:12px;opacity:.6;display:block}
+
+    /* Keys grid matches fx-50FII layout more closely */
+    .keys{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:12px}
+    button{border:0;border-radius:6px;padding:10px 6px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.45);cursor:pointer}
+    .num{background:linear-gradient(180deg,#f8fafc,#e6eef6);color:#07101a}
+    .func{background:linear-gradient(180deg,#334155,#263044);color:#e6eef6}
+    .shift{background:linear-gradient(180deg,var(--accent),#d97706);color:#07101a}
+    .alpha{background:linear-gradient(180deg,var(--alpha),#ef4444);color:#07101a}
+    .op{background:linear-gradient(180deg,#c7d2da,#b9c4ce);color:#07101a}
+    .wide{grid-column:span 2}
+    .small{padding:6px;font-size:12px}
+
+    footer{margin-top:10px;font-size:12px;color:#9fb7d6;text-align:center}
+    @media(max-width:420px){.wrap{margin:6px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="device" role="application" aria-label="Casio fx-50FII clone">
+      <div class="top"><div class="logo">CASIO fx-50FII (web)</div><div style="margin-left:auto;color:#9fb7d6">Two-line LCD · SHIFT/ALPHA</div></div>
+
+      <div class="screen" id="screenWrap">
+        <div class="lcd">
+          <div class="upper" id="upperDisplay"> </div>
+          <div class="lower" id="mainDisplay">0 <small id="modeLabel">RDY</small></div>
+        </div>
+      </div>
+
+      <div class="keys" id="keys">
+        <!-- Row order approximates fx-50FII keyboard -->
+        <button class="shift small" id="shiftBtn">SHIFT</button>
+        <button class="alpha small" id="alphaBtn">ALPHA</button>
+        <button class="func small" data-primary="MODE" data-shift="SETUP">MODE</button>
+        <button class="func small" data-primary="EXE">EXE</button>
+        <button class="func small" data-primary="ENG" data-shift="LOG">ENG</button>
+        <button class="func small" data-primary="DEL">DEL</button>
+        <button class="func small" data-primary="AC">AC</button>
+        <button class="func small" data-primary="Ans">Ans</button>
+
+        <!-- scientific functions -->
+        <button class="func" data-primary="x^2" data-shift="x^3">x^2</button>
+        <button class="func" data-primary="√" data-shift="³√">√</button>
+        <button class="func" data-primary="^" data-shift="root">^</button>
+        <button class="func" data-primary="(" data-shift=")">(</button>
+        <button class="func" data-primary=")" data-shift="(">)</button>
+        <button class="func" data-primary="," data-shift="," >,</button>
+        <button class="func" data-primary="%">%</button>
+        <button class="func" data-primary="π">π</button>
+
+        <!-- trig/log etc -->
+        <button class="func" data-primary="sin(" data-shift="sin⁻¹(">sin</button>
+        <button class="func" data-primary="cos(" data-shift="cos⁻¹(">cos</button>
+        <button class="func" data-primary="tan(" data-shift="tan⁻¹(">tan</button>
+        <button class="func" data-primary="ln(" data-shift="e^">ln</button>
+        <button class="func" data-primary="log(" data-shift="10^">log</button>
+        <button class="func" data-primary="EXP(" data-shift="10^">EXP</button>
+        <button class="func" data-primary="ANS">ANS</button>
+        <button class="func" data-primary="Ans->M" data-shift="M->Ans">M+</button>
+
+        <!-- numbers and ops (matching layout) -->
+        <button class="num" data-primary="7">7</button>
+        <button class="num" data-primary="8">8</button>
+        <button class="num" data-primary="9">9</button>
+        <button class="op" data-primary="÷">÷</button>
+        <button class="func" data-primary="INV">x^-1</button>
+        <button class="func" data-primary="!">n!</button>
+        <button class="func" data-primary="S-VAR">S-VAR</button>
+
+        <button class="num" data-primary="4">4</button>
+        <button class="num" data-primary="5">5</button>
+        <button class="num" data-primary="6">6</button>
+        <button class="op" data-primary="×">×</button>
+        <button class="func" data-primary=","> ,</button>
+        <button class="func" data-primary="x^-1">1/x</button>
+        <button class="func" data-primary="DRILL">DRILL</button>
+
+        <button class="num" data-primary="1">1</button>
+        <button class="num" data-primary="2">2</button>
+        <button class="num" data-primary="3">3</button>
+        <button class="op" data-primary="−">−</button>
+        <button class="func" data-primary="Ans">Ans</button>
+        <button class="func" data-primary="π/2">π/2</button>
+        <button class="func" data-primary="STAT">STAT</button>
+
+        <button class="num" data-primary="0" style="grid-column:span 2">0</button>
+        <button class="num" data-primary=".">.</button>
+        <button class="op" data-primary="+">+</button>
+        <button class="func" data-primary="=">=</button>
+        <button class="func" data-primary="SHIFT-Toggle">⇧</button>
+        <button class="func" data-primary="RAD/DEG">DEG</button>
+
+      </div>
+
+      <footer>Tap or use keyboard. Save as HTML on your phone to use offline.</footer>
+    </div>
+  </div>
+
+  <script>
+    // Engine: implements many fx-50FII-style operations, SHIFT/ALPHA toggles, DEG/RAD, STAT basics
+    const upper = document.getElementById('upperDisplay');
+    const main = document.getElementById('mainDisplay');
+    const modeLabel = document.getElementById('modeLabel');
+    const keys = document.getElementById('keys');
+    const shiftBtn = document.getElementById('shiftBtn');
+    const alphaBtn = document.getElementById('alphaBtn');
+
+    let expr = '';
+    let lastAns = 0;
+    let memory = 0;
+    let shift=false, alpha=false;
+    let deg=true; // DEG default
+
+    const statList = [];
+
+    function setMain(v){ main.childNodes[0].textContent = String(v); }
+    function setUpper(v){ upper.textContent = v; }
+    function setMode(v){ modeLabel.textContent = v; }
+
+    function resetShiftAlpha(){ if(shift){ shift=false; shiftBtn.style.filter='brightness(1)'; } if(alpha){ alpha=false; alphaBtn.style.filter='brightness(1)'; }}
+    function toggleShift(){ shift=!shift; shiftBtn.style.filter=shift? 'brightness(1.3)':'brightness(1)'; }
+    function toggleAlpha(){ alpha=!alpha; alphaBtn.style.filter=alpha? 'brightness(1.3)':'brightness(1)'; }
+
+    // Helper safe eval with many replacements and helper functions
+    function safeEval(input){
+      if(!input) return 0;
+      let s = input.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/\s+/g,'');
+      s = s.replace(/ANS/g,`(${lastAns})`);
+      s = s.replace(/π/g,`(${Math.PI})`);
+      s = s.replace(/e/g,`(${Math.E})`);
+      s = s.replace(/\^/g,'**');
+      s = s.replace(/√\(/g,'Math.sqrt(');
+      s = s.replace(/EXP\(/g,'Math.exp(');
+      // factorial placeholder
+      s = s.replace(/(\d+)!/g,'fact($1)');
+
+      // trig wrappers for DEG/RAD
+      function toRad(x){ return deg? x*Math.PI/180 : x; }
+      const helpers = {
+        fact: n => { n=Math.floor(n); if(n<0) return NaN; let r=1; for(let i=2;i<=n;i++) r*=i; return r; },
+        sin: x => Math.sin(toRad(x)),
+        cos: x => Math.cos(toRad(x)),
+        tan: x => Math.tan(toRad(x)),
+        asin: x => deg? Math.asin(x)*180/Math.PI : Math.asin(x),
+        acos: x => deg? Math.acos(x)*180/Math.PI : Math.acos(x),
+        atan: x => deg? Math.atan(x)*180/Math.PI : Math.atan(x),
+        log10: x => Math.log10(x),
+        ln: x => Math.log(x),
+        expf: x => Math.exp(x)
+      };
+
+      try{
+        const f = new Function('helpers','with(helpers){return ' + s + '}');
+        return f(helpers);
+      }catch(e){ return NaN; }
+    }
+
+    // Click handling with SHIFT/ALPHA behaviour
+    keys.addEventListener('click', e=>{
+      const b = e.target.closest('button'); if(!b) return;
+      const primary = b.dataset.primary;
+      const shifted = b.dataset.shift;
+      // determine effective label/action
+      let action = primary;
+      if(shift && shifted) action = shifted;
+      if(alpha && b.textContent.trim()) action = 'ALPHA:'+b.textContent.trim();
+
+      // simple numeric entry
+      if(/^[0-9]$/.test(action)) { expr += action; setMain(expr); resetShiftAlpha(); return; }
+      if(action==='0'){ expr += '0'; setMain(expr); resetShiftAlpha(); return; }
+      if(action==='.') { expr += '.'; setMain(expr); resetShiftAlpha(); return; }
+
+      switch(action){
+        case 'SHIFT': toggleShift(); break;
+        case 'ALPHA': toggleAlpha(); break;
+        case 'AC': expr=''; setMain('0'); setUpper('Cleared'); resetShiftAlpha(); break;
+        case 'DEL': expr = expr.slice(0,-1); setMain(expr||'0'); resetShiftAlpha(); break;
+        case 'π': expr += 'π'; setMain(expr); resetShiftAlpha(); break;
+        case 'x^2': expr += '**2'; setMain(expr); resetShiftAlpha(); break;
+        case 'x^3': expr += '**3'; setMain(expr); resetShiftAlpha(); break;
+        case '√': expr += '√('; setMain(expr); resetShiftAlpha(); break;
+        case '³√': expr += 'Math.cbrt('; setMain(expr); resetShiftAlpha(); break;
+        case '^': expr += '^'; setMain(expr); resetShiftAlpha(); break;
+        case 'root': // SHIFT root: a root b
+          expr += 'root('; setMain(expr); resetShiftAlpha(); break;
+        case 'sin(': expr += 'sin('; setMain(expr); resetShiftAlpha(); break;
+        case 'sin⁻¹(': expr += 'asin('; setMain(expr); resetShiftAlpha(); break;
+        case 'cos(': expr += 'cos('; setMain(expr); resetShiftAlpha(); break;
+        case 'cos⁻¹(': expr += 'acos('; setMain(expr); resetShiftAlpha(); break;
+        case 'tan(': expr += 'tan('; setMain(expr); resetShiftAlpha(); break;
+        case 'tan⁻¹(': expr += 'atan('; setMain(expr); resetShiftAlpha(); break;
+        case 'ln(': expr += 'ln('; setMain(expr); resetShiftAlpha(); break;
+        case 'e^': expr += 'expf('; setMain(expr); resetShiftAlpha(); break;
+        case 'log(': expr += 'log10('; setMain(expr); resetShiftAlpha(); break;
+        case '10^': expr += '10**'; setMain(expr); resetShiftAlpha(); break;
+        case 'EXP(': expr += 'EXP('; setMain(expr); resetShiftAlpha(); break;
+        case '%': expr += '%'; setMain(expr); resetShiftAlpha(); break;
+        case '÷': expr += '÷'; setMain(expr); resetShiftAlpha(); break;
+        case '×': expr += '×'; setMain(expr); resetShiftAlpha(); break;
+        case '−': expr += '−'; setMain(expr); resetShiftAlpha(); break;
+        case '+': expr += '+'; setMain(expr); resetShiftAlpha(); break;
+        case '(':
+        case ')': expr += action; setMain(expr); resetShiftAlpha(); break;
+        case ',': expr += ','; setMain(expr); resetShiftAlpha(); break;
+        case 'Ans': expr += 'ANS'; setMain(expr); resetShiftAlpha(); break;
+        case 'ANS': expr += 'ANS'; setMain(expr); resetShiftAlpha(); break;
+        case 'Ans->M': memory += Number(expr||lastAns); setUpper('M+=' + memory); resetShiftAlpha(); break;
+        case 'M->Ans': expr = String(memory); setMain(expr); resetShiftAlpha(); break;
+        case 'x^-1': // reciprocal
+          {
+            const out = safeEval('1/(' + (expr||lastAns) + ')'); if(!isFinite(out)){ setMain('ERR'); setUpper('Domain'); } else { lastAns = out; expr = String(out); setMain(expr); setUpper('1/x'); }
+            resetShiftAlpha();
+          }
+          break;
+        case '!': expr += '!'; setMain(expr); resetShiftAlpha(); break;
+        case '=':
+          {
+            let res = computeExpression(expr);
+            if(res===null || !isFinite(res)){ setMain('ERR'); setUpper('Math Error'); }
+            else{ lastAns = res; setMain(res); setUpper('= ' + res); expr = String(res); }
+            resetShiftAlpha();
+          }
+          break;
+        case 'RAD/DEG': deg = !deg; setMode(deg? 'DEG':'RAD'); resetShiftAlpha(); break;
+        case 'STAT': setUpper('STAT mode - add numbers with DEL?'); resetShiftAlpha(); break;
+        case 'S-VAR': // add current expression value to stat list
+          {
+            const v = Number(expr||lastAns);
+            if(!isFinite(v)){ setUpper('Invalid'); } else { statList.push(v); setUpper('Added to STAT: ' + v); }
+            resetShiftAlpha();
+          }
+          break;
+        default:
+          if(action && action.startsWith('ALPHA:')){ // alpha typed label
+            // insert letter after ALPHA
+            const letter = action.split(':')[1]; expr += letter; setMain(expr); resetShiftAlpha();
+          } else {
+            setUpper('Unmapped: ' + action); resetShiftAlpha();
+          }
+          break;
+      }
+    });
+
+    // computeExpression: handles percent, factorial, root, comma lists, trig etc
+    function computeExpression(e){
+      if(!e) return 0;
+      let s = e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/ANS/g,String(lastAns)).replace(/π/g,String(Math.PI)).replace(/EXP\(/g,'Math.exp(');
+      // percent: number% -> number/100
+      s = s.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');
+      // factorial n! -> fact(n)
+      s = s.replace(/(\d+)!/g,'fact($1)');
+      // root(a,b) not implemented: skip
+      // functions mapping
+      s = s.replace(/sin\(/g,'sin(').replace(/cos\(/g,'cos(').replace(/tan\(/g,'tan(');
+      s = s.replace(/asin\(/g,'asin(').replace(/acos\(/g,'acos(').replace(/atan\(/g,'atan(');
+      s = s.replace(/ln\(/g,'ln(').replace(/log10\(/g,'log10(');
+      s = s.replace(/expf\(/g,'Math.exp(');
+
+      // implement helper functions
+      function fact(n){ n=Math.floor(n); if(n<0) return NaN; let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+      function toRad(x){ return deg? x*Math.PI/180 : x; }
+      const helpers = {
+        sin: x=>Math.sin(toRad(x)), cos:x=>Math.cos(toRad(x)), tan:x=>Math.tan(toRad(x)),
+        asin:x=>deg? Math.asin(x)*180/Math.PI : Math.asin(x),
+        acos:x=>deg? Math.acos(x)*180/Math.PI : Math.acos(x),
+        atan:x=>deg? Math.atan(x)*180/Math.PI : Math.atan(x),
+        ln: x=>Math.log(x), log10: x=>Math.log10(x)
+      };
+
+      try{
+        const f = new Function('fact','helpers','with(helpers){return ' + s + '}');
+        return f(fact,helpers);
+      }catch(e){ console.error('eval err',e,s); return null; }
+    }
+
+    // initialize
+    setMain('0'); setUpper('Ready'); setMode('DEG');
+
+    // keyboard support - basic
+    window.addEventListener('keydown', e=>{
+      if(e.key>='0' && e.key<='9'){ expr+=e.key; setMain(expr); }
+      if(e.key==='Enter') document.querySelector('[data-primary="="]').click();
+      if(e.key==='Backspace') document.querySelector('[data-primary="DEL"]').click();
+    });
+
+  </script>
+</body>
+</html>
