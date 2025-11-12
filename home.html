@@ -952,12 +952,19 @@
         transition: opacity 0.3s, text-decoration 0.3s;
     }
     .todo-item-details.status-half-done {
-        text-decoration: line-through;
+        /* text-decoration: line-through; */ /* Removing line-through for description */
         opacity: 0.8;
     }
+    .todo-item-details.status-half-done .todo-description-text {
+        text-decoration: line-through; /* Apply line-through only to text */
+    }
+    
     .todo-item-details.status-full-done {
-        text-decoration: line-through;
+        /* text-decoration: line-through; */
         opacity: 0.5;
+    }
+    .todo-item-details.status-full-done .todo-description-text {
+        text-decoration: line-through;
     }
     
     .todo-item-details .todo-deadline {
@@ -967,15 +974,54 @@
         margin-top: 2px;
     }
     
-    .todo-item .delete-todo {
+    /* --- NEW: To-Do Edit & Due Status Styles --- */
+    .todo-item-details .todo-deadline.is-due {
+        color: var(--accent-red);
+        font-weight: 600;
+    }
+    .todo-item-details .todo-deadline.is-due-soon {
+        color: #f59e0b; /* Amber/Yellow */
+        font-weight: 600;
+    }
+
+    .todo-item .delete-todo,
+    .todo-item .edit-todo-btn { /* Group edit and delete */
         background: none;
         border: none;
         color: var(--text-secondary);
         cursor: pointer;
         font-size: 1.1rem;
         padding: 4px;
+        line-height: 1; /* Ensure consistent height */
     }
     .todo-item .delete-todo:hover { color: var(--accent-red); }
+    .todo-item .edit-todo-btn:hover { color: var(--accent-primary); } /* White hover for edit */
+
+    /* Style for the input field during edit */
+    .todo-item-details input.edit-input {
+        width: 100%;
+        font-size: 0.95rem;
+        padding: 4px;
+        margin: -4px 0; /* Adjust to maintain height */
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 4px;
+    }
+    .todo-item-details input.edit-input:focus {
+        border-color: var(--accent-primary);
+        outline: none;
+    }
+    
+    /* Hide deadline/text while editing description */
+    .todo-item-details.is-editing .todo-deadline {
+        display: none;
+    }
+    .todo-item-details.is-editing .todo-description-text {
+        display: none; /* Hide text span while editing */
+    }
+    /* --- End New To-Do Styles --- */
+
     
     #add-todo-form {
         padding-top: 1rem;
@@ -2081,7 +2127,7 @@
         // Sort todos: not-started and half-done first, then full-done
         const sortedTodos = [...todoItems].sort((a, b) => {
             const statusOrder = { 'not-started': 1, 'half-done': 2, 'full-done': 3 };
-            return statusOrder[a.status] - statusOrder[b.status];
+            return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
         });
         
         if (sortedTodos.length === 0) {
@@ -2114,10 +2160,13 @@
             const details = document.createElement('div');
             details.className = 'todo-item-details';
             
-            // Create a text node for the description and append it
-            const descriptionNode = document.createTextNode(todo.description);
-            details.appendChild(descriptionNode);
+            // **MODIFIED: Make description editable**
+            const descriptionSpan = document.createElement('span');
+            descriptionSpan.className = 'todo-description-text';
+            descriptionSpan.textContent = todo.description;
+            details.appendChild(descriptionSpan);
             
+            // (Existing status class logic)
             if (todo.status === 'half-done') details.classList.add('status-half-done');
             if (todo.status === 'full-done') details.classList.add('status-full-done');
 
@@ -2126,8 +2175,36 @@
                 const deadlineEl = document.createElement('span');
                 deadlineEl.className = 'todo-deadline';
                 deadlineEl.textContent = `Deadline: ${todo.deadline}`;
+                
+                // **NEW: Due Status Logic**
+                if (todo.status !== 'full-done') { // Don't show due status if it's done
+                    const today = new Date(toLocalISODate(new Date())); // Get today's date at 00:00
+                    const deadlineDate = new Date(todo.deadline); // This will be at 00:00 local
+                    
+                    const timeDiff = deadlineDate.getTime() - today.getTime();
+                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                    if (dayDiff < 0) {
+                        deadlineEl.classList.add('is-due');
+                        deadlineEl.textContent += ' (OVERDUE)';
+                    } else if (dayDiff === 0) {
+                        deadlineEl.classList.add('is-due-soon');
+                        deadlineEl.textContent += ' (DUE TODAY)';
+                    } else if (dayDiff <= 3) {
+                        deadlineEl.classList.add('is-due-soon');
+                        deadlineEl.textContent += ` (DUE IN ${dayDiff} DAY${dayDiff > 1 ? 'S' : ''})`;
+                    }
+                }
+                // **END NEW**
+
                 details.appendChild(deadlineEl);
             }
+
+            // **NEW: Add Edit button**
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-todo-btn';
+            editBtn.innerHTML = '&#9998;'; // Pencil icon
+            editBtn.title = 'Edit task';
 
             // Delete Button
             const deleteBtn = document.createElement('button');
@@ -2138,8 +2215,12 @@
 
             todoItem.appendChild(statusSelect);
             todoItem.appendChild(details);
+            todoItem.appendChild(editBtn); // Add edit button
             todoItem.appendChild(deleteBtn);
             todoList.appendChild(todoItem);
+            
+            // **NEW: Add event listener for the edit button**
+            editBtn.addEventListener('click', () => handleEditTodo(todoItem, descriptionSpan, todo));
         });
     }
     
@@ -2318,6 +2399,10 @@
         
         // Update Firestore in the background
         handleUpdateTodoStatus(docId, newStatus);
+        
+        // Re-render todos to update deadline styles (e.g., hide "OVERDUE" if now "full-done")
+        // This is a simple way to ensure UI consistency.
+        renderTodos();
     }
     
     async function handleUpdateTodoStatus(docId, newStatus) {
@@ -2329,6 +2414,80 @@
             showModal('Error', `Could not update task: ${error.message}`);
         }
     }
+
+    // *** NEW: Handle editing a todo item
+    function handleEditTodo(todoItem, descriptionSpan, todo) {
+        const detailsDiv = todoItem.querySelector('.todo-item-details');
+        
+        // Check if already editing
+        if (detailsDiv.classList.contains('is-editing')) return;
+        
+        detailsDiv.classList.add('is-editing');
+        
+        // Create input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'edit-input';
+        input.value = todo.description;
+        
+        // Insert input before the description span
+        detailsDiv.insertBefore(input, descriptionSpan);
+        input.focus();
+        input.select();
+
+        const saveChanges = async () => {
+            // Check if element still exists (in case of race condition with delete)
+            if (!detailsDiv.contains(input)) return;
+
+            const newDescription = input.value.trim();
+            
+            // Clean up UI first
+            detailsDiv.classList.remove('is-editing');
+            if (detailsDiv.contains(input)) {
+                detailsDiv.removeChild(input);
+            }
+            // Remove listeners
+            input.removeEventListener('blur', saveChanges);
+            input.removeEventListener('keydown', handleKey);
+
+            // If description is empty or unchanged, don't hit Firestore
+            if (!newDescription || newDescription === todo.description) {
+                return;
+            }
+
+            // Save to Firestore
+            try {
+                const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todo.id);
+                await updateDoc(todoRef, { description: newDescription });
+                // Listener will update the UI
+            } catch (error) {
+                console.error("Error updating todo:", error);
+                showModal('Error', `Could not update task: ${error.message}`);
+                // Listener will revert to old description on error
+            }
+        };
+
+        const handleKey = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveChanges();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                // Revert
+                detailsDiv.classList.remove('is-editing');
+                if (detailsDiv.contains(input)) {
+                    detailsDiv.removeChild(input);
+                }
+                // Remove listeners
+                input.removeEventListener('blur', saveChanges);
+                input.removeEventListener('keydown', handleKey);
+            }
+        };
+
+        input.addEventListener('blur', saveChanges);
+        input.addEventListener('keydown', handleKey);
+    }
+
 
     async function handleDeleteTodo(docId) {
         if (!docId) return;
@@ -2371,7 +2530,8 @@
             if (doc.exists()) {
                 const data = doc.data();
                 xpBalance = data.xpBalance || 0;
-                document.getElementById('xpBalanceDisplay').textContent = xpBalance;
+                // *** FIX: Round the display value to 1 decimal place
+                document.getElementById('xpBalanceDisplay').textContent = parseFloat(xpBalance.toFixed(1));
                 updateRedeemButtons();
             } else {
                 // This case should be handled by onAuthStateChanged, but as a fallback:
@@ -2597,8 +2757,10 @@
                             };
                             await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), redemptionLog);
 
-                            showModal('Success', `Redeemed ${itemName}! Your new balance is ${xpBalance - cost} XP.`);
-                            // The listeners will handle updating the UI
+                            // *** FIX: Round the new balance in the success message
+                            const newBalance = xpBalance - cost; // xpBalance is the high-precision value from state
+                            showModal('Success', `Redeemed ${itemName}! Your new balance is ${parseFloat(newBalance.toFixed(1))} XP.`);
+                            // The listeners will handle updating the main UI display
                         } catch (error) {
                              console.error("Error redeeming points:", error);
                              showModal('Error', `Could not redeem item: ${error.message}`);
