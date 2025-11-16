@@ -6,6 +6,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <!-- NEW: Add HLS.js for .m3u8 video streaming -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- NEW: YouTube Iframe API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- NEW: Vimeo Player API -->
+    <script src="https://player.vimeo.com/api/player.js"></script>
     <!-- Google Font: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -671,11 +675,20 @@
         /* --- VIDEO PLAYER SECTION (STYLED) --- */
         #videoPlayerSection { display: none; flex-direction: row; height: calc(100vh - 64px); }
         .video-main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: #000; }
-        #videoPlayerContainer { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        #videoPlayerContainer { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            /* NEW: Ensure API players fill the container */
+            position: relative;
+            overflow: hidden;
+        }
         
-        /* MODIFIED: Constrain video player size */
+        /* MODIFIED: Constrain video player size and apply to new API player divs */
         #videoPlayerContainer iframe,
-        #videoPlayerContainer video {
+        #videoPlayerContainer video,
+        #videoPlayerContainer #youtube-player-div {
             width: 100%;
             height: auto; /* Let aspect-ratio control height */
             max-width: 1280px; /* Set a max-width */
@@ -683,7 +696,20 @@
             aspect-ratio: 16/9; /* Enforce 16:9 ratio */
             border: none;
             border-radius: 8px; /* Add a slight radius */
+            /* NEW: Ensure API players are positioned correctly */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-height: 100%; /* Ensure it doesn't overflow container */
         }
+        /* Specific fix for non-16:9 videos to not get cut off */
+        #videoPlayerContainer video {
+             height: 100%;
+             width: 100%;
+             object-fit: contain;
+        }
+
 
         .video-player-header { padding: 1rem; background: var(--bg-primary); }
         .video-player-header .back-button { /* Uses .btn-primary style now */ }
@@ -702,6 +728,16 @@
             margin-bottom: 0.5rem; /* Added spacing */
         }
         #videoInfoDescription { color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; /* To respect newlines in notes */ }
+        
+        /* NEW: Style for materials link button */
+        #materialsLinkContainer a {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
         .completion-control button { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 600; border-radius: 30px; cursor: pointer; border: 2px solid; }
         .completion-control button.mark-complete { 
             background-color: transparent; 
@@ -870,12 +906,16 @@
                         <button class="back-button btn-primary" id="backToTutorialsBtn">← Back to Tutorials</button>
                     </div>
                     <div id="videoPlayerContainer">
-                        <!-- YouTube Iframe will be injected here -->
+                        <!-- Player will be injected here by JS -->
                     </div>
                 </div>
                 <div class="video-sidebar">
                     <h2 id="videoInfoTitle"></h2>
                     <p id="videoInfoDescription"></p>
+                    <!-- NEW: Materials Link Container -->
+                    <div id="materialsLinkContainer" style="display: none;">
+                        <a id="materialsLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">Download Materials</a>
+                    </div>
                     <div class="completion-control">
                         <button id="completionToggleButton"></button>
                     </div>
@@ -937,6 +977,12 @@
                      <textarea id="tutorialNotes" placeholder="Add any notes for this video..."></textarea>
                  </div>
                  
+                 <!-- NEW: Materials Link Field -->
+                 <div style="margin-bottom: 1rem;">
+                     <label for="tutorialMaterialsLink">Materials Link (Optional)</label>
+                     <input type="url" id="tutorialMaterialsLink" placeholder="e.g., https://drive.google.com/...">
+                 </div>
+
                  <div style="margin-bottom: 1.5rem;">
                      <label for="tutorialDifficulty">Difficulty Level</label>
                      <select id="tutorialDifficulty">
@@ -984,6 +1030,12 @@
                      <textarea id="editTutorialNotes" placeholder="Add any notes for this video..."></textarea>
                  </div>
                  
+                 <!-- NEW: Materials Link Field -->
+                 <div style="margin-bottom: 1rem;">
+                     <label for="editTutorialMaterialsLink">Materials Link (Optional)</label>
+                     <input type="url" id="editTutorialMaterialsLink" placeholder="e.g., https://drive.google.com/...">
+                 </div>
+
                  <div style="margin-bottom: 1.5rem;">
                      <label for="editTutorialDifficulty">Difficulty Level</label>
                      <select id="editTutorialDifficulty">
@@ -1035,6 +1087,17 @@
         let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
         let currentUserProfile = null; // NEW: To store the user's profile data
         let currentMaterialViewMode = 'card';
+
+        // NEW: Player state variables
+        let ytPlayer = null;
+        let vimeoPlayer = null;
+        let directPlayer = null;
+        let hls = null; 
+        let currentVideoItem = null;
+        let currentTopicPlaylist = []; 
+        let saveTimeInterval = null; // To hold our interval timer for YouTube
+        let saveTimeTimeout = null; // To hold our debounce timer for other players
+        const SAVE_TIME_DEBOUNCE = 5000; // Save every 5 seconds
 
         // DOM Element References
         const authWrapper = document.getElementById('authWrapper');
@@ -2137,102 +2200,255 @@
             }
         }
         
-        // --- VIDEO PLAYER LOGIC (Unchanged) ---
-        let currentVideoItem = null;
-        let hls = null; // NEW: To keep track of the HLS.js instance
-        let currentTopicPlaylist = []; // NEW: Cache for playlist
+        // --- VIDEO PLAYER LOGIC (HEAVILY MODIFIED) ---
+
+        // NEW: Function to save playback time, debounced
+        function savePlaybackTime(videoId, currentTime) {
+            if (!currentUserId || !videoId || currentTime < 1) return; // Don't save if 0
+
+            // Debounce the save
+            if (saveTimeTimeout) {
+                clearTimeout(saveTimeTimeout);
+            }
+
+            saveTimeTimeout = setTimeout(async () => {
+                try {
+                    // Use a separate collection for playback status
+                    const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, videoId);
+                    // Use setDoc with merge to create or update
+                    await setDoc(statusRef, { 
+                        lastPlayedTime: currentTime,
+                        timestamp: Date.now() 
+                    }, { merge: true });
+                    // console.log(`Saved time ${currentTime} for video ${videoId}`);
+                } catch (error) {
+                    console.error("Error saving playback time:", error);
+                }
+                saveTimeTimeout = null;
+            }, SAVE_TIME_DEBOUNCE);
+        }
+
+        // NEW: Function to get playback time
+        async function getPlaybackTime(videoId) {
+            if (!currentUserId || !videoId) return Promise.resolve(0);
+            
+            try {
+                const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, videoId);
+                const docSnap = await getDoc(statusRef);
+                if (docSnap.exists() && docSnap.data().lastPlayedTime) {
+                    return docSnap.data().lastPlayedTime;
+                }
+                return 0;
+            } catch (error) {
+                console.error("Error getting playback time:", error);
+                return 0;
+            }
+        }
+        
+        // NEW: Need to define this global function for the YouTube API to call
+        window.onYouTubeIframeAPIReady = function() {
+            window.isYouTubeApiReady = true;
+        };
+        
+        // NEW: Helper to clean up old players and timers
+        function cleanupPlayers() {
+            if (ytPlayer) {
+                ytPlayer.destroy();
+                ytPlayer = null;
+            }
+            if (vimeoPlayer) {
+                vimeoPlayer.destroy().catch(e => console.warn("Vimeo player cleanup error:", e));
+                vimeoPlayer = null;
+            }
+            if (directPlayer) {
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+                directPlayer.pause();
+                directPlayer.src = '';
+                directPlayer = null;
+            }
+            // Clear any pending save operations
+            if (saveTimeInterval) {
+                clearInterval(saveTimeInterval);
+                saveTimeInterval = null;
+            }
+            if (saveTimeTimeout) {
+                clearTimeout(saveTimeTimeout);
+                saveTimeTimeout = null;
+            }
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+        }
+
 
         async function showVideoPlayer(item) {
             currentVideoItem = item;
             showSection('videoPlayerSection');
             document.getElementById('videoInfoTitle').textContent = item.title;
-            // MODIFIED: Use new 'notes' field and provide a default message
             document.getElementById('videoInfoDescription').textContent = item.notes || 'No notes for this video.';
+            
+            // NEW: Show materials link
+            const materialsContainer = document.getElementById('materialsLinkContainer');
+            const materialsLinkEl = document.getElementById('materialsLink');
+            if (item.materialsLink) {
+                materialsLinkEl.href = item.materialsLink;
+                materialsContainer.style.display = 'block';
+            } else {
+                materialsContainer.style.display = 'none';
+            }
+
             const playerContainer = document.getElementById('videoPlayerContainer');
             
-            // NEW: Clear any existing HLS instance
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
+            // NEW: Clean up any existing player and timers
+            cleanupPlayers();
             
+            // NEW: Get the saved time
+            const savedTime = await getPlaybackTime(item.id);
+            // console.log(`Starting video ${item.id} at ${savedTime}s`);
+
             // NEW: Player logic for YouTube vs Vimeo vs Direct
             let embedHtml;
-            const videoId = item.videoId || item.youtubeId; // Handle old/new data
+            const videoId = item.videoId || item.youtubeId;
             
             if (item.videoType === 'vimeo') {
-                // MODIFIED: Removed inline style
-                // MODIFIED: Handle query parameters for autoplay
                 const separator = videoId.includes('?') ? '&' : '?';
-                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}${separator}autoplay=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                // Add muted=1 for autoplay reliability, but remove autoplay=1 to respect savedTime
+                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}${separator}muted=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
                 playerContainer.innerHTML = embedHtml;
-            } else if (item.videoType === 'direct') {
-                // MODIFIED: Removed inline width/height style
-                embedHtml = `<video id="directVideoPlayer" controls autoplay style="background-color: #000;"></video>`;
-                playerContainer.innerHTML = embedHtml; // Set HTML first
+                
+                const iframe = playerContainer.querySelector('iframe');
+                vimeoPlayer = new Vimeo.Player(iframe);
+                
+                vimeoPlayer.on('ready', () => {
+                     // Try to seek, only if savedTime > 0
+                    if (savedTime > 0.5) { // Add a small buffer
+                        vimeoPlayer.setCurrentTime(savedTime).catch(function(error) {
+                            console.warn("Vimeo seek failed:", error.name);
+                        });
+                    }
+                    vimeoPlayer.play().catch(e => console.warn("Vimeo play failed", e));
+                    vimeoPlayer.setVolume(1); // Unmute
+                });
+                
+                vimeoPlayer.on('timeupdate', (data) => {
+                    savePlaybackTime(item.id, data.seconds);
+                });
 
-                // NOW, run the JS for this player
-                const videoPlayer = document.getElementById('directVideoPlayer');
-                const videoUrl = item.videoId; // The full URL is stored in videoId for 'direct' type
+            } else if (item.videoType === 'direct') {
+                embedHtml = `<video id="directVideoPlayer" controls autoplay muted style="background-color: #000;"></video>`;
+                playerContainer.innerHTML = embedHtml;
+                directPlayer = document.getElementById('directVideoPlayer');
+                const videoUrl = item.videoId;
+
+                // Add timeupdate listener
+                directPlayer.addEventListener('timeupdate', () => {
+                    if(directPlayer) savePlaybackTime(item.id, directPlayer.currentTime);
+                });
+
+                // Add loadedmetadata listener to seek
+                directPlayer.addEventListener('loadedmetadata', () => {
+                    if (savedTime > 0 && directPlayer) {
+                        directPlayer.currentTime = savedTime;
+                    }
+                    if(directPlayer) {
+                        directPlayer.play().catch(e => console.warn("Direct video play failed", e));
+                        directPlayer.muted = false; // Unmute
+                    }
+                });
 
                 if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
-                    // Use HLS.js for .m3u8 streams
                     hls = new Hls();
                     hls.loadSource(videoUrl);
-                    hls.attachMedia(videoPlayer);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
-                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                    // Native HLS support (Safari)
-                    videoPlayer.src = videoUrl;
-                    videoPlayer.addEventListener('loadedmetadata', () => videoPlayer.play());
+                    hls.attachMedia(directPlayer);
+                    // HLS will trigger 'loadedmetadata'
                 } else {
-                    // Assume it's a direct file like .mp4, .webm, etc.
-                    videoPlayer.src = videoUrl;
-                    videoPlayer.play();
+                    directPlayer.src = videoUrl;
+                    // 'loadedmetadata' will be triggered
                 }
+            
             } else if (item.videoType === 'html') {
-                // NEW: Handle HTML video type
                 embedHtml = `<iframe src="${item.videoId}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
                 playerContainer.innerHTML = embedHtml;
+                // Note: We cannot track playback time for a generic HTML iframe
+            
             } else {
                 // Default to YouTube
-                embedHtml = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                playerContainer.innerHTML = embedHtml;
+                // YouTube API requires a div, not an iframe string
+                playerContainer.innerHTML = `<div id="youtube-player-div" style="width: 100%; height: 100%;"></div>`;
+                
+                const createPlayer = () => {
+                    if (!document.getElementById('youtube-player-div')) return; // Target div missing
+                    ytPlayer = new YT.Player('youtube-player-div', {
+                        height: '100%',
+                        width: '100%',
+                        videoId: videoId,
+                        playerVars: {
+                            'autoplay': 1,
+                            'playsinline': 1,
+                            'start': Math.floor(savedTime) // YouTube 'start' is in seconds
+                        },
+                        events: {
+                            'onReady': (event) => {
+                                event.target.playVideo();
+                            },
+                            'onStateChange': (event) => {
+                                // When playing, set up an interval to save time
+                                if (event.data == YT.PlayerState.PLAYING) {
+                                    // Clear any old interval
+                                    if (saveTimeInterval) clearInterval(saveTimeInterval);
+                                    
+                                    saveTimeInterval = setInterval(() => {
+                                        if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+                                            savePlaybackTime(item.id, ytPlayer.getCurrentTime());
+                                        }
+                                    }, SAVE_TIME_DEBOUNCE);
+                                } else {
+                                    // When paused, stopped, or ended, clear the interval
+                                    if (saveTimeInterval) {
+                                        clearInterval(saveTimeInterval);
+                                        saveTimeInterval = null;
+                                        // Do one final save
+                                        if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+                                            savePlaybackTime(item.id, ytPlayer.getCurrentTime());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                };
+
+                if (window.isYouTubeApiReady) {
+                    createPlayer();
+                } else {
+                    // Poll until the API is ready
+                    const apiCheckInterval = setInterval(() => {
+                        if (window.isYouTubeApiReady) {
+                            clearInterval(apiCheckInterval);
+                            createPlayer();
+                        }
+                    }, 100);
+                }
             }
             
             await updateCompletionButtonUI(item.id);
-
-            // NEW: Load the topic playlist
-            // Clear playlist container first
-            const playlistContainer = document.getElementById('topicPlaylist');
-            playlistContainer.innerHTML = ''; // Clear old playlist
-            
-            // Check if item has context (parent IDs)
             if (item.level1Id && item.level2Id) {
-                // Pass current item's ID to highlight it
                 await loadTopicPlaylist(item.level1Id, item.level2Id, item.id);
             }
         }
 
         document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
             showSection('tutorialSection');
-            document.getElementById('videoPlayerContainer').innerHTML = ''; // Stop video
             
-            // NEW: Destroy HLS.js instance if it exists
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-            
+            // MODIFIED: Call the cleanup function
+            cleanupPlayers();
+
             currentVideoItem = null; 
-            // MODIFIED: Check role before re-rendering
+            
             if (currentUserRole !== 'teacher') {
-                // Re-render student items to update completion status
                 renderViewerItems('tutorials');
             } else {
-                // For teacher, just re-render the viewer
-                // Note: This assumes the teacher was on the 'viewer' tab
-                // A more complex solution would save the tab state
                 renderViewerItems('tutorials');
             }
         });
@@ -2281,23 +2497,26 @@
             }
         }
 
-
-        // This logic appears correct for toggling completion. No changes needed.
+        // MODIFIED: Use setDoc with merge instead of deleteDoc for safer state handling
         document.getElementById('completionToggleButton').addEventListener('click', async () => {
             if (!currentVideoItem || !currentUserId) return;
             const videoId = currentVideoItem.id;
             const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId);
             try {
                 const docSnap = await getDoc(statusRef);
-                if (docSnap.exists() && docSnap.data().completed) {
-                    await deleteDoc(statusRef);
+                const isCompleted = docSnap.exists() && docSnap.data().completed;
+
+                if (isCompleted) {
+                    // MODIFIED: Use setDoc with merge to set completed to false
+                    await setDoc(statusRef, { completed: false }, { merge: true });
                 } else {
+                    // MODIFIED: Use setDoc with merge to add/update
                     await setDoc(statusRef, { 
                         completed: true, 
                         timestamp: Date.now(),
                         videoTitle: currentVideoItem.title,
                         videoId: currentVideoItem.id
-                    });
+                    }, { merge: true });
                 }
                 await updateCompletionButtonUI(videoId);
             } catch (error) {
@@ -2497,7 +2716,7 @@
         }
         // --- *** END OF NEWLY ADDED FUNCTION *** ---
         
-        // --- AddFinalItemModal (Unchanged) ---
+        // --- MODIFIED: AddFinalItemModal (for materials link) ---
         function showAddFinalItemModal(type, parentIds = []) {
             const config = materialsConfig[type];
             const modal = document.getElementById(config.modalId);
@@ -2520,24 +2739,25 @@
                     const link = document.getElementById('tutorialLink').value;
                     const title = document.getElementById('tutorialTitle').value;
                     const difficulty = document.getElementById('tutorialDifficulty').value;
-                    const notes = document.getElementById('tutorialNotes').value; // MODIFIED: Get notes
+                    const notes = document.getElementById('tutorialNotes').value;
+                    const materialsLink = document.getElementById('tutorialMaterialsLink').value; // NEW
                     
-                    const videoInfo = parseVideoLink(link); // UPDATED
+                    const videoInfo = parseVideoLink(link);
                     
-                    if (!videoInfo) { // UPDATED
-                        showModal("Invalid Link", "Please paste a valid YouTube, Vimeo, direct video (.mp4, .m3u8), or HTML file link."); // UPDATED
+                    if (!videoInfo) { 
+                        showModal("Invalid Link", "Please paste a valid YouTube, Vimeo, direct video (.mp4, .m3u8), or HTML file link.");
                         return;
                     }
                     
-                    // MODIFIED: Add notes field
                     const newItem = {
                         title: title, 
                         name: title, 
-                        videoType: videoInfo.type, // NEW
-                        videoId: videoInfo.id,     // NEW (for 'direct', this is the full URL)
+                        videoType: videoInfo.type, 
+                        videoId: videoInfo.id,     
                         link: link, 
                         difficulty: difficulty, 
-                        notes: notes || '', // NEW
+                        notes: notes || '', 
+                        materialsLink: materialsLink || '', // NEW
                         createdAt: Date.now()
                     };
 
@@ -2546,7 +2766,6 @@
                         await addDoc(collection(db, itemPath), newItem);
                         const containerId = `container-level3-${type}-${parentId2}`;
                         
-                        // NEW: Find current sort to re-render correctly
                         const sortSelect = document.getElementById(`sort-teacher-${type}-${parentId2}`);
                         const sortBy = sortSelect ? sortSelect.value : 'name-asc';
                         
@@ -2681,7 +2900,7 @@
             }, 50);
         }
 
-        // --- showEditFinalItemModal (Unchanged) ---
+        // --- MODIFIED: showEditFinalItemModal (for materials link) ---
         function showEditFinalItemModal(type, parentIds, id, item) {
             const config = materialsConfig[type];
             const modal = document.getElementById('editVideoModal'); // Use the new modal
@@ -2694,6 +2913,7 @@
             document.getElementById('editTutorialLink').value = item.link || '';
             document.getElementById('editTutorialTitle').value = item.title || '';
             document.getElementById('editTutorialNotes').value = item.notes || '';
+            document.getElementById('editTutorialMaterialsLink').value = item.materialsLink || ''; // NEW
             document.getElementById('editTutorialDifficulty').value = item.difficulty || 'U';
 
             // Trigger thumbnail preview
@@ -2722,6 +2942,7 @@
                     const title = document.getElementById('editTutorialTitle').value;
                     const difficulty = document.getElementById('editTutorialDifficulty').value;
                     const notes = document.getElementById('editTutorialNotes').value;
+                    const materialsLink = document.getElementById('editTutorialMaterialsLink').value; // NEW
                     
                     const videoInfo = parseVideoLink(link);
                     
@@ -2730,8 +2951,6 @@
                         return;
                     }
                     
-                    // Create the updated item object
-                    // Note: We don't update createdAt, we preserve it.
                     const updatedItem = {
                         title: title,
                         name: title, // Keep name and title in sync
@@ -2740,7 +2959,7 @@
                         link: link,
                         difficulty: difficulty,
                         notes: notes || '',
-                        // We don't touch createdAt, updateDoc only changes specified fields
+                        materialsLink: materialsLink || '', // NEW
                     };
 
                     try {
