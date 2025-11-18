@@ -685,10 +685,16 @@
             overflow: hidden;
         }
         
+        /* * --- THE CSS FIX IS HERE ---
+         * 1. Added direct child selector (>) to all rules
+         * 2. Added new rule for "#videoPlayerContainer > #youtube-player-div > iframe"
+         * 3. Added direct child selector (>) to "#videoPlayerContainer video"
+         */
+        
         /* MODIFIED: Constrain video player size and apply to new API player divs */
-        #videoPlayerContainer iframe,
-        #videoPlayerContainer video,
-        #videoPlayerContainer #youtube-player-div {
+        #videoPlayerContainer > iframe,
+        #videoPlayerContainer > video,
+        #videoPlayerContainer > #youtube-player-div {
             width: 100%;
             height: auto; /* Let aspect-ratio control height */
             max-width: 1280px; /* Set a max-width */
@@ -703,8 +709,18 @@
             transform: translate(-50%, -50%);
             max-height: 100%; /* Ensure it doesn't overflow container */
         }
+        
+        /* NEW: This tells the iframe *inside* the YouTube div to behave */
+        #videoPlayerContainer > #youtube-player-div > iframe {
+            width: 100%;
+            height: 100%;
+            position: static;
+            transform: none;
+            aspect-ratio: auto;
+        }
+        
         /* Specific fix for non-16:9 videos to not get cut off */
-        #videoPlayerContainer video {
+        #videoPlayerContainer > video {
              height: 100%;
              width: 100%;
              object-fit: contain;
