@@ -9,47 +9,173 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   
-  <!-- Custom styles for countdown to match the new theme -->
+  <!-- PDF.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+  <!-- Internal Styles -->
   <style>
+    /* Fallback variables in case style.css isn't loaded in preview */
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --border-color: #e0e0e0;
+      --accent-color: #4A90E2;
+      --accent-hover: #357ABD;
+      --danger-color: #e74c3c;
+    }
+
+    /* Existing styles from your upload */
     .datetime-container {
-        margin-top: 40px;
+        margin-top: 20px;
         padding: 20px;
-        background-color: var(--bg-secondary); /* Using theme variable */
+        background-color: var(--bg-secondary);
         border-radius: 10px;
-        border: 1px solid var(--border-color); /* Using theme variable */
+        border: 1px solid var(--border-color);
         width: 100%;
         max-width: 380px;
+        margin-bottom: 20px;
     }
 
     #datetime {
         font-size: 0.9em;
-        margin-bottom: 20px;
-        color: var(--text-secondary); /* Using theme variable */
+        margin-bottom: 15px;
+        color: var(--text-secondary);
     }
 
     #countdown-title {
-        font-size: 1.1em;
+        font-size: 1.0em;
         font-weight: bold;
         letter-spacing: 1px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         text-transform: uppercase;
-        color: var(--text-primary); /* Using theme variable */
+        color: var(--text-primary);
     }
 
     #countdown {
-        font-size: 1.5em;
+        font-size: 1.3em;
         font-family: 'Courier New', Courier, monospace;
         font-weight: 700;
-        color: var(--text-primary); /* Using theme variable */
-        background-color: var(--bg-primary); /* Using theme variable */
-        padding: 10px 15px;
-        border-radius: 8px;
+        color: var(--text-primary);
+        background-color: var(--bg-primary);
+        padding: 8px 12px;
+        border-radius: 6px;
         display: inline-block;
+        border: 1px solid var(--border-color);
+    }
+
+    /* --- NEW TOOLS SECTION STYLES --- */
+    .tools-container {
+        padding: 20px;
+        background-color: var(--bg-secondary);
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        width: 100%;
+        max-width: 380px;
+    }
+
+    .tools-header {
+        font-size: 0.9em;
+        color: var(--text-secondary);
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+    }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+        color: white;
+        background-color: var(--text-primary);
+    }
+
+    .tab-btn:hover:not(.active) {
+        color: var(--text-primary);
+        background-color: rgba(0,0,0,0.05);
+    }
+
+    /* Tool Views */
+    .tool-view {
+        display: none;
+        text-align: center;
+    }
+
+    .tool-view.active {
+        display: block;
+    }
+
+    .time-display {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 2em;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 15px 0;
+        background: var(--bg-primary);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    button.tool-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: opacity 0.2s;
+        color: white;
+    }
+
+    .start-btn { background-color: #2ecc71; }
+    .stop-btn { background-color: #e74c3c; }
+    .reset-btn { background-color: #95a5a6; }
+    
+    button.tool-btn:hover { opacity: 0.9; }
+
+    /* Timer specific inputs */
+    .timer-inputs {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+
+    .timer-inputs input {
+        width: 60px;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        text-align: center;
+        font-size: 1.1em;
     }
   </style>
-
-  <!-- PDF.js library (in case you preview PDFs on login screen later) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
 <body>
   <!-- LOGIN WRAPPER -->
@@ -58,12 +184,49 @@
       <h1>AI Marker</h1>
       <p>Mark with AI, learn better.</p>
       
-      <!-- Added Date, Time, and Countdown Section -->
+      <!-- Existing DSE Countdown Section -->
       <div class="datetime-container">
-        <div id="datetime">Loading date and time...</div>
-        <div id="countdown-title">2026DSE FROM NOW</div>
+        <div id="datetime">Loading date...</div>
+        <div id="countdown-title">2026 DSE Countdown</div>
         <div id="countdown">Calculating...</div>
       </div>
+
+      <!-- NEW: Public Tools Section -->
+      <div class="tools-container">
+        <div class="tools-header">Guest Study Tools</div>
+        
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('stopwatch')">Stopwatch</button>
+          <button class="tab-btn" onclick="switchTab('timer')">Timer</button>
+        </div>
+
+        <!-- Stopwatch -->
+        <div id="stopwatch-view" class="tool-view active">
+            <div class="time-display" id="sw-display">00:00:00</div>
+            <div class="controls">
+                <button id="sw-toggle" class="tool-btn start-btn" onclick="toggleStopwatch()">Start</button>
+                <button class="tool-btn reset-btn" onclick="resetStopwatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Timer -->
+        <div id="timer-view" class="tool-view">
+            <div class="timer-inputs" id="timer-input-area">
+                <input type="number" id="tm-min" placeholder="25" min="0" max="999">
+                <span>m</span>
+                <input type="number" id="tm-sec" placeholder="00" min="0" max="59">
+                <span>s</span>
+            </div>
+            <!-- Timer display is hidden initially, shown when running -->
+            <div class="time-display" id="tm-display" style="display:none;">00:00</div>
+            
+            <div class="controls">
+                <button id="tm-toggle" class="tool-btn start-btn" onclick="toggleTimer()">Start</button>
+                <button class="tool-btn reset-btn" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="login-right-panel">
@@ -78,50 +241,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-    // --- New Clock and Countdown Logic ---
-    const datetimeEl = document.getElementById('datetime');
-    const countdownEl = document.getElementById('countdown');
-
-    // Function to update the current time and date
-    function updateTime() {
-        const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-        datetimeEl.textContent = now.toLocaleDateString('en-US', options);
-    }
-
-    // Function to update the countdown
-    function updateCountdown() {
-        const countDownDate = new Date("April 9, 2026 00:00:00").getTime();
-        const now = new Date().getTime();
-        const distance = countDownDate - now;
-
-        // Time calculations for days, hours, minutes and seconds
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        // Display the result in the element with id="countdown"
-        countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
-        // If the count down is finished, write some text
-        if (distance < 0) {
-            clearInterval(countdownInterval);
-            countdownEl.innerHTML = "DSE HAS BEGUN!";
-        }
-    }
-
-    // Initial calls to display immediately on load
-    updateTime();
-    updateCountdown();
-
-    // Update the time and countdown every second
-    setInterval(updateTime, 1000);
-    const countdownInterval = setInterval(updateCountdown, 1000);
-    // --- End of New Logic ---
-
-
-    // --- Firebase Config (yours) ---
+    // --- Firebase Config ---
     const firebaseConfig = {
       apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -151,20 +271,192 @@
       try {
         await signInWithPopup(auth, provider);
       } catch (error) {
-        // Using console.error is better than alert for debugging
         console.error("Login failed: ", error);
-        // You could also show a user-friendly message on the page itself
       }
     });
 
-    // Redirect when logged in
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.location.href = "home.html";
       }
     });
+  </script>
 
+  <!-- Non-Module Script for Tools Logic -->
+  <script>
+    // --- 1. DSE Countdown Logic (Existing) ---
+    const datetimeEl = document.getElementById('datetime');
+    const countdownEl = document.getElementById('countdown');
+
+    function updateTime() {
+        const now = new Date();
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        datetimeEl.textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    function updateCountdown() {
+        const countDownDate = new Date("April 9, 2026 00:00:00").getTime();
+        const now = new Date().getTime();
+        const distance = countDownDate - now;
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    setInterval(updateTime, 1000);
+    setInterval(updateCountdown, 1000);
+    updateTime();
+    updateCountdown();
+
+
+    // --- 2. Tab Logic ---
+    window.switchTab = function(tabName) {
+        // Hide all views
+        document.querySelectorAll('.tool-view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        // Show selected
+        document.getElementById(tabName + '-view').classList.add('active');
+        
+        // Highlight button (simple lookup based on onclick text, or just querySelector)
+        // A simpler way is finding the button that called this, but let's just use DOM logic
+        const buttons = document.querySelectorAll('.tab-btn');
+        if(tabName === 'stopwatch') buttons[0].classList.add('active');
+        if(tabName === 'timer') buttons[1].classList.add('active');
+    }
+
+
+    // --- 3. Stopwatch Logic ---
+    let swInterval;
+    let swTime = 0;
+    let swRunning = false;
+
+    window.toggleStopwatch = function() {
+        const btn = document.getElementById('sw-toggle');
+        if (!swRunning) {
+            // Start
+            const startTime = Date.now() - swTime;
+            swInterval = setInterval(() => {
+                swTime = Date.now() - startTime;
+                document.getElementById('sw-display').textContent = formatTime(swTime);
+            }, 100); // 100ms update is smooth enough
+            
+            swRunning = true;
+            btn.textContent = "Stop";
+            btn.classList.remove('start-btn');
+            btn.classList.add('stop-btn');
+        } else {
+            // Stop
+            clearInterval(swInterval);
+            swRunning = false;
+            btn.textContent = "Start";
+            btn.classList.remove('stop-btn');
+            btn.classList.add('start-btn');
+        }
+    }
+
+    window.resetStopwatch = function() {
+        if(swRunning) toggleStopwatch(); // stop first
+        swTime = 0;
+        document.getElementById('sw-display').textContent = "00:00:00";
+    }
+
+    function formatTime(ms) {
+        const date = new Date(ms);
+        const m = date.getUTCMinutes().toString().padStart(2, '0');
+        const s = date.getUTCSeconds().toString().padStart(2, '0');
+        const cs = Math.floor(date.getUTCMilliseconds() / 10).toString().padStart(2, '0');
+        return `${m}:${s}:${cs}`;
+    }
+
+
+    // --- 4. Timer Logic ---
+    let tmInterval;
+    let tmRunning = false;
+    let tmRemaining = 0;
+
+    window.toggleTimer = function() {
+        const btn = document.getElementById('tm-toggle');
+        const display = document.getElementById('tm-display');
+        const inputs = document.getElementById('timer-input-area');
+
+        if (!tmRunning) {
+            // Start
+            if (tmRemaining === 0) {
+                // Read inputs only if we aren't resuming a paused timer
+                const min = parseInt(document.getElementById('tm-min').value) || 0;
+                const sec = parseInt(document.getElementById('tm-sec').value) || 0;
+                if(min === 0 && sec === 0) return; // Do nothing if 0
+                tmRemaining = (min * 60 + sec) * 1000;
+            }
+
+            inputs.style.display = 'none';
+            display.style.display = 'block';
+            updateTimerDisplay(); // Show initial time immediately
+
+            const endTime = Date.now() + tmRemaining;
+            
+            tmInterval = setInterval(() => {
+                const now = Date.now();
+                const left = endTime - now;
+                
+                if (left <= 0) {
+                    // Timer finished
+                    clearInterval(tmInterval);
+                    tmRemaining = 0;
+                    tmRunning = false;
+                    document.getElementById('tm-display').textContent = "TIME UP!";
+                    btn.textContent = "Start";
+                    btn.classList.remove('stop-btn');
+                    btn.classList.add('start-btn');
+                    // Optional: Play a sound here
+                    return;
+                }
+
+                tmRemaining = left;
+                updateTimerDisplay();
+            }, 100);
+
+            tmRunning = true;
+            btn.textContent = "Stop";
+            btn.classList.remove('start-btn');
+            btn.classList.add('stop-btn');
+
+        } else {
+            // Stop (Pause)
+            clearInterval(tmInterval);
+            tmRunning = false;
+            btn.textContent = "Resume";
+            btn.classList.remove('stop-btn');
+            btn.classList.add('start-btn');
+        }
+    }
+
+    window.resetTimer = function() {
+        clearInterval(tmInterval);
+        tmRunning = false;
+        tmRemaining = 0;
+        
+        const btn = document.getElementById('tm-toggle');
+        btn.textContent = "Start";
+        btn.classList.remove('stop-btn');
+        btn.classList.add('start-btn');
+
+        document.getElementById('tm-display').style.display = 'none';
+        document.getElementById('timer-input-area').style.display = 'flex';
+        document.getElementById('tm-display').textContent = "00:00";
+    }
+
+    function updateTimerDisplay() {
+        const totalSeconds = Math.ceil(tmRemaining / 1000);
+        const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const s = (totalSeconds % 60).toString().padStart(2, '0');
+        document.getElementById('tm-display').textContent = `${m}:${s}`;
+    }
   </script>
 </body>
 </html>
-
