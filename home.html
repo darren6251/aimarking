@@ -2124,10 +2124,28 @@
     function renderTodos() {
         todoList.innerHTML = '';
         
-        // Sort todos: not-started and half-done first, then full-done
+        // Sort todos: Status first, then "Notes" (No Date), then Nearest Due Date
         const sortedTodos = [...todoItems].sort((a, b) => {
+            // 1. Primary Sort: Status (Active items top, Done items bottom)
             const statusOrder = { 'not-started': 1, 'half-done': 2, 'full-done': 3 };
-            return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+            const statusDiff = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+            
+            if (statusDiff !== 0) return statusDiff;
+
+            // 2. Secondary Sort: Deadline
+            // If 'a' has NO deadline, it's a "Note" -> put it at the TOP (-1)
+            if (!a.deadline && b.deadline) return -1;
+            
+            // If 'b' has NO deadline, put it at the TOP (1 means 'a' goes below 'b')
+            if (a.deadline && !b.deadline) return 1;
+            
+            // If both have deadlines, compare them (Earliest date first)
+            if (a.deadline && b.deadline) {
+                return a.deadline.localeCompare(b.deadline);
+            }
+            
+            // If neither has a deadline, keep original order
+            return 0;
         });
         
         if (sortedTodos.length === 0) {
