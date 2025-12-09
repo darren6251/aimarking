@@ -344,8 +344,9 @@
     .todo-actions button:hover { color: var(--danger); transform: scale(1.1); }
 
     .status-done .todo-text { text-decoration: line-through; opacity: 0.5; }
+    .status-half-done .todo-text { text-decoration: line-through; opacity: 0.9; color: var(--text-main); }
     .is-due { color: var(--danger); font-weight: 700; }
-    .is-due-soon { color: var(--warning); }
+    .is-due-soon { color: var(--warning); font-weight: 700; }
     /* #endregion */
     
     /* #region 5. MODALS & UTILS */
@@ -1035,10 +1036,35 @@
         sorted.forEach(t => {
             const el = document.createElement('div'); el.className = 'todo-item'; el.dataset.id = t.id;
             const isDone = t.status === 'full-done';
+            const isHalfDone = t.status === 'half-done';
+            
+            // Logic for Due Date Warning
+            let deadlineDisplay = 'No Deadline';
+            if (t.deadline) {
+                const now = new Date();
+                const due = new Date(t.deadline);
+                // Reset times to midnight for accurate day comparison
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const dueDate = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+                
+                const diffTime = dueDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (dueDate < today && !isDone) {
+                    deadlineDisplay = '<span class="is-due">Overdue</span>';
+                } else if (diffDays >= 0 && diffDays <= 3 && !isDone) {
+                    // 0 = Today, 1 = Tomorrow, etc.
+                    let relativeText = diffDays === 0 ? 'Due Today!' : (diffDays === 1 ? 'Due Tomorrow!' : `Due in ${diffDays} days`);
+                    deadlineDisplay = `<span class="is-due-soon">${relativeText}</span>`;
+                } else {
+                    deadlineDisplay = t.deadline;
+                }
+            }
+
             el.innerHTML = `
-                <div class="todo-content ${isDone?'status-done':''}">
+                <div class="todo-content ${isDone?'status-done':(isHalfDone?'status-half-done':'')}">
                     <span class="todo-text">${t.description}</span>
-                    <div class="todo-meta">${t.deadline ? (new Date(t.deadline) < new Date() && !isDone ? '<span class="is-due">Overdue</span>' : t.deadline) : 'No Deadline'}</div>
+                    <div class="todo-meta">${deadlineDisplay}</div>
                 </div>
                 <select class="todo-status" style="background:transparent; border:none; color:var(--text-muted);">
                     <option value="not-started" ${t.status==='not-started'?'selected':''}>TODO</option>
