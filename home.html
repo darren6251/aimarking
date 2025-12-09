@@ -16,9 +16,12 @@
     :root {
         /* Base Colors */
         --bg-body: #050505;
+        --bg-header: rgba(5, 5, 5, 0.7); /* Default dark header */
         --bg-card: rgba(20, 20, 20, 0.7);
         --bg-card-hover: rgba(30, 30, 30, 0.8);
+        --bg-tool: rgba(10, 10, 10, 0.5); /* Dark tool widget */
         --bg-input: #111;
+        --bg-dropdown: #000;
         
         /* Text */
         --text-main: #ffffff;
@@ -47,12 +50,17 @@
 
     body.light-theme {
         --bg-body: #f0f2f5;
+        --bg-header: rgba(255, 255, 255, 0.85); /* Light header */
         --bg-card: rgba(255, 255, 255, 0.8);
         --bg-card-hover: rgba(255, 255, 255, 1);
+        --bg-tool: rgba(255, 255, 255, 0.6); /* Light tool widget */
         --bg-input: #f5f5f5;
+        --bg-dropdown: #fff;
+        
         --text-main: #111111;
         --text-muted: #666666;
         --text-accent: #000000;
+        
         --accent-glow: 0 4px 20px rgba(0, 0, 0, 0.05);
         --border-color: rgba(0, 0, 0, 0.08);
         --border-hover: rgba(0, 0, 0, 0.2);
@@ -70,7 +78,7 @@
         background-image: 
             radial-gradient(at 0% 0%, rgba(255,255,255,0.03) 0px, transparent 50%),
             radial-gradient(at 100% 100%, rgba(255,255,255,0.03) 0px, transparent 50%);
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     
     /* Scrollbar */
@@ -142,21 +150,64 @@
         position: sticky; top: 0; z-index: 100;
         display: flex; justify-content: space-between; align-items: center;
         padding: 16px 32px;
-        background: rgba(5, 5, 5, 0.7);
+        background: var(--bg-header); /* Use variable for theme switching */
         backdrop-filter: blur(15px);
         border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.3s ease;
     }
     
     .brand { display: flex; align-items: center; gap: 10px; }
     .brand h1 { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; }
-    .brand span { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 4px; }
+    
+    .nav-container { display: flex; gap: 2rem; align-items: center; }
 
     .nav-links { display: flex; gap: 2rem; align-items: center; }
-    .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; position: relative; cursor: pointer;}
     .nav-link:hover, .nav-link.active { color: var(--text-main); }
+    
+    /* Dropdown CSS */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: var(--bg-dropdown);
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        z-index: 1;
+        overflow: hidden;
+        padding: 5px 0;
+    }
+    .dropdown-content a {
+        color: var(--text-muted);
+        padding: 10px 16px;
+        text-decoration: none;
+        display: block;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+    }
+    .dropdown-content a:hover { background-color: var(--bg-card-hover); color: var(--text-main); }
+    .dropdown:hover .dropdown-content { display: block; }
     
     .user-controls { display: flex; gap: 12px; align-items: center; }
     
+    .nav-clock {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--text-main);
+        background: rgba(125, 125, 125, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        margin-right: 10px;
+    }
+
+    /* Mobile Menu Toggle */
+    .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; }
+
     /* Main Grid Layout - The Bento Box */
     .main-grid {
         display: grid;
@@ -187,6 +238,26 @@
     @media (max-width: 768px) {
         .area-stats { flex-direction: column; }
         .main-grid { padding: 15px; gap: 15px; display: flex; flex-direction: column; }
+        
+        /* Mobile Nav */
+        .mobile-menu-btn { display: block; }
+        .nav-links {
+            display: none; /* Hidden by default on mobile */
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            flex-direction: column;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 1rem;
+        }
+        .nav-links.active { display: flex; }
+        .dropdown-content { position: static; background: transparent; border: none; padding-left: 20px; box-shadow: none; display: block; }
+        .user-controls { display: none; } /* Simplify header on mobile, maybe put in menu later */
+        .user-controls.mobile-visible { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 10px; width: 100%; }
     }
     /* #endregion */
 
@@ -211,14 +282,17 @@
     /* Tool Widgets (Stopwatch/Timer) */
     .tool-widget { 
         display: flex; flex-direction: column; align-items: center; padding: 20px; 
-        border: 1px solid var(--border-color); background: rgba(10,10,10,0.5);
+        border: 1px solid var(--border-color); 
+        background: var(--bg-tool); /* Use variable */
+        transition: background-color 0.3s ease;
     }
     .tool-widget h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
     .digital-display {
         font-family: var(--font-mono); font-size: 3rem; font-weight: 700; 
-        background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 8px;
+        background: rgba(125,125,125,0.1); padding: 10px 20px; border-radius: 8px;
         margin-bottom: 15px; width: 100%; text-align: center;
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
     }
     .tool-controls { display: flex; gap: 10px; width: 100%; justify-content: center; }
     .tool-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-main); font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
@@ -231,8 +305,8 @@
     .timer-inputs input:focus { border-bottom-color: var(--text-main); }
     
     /* XP Section */
-    .xp-bar-container { position: relative; height: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 15px 0; }
-    .xp-bar-fill { height: 100%; background: var(--text-main); width: 0%; box-shadow: 0 0 15px rgba(255,255,255,0.3); transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+    .xp-bar-container { position: relative; height: 12px; background: rgba(125,125,125,0.1); border-radius: 10px; overflow: hidden; margin: 15px 0; }
+    .xp-bar-fill { height: 100%; background: var(--text-main); width: 0%; box-shadow: 0 0 15px rgba(125,125,125,0.3); transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
     .xp-header { display: flex; justify-content: space-between; align-items: flex-end; }
     .xp-badge { background: var(--text-main); color: var(--bg-body); padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 0.8rem; }
     
@@ -256,10 +330,10 @@
     /* Todo Items */
     .todo-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
     .todo-item { 
-        background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; 
+        background: rgba(125,125,125,0.05); padding: 12px; border-radius: 8px; 
         display: flex; align-items: center; gap: 12px; border: 1px solid transparent; transition: 0.2s;
     }
-    .todo-item:hover { border-color: var(--border-color); background: rgba(255,255,255,0.05); }
+    .todo-item:hover { border-color: var(--border-color); background: rgba(125,125,125,0.1); }
     .todo-status { width: 120px; padding: 4px; font-size: 0.8rem; border: none; background: transparent; color: var(--text-muted); font-weight: 600; text-align: right; cursor: pointer; }
     .todo-content { flex: 1; }
     .todo-text { display: block; font-weight: 500; font-size: 0.95rem; }
@@ -275,16 +349,16 @@
     
     /* #region 5. MODALS & UTILS */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; align-items: center; justify-content: center; }
-    .modal-content { background: #111; border: 1px solid var(--border-color); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .modal-content { background: var(--bg-body); border: 1px solid var(--border-color); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; color: var(--text-main); }
     @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     
-    #startupAnimation { position: fixed; inset: 0; background: #000; z-index: 3000; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s; pointer-events: none; }
-    #animatedLogo { font-size: 3rem; font-weight: 800; letter-spacing: -2px; }
-    .fade-out { opacity: 0; }
+    #startupAnimation { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s; pointer-events: none; }
+    #animatedLogo { font-size: 3rem; font-weight: 800; letter-spacing: -2px; color: #fff; }
+    .fade-out { opacity: 0; pointer-events: none; }
     
-    #authWrapper { display: flex; height: 100vh; width: 100vw; align-items: center; justify-content: center; background: #050505; }
-    .auth-box { width: 100%; max-width: 400px; padding: 40px; text-align: center; }
+    #authWrapper { display: flex; height: 100vh; width: 100vw; align-items: center; justify-content: center; background: #050505; position: fixed; z-index: 5000; }
+    .auth-box { width: 100%; max-width: 400px; padding: 40px; text-align: center; color: #fff; }
     .auth-box h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 800; letter-spacing: -1px; }
     /* #endregion */
   </style>
@@ -307,16 +381,32 @@
     <!-- Navbar -->
     <header>
       <div class="brand">
+        <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
         <h1>AI MARKER</h1>
-        <span>BETA</span>
       </div>
-      <nav class="nav-links">
+      
+      <nav class="nav-links" id="navLinks">
         <a href="#" class="nav-link active">Dashboard</a>
         <a href="chat.html" class="nav-link">AI Chat</a>
         <a href="submissions.html" class="nav-link">Tasks</a>
-        <a href="materials.html" class="nav-link">Resources</a>
+        <div class="dropdown">
+            <a href="#" class="nav-link">Resources ▾</a>
+            <div class="dropdown-content">
+                <a href="tutorials.html">Tutorials</a>
+                <a href="pastpaper.html">Past Papers</a>
+                <a href="materials.html">All Materials</a>
+            </div>
+        </div>
+        
+        <!-- Mobile User Controls -->
+        <div class="user-controls mobile-visible d-md-none" style="display:none;">
+            <button id="themeToggleButtonMobile" class="btn-ghost" title="Toggle Theme">Toggle Theme</button>
+            <button id="logoutButtonMobile" class="btn-ghost" style="color: var(--danger);">Exit</button>
+        </div>
       </nav>
-      <div class="user-controls">
+
+      <div class="user-controls d-none d-md-flex">
+        <span id="navClock" class="nav-clock">00:00:00</span>
         <span id="userDisplayName" style="font-size: 0.9rem; font-weight: 600; cursor: pointer;">Guest</span>
         <button id="themeToggleButton" class="btn-ghost" title="Toggle Theme">◐</button>
         <button id="switchRoleButton" class="btn-ghost">Role</button>
@@ -332,7 +422,7 @@
             <h2 class="hero-greeting">Welcome back, <br><span id="homeUserNamePlaceholder" style="color: var(--text-main);">Student</span>.</h2>
             <p class="hero-sub">Ready to crush the DSE? "You don't have to see the whole staircase, just take the first step."</p>
             <div class="hero-actions">
-                <button id="viewAnalyticsBtn" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-color);">View Analytics 📈</button>
+                <button id="viewAnalyticsBtn" class="btn-primary" style="background: rgba(125,125,125,0.2); border: 1px solid var(--border-color);">View Analytics 📈</button>
                 <a href="chat.html" class="btn-primary">Ask AI Tutor →</a>
             </div>
             
@@ -345,19 +435,13 @@
                  <div class="xp-bar-container">
                     <div id="xpProgressBar" class="xp-bar-fill"></div>
                  </div>
-                 <div style="display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <h3 id="xpBalanceDisplay" style="font-size: 1.5rem; font-weight: 700;">0 XP</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <button id="log-study-btn" class="btn-ghost" style="font-size: 0.8rem;">+ Log Study</button>
-                        <button id="redeemHalfDayBtn" class="btn-ghost" disabled style="font-size: 0.8rem;">Redeem</button>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button id="openLogStudyBtn" class="btn-ghost" style="font-size: 0.8rem;">+ Log Study</button>
+                        <button id="redeemHalfDayBtn" class="btn-ghost" disabled style="font-size: 0.8rem;">1/2 Day (150XP)</button>
+                        <button id="redeemFullDayBtn" class="btn-ghost" disabled style="font-size: 0.8rem;">Full Day (300XP)</button>
                     </div>
-                 </div>
-                 <!-- Hidden inputs for logic compatibility -->
-                 <div style="display:none;">
-                    <input type="date" id="study-date">
-                    <input type="number" id="study-hours-input">
-                    <input type="number" id="study-minutes-input">
-                    <button id="redeemFullDayBtn"></button>
                  </div>
             </div>
         </div>
@@ -370,9 +454,9 @@
                 <div id="currentDate" class="stat-sub">...</div>
             </div>
             <div class="stat-card" style="flex: 1;">
-                <span class="stat-label">DSE Countdown</span>
+                <span class="stat-label">DSE 2026</span>
                 <div id="countdown" class="stat-value" style="color: var(--warning);">--:--:--</div>
-                <div class="stat-sub">Remains</div>
+                <div class="stat-sub">Until Exams</div>
                 <!-- Hidden teacher controls -->
                 <div id="teacher-controls" style="display: none; margin-top: 10px;">
                      <input type="datetime-local" id="countdown-datetime" style="font-size: 0.7rem; padding: 4px;">
@@ -395,11 +479,11 @@
             
             <div class="card tool-widget" style="grid-column: span 2;">
                 <h3>Focus Timer</h3>
-                <div style="display: flex; gap: 20px; width: 100%; align-items: center;">
-                    <div style="flex: 1;">
+                <div style="display: flex; gap: 20px; width: 100%; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
                         <div id="timerDisplay" class="digital-display">00:00:00</div>
                     </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 200px;">
                         <div id="timerInputs" class="timer-inputs">
                             <input type="number" id="timerHours" placeholder="00" min="0"><span>:</span>
                             <input type="number" id="timerMinutes" placeholder="00" min="0" max="59"><span>:</span>
@@ -434,9 +518,9 @@
                 <h4 id="event-list-header" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Selected Date</h4>
                 <div id="event-list" style="min-height: 50px;"></div>
                 
-                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px;">
+                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                     <input type="time" id="event-time" style="width: auto;">
-                    <input type="text" id="event-desc" placeholder="Add new event..." required>
+                    <input type="text" id="event-desc" placeholder="Add new event..." required style="flex:1; min-width: 150px;">
                     <input type="date" id="event-date" style="display:none;"> <!-- Hidden, handled by JS -->
                     <button type="submit" id="add-event-btn" class="btn-primary" style="padding: 0 15px;">+</button>
                     <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox"></div>
@@ -456,7 +540,7 @@
             </div>
             
             <form id="add-todo-form" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                <input type="text" id="todo-input" placeholder="New task or note..." required style="background: rgba(255,255,255,0.05); border: none;">
+                <input type="text" id="todo-input" placeholder="New task or note..." required style="background: rgba(125,125,125,0.05); border: none;">
                 <div style="display: flex; gap: 10px;">
                     <input type="date" id="todo-deadline" title="Deadline">
                     <button type="submit" id="add-todo-btn" class="btn-primary">Add Task</button>
@@ -464,24 +548,40 @@
             </form>
         </div>
         
-        <!-- 6. XP History (Collapsed/Hidden usually, kept for logic) -->
-        <div class="card area-xp" style="display: none;">
-             <div id="study-history-container">
-                 <div id="study-history-list"></div>
-             </div>
-        </div>
-        
     </div> <!-- End Main Grid -->
 
   </div> <!-- End App Section -->
 
-  <!-- Modals (Kept Functional) -->
+  <!-- Modals -->
   <div id="messageModal" class="modal">
       <div class="modal-content">
           <span class="close-button" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
           <h3 id="modalTitle" style="margin-bottom: 15px; font-weight: 800;">Message</h3>
           <div id="modalMessage" style="color: var(--text-muted); margin-bottom: 20px;"></div>
           <div id="modalButtons" style="display: flex; justify-content: flex-end; gap: 10px;"></div>
+      </div>
+  </div>
+  
+  <div id="logStudyModal" class="modal">
+      <div class="modal-content">
+          <span class="close-button study-close-button" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+          <h3 style="margin-bottom: 15px;">Log Study Session</h3>
+          <p style="color: var(--text-muted); margin-bottom: 15px;">How long did you study?</p>
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <div style="flex:1">
+                  <label style="font-size:0.8rem; color:var(--text-muted)">Hours</label>
+                  <input type="number" id="log-hours" placeholder="0" min="0" value="0">
+              </div>
+              <div style="flex:1">
+                  <label style="font-size:0.8rem; color:var(--text-muted)">Minutes</label>
+                  <input type="number" id="log-minutes" placeholder="0" min="0" max="59" value="0">
+              </div>
+          </div>
+          <input type="date" id="study-date-hidden" style="display:none;">
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button class="btn-ghost study-close-button">Cancel</button>
+              <button id="confirmLogStudyBtn" class="btn-primary">Log Time</button>
+          </div>
       </div>
   </div>
   
@@ -509,13 +609,12 @@
       </div>
   </div>
 
-  <!-- FIREBASE LOGIC (UNCHANGED) -->
+  <!-- FIREBASE LOGIC -->
   <script type="module">
     // #region FIREBASE IMPORTS
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, where, serverTimestamp, limit, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
     // #endregion
 
     // #region GLOBAL VARIABLES & CONFIG
@@ -532,11 +631,13 @@
     };
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-    let app, db, auth, storage;
+    let app, db, auth;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
     let countdownInterval;
     
-    // State variables
+    // Default DSE 2026 Date: April 9, 2026 (Approx start)
+    const DEFAULT_DSE_DATE = new Date("2026-04-09T08:30:00");
+
     let currentSelectedDate = new Date();
     let currentMonth = currentSelectedDate.getMonth();
     let currentYear = currentSelectedDate.getFullYear();
@@ -547,128 +648,112 @@
 
     // Timer State
     let stopwatchInterval = null, stopwatchStartTime = 0, stopwatchElapsedTime = 0, stopwatchRunning = false;
-    let timerInterval = null, timerTotalTime = 0, timerTimeRemaining = 0, timerRunning = false, timerAudioContext = null, timerBeepNode = null;
+    let timerInterval = null, timerTotalTime = 0, timerTimeRemaining = 0, timerRunning = false, timerAudioContext = null;
     
-    // Chart State
     let studyChart = null;
-    // #endregion
 
-    // #region INITIALIZATION & AUTH
-    const authWrapper = document.getElementById('authWrapper');
-    const appSection = document.getElementById('appSection');
-    const authContainer = document.getElementById('authContainer');
-    const userDisplayNameSpan = document.getElementById('userDisplayName');
-    const startupAnimation = document.getElementById('startupAnimation');
-    const headerLogo = document.querySelector('header .brand h1'); // UPDATED SELECTOR
-
-    const googleSignInTemplate = `
-        <h1>Sign In</h1>
-        <button id="googleSignInButton" class="btn-primary" style="background: #fff; color: #000; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon" height="20">
-            <span>Continue with Google</span>
-        </button>
-        <p id="authError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></p>
-    `;
-
-    const codeEntryTemplate = `
-        <h1>Access Code</h1>
-        <p style="color: var(--text-muted); margin-bottom: 20px;">Enter your student or teacher code</p>
-        <input type="text" id="accessCodeInput" placeholder="Code..." style="margin-bottom: 15px; text-align: center; font-size: 1.2rem;">
-        <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button>
-        <p id="codeError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></p>
-    `;
-
+    // #region INITIALIZATION
     try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        storage = getStorage(app);
         console.log("Firebase initialized.");
-    } catch (error) {
-        console.error("Firebase Init Error:", error);
-    }
+    } catch (error) { console.error("Firebase Init Error:", error); }
 
+    const startupAnimation = document.getElementById('startupAnimation');
+    const appSection = document.getElementById('appSection');
+    const authWrapper = document.getElementById('authWrapper');
+
+    // Make sure animation is visible initially
+    startupAnimation.style.opacity = '1';
+    
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUserId = user.uid;
             currentUserEmail = user.email;
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
             try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 const userProfileDoc = await getDoc(userProfileRef);
+                
                 if (userProfileDoc.exists() && userProfileDoc.data().role) {
-                    const profileData = userProfileDoc.data();
-                    currentUserRole = profileData.role;
-                    currentUserName = profileData.name || user.displayName;
-                    const updateData = { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() };
-                    if (profileData.xpBalance === undefined) updateData.xpBalance = 0;
-                    await setDoc(userProfileRef, updateData, { merge: true });
+                    const data = userProfileDoc.data();
+                    currentUserRole = data.role;
+                    currentUserName = data.name || user.displayName;
                     showApp();
                 } else {
                     currentUserName = user.displayName;
                     currentUserRole = 'unassigned';
-                    await setDoc(userProfileRef, { 
-                        name: currentUserName, email: currentUserEmail, role: 'unassigned', xpBalance: 0, lastLogin: Date.now()
-                    }, { merge: true });
+                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: 'unassigned', xpBalance: 0 }, { merge: true });
                     showCodeEntry();
                 }
-            } catch (e) {
-                 console.error("Profile Error:", e);
-                 showLogin();
-            }
+            } catch (e) { console.error(e); showLogin(); }
         } else {
-            currentUserId = null; currentUserRole = null; currentUserName = null; xpBalance = 0; studyHistory = [];
-            unsubscribePersonalEvents(); unsubscribePublicEvents(); unsubscribeTodos(); unsubscribeProfile(); unsubscribeStudyHistory();
-            personalEvents = []; publicEvents = []; todoItems = [];
             showLogin();
         }
     });
 
+    function hideAnimation() {
+        startupAnimation.classList.add('fade-out');
+        setTimeout(() => startupAnimation.style.display = 'none', 500);
+    }
+
     function showLogin() {
         appSection.style.display = 'none';
         authWrapper.style.display = 'flex';
-        startupAnimation.classList.add('fade-out'); // Quick fade
-        setTimeout(() => startupAnimation.style.display = 'none', 500);
-        
-        authContainer.innerHTML = googleSignInTemplate;
-        document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
+        document.getElementById('authContainer').innerHTML = `
+            <h1>Sign In</h1>
+            <button id="googleSignInButton" class="btn-primary" style="background: #fff; color: #000; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" height="20"> Continue with Google
+            </button>
+            <p id="authError" style="color: var(--danger); margin-top: 10px;"></p>
+        `;
+        document.getElementById('googleSignInButton')?.addEventListener('click', async () => {
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { document.getElementById('authError').textContent = e.message; }
+        });
+        hideAnimation();
     }
 
     function showCodeEntry() {
         appSection.style.display = 'none';
         authWrapper.style.display = 'flex';
-        startupAnimation.classList.add('fade-out');
-        setTimeout(() => startupAnimation.style.display = 'none', 500);
+        document.getElementById('authContainer').innerHTML = `
+            <h1>Access Code</h1>
+            <input type="text" id="accessCodeInput" placeholder="Enter Code..." style="margin-bottom: 15px; text-align: center; font-size: 1.2rem; width:100%; padding:10px;">
+            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button>
+            <p id="codeError" style="color: var(--danger); margin-top: 10px;"></p>
+        `;
+        document.getElementById('submitCodeButton').addEventListener('click', handleCodeSubmit);
+        hideAnimation();
+    }
 
-        authContainer.innerHTML = codeEntryTemplate;
-        const submitCodeBtn = document.getElementById('submitCodeButton');
-        const accessCodeInput = document.getElementById('accessCodeInput');
-        submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
-        accessCodeInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); handleSubmitCode(); }
-        });
-        accessCodeInput?.focus();
+    async function handleCodeSubmit() {
+        const code = document.getElementById('accessCodeInput').value.trim();
+        let role = null;
+        if (code === TEACHER_CODE) role = 'teacher';
+        else if (code === STUDENT_CODE) role = 'student';
+        
+        if (!role) { document.getElementById('codeError').textContent = 'Invalid Code'; return; }
+        
+        try {
+            await setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { role }, { merge: true });
+            currentUserRole = role;
+            showApp();
+        } catch (e) { document.getElementById('codeError').textContent = e.message; }
     }
 
     async function showApp() {
         authWrapper.style.display = 'none';
         appSection.style.display = 'flex';
-        userDisplayNameSpan.textContent = currentUserName;
+        document.getElementById('userDisplayName').textContent = currentUserName;
         document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
         
-        // Show teacher controls
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'block';
             document.getElementById('public-event-container').style.display = 'block';
-        } else {
-             document.getElementById('teacher-controls').style.display = 'none';
-             document.getElementById('public-event-container').style.display = 'none';
         }
 
-        // Animation logic
-        startupAnimation.style.display = 'flex';
-        startupAnimation.classList.remove('fade-out');
-        setTimeout(() => { startupAnimation.classList.add('fade-out'); setTimeout(() => startupAnimation.style.display = 'none', 500); }, 1500);
-
+        hideAnimation();
+        
         startClocks();
         listenForCountdownChanges();
         initDashboard();
@@ -682,186 +767,106 @@
         }
     }
 
-    async function handleGoogleSignIn() {
-        const provider = new GoogleAuthProvider();
-        try { await signInWithPopup(auth, provider); } catch (error) { 
-            document.getElementById('authError').textContent = `Error: ${error.message}`; 
-        }
-    }
-
-    async function handleSubmitCode(codeValue) {
-        const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
-        const codeError = document.getElementById('codeError');
-        if(codeError) codeError.textContent = '';
-        
-        let roleToSet = null;
-        if (code === TEACHER_CODE) roleToSet = 'teacher';
-        else if (code === STUDENT_CODE) roleToSet = 'student';
-        else { if(codeError) codeError.textContent = 'Invalid code.'; return; }
-        
-        try {
-            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            await setDoc(userProfileRef, { role: roleToSet }, { merge: true });
-            currentUserRole = roleToSet;
-            showApp();
-        } catch (error) {
-            if(codeError) codeError.textContent = `Error: ${error.message}`;
-        }
-    }
-
     document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-    document.getElementById('switchRoleButton').addEventListener('click', () => {
-        showInputModal('Switch Role', 'Enter new access code:', async (code) => { await handleSubmitCode(code); });
-    });
-    
-    // Profile Edit
-    userDisplayNameSpan.addEventListener('click', async () => {
-        if (!currentUserId) return;
-        const profileEditModal = document.getElementById('profileEditModal');
-        const editUserNameInput = document.getElementById('editUserName');
-        const editUserEmailInput = document.getElementById('editUserEmail');
-        const editUserRoleInput = document.getElementById('editUserRole');
-        const saveProfileButton = document.getElementById('saveProfileButton');
-        const cancelProfileButton = document.getElementById('cancelProfileButton');
+    document.getElementById('logoutButtonMobile').addEventListener('click', () => signOut(auth));
 
-        editUserNameInput.value = currentUserName || '';
-        editUserEmailInput.value = currentUserEmail || '';
-        editUserRoleInput.value = currentUserRole || '';
-        profileEditModal.style.display = 'flex';
-
-        const saveHandler = async () => {
-            const newName = editUserNameInput.value.trim();
-            if (!newName) return;
-            try {
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                await updateDoc(userProfileRef, { name: newName });
-                currentUserName = newName;
-                userDisplayNameSpan.textContent = currentUserName;
-                document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
-                profileEditModal.style.display = 'none';
-            } catch (error) { showModal('Error', error.message); }
-            saveProfileButton.removeEventListener('click', saveHandler);
-            cancelProfileButton.removeEventListener('click', cancelHandler);
-        };
-        const cancelHandler = () => {
-            profileEditModal.style.display = 'none';
-            saveProfileButton.removeEventListener('click', saveHandler);
-            cancelProfileButton.removeEventListener('click', cancelHandler);
-        };
-        saveProfileButton.addEventListener('click', saveHandler);
-        cancelProfileButton.addEventListener('click', cancelHandler);
-        document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
-    });
-    // #endregion
-
-    // #region TIME & COUNTDOWN
+    // #region TIME & CLOCK
     function startClocks() {
         const currentTimeEl = document.getElementById('currentTime');
         const currentDateEl = document.getElementById('currentDate');
+        const navClockEl = document.getElementById('navClock');
+
         setInterval(() => {
             const now = new Date();
+            // HH:MM for main card
             currentTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            // HH:MM:SS for Nav
+            navClockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            
             currentDateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }, 1000);
     }
+    
     function updateCountdown(targetDate) {
         const countdownEl = document.getElementById('countdown');
         if (countdownInterval) clearInterval(countdownInterval);
-        if (!targetDate) { countdownEl.textContent = "--:--:--"; return; }
-
+        
+        const target = targetDate || DEFAULT_DSE_DATE;
+        
         countdownInterval = setInterval(() => {
             const now = new Date().getTime();
-            const distance = targetDate - now;
-            if (distance < 0) { clearInterval(countdownInterval); countdownEl.textContent = "DONE"; return; }
+            const distance = target - now;
+            if (distance < 0) { countdownEl.textContent = "DONE"; return; }
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             countdownEl.textContent = `${days}d ${hours}h`;
         }, 1000);
     }
+
     function listenForCountdownChanges() {
-        const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
-        onSnapshot(countdownRef, (doc) => {
-            if (doc.exists()) { updateCountdown(doc.data().target ? doc.data().target.toDate() : null); } 
-            else { updateCountdown(null); }
+        onSnapshot(doc(db, `artifacts/${appId}/public/data/settings/countdown`), (doc) => {
+            if (doc.exists() && doc.data().target) {
+                updateCountdown(doc.data().target.toDate());
+            } else {
+                updateCountdown(null);
+            }
         });
     }
+    
     document.getElementById('set-countdown-btn').addEventListener('click', async () => {
-        const datetimeInput = document.getElementById('countdown-datetime').value;
-        if (!datetimeInput) return;
-        const targetDate = new Date(datetimeInput);
-        try {
-            const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
-            await setDoc(countdownRef, { target: targetDate });
-        } catch (error) { console.error(error); }
+        const val = document.getElementById('countdown-datetime').value;
+        if(val) await setDoc(doc(db, `artifacts/${appId}/public/data/settings/countdown`), { target: new Date(val) });
     });
     // #endregion
 
     // #region THEME
-    const themeToggleButton = document.getElementById('themeToggleButton');
-    function applyTheme(theme) { 
-        document.body.classList.toggle('light-theme', theme === 'light'); 
+    function applyTheme(theme) {
+        document.body.classList.toggle('light-theme', theme === 'light');
         if(studyChart) renderAnalyticsChart();
     }
-    function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
-    themeToggleButton.addEventListener('click', () => {
+    const toggleTheme = () => {
         const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-        applyTheme(newTheme); localStorage.setItem('ai-marker-theme', newTheme);
+        applyTheme(newTheme);
+        localStorage.setItem('ai-marker-theme', newTheme);
+    };
+    document.getElementById('themeToggleButton').addEventListener('click', toggleTheme);
+    document.getElementById('themeToggleButtonMobile').addEventListener('click', toggleTheme);
+    applyTheme(localStorage.getItem('ai-marker-theme') || 'dark');
+    
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.getElementById('navLinks');
+    mobileMenuBtn.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        const userControlsMobile = document.querySelector('.user-controls.mobile-visible');
+        if(userControlsMobile) userControlsMobile.style.display = navLinks.classList.contains('active') ? 'flex' : 'none';
     });
-    loadTheme();
     // #endregion
 
-    // #region DASHBOARD (Calendar & Todo)
-    const calendarGrid = document.getElementById('calendar-grid');
-    const eventListHeader = document.getElementById('event-list-header');
-    const eventList = document.getElementById('event-list');
-    const addEventForm = document.getElementById('add-event-form');
-    const eventDateInput = document.getElementById('event-date');
-    const eventTimeInput = document.getElementById('event-time');
-    const eventDescInput = document.getElementById('event-desc');
-    const publicEventCheckbox = document.getElementById('public-event-checkbox');
-    const todoList = document.getElementById('todo-list');
-    const addTodoForm = document.getElementById('add-todo-form');
-    const todoInput = document.getElementById('todo-input');
-    const todoDeadlineInput = document.getElementById('todo-deadline');
+    // #region DASHBOARD LOGIC
     const monthSelect = document.getElementById('month-select');
     const yearSelect = document.getElementById('year-select');
-    const todayBtn = document.getElementById('today-btn');
+    const calendarGrid = document.getElementById('calendar-grid');
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     function initDashboard() {
-        months.forEach((month, index) => { const option = document.createElement('option'); option.value = index; option.textContent = month; monthSelect.appendChild(option); });
-        const currentYear = new Date().getFullYear();
-        for (let i = currentYear - 2; i <= currentYear + 2; i++) { const option = document.createElement('option'); option.value = i; option.textContent = i; yearSelect.appendChild(option); }
+        months.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = m; monthSelect.appendChild(opt); });
+        const yr = new Date().getFullYear();
+        for(let i=yr-2; i<=yr+2; i++) { const opt = document.createElement('option'); opt.value = i; opt.textContent = i; yearSelect.appendChild(opt); }
         
         updateCalendarState(new Date());
         
-        monthSelect.addEventListener('change', handleMonthYearChange);
-        yearSelect.addEventListener('change', handleMonthYearChange);
-        todayBtn.addEventListener('click', () => updateCalendarState(new Date()));
-        addEventForm.addEventListener('submit', handleAddEvent);
-        addTodoForm.addEventListener('submit', handleAddTodo);
-        todoList.addEventListener('change', handleTodoStatusChange);
+        monthSelect.addEventListener('change', () => { currentMonth = parseInt(monthSelect.value); currentYear = parseInt(yearSelect.value); renderCalendar(); });
+        yearSelect.addEventListener('change', () => { currentMonth = parseInt(monthSelect.value); currentYear = parseInt(yearSelect.value); renderCalendar(); });
+        document.getElementById('today-btn').addEventListener('click', () => updateCalendarState(new Date()));
         
-        // XP Listeners
-        // NOTE: We now use showInputModal for logging to keep UI clean
-        document.getElementById('log-study-btn').addEventListener('click', () => {
-            showInputModal("Log Study Time", "Enter hours (e.g. 1.5):", (val) => {
-               // Dirty hack to reuse existing logic
-               const hours = parseFloat(val);
-               if(isNaN(hours)) return;
-               document.getElementById('study-date').value = toLocalISODate(new Date());
-               document.getElementById('study-hours-input').value = Math.floor(hours);
-               document.getElementById('study-minutes-input').value = (hours - Math.floor(hours)) * 60;
-               handleLogStudy();
-            });
+        document.getElementById('add-event-form').addEventListener('submit', handleAddEvent);
+        document.getElementById('add-todo-form').addEventListener('submit', handleAddTodo);
+        document.getElementById('todo-list').addEventListener('change', (e) => {
+            if(e.target.classList.contains('todo-status')) handleUpdateTodoStatus(e.target.closest('.todo-item').dataset.id, e.target.value);
         });
-        
-        document.getElementById('redeemHalfDayBtn').addEventListener('click', handleRedeemPoints);
-        document.getElementById('viewAnalyticsBtn').addEventListener('click', openAnalyticsModal);
-        document.querySelector('.analytics-close-button').addEventListener('click', () => document.getElementById('analyticsModal').style.display = 'none');
 
-        // Timer Listeners
+        // Tools
         document.getElementById('startStopwatchBtn').addEventListener('click', startStopwatch);
         document.getElementById('stopStopwatchBtn').addEventListener('click', stopStopwatch);
         document.getElementById('resetStopwatchBtn').addEventListener('click', resetStopwatch);
@@ -869,437 +874,345 @@
         document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
         document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
         
-        const initAudio = () => { if (!timerAudioContext) timerAudioContext = new (window.AudioContext || window.webkitAudioContext)(); document.body.removeEventListener('click', initAudio); };
-        document.body.addEventListener('click', initAudio, { once: true });
-        document.body.addEventListener('keydown', initAudio, { once: true });
+        // XP / Study
+        document.getElementById('openLogStudyBtn').addEventListener('click', () => {
+            document.getElementById('logStudyModal').style.display = 'flex';
+            document.getElementById('study-date-hidden').value = toLocalISODate(new Date());
+        });
+        document.querySelectorAll('.study-close-button').forEach(b => b.onclick = () => document.getElementById('logStudyModal').style.display = 'none');
+        document.getElementById('confirmLogStudyBtn').addEventListener('click', handleLogStudy);
+        
+        document.getElementById('redeemHalfDayBtn').addEventListener('click', () => handleRedeem(150, "Half Day Off"));
+        document.getElementById('redeemFullDayBtn').addEventListener('click', () => handleRedeem(300, "Full Day Off"));
+        
+        document.getElementById('viewAnalyticsBtn').addEventListener('click', () => {
+            document.getElementById('analyticsModal').style.display = 'flex';
+            renderAnalyticsChart();
+        });
+        document.querySelector('.analytics-close-button').addEventListener('click', () => document.getElementById('analyticsModal').style.display = 'none');
+        
+        // Profile Modal Listeners
+        document.getElementById('userDisplayName').addEventListener('click', openProfileModal);
+        document.getElementById('switchRoleButton').addEventListener('click', () => {
+             const code = prompt("Enter Code:");
+             if(code) { document.getElementById('accessCodeInput').value = code; handleCodeSubmit(); }
+        });
+        document.querySelector('.profile-close-button').addEventListener('click', () => document.getElementById('profileEditModal').style.display = 'none');
+        document.getElementById('cancelProfileButton').addEventListener('click', () => document.getElementById('profileEditModal').style.display = 'none');
     }
-    
-    function handleMonthYearChange() {
-        currentMonth = parseInt(monthSelect.value); currentYear = parseInt(yearSelect.value); renderCalendar();
-    }
-    function updateCalendarState(date) {
-        currentSelectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        currentMonth = currentSelectedDate.getMonth(); currentYear = currentSelectedDate.getFullYear();
+
+    function updateCalendarState(d) {
+        currentSelectedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        currentMonth = currentSelectedDate.getMonth();
+        currentYear = currentSelectedDate.getFullYear();
         monthSelect.value = currentMonth; yearSelect.value = currentYear;
-        eventDateInput.value = toLocalISODate(currentSelectedDate);
-        document.getElementById('study-date').value = toLocalISODate(new Date()); 
+        document.getElementById('event-date').value = toLocalISODate(currentSelectedDate);
         renderCalendar(); renderEventsForDay();
     }
+
     function renderCalendar() {
-        while (calendarGrid.children.length > 7) calendarGrid.removeChild(calendarGrid.lastChild);
+        calendarGrid.innerHTML = '';
+        ['S','M','T','W','T','F','S'].forEach(d => calendarGrid.innerHTML += `<div class="cal-day-name">${d}</div>`);
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
         
-        // Add headers first (Mon, Tue...) if needed, but we use CSS grid now so maybe just raw days? 
-        // Let's add simple day headers
-        const days = ['S','M','T','W','T','F','S'];
-        calendarGrid.innerHTML = ''; // Reset
-        days.forEach(d => { const div = document.createElement('div'); div.className='cal-day-name'; div.textContent=d; calendarGrid.appendChild(div); });
-
-        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const today = new Date();
-
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            const dayEl = document.createElement('div'); calendarGrid.appendChild(dayEl); // Empty slot
-        }
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dayEl = document.createElement('div');
-            const dayDate = new Date(currentYear, currentMonth, i);
-            const dateStr = toLocalISODate(dayDate);
-            dayEl.className = 'cal-day'; dayEl.textContent = i; dayEl.dataset.date = dateStr;
-
-            if (isSameDay(dayDate, today)) dayEl.classList.add('today');
-            if (isSameDay(dayDate, currentSelectedDate)) dayEl.classList.add('selected');
+        for(let i=0; i<firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+        
+        for(let i=1; i<=daysInMonth; i++) {
+            const d = new Date(currentYear, currentMonth, i);
+            const dateStr = toLocalISODate(d);
+            const el = document.createElement('div');
+            el.className = 'cal-day'; el.textContent = i;
+            if(isSameDay(d, new Date())) el.classList.add('today');
+            if(isSameDay(d, currentSelectedDate)) el.classList.add('selected');
             
-            const hasPublicEvent = publicEvents.some(e => e.date === dateStr);
-            const hasPersonalEvent = personalEvents.some(e => e.date === dateStr);
-            if (hasPublicEvent || hasPersonalEvent) {
-                const marker = document.createElement('div'); marker.className = 'event-dot';
-                if (hasPublicEvent) marker.classList.add('public');
-                dayEl.appendChild(marker);
+            const hasEvent = [...personalEvents, ...publicEvents].some(e => e.date === dateStr);
+            if(hasEvent) {
+                const dot = document.createElement('div'); dot.className = 'event-dot';
+                if(publicEvents.some(e => e.date === dateStr)) dot.classList.add('public');
+                el.appendChild(dot);
             }
-            dayEl.addEventListener('click', () => updateCalendarState(dayDate));
-            calendarGrid.appendChild(dayEl);
+            el.onclick = () => updateCalendarState(d);
+            calendarGrid.appendChild(el);
         }
     }
+
     function renderEventsForDay() {
-        eventList.innerHTML = '';
-        const selectedDateStr = toLocalISODate(currentSelectedDate);
-        eventListHeader.textContent = `${currentSelectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+        const list = document.getElementById('event-list');
+        list.innerHTML = '';
+        const dStr = toLocalISODate(currentSelectedDate);
+        document.getElementById('event-list-header').textContent = currentSelectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         
-        const dayEvents = [...personalEvents.filter(e => e.date === selectedDateStr), ...publicEvents.filter(e => e.date === selectedDateStr)];
-        dayEvents.sort((a, b) => a.time.localeCompare(b.time));
-
-        if (dayEvents.length === 0) { eventList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 10px;">No events.</p>`; return; }
-
-        dayEvents.forEach(event => {
-            const isPublicEvent = event.isPublic; 
-            const eventItem = document.createElement('div'); 
-            // Simple row style
-            eventItem.className = 'event-item';
-            eventItem.dataset.id = event.id; eventItem.dataset.isPublic = isPublicEvent;
-            
-            eventItem.innerHTML = `
-                <div style="flex:1;">
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${event.time} ${isPublicEvent ? '• PUBLIC' : ''}</div>
-                    <div style="font-weight:600;">${event.description}</div>
-                </div>
-                ${(currentUserRole === 'teacher' || !isPublicEvent) ? '<button class="delete-event" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>' : ''}
-            `;
-            
-            const delBtn = eventItem.querySelector('.delete-event');
-            if(delBtn) delBtn.addEventListener('click', handleDeleteEvent);
-            
-            eventList.appendChild(eventItem);
+        const evs = [...personalEvents.filter(e => e.date === dStr), ...publicEvents.filter(e => e.date === dStr)].sort((a,b) => a.time.localeCompare(b.time));
+        
+        if(!evs.length) list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; padding:10px;">No events.</p>`;
+        else evs.forEach(e => {
+            const div = document.createElement('div');
+            div.innerHTML = `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color);">
+                <div><div style="font-size:0.75rem; color:var(--text-muted)">${e.time} ${e.isPublic?'• PUBLIC':''}</div><div style="font-weight:600;">${e.description}</div></div>
+                ${(currentUserRole === 'teacher' || !e.isPublic) ? `<button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>` : ''}
+            </div>`;
+            list.appendChild(div);
         });
     }
+    
+    window.deleteEvent = async (id, isPublic) => {
+        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
+    };
 
     function renderTodos() {
-        todoList.innerHTML = '';
+        const list = document.getElementById('todo-list');
+        list.innerHTML = '';
+        const sorted = [...todoItems].sort((a,b) => (a.status === 'full-done' ? 1 : 0) - (b.status === 'full-done' ? 1 : 0));
         
-        const sortedTodos = [...todoItems].sort((a, b) => {
-            const statusOrder = { 'not-started': 1, 'half-done': 2, 'full-done': 3 };
-            const statusDiff = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
-            if (statusDiff !== 0) return statusDiff;
-            if (!a.deadline && b.deadline) return -1;
-            if (a.deadline && !b.deadline) return 1;
-            if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
-            return 0;
-        });
+        if(!sorted.length) list.innerHTML = `<p style="color:var(--text-muted); text-align:center;">No tasks.</p>`;
         
-        if (sortedTodos.length === 0) { todoList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">No tasks active.</p>`; return; }
-
-        sortedTodos.forEach(todo => {
-            const todoItem = document.createElement('div'); todoItem.className = 'todo-item'; todoItem.dataset.id = todo.id;
-            
-            const isDone = todo.status === 'full-done';
-            
-            // Status Select as a minimal badge
-            const statusSelect = document.createElement('select'); statusSelect.className = 'todo-status';
-            [{value:'not-started',text:'TODO'},{value:'half-done',text:'IN PROGRESS'},{value:'full-done',text:'DONE'}].forEach(s => {
-                const option = document.createElement('option'); option.value = s.value; option.textContent = s.text;
-                if (s.value === todo.status) option.selected = true; statusSelect.appendChild(option);
-            });
-            
-            const content = document.createElement('div'); content.className = 'todo-content';
-            if (isDone) content.classList.add('status-done');
-            
-            const text = document.createElement('span'); text.className = 'todo-text'; text.textContent = todo.description;
-            const meta = document.createElement('div'); meta.className = 'todo-meta';
-            
-            if (todo.deadline) {
-                const diff = Math.ceil((new Date(todo.deadline) - new Date(toLocalISODate(new Date()))) / (86400000));
-                let dueText = todo.deadline;
-                let dueClass = '';
-                if (!isDone) {
-                    if (diff < 0) { dueText = 'OVERDUE'; dueClass = 'is-due'; }
-                    else if (diff === 0) { dueText = 'Due Today'; dueClass = 'is-due-soon'; }
-                    else if (diff <= 3) { dueText = `${diff} days left`; dueClass = 'is-due-soon'; }
-                }
-                meta.innerHTML = `<span class="${dueClass}">${dueText}</span>`;
-            } else {
-                meta.textContent = 'Note';
-            }
-            
-            content.appendChild(text); content.appendChild(meta);
-            
-            const actions = document.createElement('div'); actions.className = 'todo-actions';
-            const editBtn = document.createElement('button'); editBtn.innerHTML = '✎'; 
-            editBtn.onclick = () => handleEditTodo(todoItem, text, todo);
-            
-            const delBtn = document.createElement('button'); delBtn.innerHTML = '🗑'; 
-            delBtn.onclick = () => handleDeleteTodo(todo.id);
-            
-            actions.appendChild(editBtn); actions.appendChild(delBtn);
-
-            todoItem.appendChild(content); todoItem.appendChild(statusSelect); todoItem.appendChild(actions);
-            todoList.appendChild(todoItem);
+        sorted.forEach(t => {
+            const el = document.createElement('div'); el.className = 'todo-item'; el.dataset.id = t.id;
+            const isDone = t.status === 'full-done';
+            el.innerHTML = `
+                <div class="todo-content ${isDone?'status-done':''}">
+                    <span class="todo-text">${t.description}</span>
+                    <div class="todo-meta">${t.deadline ? (new Date(t.deadline) < new Date() && !isDone ? '<span class="is-due">Overdue</span>' : t.deadline) : 'Note'}</div>
+                </div>
+                <select class="todo-status" style="background:transparent; border:none; color:var(--text-muted);">
+                    <option value="not-started" ${t.status==='not-started'?'selected':''}>TODO</option>
+                    <option value="half-done" ${t.status==='half-done'?'selected':''}>DOING</option>
+                    <option value="full-done" ${t.status==='full-done'?'selected':''}>DONE</option>
+                </select>
+                <div class="todo-actions"><button onclick="deleteTodo('${t.id}')">🗑</button></div>
+            `;
+            list.appendChild(el);
         });
     }
+    window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
 
+    // #region FIRESTORE LISTENERS
     function listenForPersonalEvents() {
-        if (!currentUserId) return; unsubscribePersonalEvents();
-        unsubscribePersonalEvents = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/events`)), (snapshot) => {
-            personalEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCalendar(); renderEventsForDay();
+        unsubscribePersonalEvents();
+        unsubscribePersonalEvents = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/events`)), (s) => {
+            personalEvents = s.docs.map(d => ({id:d.id, ...d.data()})); renderCalendar(); renderEventsForDay();
         });
     }
     function listenForPublicEvents() {
         unsubscribePublicEvents();
-        unsubscribePublicEvents = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/public_events`)), (snapshot) => {
-            publicEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCalendar(); renderEventsForDay();
+        unsubscribePublicEvents = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/public_events`)), (s) => {
+            publicEvents = s.docs.map(d => ({id:d.id, ...d.data()})); renderCalendar(); renderEventsForDay();
         });
     }
     function listenForTodos() {
-        if (!currentUserId) return; unsubscribeTodos();
-        unsubscribeTodos = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`)), (snapshot) => {
-            todoItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTodos();
+        unsubscribeTodos();
+        unsubscribeTodos = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`)), (s) => {
+            todoItems = s.docs.map(d => ({id:d.id, ...d.data()})); renderTodos();
         });
     }
-
-    async function handleAddEvent(e) {
-        e.preventDefault();
-        const eventDesc = eventDescInput.value.trim(); const eventTime = eventTimeInput.value; const selectedDateStr = eventDateInput.value;
-        if (!eventDesc || !eventTime || !selectedDateStr) return;
-        const isPublic = publicEventCheckbox.checked && currentUserRole === 'teacher';
-        try {
-            const collectionPath = isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
-            await addDoc(collection(db, collectionPath), { date: selectedDateStr, time: eventTime, description: eventDesc, isPublic, createdAt: serverTimestamp(), userId: currentUserId });
-            eventDescInput.value = ''; eventTimeInput.value = ''; publicEventCheckbox.checked = false;
-        } catch (error) { console.error(error); }
-    }
-    async function handleDeleteEvent(e) {
-        const eventEl = e.target.closest('.event-item');
-        if(!eventEl) return;
-        try {
-             const path = eventEl.dataset.isPublic === 'true' ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
-             await deleteDoc(doc(db, path, eventEl.dataset.id));
-        } catch (error) { console.error(error); }
-    }
-    async function handleAddTodo(e) {
-        e.preventDefault();
-        const description = todoInput.value.trim();
-        if (!description) return;
-        try {
-            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`), { description, status: 'not-started', deadline: todoDeadlineInput.value || null, createdAt: serverTimestamp(), userId: currentUserId });
-            todoInput.value = ''; todoDeadlineInput.value = '';
-        } catch (error) { console.error(error); }
-    }
-    function handleTodoStatusChange(e) {
-        if (!e.target.classList.contains('todo-status')) return;
-        const todoItem = e.target.closest('.todo-item');
-        handleUpdateTodoStatus(todoItem.dataset.id, e.target.value);
-    }
-    async function handleUpdateTodoStatus(docId, newStatus) {
-        try { await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId), { status: newStatus }); } catch (e) { console.error(e); }
-    }
-    function handleEditTodo(todoItem, descriptionSpan, todo) {
-        const contentDiv = todoItem.querySelector('.todo-content');
-        if (contentDiv.classList.contains('is-editing')) return;
-        contentDiv.classList.add('is-editing');
-        
-        const input = document.createElement('input'); input.type = 'text'; input.value = todo.description;
-        // Replace span with input
-        descriptionSpan.style.display = 'none';
-        contentDiv.insertBefore(input, contentDiv.firstChild); 
-        input.focus(); 
-        
-        const save = async () => {
-            const newDesc = input.value.trim();
-            if (newDesc && newDesc !== todo.description) {
-                try { await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todo.id), { description: newDesc }); } catch(e){}
-            }
-            // Cleanup
-            if(contentDiv.contains(input)) contentDiv.removeChild(input);
-            descriptionSpan.style.display = 'block';
-            contentDiv.classList.remove('is-editing');
-        };
-        input.addEventListener('blur', save);
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
-    }
-    async function handleDeleteTodo(docId) {
-         try { await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId)); } catch (e) { console.error(e); }
-    }
-    // #endregion
-
-    // #region XP SYSTEM
     function listenForProfileChanges() {
-        if (!currentUserId) return; unsubscribeProfile();
-        unsubscribeProfile = onSnapshot(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                xpBalance = data.xpBalance || 0;
+        unsubscribeProfile();
+        unsubscribeProfile = onSnapshot(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), (d) => {
+            if(d.exists()) {
+                xpBalance = d.data().xpBalance || 0;
                 document.getElementById('xpBalanceDisplay').textContent = `${parseFloat(xpBalance.toFixed(1))} XP`;
+                const level = Math.floor(xpBalance/1000)+1;
+                document.getElementById('xpProgressText').textContent = `Lvl ${level}`;
+                document.getElementById('xpProgressBar').style.width = `${((xpBalance%1000)/1000)*100}%`;
                 
-                // LEVEL CALCULATION
-                const xpPerLevel = 1000;
-                const currentLevel = Math.floor(xpBalance / xpPerLevel) + 1;
-                const currentLevelStartXp = (currentLevel - 1) * xpPerLevel;
-                const xpInCurrentLevel = xpBalance - currentLevelStartXp;
-                let progressPercent = (xpInCurrentLevel / xpPerLevel) * 100;
-                if (progressPercent > 100) progressPercent = 100;
-
-                document.getElementById('xpProgressBar').style.width = `${progressPercent}%`;
-                document.getElementById('xpProgressText').textContent = `LVL ${currentLevel}`;
-                
-                updateRedeemButtons();
-            } else {
-                xpBalance = 0; document.getElementById('xpBalanceDisplay').textContent = '0 XP';
+                document.getElementById('redeemHalfDayBtn').disabled = xpBalance < 150;
+                document.getElementById('redeemHalfDayBtn').style.opacity = xpBalance < 150 ? 0.5 : 1;
+                document.getElementById('redeemFullDayBtn').disabled = xpBalance < 300;
+                document.getElementById('redeemFullDayBtn').style.opacity = xpBalance < 300 ? 0.5 : 1;
             }
         });
     }
     function listenForStudyHistory() {
-        if (!currentUserId) return; unsubscribeStudyHistory();
-        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(50)), (snapshot) => {
-            studyHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => b.date.localeCompare(a.date));
-            renderStudyHistory();
+        unsubscribeStudyHistory();
+        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(50)), (s) => {
+            studyHistory = s.docs.map(d => ({id:d.id, ...d.data()}));
         });
-    }
-    function renderStudyHistory() {
-        // We aren't showing the list in the Bento UI by default to keep it clean, but logic exists
-    }
-    function updateRedeemButtons() {
-        document.getElementById('redeemHalfDayBtn').disabled = xpBalance < 150;
-        // We reuse the button style to indicate status
-        if(xpBalance >= 150) document.getElementById('redeemHalfDayBtn').style.opacity = '1';
-        else document.getElementById('redeemHalfDayBtn').style.opacity = '0.5';
-    }
-    async function handleLogStudy() {
-        // Logic handled by modal inputs now
-        const date = document.getElementById('study-date').value;
-        const hours = parseFloat((parseInt(document.getElementById('study-hours-input').value||0) + (parseInt(document.getElementById('study-minutes-input').value||0)/60)).toFixed(2));
-        
-        if (!date || hours <= 0) return;
-        
-        // Simple duplicate check
-        const todayLogs = studyHistory.filter(l => l.date === date && l.hours > 0);
-        if (todayLogs.length > 0) { showModal('Ops', 'Already logged today.'); return; }
-        
-        try {
-            const points = parseFloat((hours * 10).toFixed(1));
-            // Bonus logic same as before...
-            const bonus = await checkConsecutiveBonus({ date, hours }, studyHistory);
-            const total = points + bonus;
-            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(total) });
-            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date, hours, pointsEarned: total, createdAt: serverTimestamp(), userId: currentUserId });
-            showModal('Nice!', `+${total} XP logged.`);
-        } catch (e) { showModal('Error', e.message); }
-    }
-    async function checkConsecutiveBonus(newLog, history) {
-        if (newLog.hours < 3) return 0;
-        const logs = [...history, newLog].filter(l => l.hours >= 3).sort((a,b) => b.date.localeCompare(a.date));
-        const idx = logs.findIndex(l => l.date === newLog.date);
-        let streak = 1; let lastDate = new Date(logs[idx].date);
-        for (let i = idx + 1; i < logs.length; i++) {
-            const curr = new Date(logs[i].date); const diff = Math.round((lastDate - curr)/(86400000));
-            if (diff === 1) { streak++; lastDate = curr; } else if (diff > 1) break;
-            if (streak === 5) return 50;
-        }
-        return 0;
-    }
-    async function handleRedeemPoints(e) {
-        const cost = 150;
-        if (xpBalance < cost) { showModal('Too poor', 'Need 150 XP'); return; }
-        showModal('Redeem?', 'Spend 150 XP for Half Day Off?', [{ text: 'Cancel', className: 'btn-ghost' }, { text: 'Redeem', className: 'btn-primary', onClick: async () => {
-             try {
-                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(-cost) });
-                await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date: toLocalISODate(new Date()), hours: 0, pointsEarned: -cost, description: `Redeemed Reward`, createdAt: serverTimestamp(), userId: currentUserId });
-             } catch (e) { console.error(e); }
-        }}]);
     }
     // #endregion
 
-    // #region CHART ANALYTICS
-    function openAnalyticsModal() {
-        document.getElementById('analyticsModal').style.display = 'flex';
-        renderAnalyticsChart();
+    // #region HANDLERS
+    async function handleAddEvent(e) {
+        e.preventDefault();
+        const desc = document.getElementById('event-desc').value.trim();
+        const time = document.getElementById('event-time').value;
+        const date = document.getElementById('event-date').value;
+        const isPub = document.getElementById('public-event-checkbox').checked && currentUserRole === 'teacher';
+        if(desc && time && date) {
+            await addDoc(collection(db, isPub ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
+                description: desc, time, date, isPublic: isPub, createdAt: serverTimestamp()
+            });
+            document.getElementById('event-desc').value = '';
+        }
+    }
+    async function handleAddTodo(e) {
+        e.preventDefault();
+        const desc = document.getElementById('todo-input').value.trim();
+        const dl = document.getElementById('todo-deadline').value;
+        if(desc) {
+            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`), {
+                description: desc, deadline: dl, status: 'not-started', createdAt: serverTimestamp()
+            });
+            document.getElementById('todo-input').value = '';
+        }
+    }
+    async function handleUpdateTodoStatus(id, status) {
+        await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id), { status });
     }
     
+    // XP Logic
+    async function handleLogStudy() {
+        const hrs = parseInt(document.getElementById('log-hours').value) || 0;
+        const mins = parseInt(document.getElementById('log-minutes').value) || 0;
+        const date = document.getElementById('study-date-hidden').value;
+        
+        const totalHours = hrs + (mins / 60);
+        if(totalHours <= 0) { alert("Please enter a valid time."); return; }
+        
+        // Check duplicate
+        const exists = studyHistory.find(l => l.date === date && l.hours > 0);
+        if(exists) { alert("Already logged study for today!"); return; }
+        
+        const points = parseFloat((totalHours * 10).toFixed(1));
+        // Bonus logic
+        let bonus = 0;
+        if(totalHours >= 3) {
+             const streak = calculateStreak(date);
+             if(streak === 4) bonus = 50; // 5th day
+        }
+        
+        const total = points + bonus;
+        
+        try {
+            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(total) });
+            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date, hours: totalHours, pointsEarned: total, createdAt: serverTimestamp() });
+            document.getElementById('logStudyModal').style.display = 'none';
+            document.getElementById('log-hours').value = 0; document.getElementById('log-minutes').value = 0;
+            alert(`Logged! Earned ${total} XP.`);
+        } catch(e) { console.error(e); }
+    }
+    
+    function calculateStreak(todayDateStr) {
+        // Simple streak calc based on history
+        let streak = 0;
+        const target = new Date(todayDateStr);
+        for(let i=1; i<=10; i++) {
+            const d = new Date(target); d.setDate(d.getDate() - i);
+            const ds = toLocalISODate(d);
+            const found = studyHistory.find(l => l.date === ds && l.hours >= 3);
+            if(found) streak++; else break;
+        }
+        return streak;
+    }
+
+    async function handleRedeem(cost, itemName) {
+        if(confirm(`Redeem ${itemName} for ${cost} XP?`)) {
+            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(-cost) });
+             await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date: toLocalISODate(new Date()), hours: 0, pointsEarned: -cost, description: `Redeemed ${itemName}`, createdAt: serverTimestamp() });
+        }
+    }
+
+    // Chart
     function renderAnalyticsChart() {
         const ctx = document.getElementById('studyChart').getContext('2d');
-        if (studyChart) studyChart.destroy();
+        if(studyChart) studyChart.destroy();
         
-        const labels = [], dataPoints = [];
-        const today = new Date();
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today); d.setDate(today.getDate() - i);
-            const dateStr = toLocalISODate(d);
-            labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-            const logsForDay = studyHistory.filter(l => l.date === dateStr && l.hours > 0);
-            dataPoints.push(logsForDay.reduce((sum, log) => sum + log.hours, 0));
+        const labels = [], data = [];
+        for(let i=6; i>=0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            const ds = toLocalISODate(d);
+            labels.push(d.toLocaleDateString('en-US', {weekday:'short'}));
+            const entry = studyHistory.find(l => l.date === ds && l.hours > 0);
+            data.push(entry ? entry.hours : 0);
         }
         
         const isDark = !document.body.classList.contains('light-theme');
-        const color = isDark ? '#fff' : '#000';
-        
         studyChart = new Chart(ctx, {
-            type: 'bar', // Changed to BAR for better bento look
+            type: 'bar',
             data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Hours',
-                    data: dataPoints,
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
-                    borderRadius: 4
-                }]
+                labels, 
+                datasets: [{ label: 'Study Hours', data, backgroundColor: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)', borderRadius: 4 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, grid: { display:false }, ticks: { color: color } },
-                    x: { grid: { display: false }, ticks: { color: color } }
+                    y: { beginAtZero: true, grid: { display: false }, ticks: { color: isDark?'#fff':'#000' } },
+                    x: { grid: { display: false }, ticks: { color: isDark?'#fff':'#000' } }
                 },
                 plugins: { legend: { display: false } }
             }
         });
     }
-    // #endregion
 
-    // #region STUDY TOOLS (Stopwatch & Timer)
+    // Stopwatch/Timer Logic
     function startStopwatch() {
-        if (stopwatchRunning) return; stopwatchRunning = true; stopwatchStartTime = Date.now() - stopwatchElapsedTime;
+        if(stopwatchRunning) return; stopwatchRunning = true;
+        stopwatchStartTime = Date.now() - stopwatchElapsedTime;
         stopwatchInterval = setInterval(() => {
             const elapsed = Date.now() - stopwatchStartTime;
-            let ms = elapsed % 1000, s = Math.floor((elapsed / 1000) % 60), m = Math.floor((elapsed / 60000) % 60), h = Math.floor(elapsed / 3600000);
-            document.getElementById('stopwatchDisplay').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            let h = Math.floor(elapsed/3600000), m = Math.floor((elapsed%3600000)/60000), s = Math.floor((elapsed%60000)/1000);
+            document.getElementById('stopwatchDisplay').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
         }, 100);
-        document.getElementById('startStopwatchBtn').style.display = 'none'; document.getElementById('stopStopwatchBtn').style.display = 'inline-block';
+        document.getElementById('startStopwatchBtn').style.display='none'; document.getElementById('stopStopwatchBtn').style.display='inline-block';
     }
     function stopStopwatch() {
-        if (!stopwatchRunning) return; stopwatchRunning = false; clearInterval(stopwatchInterval); stopwatchElapsedTime = Date.now() - stopwatchStartTime;
-        document.getElementById('startStopwatchBtn').style.display = 'inline-block'; document.getElementById('stopStopwatchBtn').style.display = 'none';
+        if(!stopwatchRunning) return; stopwatchRunning = false; clearInterval(stopwatchInterval);
+        stopwatchElapsedTime = Date.now() - stopwatchStartTime;
+        document.getElementById('startStopwatchBtn').style.display='inline-block'; document.getElementById('stopStopwatchBtn').style.display='none';
     }
-    function resetStopwatch() { stopStopwatch(); stopwatchElapsedTime = 0; document.getElementById('stopwatchDisplay').textContent = '00:00:00'; }
+    function resetStopwatch() { stopStopwatch(); stopwatchElapsedTime=0; document.getElementById('stopwatchDisplay').textContent='00:00:00'; }
     
     function startTimer() {
-        if (timerRunning) return;
-        if (!timerAudioContext) try { timerAudioContext = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-        const h = parseInt(document.getElementById('timerHours').value)||0, m = parseInt(document.getElementById('timerMinutes').value)||0, s = parseInt(document.getElementById('timerSeconds').value)||0;
-        timerTotalTime = (h * 3600) + (m * 60) + s;
-        if (timerTotalTime <= 0) return;
-        timerTimeRemaining = timerTimeRemaining > 0 ? timerTimeRemaining : timerTotalTime;
-        timerRunning = true; 
+        if(timerRunning) return;
+        if(!timerAudioContext) timerAudioContext = new (window.AudioContext||window.webkitAudioContext)();
+        
+        if(timerTimeRemaining === 0) {
+            const h = parseInt(document.getElementById('timerHours').value)||0;
+            const m = parseInt(document.getElementById('timerMinutes').value)||0;
+            const s = parseInt(document.getElementById('timerSeconds').value)||0;
+            timerTotalTime = (h*3600)+(m*60)+s;
+            if(timerTotalTime<=0) return;
+            timerTimeRemaining = timerTotalTime;
+        }
+        timerRunning = true;
         timerInterval = setInterval(() => {
-            if (timerTimeRemaining <= 0) { stopTimer(); playTimerBeep(); timerTimeRemaining = 0; return; }
+            if(timerTimeRemaining<=0) { stopTimer(); playBeep(); timerTimeRemaining=0; return; }
             timerTimeRemaining--;
-            let r = timerTimeRemaining, th = Math.floor(r / 3600); r %= 3600; let tm = Math.floor(r / 60), ts = r % 60;
-            document.getElementById('timerDisplay').textContent = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}:${String(ts).padStart(2,'0')}`;
+            let r=timerTimeRemaining, h=Math.floor(r/3600); r%=3600; let m=Math.floor(r/60), s=r%60;
+            document.getElementById('timerDisplay').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
         }, 1000);
-        document.getElementById('startTimerBtn').style.display = 'none'; document.getElementById('stopTimerBtn').style.display = 'inline-block';
+        document.getElementById('startTimerBtn').style.display='none'; document.getElementById('stopTimerBtn').style.display='inline-block';
     }
-    function stopTimer() { if (!timerRunning) return; timerRunning = false; clearInterval(timerInterval); document.getElementById('startTimerBtn').style.display = 'inline-block'; document.getElementById('stopTimerBtn').style.display = 'none'; }
-    function resetTimer() { stopTimer(); timerTimeRemaining = 0; document.getElementById('timerDisplay').textContent = '00:00:00'; }
-    function playTimerBeep() {
-        if (!timerAudioContext) return;
-        timerBeepNode = timerAudioContext.createOscillator(); const g = timerAudioContext.createGain();
-        timerBeepNode.connect(g); g.connect(timerAudioContext.destination);
-        timerBeepNode.type = 'sine'; timerBeepNode.frequency.setValueAtTime(880, timerAudioContext.currentTime);
-        g.gain.setValueAtTime(0.5, timerAudioContext.currentTime);
-        timerBeepNode.start(timerAudioContext.currentTime); timerBeepNode.stop(timerAudioContext.currentTime + 0.5);
+    function stopTimer() { if(!timerRunning) return; timerRunning=false; clearInterval(timerInterval); document.getElementById('startTimerBtn').style.display='inline-block'; document.getElementById('stopTimerBtn').style.display='none'; }
+    function resetTimer() { stopTimer(); timerTimeRemaining=0; document.getElementById('timerDisplay').textContent='00:00:00'; }
+    function playBeep() {
+        if(!timerAudioContext) return;
+        const o = timerAudioContext.createOscillator(); const g = timerAudioContext.createGain();
+        o.connect(g); g.connect(timerAudioContext.destination);
+        o.frequency.value = 880; o.start(); setTimeout(() => o.stop(), 500);
     }
-    // #endregion
-
-    // #region UTILS
-    function toLocalISODate(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
-    function isSameDay(d1, d2) { return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
     
-    function showModal(title, msg, buttons = []) {
-        const m = document.getElementById('messageModal'); document.getElementById('modalTitle').textContent = title; document.getElementById('modalMessage').innerHTML = msg;
-        const bDiv = document.getElementById('modalButtons'); bDiv.innerHTML = '';
-        if (buttons.length === 0) buttons = [{ text: 'OK', className: 'btn-primary' }];
-        buttons.forEach(b => {
-            const btn = document.createElement('button'); btn.textContent = b.text; btn.className = b.className;
-            btn.onclick = () => { m.style.display = 'none'; if(b.onClick) b.onClick(); }; bDiv.appendChild(btn);
-        });
-        m.style.display = 'flex';
+    function pad(n) { return n.toString().padStart(2,'0'); }
+    function toLocalISODate(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+    function isSameDay(d1, d2) { return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
+
+    // Profile Edit
+    function openProfileModal() {
+        document.getElementById('editUserName').value = currentUserName;
+        document.getElementById('editUserEmail').value = currentUserEmail;
+        document.getElementById('editUserRole').value = currentUserRole;
+        document.getElementById('profileEditModal').style.display = 'flex';
+        
+        document.getElementById('saveProfileButton').onclick = async () => {
+            const name = document.getElementById('editUserName').value.trim();
+            if(name) {
+                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { name });
+                currentUserName = name; document.getElementById('userDisplayName').textContent = name;
+                document.getElementById('homeUserNamePlaceholder').textContent = name;
+                document.getElementById('profileEditModal').style.display = 'none';
+            }
+        };
     }
-    function showInputModal(title, label, cb) {
-        showModal(title, `<label style="color:var(--text-muted); margin-bottom:10px; display:block;">${label}</label><input id="mInput" style="background:var(--bg-input); border:1px solid var(--border-color); width:100%; padding:10px; color:#fff;">`, [
-            { text: 'Confirm', className: 'btn-primary', onClick: () => { const v = document.getElementById('mInput').value.trim(); if(v) cb(v); } },
-            { text: 'Cancel', className: 'btn-ghost' }
-        ]);
-        setTimeout(() => document.getElementById('mInput').focus(), 50);
-    }
-    document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => btn.closest('.modal').style.display = 'none');
     // #endregion
   </script>
 </body>
