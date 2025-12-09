@@ -196,13 +196,14 @@
     
     .nav-clock {
         font-family: var(--font-mono);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: var(--text-main);
         background: rgba(125, 125, 125, 0.1);
-        padding: 4px 8px;
+        padding: 4px 12px;
         border-radius: 4px;
         border: 1px solid var(--border-color);
         margin-right: 10px;
+        white-space: nowrap;
     }
 
     /* Mobile Menu Toggle */
@@ -419,7 +420,7 @@
         
         <!-- 1. Hero Section -->
         <div class="card area-hero hero-card">
-            <h2 class="hero-greeting">Welcome back, <br><span id="homeUserNamePlaceholder" style="color: var(--text-main);">Student</span>.</h2>
+            <h2 id="dynamicGreeting" class="hero-greeting">Welcome back, <br><span id="homeUserNamePlaceholder" style="color: var(--text-main);">Student</span>.</h2>
             <p class="hero-sub">Ready to crush the DSE? "You don't have to see the whole staircase, just take the first step."</p>
             <div class="hero-actions">
                 <button id="viewAnalyticsBtn" class="btn-primary" style="background: rgba(125,125,125,0.2); border: 1px solid var(--border-color);">View Analytics 📈</button>
@@ -532,7 +533,7 @@
         <div class="card area-todo">
              <div class="section-header">
                 <span class="section-title">Tasks</span>
-                <span class="btn-ghost" style="font-size: 0.7rem;">Sort: Auto</span>
+                <span class="btn-ghost" style="font-size: 0.7rem;">Sort: Deadline</span>
             </div>
             
             <div id="todo-list" class="todo-list">
@@ -577,7 +578,10 @@
                   <input type="number" id="log-minutes" placeholder="0" min="0" max="59" value="0">
               </div>
           </div>
-          <input type="date" id="study-date-hidden" style="display:none;">
+          <div style="margin-bottom: 20px;">
+             <label style="font-size:0.8rem; color:var(--text-muted)">Date</label>
+             <input type="date" id="study-date-visible">
+          </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
               <button class="btn-ghost study-close-button">Cancel</button>
               <button id="confirmLogStudyBtn" class="btn-primary">Log Time</button>
@@ -588,7 +592,14 @@
   <div id="analyticsModal" class="modal">
       <div class="modal-content" style="max-width: 800px;">
           <span class="close-button analytics-close-button" style="float: right; cursor: pointer;">&times;</span>
-          <h3>Study Analytics</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+              <h3>Study Analytics</h3>
+              <div style="display:flex; gap:10px;">
+                  <button id="analyticsPrevWeek" class="btn-ghost" style="padding:4px 10px;">&lt;</button>
+                  <span id="analyticsDateRange" style="font-size:0.9rem; color:var(--text-muted); align-self:center;">Last 7 Days</span>
+                  <button id="analyticsNextWeek" class="btn-ghost" style="padding:4px 10px;">&gt;</button>
+              </div>
+          </div>
           <div class="chart-container"><canvas id="studyChart"></canvas></div>
       </div>
   </div>
@@ -650,7 +661,9 @@
     let stopwatchInterval = null, stopwatchStartTime = 0, stopwatchElapsedTime = 0, stopwatchRunning = false;
     let timerInterval = null, timerTotalTime = 0, timerTimeRemaining = 0, timerRunning = false, timerAudioContext = null;
     
+    // Analytics State
     let studyChart = null;
+    let analyticsWeekOffset = 0; // 0 = current, 1 = future, -1 = past
 
     // #region INITIALIZATION
     try {
@@ -747,6 +760,8 @@
         document.getElementById('userDisplayName').textContent = currentUserName;
         document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
         
+        updateGreeting();
+
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'block';
             document.getElementById('public-event-container').style.display = 'block';
@@ -771,6 +786,29 @@
     document.getElementById('logoutButtonMobile').addEventListener('click', () => signOut(auth));
 
     // #region TIME & CLOCK
+    function updateGreeting() {
+        const h = new Date().getHours();
+        let greeting = "Welcome back,";
+        let quote = "Ready to crush the DSE?";
+        
+        if (h >= 5 && h < 12) {
+             greeting = "Ready to start your day?";
+        } else if (h >= 12 && h < 18) {
+             greeting = "Keep crushing it!";
+             quote = "Don't stop when you're tired. Stop when you're done.";
+        } else if (h >= 18 && h < 24) {
+             greeting = "How's ur progress, almost finish? Sleep!";
+             quote = "Rest is part of the process.";
+        } else {
+             greeting = "Go to sleep!";
+             quote = "Seriously, your brain needs rest.";
+        }
+        
+        const nameSpan = `<br><span id="homeUserNamePlaceholder" style="color: var(--text-main);">${currentUserName || 'Student'}</span>.`;
+        document.getElementById('dynamicGreeting').innerHTML = greeting + nameSpan;
+        document.querySelector('.hero-sub').textContent = quote;
+    }
+
     function startClocks() {
         const currentTimeEl = document.getElementById('currentTime');
         const currentDateEl = document.getElementById('currentDate');
@@ -780,8 +818,11 @@
             const now = new Date();
             // HH:MM for main card
             currentTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-            // HH:MM:SS for Nav
-            navClockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            // Date + Time for Nav
+            // Format: Mon, Dec 9 • 22:16:45
+            const navDate = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const navTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            navClockEl.textContent = `${navDate} • ${navTime}`;
             
             currentDateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }, 1000);
@@ -877,7 +918,7 @@
         // XP / Study
         document.getElementById('openLogStudyBtn').addEventListener('click', () => {
             document.getElementById('logStudyModal').style.display = 'flex';
-            document.getElementById('study-date-hidden').value = toLocalISODate(new Date());
+            document.getElementById('study-date-visible').value = toLocalISODate(new Date());
         });
         document.querySelectorAll('.study-close-button').forEach(b => b.onclick = () => document.getElementById('logStudyModal').style.display = 'none');
         document.getElementById('confirmLogStudyBtn').addEventListener('click', handleLogStudy);
@@ -885,11 +926,15 @@
         document.getElementById('redeemHalfDayBtn').addEventListener('click', () => handleRedeem(150, "Half Day Off"));
         document.getElementById('redeemFullDayBtn').addEventListener('click', () => handleRedeem(300, "Full Day Off"));
         
+        // Analytics
         document.getElementById('viewAnalyticsBtn').addEventListener('click', () => {
             document.getElementById('analyticsModal').style.display = 'flex';
+            analyticsWeekOffset = 0;
             renderAnalyticsChart();
         });
         document.querySelector('.analytics-close-button').addEventListener('click', () => document.getElementById('analyticsModal').style.display = 'none');
+        document.getElementById('analyticsPrevWeek').addEventListener('click', () => { analyticsWeekOffset++; renderAnalyticsChart(); });
+        document.getElementById('analyticsNextWeek').addEventListener('click', () => { analyticsWeekOffset--; renderAnalyticsChart(); });
         
         // Profile Modal Listeners
         document.getElementById('userDisplayName').addEventListener('click', openProfileModal);
@@ -963,7 +1008,27 @@
     function renderTodos() {
         const list = document.getElementById('todo-list');
         list.innerHTML = '';
-        const sorted = [...todoItems].sort((a,b) => (a.status === 'full-done' ? 1 : 0) - (b.status === 'full-done' ? 1 : 0));
+        
+        // Sorting Logic: 
+        // 1. Split into "Active" (Not Started/Doing) and "Done"
+        // 2. Sort "Active" by deadline (closest first). Null deadlines go last.
+        // 3. Sort "Done" by deadline.
+        // 4. Combine.
+        
+        const activeTasks = todoItems.filter(t => t.status !== 'full-done');
+        const doneTasks = todoItems.filter(t => t.status === 'full-done');
+        
+        const sortByDeadline = (a, b) => {
+            if (!a.deadline && !b.deadline) return 0;
+            if (!a.deadline) return 1; // a last
+            if (!b.deadline) return -1; // b last
+            return new Date(a.deadline) - new Date(b.deadline);
+        };
+        
+        activeTasks.sort(sortByDeadline);
+        doneTasks.sort(sortByDeadline);
+        
+        const sorted = [...activeTasks, ...doneTasks];
         
         if(!sorted.length) list.innerHTML = `<p style="color:var(--text-muted); text-align:center;">No tasks.</p>`;
         
@@ -973,7 +1038,7 @@
             el.innerHTML = `
                 <div class="todo-content ${isDone?'status-done':''}">
                     <span class="todo-text">${t.description}</span>
-                    <div class="todo-meta">${t.deadline ? (new Date(t.deadline) < new Date() && !isDone ? '<span class="is-due">Overdue</span>' : t.deadline) : 'Note'}</div>
+                    <div class="todo-meta">${t.deadline ? (new Date(t.deadline) < new Date() && !isDone ? '<span class="is-due">Overdue</span>' : t.deadline) : 'No Deadline'}</div>
                 </div>
                 <select class="todo-status" style="background:transparent; border:none; color:var(--text-muted);">
                     <option value="not-started" ${t.status==='not-started'?'selected':''}>TODO</option>
@@ -1025,8 +1090,10 @@
     }
     function listenForStudyHistory() {
         unsubscribeStudyHistory();
-        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(50)), (s) => {
+        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(100)), (s) => {
             studyHistory = s.docs.map(d => ({id:d.id, ...d.data()}));
+            // If chart is open, refresh it
+            if(document.getElementById('analyticsModal').style.display === 'flex') renderAnalyticsChart();
         });
     }
     // #endregion
@@ -1064,14 +1131,16 @@
     async function handleLogStudy() {
         const hrs = parseInt(document.getElementById('log-hours').value) || 0;
         const mins = parseInt(document.getElementById('log-minutes').value) || 0;
-        const date = document.getElementById('study-date-hidden').value;
+        const date = document.getElementById('study-date-visible').value;
+        
+        if(!date) { alert("Please pick a date."); return; }
         
         const totalHours = hrs + (mins / 60);
         if(totalHours <= 0) { alert("Please enter a valid time."); return; }
         
         // Check duplicate
         const exists = studyHistory.find(l => l.date === date && l.hours > 0);
-        if(exists) { alert("Already logged study for today!"); return; }
+        if(exists) { alert("Already logged study for that date!"); return; }
         
         const points = parseFloat((totalHours * 10).toFixed(1));
         // Bonus logic
@@ -1117,14 +1186,29 @@
         const ctx = document.getElementById('studyChart').getContext('2d');
         if(studyChart) studyChart.destroy();
         
+        // Calculate week range based on offset
+        // offset 0 = end date is Today
+        // offset 1 = end date is 7 days ago
+        // Wait, offset should be weeks AGO. 
+        // offset 0: last 7 days (today inclusive)
+        // offset 1: previous 7 days
+        
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() - (analyticsWeekOffset * 7));
+        
         const labels = [], data = [];
         for(let i=6; i>=0; i--) {
-            const d = new Date(); d.setDate(d.getDate() - i);
+            const d = new Date(endDate); 
+            d.setDate(d.getDate() - i);
             const ds = toLocalISODate(d);
-            labels.push(d.toLocaleDateString('en-US', {weekday:'short'}));
+            labels.push(d.toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'}));
             const entry = studyHistory.find(l => l.date === ds && l.hours > 0);
             data.push(entry ? entry.hours : 0);
         }
+        
+        const startStr = labels[0];
+        const endStr = labels[6];
+        document.getElementById('analyticsDateRange').textContent = `${startStr} - ${endStr}`;
         
         const isDark = !document.body.classList.contains('light-theme');
         studyChart = new Chart(ctx, {
@@ -1209,6 +1293,7 @@
                 await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { name });
                 currentUserName = name; document.getElementById('userDisplayName').textContent = name;
                 document.getElementById('homeUserNamePlaceholder').textContent = name;
+                updateGreeting();
                 document.getElementById('profileEditModal').style.display = 'none';
             }
         };
