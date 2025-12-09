@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Marker - Home</title>
   <style>
-    /* --- MODERN BLACK & WHITE THEME --- */
+    /* #region CORE THEME & VARIABLES */
     :root {
         --bg-primary: #0a0a0a; /* Near black for main background */
         --bg-secondary: #1a1a1a; /* Dark gray for secondary elements */
@@ -29,7 +29,6 @@
         --finder-active-text: #0a0a0a;
     }
 
-    /* --- LIGHT THEME OVERRIDES --- */
     body.light-theme {
         --bg-primary: #ffffff;
         --bg-secondary: #f5f5f5;
@@ -40,7 +39,6 @@
         --border-color: #d4d4d4;
         --focus-ring-color: rgba(10, 10, 10, 0.5);
 
-        /* Finder Window Light Theme */
         --finder-bg-primary: #ffffff;
         --finder-bg-secondary: #f5f5f5;
         --finder-text-primary: #0a0a0a;
@@ -52,11 +50,7 @@
         --finder-active-text: #ffffff;
     }
 
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -69,11 +63,10 @@
         min-height: 100vh;
         transition: background-color 0.3s, color 0.3s;
     }
+    /* #endregion */
 
-    button,
-    input,
-    textarea,
-    select {
+    /* #region UI ELEMENTS (Buttons, Inputs, Modals) */
+    button, input, textarea, select {
         transition: all .2s ease-in-out;
         font-family: inherit;
         color: var(--text-primary);
@@ -84,9 +77,7 @@
     }
     
     select {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
+        -webkit-appearance: none; -moz-appearance: none; appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a3a3a3' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 10px center;
@@ -99,451 +90,19 @@
     }
 
     input:focus, select:focus, textarea:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px var(--focus-ring-color);
+        outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color);
     }
     
-    input[type="date"], input[type="time"] {
-        color-scheme: var(--bg-primary) == #0a0a0a ? dark : light;
-    }
-    
-    body.light-theme input[type="date"], body.light-theme input[type="time"] {
-        color-scheme: light;
-    }
-
-    button:disabled {
-        opacity: .5;
-        cursor: not-allowed;
-    }
-
-    /* Keyframe animations */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes slideInUp {
-        from {
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-    
-    /* --- STARTUP ANIMATION --- */
-    #startupAnimation {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: var(--bg-primary);
-        z-index: 2000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        pointer-events: none;
-        opacity: 0; /* Starts hidden */
-    }
-    
-    #animatedLogo {
-        font-size: 10vw; /* Starts large */
-        font-weight: 700;
-        color: var(--text-primary);
-        transform: translate(0, 0) scale(1);
-        opacity: 0;
-    }
-    
-    #startupAnimation.run-animation {
-        opacity: 1;
-    }
-
-    #startupAnimation.run-animation #animatedLogo {
-        /*
-          Animation: 
-          1. Fade in and stay (0% to 20%)
-          2. Hold (20% to 50%)
-          3. Transform and fade (50% to 100%)
-        */
-        animation: shrinkToCorner 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-    }
-    
-    #startupAnimation.fade-out {
-        opacity: 0;
-        transition: opacity 0.5s ease-out;
-    }
-    
-    /* Make the real logo start as invisible */
-    header .logo-container h1 {
-        opacity: 0;
-    }
-
-    @keyframes shrinkToCorner {
-        0% {
-            transform: translate(0, 0) scale(1);
-            font-size: 10vw;
-            opacity: 0;
-        }
-        20% {
-            transform: translate(0, 0) scale(1);
-            font-size: 10vw;
-            opacity: 1;
-        }
-        50% {
-            transform: translate(0, 0) scale(1);
-            font-size: 10vw;
-            opacity: 1;
-        }
-        100% {
-            /* These transform values are approximations to get to the top left corner.
-              They might need fine-tuning based on your exact header layout.
-            */
-            transform: translate(calc(-50vw + 90px), calc(-50vh + 34px));
-            font-size: 1.25rem; /* Matches .logo-container h1 */
-            opacity: 1;
-        }
-    }
-
-    
-    /* --- LOGIN PAGE --- */
-    #authWrapper {
-        display: flex;
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        opacity: 0; /* Starts hidden, fades in with JS */
-        transition: opacity 0.5s ease-in-out;
-        z-index: 1001;
-    }
-
-    .login-left-panel,
-    .login-right-panel {
-        width: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 2rem;
-    }
-
-    .login-left-panel {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .login-left-panel h1 {
-        font-size: 3.5rem;
-        font-weight: 700;
-        letter-spacing: -1px;
-        margin-bottom: 1rem;
-    }
-
-    .login-left-panel p {
-        font-size: 1.25rem;
-        font-weight: 400;
-        line-height: 1.5;
-        margin-bottom: .5rem;
-        color: var(--text-secondary);
-    }
-
-    .login-right-panel {
-        background: var(--bg-secondary);
-        flex-direction: column;
-    }
-    
-    #authContainer {
-        width: 100%;
-        max-width: 380px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        background-color: var(--bg-primary);
-        padding: 2.5rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-    }
-
-    #authContainer h2 {
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-
-    .google-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: .75rem;
-        cursor: pointer;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        font-size: 1rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-    .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
-    .google-btn img { height: 20px; }
-    
-    #accessCodeInput {
-         background-color: var(--bg-secondary);
-         border: 1px solid var(--border-color);
-         color: var(--text-primary);
-         padding: 12px;
-         border-radius: 8px;
-         width: 100%;
-         margin-bottom: 1rem;
-         text-align: center;
-         font-size: 1rem;
-    }
-    #accessCodeInput:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px var(--focus-ring-color);
-    }
+    input[type="date"], input[type="time"] { color-scheme: dark; }
+    body.light-theme input[type="date"], body.light-theme input[type="time"] { color-scheme: light; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
 
     .btn-primary {
-         background-color: var(--accent-primary);
-         color: var(--bg-primary);
-         padding: .75rem 1.5rem;
-         border-radius: 8px;
-         border: none;
-         cursor: pointer;
-         font-weight: 600;
-         font-size: 1rem;
+         background-color: var(--accent-primary); color: var(--bg-primary); padding: .75rem 1.5rem;
+         border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 1rem;
     }
-    
-    body.light-theme .btn-primary {
-        color: var(--bg-primary);
-    }
-
-    .btn-primary:hover {
-         opacity: 0.85;
-         transform: translateY(-1px);
-    }
-    
-    #appSection {
-        display: none; /* Hidden until authenticated */
-        flex-direction: column;
-        height: 100vh;
-        background-color: var(--bg-primary);
-        animation: fadeIn .6s ease-out both;
-    }
-        
-    /* --- HEADER --- */
-    header {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        height: 64px;
-        border-bottom: 1px solid var(--border-color);
-        flex-shrink: 0;
-    }
-
-    .logo-container {
-        display: flex;
-        flex-direction: column;
-        line-height: 1.2;
-    }
-    .logo-container h1 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        transition: opacity 0.5s ease-out; /* For fade-in after animation */
-    }
-    .logo-container p {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-
-    /* Navigation */
-    .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .header-actions .tab,
-    .header-actions .dropdown-menu > button {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        color: var(--text-secondary);
-        background: transparent;
-        border: none;
-        transition: background 0.2s, color 0.2s;
-    }
-
-    .header-actions .tab:hover,
-    .header-actions .dropdown-menu > button:hover {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-    }
-
-    .header-actions .tab.active,
-    .header-actions .dropdown-menu > button.active {
-        background: var(--bg-secondary);
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-
-    /* Dropdown Menu */
-    .dropdown-menu {
-        position: relative;
-    }
-
-    .dropdown-menu-content {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background-color: var(--bg-secondary);
-        min-width: 180px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-        border-radius: 8px;
-        overflow: hidden;
-        z-index: 20;
-    }
-
-    .dropdown-menu-content a, .dropdown-menu-content button {
-        display: block;
-        padding: 10px 14px;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: background 0.2s, color 0.2s;
-        background: none;
-        border: none;
-        width: 100%;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    .dropdown-menu-content a:hover, .dropdown-menu-content button:hover {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-    .dropdown-menu-content a.active {
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-
-
-    /* Show menu on hover */
-    .dropdown-menu:hover .dropdown-menu-content {
-        display: block;
-    }
-
-    .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
-    #userDisplayName { font-weight: 500; cursor: pointer; }
-    .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
-    .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
-
-    #switchRoleButton {
-        background-color: var(--bg-secondary);
-        color: var(--text-primary);
-        padding: 6px 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        cursor: pointer;
-        font-weight: 600;
-    }
-    #switchRoleButton:hover {
-        background-color: var(--bg-tertiary);
-        border-color: var(--text-secondary);
-    }
-    
-    /* --- MAIN CONTENT (HOME SPECIFIC) --- */
-    main {
-        flex: 1;
-        display: flex;
-        flex-direction: column; /* Changed to column for hero section */
-        overflow-y: auto;
-        padding: 32px;
-        gap: 32px;
-        align-items: center; /* Center content horizontally */
-    }
-
-    .hero {
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens */
-        align-items: center;
-        justify-content: center;
-        gap: 4rem;
-        padding: 4rem 2rem;
-        max-width: 1200px;
-        width: 100%;
-    }
-
-    .hero-text {
-        flex: 1;
-        min-width: 300px;
-        text-align: center;
-    }
-
-    .hero-text h2 {
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-    }
-
-    .hero-text h2 span {
-        color: var(--accent-primary);
-    }
-
-    .hero-text .buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .hero-text .buttons a {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        padding: 0.8rem 1.8rem;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: opacity 0.2s, transform 0.2s;
-        font-size: 1rem;
-    }
-
-    .hero-text .buttons a:hover {
-        opacity: 0.85;
-        transform: translateY(-2px);
-    }
-
-    .hero-image {
-        flex: 1;
-        min-width: 300px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .hero-image img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
+    body.light-theme .btn-primary { color: var(--bg-primary); }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
 
     /* Modals */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
@@ -552,670 +111,288 @@
     .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
     .close-button:hover { color: var(--text-primary); }
     #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+    .modal-input { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px; border-radius: 6px; width: 100%; margin-top: 10px; }
+    .modal-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--focus-ring-color); }
+    /* #endregion */
+
+    /* #region ANIMATIONS */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     
-    .modal-input {
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 10px;
-        border-radius: 6px;
-        width: 100%;
-        margin-top: 10px;
+    #startupAnimation {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: var(--bg-primary); z-index: 2000;
+        display: flex; justify-content: center; align-items: center;
+        pointer-events: none; opacity: 0;
     }
-    .modal-input:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px var(--focus-ring-color);
-    }
+    #animatedLogo { font-size: 10vw; font-weight: 700; color: var(--text-primary); transform: translate(0, 0) scale(1); opacity: 0; }
+    #startupAnimation.run-animation { opacity: 1; }
+    #startupAnimation.run-animation #animatedLogo { animation: shrinkToCorner 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+    #startupAnimation.fade-out { opacity: 0; transition: opacity 0.5s ease-out; }
+    header .logo-container h1 { opacity: 0; }
 
-    /* --- Time and Countdown Section --- */
-    .time-info-section {
-        width: 100%;
-        max-width: 1200px;
-        padding: 2rem;
-        background-color: var(--bg-secondary);
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2rem;
+    @keyframes shrinkToCorner {
+        0% { transform: translate(0, 0) scale(1); font-size: 10vw; opacity: 0; }
+        20% { transform: translate(0, 0) scale(1); font-size: 10vw; opacity: 1; }
+        50% { transform: translate(0, 0) scale(1); font-size: 10vw; opacity: 1; }
+        100% { transform: translate(calc(-50vw + 90px), calc(-50vh + 34px)); font-size: 1.25rem; opacity: 1; }
     }
-    .time-container {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        flex-wrap: wrap;
-        gap: 2rem;
+    /* #endregion */
+
+    /* #region LOGIN & AUTH */
+    #authWrapper {
+        display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;
+        opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001;
     }
-    .time-box {
-        background-color: var(--bg-primary);
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        text-align: center;
-        flex: 1;
-        min-width: 300px;
-    }
-    .time-label {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        display: block;
-        margin-bottom: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-    }
-    .time-display, .countdown-display {
-        font-size: 3.5rem;
-        font-weight: 600;
-        letter-spacing: -1px;
-        color: var(--text-primary);
-        font-variant-numeric: tabular-nums;
-        line-height: 1.1;
-    }
-    .date-display {
-        font-size: 1.1rem;
-        font-weight: 400;
-        color: var(--text-secondary);
-        margin-top: 0.75rem;
-        letter-spacing: 0.5px;
-    }
-    #teacher-controls {
-        display: none; /* Hidden by default */
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: var(--bg-primary);
-        border-radius: 8px;
-        width: 100%;
-        max-width: 500px;
-        justify-content: center;
-    }
-    #countdown-datetime {
-        background-color: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        padding: 8px;
-        border-radius: 6px;
-    }
-    #set-countdown-btn {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        padding: 8px 16px;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    #set-countdown-btn:hover {
-        opacity: 0.85;
-    }
-    body.light-theme #set-countdown-btn {
-        color: var(--bg-primary);
-    }
+    .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+    .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; }
+    .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 1rem; }
+    .login-left-panel p { font-size: 1.25rem; font-weight: 400; line-height: 1.5; margin-bottom: .5rem; color: var(--text-secondary); }
+    .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
     
-    /* --- NEW: Stopwatch & Timer Section --- */
-    .study-tools-section {
-        width: 100%;
-        max-width: 1200px;
-        padding: 2rem;
-        background-color: var(--bg-secondary);
-        border-radius: 12px;
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping on small screens */
-        justify-content: center;
-        gap: 2rem;
+    #authContainer {
+        width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: stretch;
+        background-color: var(--bg-primary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color);
     }
-    .study-tool-box {
-        background-color: var(--bg-primary);
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        text-align: center;
-        flex: 1;
-        min-width: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
+    #authContainer h2 { font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
+    .google-btn {
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem;
+        cursor: pointer; background: var(--bg-secondary); color: var(--text-primary);
+        font-size: 1rem; font-weight: 500; margin-bottom: 1rem;
     }
-    .study-tool-box h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        text-align: center;
+    .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
+    .google-btn img { height: 20px; }
+    #accessCodeInput {
+         background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+         color: var(--text-primary); padding: 12px; border-radius: 8px; width: 100%;
+         margin-bottom: 1rem; text-align: center; font-size: 1rem;
     }
-    .study-tool-display {
-        font-size: 2.75rem; /* Slightly smaller than main clock */
-        font-weight: 600;
-        letter-spacing: -1px;
-        color: var(--text-primary);
-        font-variant-numeric: tabular-nums;
-        line-height: 1.1;
-        margin: 0.5rem 0;
-    }
-    .timer-inputs {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        justify-content: center;
-    }
-    .timer-inputs input {
-        width: 60px;
-        text-align: center;
-        font-size: 1rem;
-        padding: 8px;
-    }
-    .timer-inputs input:disabled {
-        background-color: var(--bg-tertiary);
-        opacity: 0.7;
-    }
-    .timer-inputs span {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-    .study-tool-controls {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: center;
-        margin-top: 0.5rem;
-    }
-    .study-tool-btn {
-        padding: 8px 16px;
-        font-weight: 600;
-    }
+    #accessCodeInput:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring-color); }
+    /* #endregion */
 
-    /* --- DASHBOARD: CALENDAR & TODO --- */
-    .dashboard-container {
-        width: 100%;
-        max-width: 1200px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2rem;
+    /* #region HEADER & NAV */
+    #appSection { display: none; flex-direction: column; height: 100vh; background-color: var(--bg-primary); animation: fadeIn .6s ease-out both; }
+    header {
+        background: var(--bg-primary); color: var(--text-primary); display: flex;
+        align-items: center; justify-content: space-between; padding: 0 24px; height: 64px;
+        border-bottom: 1px solid var(--border-color); flex-shrink: 0;
     }
+    .logo-container { display: flex; flex-direction: column; line-height: 1.2; }
+    .logo-container h1 { font-size: 1.25rem; font-weight: 700; transition: opacity 0.5s ease-out; }
+    .logo-container p { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    .header-actions .tab, .header-actions .dropdown-menu > button {
+        padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+        color: var(--text-secondary); background: transparent; border: none; transition: background 0.2s, color 0.2s;
+    }
+    .header-actions .tab:hover, .header-actions .dropdown-menu > button:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .header-actions .tab.active, .header-actions .dropdown-menu > button.active { background: var(--bg-secondary); color: var(--accent-primary); font-weight: 600; }
+
+    .dropdown-menu { position: relative; }
+    .dropdown-menu-content {
+        display: none; position: absolute; top: 100%; left: 0; background-color: var(--bg-secondary);
+        min-width: 180px; box-shadow: 0 6px 18px rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; z-index: 20;
+    }
+    .dropdown-menu-content a, .dropdown-menu-content button {
+        display: block; padding: 10px 14px; font-size: 0.9rem; color: var(--text-secondary);
+        text-decoration: none; transition: background 0.2s, color 0.2s; background: none; border: none;
+        width: 100%; text-align: left; cursor: pointer;
+    }
+    .dropdown-menu-content a:hover, .dropdown-menu-content button:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+    .dropdown-menu:hover .dropdown-menu-content { display: block; }
+    .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+    #userDisplayName { font-weight: 500; cursor: pointer; }
+    .logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
+    .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); color: var(--accent-primary); }
+    #switchRoleButton { background-color: var(--bg-secondary); color: var(--text-primary); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; }
+    #switchRoleButton:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
+    /* #endregion */
+
+    /* #region HERO & MAIN LAYOUT */
+    main {
+        flex: 1; display: flex; flex-direction: column; overflow-y: auto;
+        padding: 32px; gap: 32px; align-items: center;
+    }
+    .hero {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+        gap: 4rem; padding: 4rem 2rem; max-width: 1200px; width: 100%;
+    }
+    .hero-text { flex: 1; min-width: 300px; text-align: center; }
+    .hero-text h2 { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+    .hero-text h2 span { color: var(--accent-primary); }
+    .hero-text .buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .hero-text .buttons a {
+        background-color: var(--accent-primary); color: var(--bg-primary); padding: 0.8rem 1.8rem;
+        border-radius: 8px; text-decoration: none; font-weight: 600; transition: opacity 0.2s, transform 0.2s; font-size: 1rem;
+    }
+    .hero-text .buttons a:hover { opacity: 0.85; transform: translateY(-2px); }
+    .hero-image { flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; }
+    .hero-image img { max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+    /* #endregion */
+
+    /* #region STUDY TOOLS (Time, Stopwatch, Timer) */
+    .time-info-section, .study-tools-section, .xp-system-section, .dashboard-container { width: 100%; max-width: 1200px; }
+    .time-info-section, .study-tools-section, .xp-system-section {
+        padding: 2rem; background-color: var(--bg-secondary); border-radius: 12px;
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem;
+    }
+    .time-container { display: flex; justify-content: center; width: 100%; flex-wrap: wrap; gap: 2rem; }
+    .time-box, .study-tool-box {
+        background-color: var(--bg-primary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);
+        text-align: center; flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center;
+    }
+    .time-label { font-size: 1rem; color: var(--text-secondary); display: block; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1.5px; }
+    .time-display, .countdown-display { font-size: 3.5rem; font-weight: 600; letter-spacing: -1px; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .date-display { font-size: 1.1rem; font-weight: 400; color: var(--text-secondary); margin-top: 0.75rem; letter-spacing: 0.5px; }
     
-    .dashboard-calendar, .dashboard-todo {
-        flex: 1;
-        background-color: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        min-width: 300px;
-    }
+    #teacher-controls { display: none; align-items: center; gap: 0.5rem; margin-top: 1rem; padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; width: 100%; max-width: 500px; justify-content: center; }
+    #countdown-datetime { background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; }
+    #set-countdown-btn { background-color: var(--accent-primary); color: var(--bg-primary); padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    body.light-theme #set-countdown-btn { color: var(--bg-primary); }
 
-    .dashboard-calendar h3, .dashboard-todo h3, .xp-system-section h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1rem;
-        text-align: center;
-    }
+    .study-tool-box h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; text-align: center; }
+    .study-tool-display { font-size: 2.75rem; font-weight: 600; letter-spacing: -1px; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1.1; margin: 0.5rem 0; }
+    .timer-inputs { display: flex; gap: 5px; align-items: center; justify-content: center; }
+    .timer-inputs input { width: 60px; text-align: center; font-size: 1rem; padding: 8px; }
+    .timer-inputs input:disabled { background-color: var(--bg-tertiary); opacity: 0.7; }
+    .timer-inputs span { font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); }
+    .study-tool-controls { display: flex; gap: 0.75rem; justify-content: center; margin-top: 0.5rem; }
+    .study-tool-btn { padding: 8px 16px; font-weight: 600; }
+    /* #endregion */
+
+    /* #region DASHBOARD (Calendar & Todo) */
+    .dashboard-container { display: flex; flex-wrap: wrap; gap: 2rem; }
+    .dashboard-calendar, .dashboard-todo { flex: 1; background-color: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; min-width: 300px; }
+    .dashboard-calendar h3, .dashboard-todo h3, .xp-system-section h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; text-align: center; }
     
-    .xp-system-section h3 {
-        width: 100%;
-    }
-
-    /* Calendar Styling */
-    .calendar-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        gap: 0.5rem;
-    }
-    .calendar-header select {
-        flex: 1;
-        padding: 8px;
-        font-weight: 600;
-    }
-    .calendar-header .btn-secondary {
-        padding: 8px 16px;
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        cursor: pointer;
-    }
-    .calendar-header .btn-secondary:hover {
-        background-color: var(--bg-primary);
-    }
-
-    #calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-    }
-    .calendar-header-day, .calendar-day {
-        text-align: center;
-        padding: 10px;
-        border-radius: 6px;
-    }
-    .calendar-header-day {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-    .calendar-day {
-        cursor: pointer;
-        font-weight: 500;
-        position: relative;
-        transition: background-color 0.2s;
-    }
-    .calendar-day:not(.other-month):hover {
-        background-color: var(--bg-tertiary);
-    }
-    .calendar-day.other-month {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    .calendar-day.today {
-        background-color: var(--bg-tertiary);
-        color: var(--accent-primary);
-        font-weight: 700;
-    }
-    .calendar-day.selected {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        font-weight: 700;
-    }
-    .calendar-day .event-marker {
-        position: absolute;
-        bottom: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background-color: var(--text-secondary);
-    }
-    .calendar-day .event-marker.public {
-        background-color: var(--accent-primary);
-    }
-    /* When selected, the public marker should be dark */
-    .calendar-day.selected .event-marker.public {
-        background-color: var(--bg-primary);
-    }
-
+    /* Calendar */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.5rem; }
+    .calendar-header select { flex: 1; padding: 8px; font-weight: 600; }
+    .calendar-header .btn-secondary { padding: 8px 16px; background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer; }
+    .calendar-header .btn-secondary:hover { background-color: var(--bg-primary); }
+    #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .calendar-header-day, .calendar-day { text-align: center; padding: 10px; border-radius: 6px; }
+    .calendar-header-day { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+    .calendar-day { cursor: pointer; font-weight: 500; position: relative; transition: background-color 0.2s; }
+    .calendar-day:not(.other-month):hover { background-color: var(--bg-tertiary); }
+    .calendar-day.other-month { opacity: 0.4; cursor: not-allowed; }
+    .calendar-day.today { background-color: var(--bg-tertiary); color: var(--accent-primary); font-weight: 700; }
+    .calendar-day.selected { background-color: var(--accent-primary); color: var(--bg-primary); font-weight: 700; }
+    .calendar-day .event-marker { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background-color: var(--text-secondary); }
+    .calendar-day .event-marker.public { background-color: var(--accent-primary); }
+    .calendar-day.selected .event-marker.public { background-color: var(--bg-primary); }
+    
     /* Event List */
     #event-list-container { margin-top: 1.5rem; }
-    #event-list-header {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-    #event-list {
-        max-height: 200px;
-        overflow-y: auto;
-        padding-right: 10px; /* For scrollbar */
-    }
-    .event-item {
-        background-color: var(--bg-primary);
-        padding: 10px 12px;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-    }
+    #event-list-header { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+    #event-list { max-height: 200px; overflow-y: auto; padding-right: 10px; }
+    .event-item { background-color: var(--bg-primary); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .event-item-details { flex: 1; }
-    .event-item-details span {
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-right: 8px;
-    }
-    .event-item-details .tag {
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background-color: var(--text-secondary);
-        color: var(--bg-primary);
-        margin-right: 8px;
-    }
-    .event-item-details .tag.public {
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-    }
-    .event-item .delete-event {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        font-size: 1.1rem;
-        padding: 4px;
-    }
+    .event-item-details span { font-weight: 600; font-size: 0.9rem; margin-right: 8px; }
+    .event-item-details .tag { font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background-color: var(--text-secondary); color: var(--bg-primary); margin-right: 8px; }
+    .event-item-details .tag.public { background-color: var(--accent-primary); color: var(--bg-primary); }
+    .event-item .delete-event { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem; padding: 4px; }
     .event-item .delete-event:hover { color: var(--accent-red); }
 
-    /* Add Event Form */
-    #add-event-form {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-    #event-desc {
-        grid-column: 1 / -1; /* Span full width */
-    }
-    #add-event-btn {
-        grid-column: 1 / -1;
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        font-weight: 600;
-        padding: 10px;
-        cursor: pointer;
-    }
-    body.light-theme #add-event-btn { color: var(--bg-primary); }
-    #add-event-btn:hover { opacity: 0.85; }
-    
-    #public-event-container {
-        grid-column: 1 / -1;
-        display: none; /* Hidden by default */
-        align-items: center;
-        gap: 8px;
-    }
-    #public-event-container label {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-    }
-    
-    /* Todo List Styling */
-    #todo-list {
-        max-height: 400px;
-        overflow-y: auto;
-        padding-right: 10px;
-        margin-bottom: 1.5rem;
-    }
-    .todo-item {
-        background-color: var(--bg-primary);
-        padding: 10px 12px;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .todo-item select.status-select {
-        flex-shrink: 0;
-        width: 120px;
-        padding: 6px;
-        font-size: 0.85rem;
-    }
-    
-    .todo-item-details {
-        flex: 1;
-        font-size: 0.95rem;
-        /* Add transition for smoother visual change */
-        transition: opacity 0.3s, text-decoration 0.3s;
-    }
-    .todo-item-details.status-half-done {
-        /* text-decoration: line-through; */ /* Removing line-through for description */
-        opacity: 0.8;
-    }
-    .todo-item-details.status-half-done .todo-description-text {
-        text-decoration: line-through; /* Apply line-through only to text */
-    }
-    
-    .todo-item-details.status-full-done {
-        /* text-decoration: line-through; */
-        opacity: 0.5;
-    }
-    .todo-item-details.status-full-done .todo-description-text {
-        text-decoration: line-through;
-    }
-    
-    .todo-item-details .todo-deadline {
-        display: block;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 2px;
-    }
-    
-    /* --- NEW: To-Do Edit & Due Status Styles --- */
-    .todo-item-details .todo-deadline.is-due {
-        color: var(--accent-red);
-        font-weight: 600;
-    }
-    .todo-item-details .todo-deadline.is-due-soon {
-        color: #f59e0b; /* Amber/Yellow */
-        font-weight: 600;
-    }
+    /* Forms */
+    #add-event-form, #add-todo-form { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: grid; gap: 10px; }
+    #add-event-form { grid-template-columns: 1fr 1fr; }
+    #add-todo-form { grid-template-columns: 1fr auto; }
+    #event-desc, #todo-input { grid-column: 1 / -1; }
+    #add-event-btn, #add-todo-btn { grid-column: 1 / -1; background-color: var(--accent-primary); color: var(--bg-primary); font-weight: 600; padding: 10px; cursor: pointer; }
+    #add-todo-btn { grid-column: 2 / 3; padding: 10px 20px; }
+    body.light-theme #add-event-btn, body.light-theme #add-todo-btn { color: var(--bg-primary); }
+    #public-event-container { grid-column: 1 / -1; display: none; align-items: center; gap: 8px; }
+    #public-event-container label { font-size: 0.9rem; color: var(--text-secondary); }
 
-    .todo-item .delete-todo,
-    .todo-item .edit-todo-btn { /* Group edit and delete */
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        font-size: 1.1rem;
-        padding: 4px;
-        line-height: 1; /* Ensure consistent height */
-    }
+    /* Todo List */
+    #todo-list { max-height: 400px; overflow-y: auto; padding-right: 10px; margin-bottom: 1.5rem; }
+    .todo-item { background-color: var(--bg-primary); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .todo-item select.status-select { flex-shrink: 0; width: 120px; padding: 6px; font-size: 0.85rem; }
+    .todo-item-details { flex: 1; font-size: 0.95rem; transition: opacity 0.3s, text-decoration 0.3s; }
+    .todo-item-details.status-half-done { opacity: 0.8; }
+    .todo-item-details.status-half-done .todo-description-text { text-decoration: line-through; }
+    .todo-item-details.status-full-done { opacity: 0.5; }
+    .todo-item-details.status-full-done .todo-description-text { text-decoration: line-through; }
+    .todo-item-details .todo-deadline { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+    .todo-item-details .todo-deadline.is-due { color: var(--accent-red); font-weight: 600; }
+    .todo-item-details .todo-deadline.is-due-soon { color: #f59e0b; font-weight: 600; }
+    .todo-item .delete-todo, .todo-item .edit-todo-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem; padding: 4px; line-height: 1; }
     .todo-item .delete-todo:hover { color: var(--accent-red); }
-    .todo-item .edit-todo-btn:hover { color: var(--accent-primary); } /* White hover for edit */
+    .todo-item .edit-todo-btn:hover { color: var(--accent-primary); }
+    .todo-item-details input.edit-input { width: 100%; font-size: 0.95rem; padding: 4px; margin: -4px 0; background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; }
+    .todo-item-details.is-editing .todo-deadline, .todo-item-details.is-editing .todo-description-text { display: none; }
+    /* #endregion */
 
-    /* Style for the input field during edit */
-    .todo-item-details input.edit-input {
-        width: 100%;
-        font-size: 0.95rem;
-        padding: 4px;
-        margin: -4px 0; /* Adjust to maintain height */
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        border-radius: 4px;
-    }
-    .todo-item-details input.edit-input:focus {
-        border-color: var(--accent-primary);
-        outline: none;
-    }
+    /* #region XP SYSTEM & PROGRESS BAR */
+    .xp-balance-container { margin-top: 1.5rem; text-align: center; }
+    .xp-balance-container h4 { font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+    #xpBalanceDisplay { font-size: 2.5rem; font-weight: 700; color: var(--accent-primary); line-height: 1.1; }
     
-    /* Hide deadline/text while editing description */
-    .todo-item-details.is-editing .todo-deadline {
-        display: none;
+    /* XP Bar Styles */
+    .xp-container {
+        width: 100%; background-color: var(--bg-primary); border-radius: 10px; height: 24px;
+        margin-top: 12px; border: 1px solid var(--border-color); overflow: hidden; position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
     }
-    .todo-item-details.is-editing .todo-description-text {
-        display: none; /* Hide text span while editing */
+    .xp-fill {
+        height: 100%; background-color: var(--accent-primary); width: 0%; 
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    /* --- End New To-Do Styles --- */
+    .xp-text {
+        position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        top: 0; left: 0; font-size: 0.8rem; color: var(--text-secondary); font-weight: 700; z-index: 2;
+        mix-blend-mode: difference; pointer-events: none;
+    }
 
-    
-    #add-todo-form {
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-    }
-    #todo-input {
-        grid-column: 1 / -1;
-    }
-    #add-todo-btn {
-        grid-column: 2 / 3;
-        background-color: var(--accent-primary);
-        color: var(--bg-primary);
-        font-weight: 600;
-        padding: 10px 20px;
-        cursor: pointer;
-    }
-    body.light-theme #add-todo-btn { color: var(--bg-primary); }
-    #add-todo-btn:hover { opacity: 0.85; }
-
-    /* --- XP System Styles --- */
-    .xp-balance-container {
-        margin-top: 1.5rem; 
-        text-align: center;
-    }
-    .xp-balance-container h4 {
-        font-size: 1.2rem; 
-        font-weight: 600; 
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    #xpBalanceDisplay {
-        font-size: 2.5rem; 
-        font-weight: 700; 
-        color: var(--accent-primary); 
-        line-height: 1.1;
-    }
-    
-    .xp-system-section {
-        width: 100%;
-        max-width: 1200px;
-        padding: 2rem;
-        background-color: var(--bg-secondary);
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-    }
-    .xp-form-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        align-items: center;
-        justify-content: center;
-    }
-    .xp-form-container label {
-        color: var(--text-secondary);
-    }
-    .xp-form-container input[type="number"] {
-        width: 80px; /* Reduced width to fit hours and minutes */
-    }
-    .xp-redeem-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 1rem;
-    }
-    #study-history-container {
-        width: 100%;
-        max-width: 600px;
-        margin-top: 1rem;
-    }
-    #study-history-container h4 {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        text-align: center;
-    }
-    #study-history-list {
-        max-height: 200px;
-        overflow-y: auto;
-        background-color: var(--bg-primary);
-        padding: 1rem;
-        border-radius: 8px;
-    }
-    .study-log-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--border-color);
-        font-size: 0.9rem;
-    }
-    .study-log-item:last-child {
-        border-bottom: none;
-    }
+    .xp-system-section { flex-direction: column; align-items: center; gap: 1.5rem; }
+    .xp-system-section h3 { width: 100%; }
+    .xp-form-container { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: center; }
+    .xp-form-container label { color: var(--text-secondary); }
+    .xp-form-container input[type="number"] { width: 80px; }
+    .xp-redeem-container { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1rem; }
+    #study-history-container { width: 100%; max-width: 600px; margin-top: 1rem; }
+    #study-history-container h4 { font-weight: 600; margin-bottom: 0.5rem; text-align: center; }
+    #study-history-list { max-height: 200px; overflow-y: auto; background-color: var(--bg-primary); padding: 1rem; border-radius: 8px; }
+    .study-log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    .study-log-item:last-child { border-bottom: none; }
     .log-date { font-weight: 600; }
     .log-hours { color: var(--text-secondary); }
     .log-points { font-weight: 600; }
-    .log-points.positive { color: #4ade80; } /* Green */
-    .log-points.negative { color: var(--accent-red); } /* Red */
+    .log-points.positive { color: #4ade80; }
+    .log-points.negative { color: var(--accent-red); }
+    .delete-log-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem; padding: 0 4px; line-height: 1; }
+    .delete-log-btn:hover { color: var(--accent-red); }
+    /* #endregion */
 
-    /* Style for the new delete log button */
-    .delete-log-btn {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        font-size: 1.1rem;
-        padding: 0 4px;
-        line-height: 1;
-    }
-    .delete-log-btn:hover {
-        color: var(--accent-red);
-    }
-
-
-    /* Responsive Adjustments */
-    @media (max-width: 900px) {
-        .dashboard-container {
-            flex-direction: column;
-        }
-    }
-    
+    /* #region MEDIA QUERIES */
+    @media (max-width: 900px) { .dashboard-container { flex-direction: column; } }
     @media (max-width: 768px) {
         #authWrapper { flex-direction: column; position: static; height: auto; }
         .login-left-panel, .login-right-panel { width: 100%; }
-        header {
-            flex-direction: column;
-            height: auto;
-            padding: 1rem;
-            align-items: flex-start;
-        }
-        .header-actions {
-            margin-left: 0;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        .hero {
-            flex-direction: column;
-            text-align: center;
-        }
-        .hero-text h2 {
-            font-size: 2.2rem;
-        }
-        .hero-text .buttons {
-            flex-direction: column;
-        }
-        .hero-text .buttons a {
-            width: 100%;
-        }
-        .time-container {
-            flex-direction: column;
-        }
-        .time-display, .countdown-display {
-            font-size: 2.5rem;
-        }
-        .study-tool-display { /* NEW: Responsive font size */
-            font-size: 2.2rem;
-        }
-        .date-display {
-            font-size: 1rem;
-        }
+        header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
+        .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
+        .hero { flex-direction: column; text-align: center; }
+        .hero-text h2 { font-size: 2.2rem; }
+        .hero-text .buttons { flex-direction: column; }
+        .hero-text .buttons a { width: 100%; }
+        .time-container { flex-direction: column; }
+        .time-display, .countdown-display { font-size: 2.5rem; }
+        .study-tool-display { font-size: 2.2rem; }
+        .date-display { font-size: 1rem; }
         .calendar-header { flex-wrap: wrap; }
-        #add-todo-form {
-            grid-template-columns: 1fr;
-        }
-        #add-todo-btn {
-            grid-column: 1 / -1;
-        }
+        #add-todo-form { grid-template-columns: 1fr; }
+        #add-todo-btn { grid-column: 1 / -1; }
     }
-
-    /* --- FOOTER --- */
-    footer { 
-        text-align: right; 
-        padding: 10px 20px; 
-        color: var(--text-secondary); 
-        font-size: 0.875rem; 
-        z-index: 100; 
-        width: 100%; 
-        margin-top: auto;
-    }
-    footer a { 
-        color: var(--text-secondary); 
-        text-decoration: none; 
-    }
-    footer a:hover { 
-        text-decoration: underline; 
-        color: var(--text-primary); 
-    }
-
+    /* #endregion */
+    
+    /* #region FOOTER */
+    footer { text-align: right; padding: 10px 20px; color: var(--text-secondary); font-size: 0.875rem; z-index: 100; width: 100%; margin-top: auto; }
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; color: var(--text-primary); }
+    /* #endregion */
   </style>
 </head>
 <body>
@@ -1288,6 +465,11 @@
             <div class="xp-balance-container">
                 <h4>Your XP Balance</h4>
                 <p id="xpBalanceDisplay">Loading...</p>
+                <!-- NEW XP PROGRESS BAR -->
+                <div class="xp-container">
+                    <div id="xpProgressBar" class="xp-fill"></div>
+                    <div id="xpProgressText" class="xp-text">Lvl 1: 0 / 1000 XP</div>
+                </div>
             </div>
             
             <div class="buttons" style="margin-top: 2rem;">
@@ -1302,6 +484,7 @@
           </div>
         </section>
         
+        <!-- TIME SECTION -->
         <section class="time-info-section">
             <div class="time-container">
                 <div class="time-box">
@@ -1320,9 +503,8 @@
             </div>
         </section>
         
-        <!-- === NEW STOPWATCH & TIMER SECTION === -->
+        <!-- STOPWATCH & TIMER SECTION -->
         <section class="study-tools-section">
-            <!-- Stopwatch Box -->
             <div class="study-tool-box">
                 <h3>Stopwatch</h3>
                 <div id="stopwatchDisplay" class="study-tool-display">00:00:00.000</div>
@@ -1332,8 +514,6 @@
                     <button id="resetStopwatchBtn" class="logout-btn study-tool-btn">Reset</button>
                 </div>
             </div>
-            
-            <!-- Timer Box -->
             <div class="study-tool-box">
                 <h3>Timer</h3>
                 <div id="timerDisplay" class="study-tool-display">00:00:00</div>
@@ -1352,7 +532,7 @@
             </div>
         </section>
 
-        <!-- Dashboard Section -->
+        <!-- DASHBOARD SECTION -->
         <section class="dashboard-container">
             <!-- Calendar -->
             <div class="dashboard-calendar">
@@ -1374,13 +554,9 @@
                         <!-- Calendar days will be injected by JS -->
                     </div>
                 </div>
-                
                 <div id="event-list-container">
                     <h4 id="event-list-header">Events for:</h4>
-                    <div id="event-list">
-                        <!-- Event items will be injected by JS -->
-                    </div>
-                    
+                    <div id="event-list"></div>
                     <form id="add-event-form">
                         <h5 style="grid-column: 1 / -1; margin-bottom: 5px; font-weight: 600;">Add Event</h5>
                         <input type="date" id="event-date" required>
@@ -1398,10 +574,7 @@
             <!-- Quick Notes & To-Do -->
             <div class="dashboard-todo">
                 <h3>Quick Notes & To-Do</h3>
-                <div id="todo-list">
-                    <!-- Todo items will be injected by JS -->
-                </div>
-                
+                <div id="todo-list"></div>
                 <form id="add-todo-form">
                     <h5 style="grid-column: 1 / -1; margin-bottom: 5px; font-weight: 600;">Add Note / Task</h5>
                     <input type="text" id="todo-input" placeholder="New note or task..." required>
@@ -1431,7 +604,6 @@
                 <h4>Recent Study Logs</h4>
                 <div id="study-history-list">
                     <p style="color: var(--text-secondary); text-align: center;">No study logs yet.</p>
-                    <!-- Logs will be injected here -->
                 </div>
             </div>
         </section>
@@ -1483,17 +655,16 @@
 
   <!-- Firebase & App Script -->
   <script type="module">
+    // #region FIREBASE IMPORTS
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    // Added 'limit' and 'increment' for XP system query and updates
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, where, serverTimestamp, limit, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+    // #endregion
 
-    // --- IMPORTANT CONFIGURATION ---
-    const TEACHER_CODE = "DDDDDDDD"; // Example teacher code
-    const STUDENT_CODE = "STUDENT456"; // Example student code
-
-    // Firebase Configuration
+    // #region GLOBAL VARIABLES & CONFIG
+    const TEACHER_CODE = "DDDDDDDD";
+    const STUDENT_CODE = "STUDENT456";
     const firebaseConfig = {
       apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",
       authDomain: "ai-grading-9bb30.firebaseapp.com",
@@ -1503,46 +674,27 @@
       appId: "1:298162112230:web:529d3f95536991be685d27",
       measurementId: "G-CHKLKSM17S"
     };
-    
-    // Canvas provided global variables
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     let app, db, auth, storage;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
     let countdownInterval;
     
-    // State for dashboard
+    // State variables
     let currentSelectedDate = new Date();
     let currentMonth = currentSelectedDate.getMonth();
     let currentYear = currentSelectedDate.getFullYear();
-    let personalEvents = [];
-    let publicEvents = [];
-    let todoItems = [];
-    let unsubscribePersonalEvents = () => {};
-    let unsubscribePublicEvents = () => {};
-    let unsubscribeTodos = () => {};
-    
-    // State for XP System
-    let xpBalance = 0;
-    let studyHistory = [];
-    let unsubscribeProfile = () => {};
-    let unsubscribeStudyHistory = () => {};
+    let personalEvents = [], publicEvents = [], todoItems = [];
+    let unsubscribePersonalEvents = () => {}, unsubscribePublicEvents = () => {}, unsubscribeTodos = () => {};
+    let xpBalance = 0, studyHistory = [];
+    let unsubscribeProfile = () => {}, unsubscribeStudyHistory = () => {};
 
-    // --- NEW: Stopwatch & Timer State ---
-    let stopwatchInterval = null;
-    let stopwatchStartTime = 0;
-    let stopwatchElapsedTime = 0;
-    let stopwatchRunning = false;
-    
-    let timerInterval = null;
-    let timerTotalTime = 0; // in seconds
-    let timerTimeRemaining = 0; // in seconds
-    let timerRunning = false;
-    let timerAudioContext = null; // For beep sound
-    let timerBeepNode = null;
+    // Timer State
+    let stopwatchInterval = null, stopwatchStartTime = 0, stopwatchElapsedTime = 0, stopwatchRunning = false;
+    let timerInterval = null, timerTotalTime = 0, timerTimeRemaining = 0, timerRunning = false, timerAudioContext = null, timerBeepNode = null;
+    // #endregion
 
-
-    // --- AUTH & INITIALIZATION ---
+    // #region INITIALIZATION & AUTH
     const authWrapper = document.getElementById('authWrapper');
     const appSection = document.getElementById('appSection');
     const authContainer = document.getElementById('authContainer');
@@ -1573,8 +725,7 @@
         auth = getAuth(app);
         storage = getStorage(app);
         console.log("Firebase initialized successfully.");
-    } catch (error)
-    {
+    } catch (error) {
         console.error("Error initializing Firebase:", error);
         showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`);
     }
@@ -1590,23 +741,15 @@
                     const profileData = userProfileDoc.data();
                     currentUserRole = profileData.role;
                     currentUserName = profileData.name || user.displayName;
-                    // Ensure xpBalance exists on profile
                     const updateData = { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() };
-                    if (profileData.xpBalance === undefined) {
-                        updateData.xpBalance = 0;
-                    }
+                    if (profileData.xpBalance === undefined) updateData.xpBalance = 0;
                     await setDoc(userProfileRef, updateData, { merge: true });
                     showApp();
                 } else {
                     currentUserName = user.displayName;
                     currentUserRole = 'unassigned';
-                    // Ensure profile doc is created with default xpBalance
                     await setDoc(userProfileRef, { 
-                        name: currentUserName, 
-                        email: currentUserEmail, 
-                        role: 'unassigned',
-                        xpBalance: 0,
-                        lastLogin: Date.now()
+                        name: currentUserName, email: currentUserEmail, role: 'unassigned', xpBalance: 0, lastLogin: Date.now()
                     }, { merge: true });
                     showCodeEntry();
                 }
@@ -1616,23 +759,9 @@
                  showLogin();
             }
         } else {
-            currentUserId = null;
-            currentUserRole = null;
-            currentUserName = null;
-            xpBalance = 0;
-            studyHistory = [];
-            
-            // Detach listeners on logout
-            unsubscribePersonalEvents();
-            unsubscribePublicEvents();
-            unsubscribeTodos();
-            unsubscribeProfile();
-            unsubscribeStudyHistory();
-
-            personalEvents = [];
-            publicEvents = [];
-            todoItems = [];
-
+            currentUserId = null; currentUserRole = null; currentUserName = null; xpBalance = 0; studyHistory = [];
+            unsubscribePersonalEvents(); unsubscribePublicEvents(); unsubscribeTodos(); unsubscribeProfile(); unsubscribeStudyHistory();
+            personalEvents = []; publicEvents = []; todoItems = [];
             showLogin();
         }
     });
@@ -1658,10 +787,7 @@
         const accessCodeInput = document.getElementById('accessCodeInput');
         submitCodeBtn?.addEventListener('click', () => handleSubmitCode());
         accessCodeInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSubmitCode();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); handleSubmitCode(); }
         });
         accessCodeInput?.focus();
     }
@@ -1672,7 +798,6 @@
         userDisplayNameSpan.textContent = `${currentUserName} (${currentUserRole})`;
         document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
         
-        // Show teacher controls for countdown if applicable
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'flex';
             document.getElementById('public-event-container').style.display = 'flex';
@@ -1681,42 +806,26 @@
              document.getElementById('public-event-container').style.display = 'none';
         }
 
-        // --- Run Animation ---
         startupAnimation.classList.add('run-animation');
-        
-        // Wait for animation to finish (2.5s)
-        setTimeout(() => {
-            // Fade out overlay
-            startupAnimation.classList.add('fade-out');
-            // Fade in real logo
-            headerLogo.style.opacity = '1';
-        }, 2500); // Must match animation duration
-        
+        setTimeout(() => { startupAnimation.classList.add('fade-out'); headerLogo.style.opacity = '1'; }, 2500);
 
-        // Start clocks and listen for countdown changes
         startClocks();
         listenForCountdownChanges();
-        
-        // Init dashboard
         initDashboard();
         
-        // Attach listeners
         if (currentUserId) {
             listenForPersonalEvents();
             listenForPublicEvents();
             listenForTodos();
-            listenForProfileChanges(); // XP System
-            listenForStudyHistory(); // XP System
+            listenForProfileChanges();
+            listenForStudyHistory();
         }
     }
 
     async function handleGoogleSignIn() {
         const provider = new GoogleAuthProvider();
-        try { 
-            await signInWithPopup(auth, provider); 
-        } catch (error) { 
+        try { await signInWithPopup(auth, provider); } catch (error) { 
             document.getElementById('authError').textContent = `Sign-in failed. Error: ${error.message}`; 
-            console.error("Google Sign-In Error:", error);
         }
     }
 
@@ -1728,10 +837,7 @@
         let roleToSet = null;
         if (code === TEACHER_CODE) roleToSet = 'teacher';
         else if (code === STUDENT_CODE) roleToSet = 'student';
-        else { 
-            if(codeError) codeError.textContent = 'Invalid access code.';
-            return; 
-        }
+        else { if(codeError) codeError.textContent = 'Invalid access code.'; return; }
         
         try {
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
@@ -1741,25 +847,17 @@
             showApp();
         } catch (error) {
             if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`;
-            console.error("Submit Code Error:", error);
         }
     }
 
     document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-
     document.getElementById('switchRoleButton').addEventListener('click', () => {
-        showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => {
-            await handleSubmitCode(code);
-        });
+        showInputModal('Switch Role', 'Enter new access code (Teacher or Student):', async (code) => { await handleSubmitCode(code); });
     });
-
-    // --- PROFILE EDITING ---
+    
+    // Profile Edit
     userDisplayNameSpan.addEventListener('click', async () => {
-        if (!currentUserId) {
-            showModal('Error', 'Please log in to edit your profile.');
-            return;
-        }
-
+        if (!currentUserId) { showModal('Error', 'Please log in to edit your profile.'); return; }
         const profileEditModal = document.getElementById('profileEditModal');
         const editUserNameInput = document.getElementById('editUserName');
         const editUserEmailInput = document.getElementById('editUserEmail');
@@ -1770,17 +868,11 @@
         editUserNameInput.value = currentUserName || '';
         editUserEmailInput.value = currentUserEmail || '';
         editUserRoleInput.value = currentUserRole || '';
-
         profileEditModal.style.display = 'flex';
 
         const saveHandler = async () => {
             const newName = editUserNameInput.value.trim();
-            if (!newName) {
-                editUserNameInput.style.border = '1px solid var(--accent-red)';
-                editUserNameInput.focus();
-                return;
-            }
-
+            if (!newName) { editUserNameInput.style.border = '1px solid var(--accent-red)'; editUserNameInput.focus(); return; }
             try {
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 await updateDoc(userProfileRef, { name: newName });
@@ -1789,123 +881,79 @@
                 document.getElementById('homeUserNamePlaceholder').textContent = currentUserName;
                 profileEditModal.style.display = 'none';
                 showModal('Success', 'Profile updated successfully!');
-            } catch (error) {
-                console.error("Error updating profile:", error);
-                showModal('Error', `Failed to update profile: ${error.message}`);
-            }
+            } catch (error) { showModal('Error', `Failed to update profile: ${error.message}`); }
             saveProfileButton.removeEventListener('click', saveHandler);
             cancelProfileButton.removeEventListener('click', cancelHandler);
         };
-
         const cancelHandler = () => {
             profileEditModal.style.display = 'none';
             saveProfileButton.removeEventListener('click', saveHandler);
             cancelProfileButton.removeEventListener('click', cancelHandler);
         };
-
         saveProfileButton.addEventListener('click', saveHandler);
         cancelProfileButton.addEventListener('click', cancelHandler);
         document.querySelector('.profile-close-button').addEventListener('click', cancelHandler);
     });
+    // #endregion
 
-    // --- TIME AND COUNTDOWN LOGIC ---
+    // #region TIME & COUNTDOWN
     function startClocks() {
         const currentTimeEl = document.getElementById('currentTime');
         const currentDateEl = document.getElementById('currentDate');
-
         setInterval(() => {
             const now = new Date();
-            // Set Time with AM/PM
             currentTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-            
-            // Set Date
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            currentDateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
+            currentDateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }, 1000);
     }
-
     function updateCountdown(targetDate) {
         const countdownEl = document.getElementById('countdown');
         if (countdownInterval) clearInterval(countdownInterval);
-
-        if (!targetDate) {
-            countdownEl.textContent = "No Event";
-            return;
-        }
+        if (!targetDate) { countdownEl.textContent = "No Event"; return; }
 
         countdownInterval = setInterval(() => {
             const now = new Date().getTime();
             const distance = targetDate - now;
-
-            if (distance < 0) {
-                clearInterval(countdownInterval);
-                countdownEl.textContent = "EXPIRED";
-                return;
-            }
-
+            if (distance < 0) { clearInterval(countdownInterval); countdownEl.textContent = "EXPIRED"; return; }
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
             countdownEl.textContent = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }, 1000);
     }
-
     function listenForCountdownChanges() {
         const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
         onSnapshot(countdownRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                const targetDate = data.target ? data.target.toDate() : null;
-                updateCountdown(targetDate);
-            } else {
-                updateCountdown(null);
-            }
+            if (doc.exists()) { updateCountdown(doc.data().target ? doc.data().target.toDate() : null); } 
+            else { updateCountdown(null); }
         });
     }
-
     document.getElementById('set-countdown-btn').addEventListener('click', async () => {
         const datetimeInput = document.getElementById('countdown-datetime').value;
-        if (!datetimeInput) {
-            showModal('Error', 'Please select a date and time.');
-            return;
-        }
-
+        if (!datetimeInput) { showModal('Error', 'Please select a date and time.'); return; }
         const targetDate = new Date(datetimeInput);
-        if (isNaN(targetDate)) {
-            showModal('Error', 'Invalid date and time format.');
-            return;
-        }
-
+        if (isNaN(targetDate)) { showModal('Error', 'Invalid date and time format.'); return; }
         try {
             const countdownRef = doc(db, `artifacts/${appId}/public/data/settings/countdown`);
             await setDoc(countdownRef, { target: targetDate });
             showModal('Success', 'Countdown target has been set!');
-        } catch (error) {
-            showModal('Error', `Could not set countdown: ${error.message}`);
-            console.error("Error setting countdown:", error);
-        }
+        } catch (error) { showModal('Error', `Could not set countdown: ${error.message}`); }
     });
-    
-     // --- THEME TOGGLE ---
+    // #endregion
+
+    // #region THEME
     const themeToggleButton = document.getElementById('themeToggleButton');
-    function applyTheme(theme) { 
-        document.body.classList.toggle('light-theme', theme === 'light'); 
-    }
-    function loadTheme() { 
-        const savedTheme = localStorage.getItem('ai-marker-theme') || 'dark';
-        applyTheme(savedTheme); 
-    }
+    function applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); }
+    function loadTheme() { applyTheme(localStorage.getItem('ai-marker-theme') || 'dark'); }
     themeToggleButton.addEventListener('click', () => {
         const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-        applyTheme(newTheme);
-        localStorage.setItem('ai-marker-theme', newTheme);
+        applyTheme(newTheme); localStorage.setItem('ai-marker-theme', newTheme);
     });
-    loadTheme(); // Apply theme on load
+    loadTheme();
+    // #endregion
 
-    // --- DASHBOARD: CALENDAR & TODO LOGIC ---
-    
+    // #region DASHBOARD (Calendar & Todo)
     const calendarGrid = document.getElementById('calendar-grid');
     const eventListHeader = document.getElementById('event-list-header');
     const eventList = document.getElementById('event-list');
@@ -1921,1168 +969,416 @@
     const monthSelect = document.getElementById('month-select');
     const yearSelect = document.getElementById('year-select');
     const todayBtn = document.getElementById('today-btn');
-    
-    const months = [
-        "January", "February", "March", "April", "May", "June", 
-        "July", "August", "September", "October", "November", "December"
-    ];
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     function initDashboard() {
-        // Populate Month Select
-        months.forEach((month, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = month;
-            monthSelect.appendChild(option);
-        });
-        
-        // Populate Year Select
+        months.forEach((month, index) => { const option = document.createElement('option'); option.value = index; option.textContent = month; monthSelect.appendChild(option); });
         const currentYear = new Date().getFullYear();
-        for (let i = currentYear - 10; i <= currentYear + 10; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i;
-            yearSelect.appendChild(option);
-        }
+        for (let i = currentYear - 10; i <= currentYear + 10; i++) { const option = document.createElement('option'); option.value = i; option.textContent = i; yearSelect.appendChild(option); }
         
-        // Set initial state
-        const today = new Date();
-        updateCalendarState(today);
-        eventDateInput.value = toLocalISODate(today); // Default event date to today
-        document.getElementById('study-date').value = toLocalISODate(today); // Default study date to today
+        updateCalendarState(new Date());
         
-        // Add event listeners
         monthSelect.addEventListener('change', handleMonthYearChange);
         yearSelect.addEventListener('change', handleMonthYearChange);
         todayBtn.addEventListener('click', () => updateCalendarState(new Date()));
         addEventForm.addEventListener('submit', handleAddEvent);
         addTodoForm.addEventListener('submit', handleAddTodo);
-        
-        // *** NEW: Add listener for immediate status changes on To-Do list
         todoList.addEventListener('change', handleTodoStatusChange);
-
-        // *** NEW: Add listeners for XP System
+        
+        // XP Listeners
         document.getElementById('log-study-btn').addEventListener('click', handleLogStudy);
         document.getElementById('redeemHalfDayBtn').addEventListener('click', handleRedeemPoints);
         document.getElementById('redeemFullDayBtn').addEventListener('click', handleRedeemPoints);
-        // *** NEW: Add listener for deleting study logs
         document.getElementById('study-history-list').addEventListener('click', handleDeleteStudyLog);
 
-        // --- NEW: Stopwatch & Timer Listeners ---
+        // Timer Listeners
         document.getElementById('startStopwatchBtn').addEventListener('click', startStopwatch);
         document.getElementById('stopStopwatchBtn').addEventListener('click', stopStopwatch);
         document.getElementById('resetStopwatchBtn').addEventListener('click', resetStopwatch);
-        
         document.getElementById('startTimerBtn').addEventListener('click', startTimer);
         document.getElementById('stopTimerBtn').addEventListener('click', stopTimer);
         document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
         
-        // Initialize timer audio context on user interaction
-        const initAudio = () => {
-            if (!timerAudioContext) {
-                timerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            document.body.removeEventListener('click', initAudio);
-        };
-        // Use 'click' or 'keydown' as robust ways to ensure user interaction
+        const initAudio = () => { if (!timerAudioContext) timerAudioContext = new (window.AudioContext || window.webkitAudioContext)(); document.body.removeEventListener('click', initAudio); };
         document.body.addEventListener('click', initAudio, { once: true });
         document.body.addEventListener('keydown', initAudio, { once: true });
     }
     
     function handleMonthYearChange() {
-        currentMonth = parseInt(monthSelect.value);
-        currentYear = parseInt(yearSelect.value);
-        renderCalendar();
+        currentMonth = parseInt(monthSelect.value); currentYear = parseInt(yearSelect.value); renderCalendar();
     }
-
     function updateCalendarState(date) {
         currentSelectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        currentMonth = currentSelectedDate.getMonth();
-        currentYear = currentSelectedDate.getFullYear();
-        
-        monthSelect.value = currentMonth;
-        yearSelect.value = currentYear;
-        
-        eventDateInput.value = toLocalISODate(currentSelectedDate); // FIX: Use new local-aware function
-        
-        renderCalendar();
-        renderEventsForDay();
+        currentMonth = currentSelectedDate.getMonth(); currentYear = currentSelectedDate.getFullYear();
+        monthSelect.value = currentMonth; yearSelect.value = currentYear;
+        eventDateInput.value = toLocalISODate(currentSelectedDate);
+        document.getElementById('study-date').value = toLocalISODate(new Date()); // Default study date to today
+        renderCalendar(); renderEventsForDay();
     }
-
     function renderCalendar() {
-        // Clear grid but keep headers
-        while (calendarGrid.children.length > 7) {
-            calendarGrid.removeChild(calendarGrid.lastChild);
-        }
-
+        while (calendarGrid.children.length > 7) calendarGrid.removeChild(calendarGrid.lastChild);
         const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const today = new Date();
 
-        // Add blank days
         for (let i = 0; i < firstDayOfMonth; i++) {
-            const dayEl = document.createElement('div');
-            dayEl.className = 'calendar-day other-month';
-            calendarGrid.appendChild(dayEl);
+            const dayEl = document.createElement('div'); dayEl.className = 'calendar-day other-month'; calendarGrid.appendChild(dayEl);
         }
-
-        // Add month days
         for (let i = 1; i <= daysInMonth; i++) {
             const dayEl = document.createElement('div');
             const dayDate = new Date(currentYear, currentMonth, i);
-            const dateStr = toLocalISODate(dayDate); // FIX: Use new local-aware function
-            
-            dayEl.className = 'calendar-day';
-            dayEl.textContent = i;
-            dayEl.dataset.date = dateStr;
+            const dateStr = toLocalISODate(dayDate);
+            dayEl.className = 'calendar-day'; dayEl.textContent = i; dayEl.dataset.date = dateStr;
 
-            // Mark today
-            if (isSameDay(dayDate, today)) {
-                dayEl.classList.add('today');
-            }
+            if (isSameDay(dayDate, today)) dayEl.classList.add('today');
+            if (isSameDay(dayDate, currentSelectedDate)) dayEl.classList.add('selected');
             
-            // Mark selected
-            if (isSameDay(dayDate, currentSelectedDate)) {
-                dayEl.classList.add('selected');
-            }
-            
-            // Check for events on this day
             const hasPublicEvent = publicEvents.some(e => e.date === dateStr);
             const hasPersonalEvent = personalEvents.some(e => e.date === dateStr);
-
             if (hasPublicEvent || hasPersonalEvent) {
-                const marker = document.createElement('div');
-                marker.className = 'event-marker';
-                if (hasPublicEvent) {
-                    marker.classList.add('public');
-                }
+                const marker = document.createElement('div'); marker.className = 'event-marker';
+                if (hasPublicEvent) marker.classList.add('public');
                 dayEl.appendChild(marker);
             }
-
-            dayEl.addEventListener('click', () => {
-                updateCalendarState(dayDate);
-            });
-            
+            dayEl.addEventListener('click', () => updateCalendarState(dayDate));
             calendarGrid.appendChild(dayEl);
         }
     }
-    
     function renderEventsForDay() {
         eventList.innerHTML = '';
-        const selectedDateStr = toLocalISODate(currentSelectedDate); // FIX: Use new local-aware function
+        const selectedDateStr = toLocalISODate(currentSelectedDate);
         eventListHeader.textContent = `Events for: ${currentSelectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
         
-        const dayEvents = [
-            ...personalEvents.filter(e => e.date === selectedDateStr),
-            ...publicEvents.filter(e => e.date === selectedDateStr)
-        ];
-        
-        // Sort events by time
+        const dayEvents = [...personalEvents.filter(e => e.date === selectedDateStr), ...publicEvents.filter(e => e.date === selectedDateStr)];
         dayEvents.sort((a, b) => a.time.localeCompare(b.time));
 
-        if (dayEvents.length === 0) {
-            eventList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No events for this day.</p>`;
-            return;
-        }
+        if (dayEvents.length === 0) { eventList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No events for this day.</p>`; return; }
 
         dayEvents.forEach(event => {
             const isPublicEvent = event.isPublic; 
+            const eventItem = document.createElement('div'); eventItem.className = 'event-item';
+            eventItem.dataset.id = event.id; eventItem.dataset.isPublic = isPublicEvent;
             
-            const eventItem = document.createElement('div');
-            eventItem.className = 'event-item';
-            eventItem.dataset.id = event.id;
-            eventItem.dataset.isPublic = isPublicEvent;
-
-            const details = document.createElement('div');
-            details.className = 'event-item-details';
+            const details = document.createElement('div'); details.className = 'event-item-details';
+            details.innerHTML = `<span class="tag ${isPublicEvent ? 'public' : ''}">${isPublicEvent ? 'PUBLIC' : 'MY EVENT'}</span><span>${event.time}</span> ${event.description}`;
             
-            const tag = document.createElement('span');
-            tag.className = 'tag';
-            tag.textContent = isPublicEvent ? 'PUBLIC' : 'MY EVENT';
-            if (isPublicEvent) tag.classList.add('public');
-
-            details.appendChild(tag);
-            details.innerHTML += `<span>${event.time}</span> ${event.description}`;
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-event';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.title = 'Delete event';
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-event';
+            deleteBtn.innerHTML = '&times;'; deleteBtn.title = 'Delete event';
             deleteBtn.addEventListener('click', handleDeleteEvent);
+            if (isPublicEvent && currentUserRole !== 'teacher') deleteBtn.style.display = 'none';
             
-            // Hide delete button if it's a public event and user is not a teacher
-            if (isPublicEvent && currentUserRole !== 'teacher') {
-                deleteBtn.style.display = 'none';
-            }
-            
-            eventItem.appendChild(details);
-            eventItem.appendChild(deleteBtn);
-            eventList.appendChild(eventItem);
+            eventItem.appendChild(details); eventItem.appendChild(deleteBtn); eventList.appendChild(eventItem);
         });
     }
 
     function renderTodos() {
         todoList.innerHTML = '';
         
-        // Sort todos: Status first, then "Notes" (No Date), then Nearest Due Date
+        // SORTING LOGIC: Notes > Active > Done
         const sortedTodos = [...todoItems].sort((a, b) => {
-            // 1. Primary Sort: Status (Active items top, Done items bottom)
             const statusOrder = { 'not-started': 1, 'half-done': 2, 'full-done': 3 };
             const statusDiff = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
-            
             if (statusDiff !== 0) return statusDiff;
-
-            // 2. Secondary Sort: Deadline
-            // If 'a' has NO deadline, it's a "Note" -> put it at the TOP (-1)
+            // Notes (no deadline) float to top
             if (!a.deadline && b.deadline) return -1;
-            
-            // If 'b' has NO deadline, put it at the TOP (1 means 'a' goes below 'b')
             if (a.deadline && !b.deadline) return 1;
-            
-            // If both have deadlines, compare them (Earliest date first)
-            if (a.deadline && b.deadline) {
-                return a.deadline.localeCompare(b.deadline);
-            }
-            
-            // If neither has a deadline, keep original order
+            // Both have deadline -> compare
+            if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
             return 0;
         });
         
-        if (sortedTodos.length === 0) {
-            todoList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No tasks added yet.</p>`;
-            return;
-        }
+        if (sortedTodos.length === 0) { todoList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">No tasks added yet.</p>`; return; }
 
         sortedTodos.forEach(todo => {
-            const todoItem = document.createElement('div');
-            todoItem.className = 'todo-item';
-            todoItem.dataset.id = todo.id;
-
-            // Status Select
-            const statusSelect = document.createElement('select');
-            statusSelect.className = 'status-select';
-            const statuses = [
-                { value: 'not-started', text: 'Not Started' },
-                { value: 'half-done', text: 'Half Done' },
-                { value: 'full-done', text: 'Full Done' }
-            ];
-            statuses.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s.value;
-                option.textContent = s.text;
-                if (s.value === todo.status) option.selected = true;
-                statusSelect.appendChild(option);
+            const todoItem = document.createElement('div'); todoItem.className = 'todo-item'; todoItem.dataset.id = todo.id;
+            const statusSelect = document.createElement('select'); statusSelect.className = 'status-select';
+            [{value:'not-started',text:'Not Started'},{value:'half-done',text:'Half Done'},{value:'full-done',text:'Full Done'}].forEach(s => {
+                const option = document.createElement('option'); option.value = s.value; option.textContent = s.text;
+                if (s.value === todo.status) option.selected = true; statusSelect.appendChild(option);
             });
             
-            // Details
-            const details = document.createElement('div');
-            details.className = 'todo-item-details';
-            
-            // **MODIFIED: Make description editable**
-            const descriptionSpan = document.createElement('span');
-            descriptionSpan.className = 'todo-description-text';
-            descriptionSpan.textContent = todo.description;
-            details.appendChild(descriptionSpan);
-            
-            // (Existing status class logic)
+            const details = document.createElement('div'); details.className = 'todo-item-details';
             if (todo.status === 'half-done') details.classList.add('status-half-done');
             if (todo.status === 'full-done') details.classList.add('status-full-done');
+            
+            const descriptionSpan = document.createElement('span'); descriptionSpan.className = 'todo-description-text'; descriptionSpan.textContent = todo.description;
+            details.appendChild(descriptionSpan);
 
-            // Deadline
             if (todo.deadline) {
-                const deadlineEl = document.createElement('span');
-                deadlineEl.className = 'todo-deadline';
-                deadlineEl.textContent = `Deadline: ${todo.deadline}`;
-                
-                // **NEW: Due Status Logic**
-                if (todo.status !== 'full-done') { // Don't show due status if it's done
-                    const today = new Date(toLocalISODate(new Date())); // Get today's date at 00:00
-                    const deadlineDate = new Date(todo.deadline); // This will be at 00:00 local
-                    
-                    const timeDiff = deadlineDate.getTime() - today.getTime();
-                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-                    if (dayDiff < 0) {
-                        deadlineEl.classList.add('is-due');
-                        deadlineEl.textContent += ' (OVERDUE)';
-                    } else if (dayDiff === 0) {
-                        deadlineEl.classList.add('is-due-soon');
-                        deadlineEl.textContent += ' (DUE TODAY)';
-                    } else if (dayDiff <= 3) {
-                        deadlineEl.classList.add('is-due-soon');
-                        deadlineEl.textContent += ` (DUE IN ${dayDiff} DAY${dayDiff > 1 ? 'S' : ''})`;
-                    }
+                const deadlineEl = document.createElement('span'); deadlineEl.className = 'todo-deadline'; deadlineEl.textContent = `Deadline: ${todo.deadline}`;
+                if (todo.status !== 'full-done') {
+                    const diff = Math.ceil((new Date(todo.deadline) - new Date(toLocalISODate(new Date()))) / (86400000));
+                    if (diff < 0) { deadlineEl.classList.add('is-due'); deadlineEl.textContent += ' (OVERDUE)'; }
+                    else if (diff === 0) { deadlineEl.classList.add('is-due-soon'); deadlineEl.textContent += ' (DUE TODAY)'; }
+                    else if (diff <= 3) { deadlineEl.classList.add('is-due-soon'); deadlineEl.textContent += ` (DUE IN ${diff} DAYS)`; }
                 }
-                // **END NEW**
-
                 details.appendChild(deadlineEl);
             }
 
-            // **NEW: Add Edit button**
-            const editBtn = document.createElement('button');
-            editBtn.className = 'edit-todo-btn';
-            editBtn.innerHTML = '&#9998;'; // Pencil icon
-            editBtn.title = 'Edit task';
-
-            // Delete Button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-todo';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.title = 'Delete task';
+            const editBtn = document.createElement('button'); editBtn.className = 'edit-todo-btn'; editBtn.innerHTML = '&#9998;'; editBtn.title = 'Edit task';
+            editBtn.addEventListener('click', () => handleEditTodo(todoItem, descriptionSpan, todo));
+            
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-todo'; deleteBtn.innerHTML = '&times;'; deleteBtn.title = 'Delete task';
             deleteBtn.addEventListener('click', () => handleDeleteTodo(todo.id));
 
-            todoItem.appendChild(statusSelect);
-            todoItem.appendChild(details);
-            todoItem.appendChild(editBtn); // Add edit button
-            todoItem.appendChild(deleteBtn);
+            todoItem.appendChild(statusSelect); todoItem.appendChild(details); todoItem.appendChild(editBtn); todoItem.appendChild(deleteBtn);
             todoList.appendChild(todoItem);
-            
-            // **NEW: Add event listener for the edit button**
-            editBtn.addEventListener('click', () => handleEditTodo(todoItem, descriptionSpan, todo));
         });
     }
-    
-    // --- Firestore Listeners ---
+
     function listenForPersonalEvents() {
-        if (!currentUserId) return;
-        unsubscribePersonalEvents(); // Detach old listener
-        
-        const personalEventsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/events`);
-        const q = query(personalEventsRef);
-        
-        unsubscribePersonalEvents = onSnapshot(q, (snapshot) => {
-            personalEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderCalendar();
-            renderEventsForDay();
-        }, (error) => {
-            console.error("Error listening to personal events:", error);
-            showModal("Error", "Could not load personal events.");
+        if (!currentUserId) return; unsubscribePersonalEvents();
+        unsubscribePersonalEvents = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/events`)), (snapshot) => {
+            personalEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCalendar(); renderEventsForDay();
         });
     }
-    
     function listenForPublicEvents() {
-        unsubscribePublicEvents(); // Detach old listener
-        
-        const publicEventsRef = collection(db, `artifacts/${appId}/public/data/public_events`);
-        const q = query(publicEventsRef);
-        
-        unsubscribePublicEvents = onSnapshot(q, (snapshot) => {
-            publicEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderCalendar();
-            renderEventsForDay();
-        }, (error) => {
-            console.error("Error listening to public events:", error);
-            showModal("Error", "Could not load public events.");
+        unsubscribePublicEvents();
+        unsubscribePublicEvents = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/public_events`)), (snapshot) => {
+            publicEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCalendar(); renderEventsForDay();
         });
     }
-
     function listenForTodos() {
-        if (!currentUserId) return;
-        unsubscribeTodos(); // Detach old listener
-        
-        const todosRef = collection(db, `artifacts/${appId}/users/${currentUserId}/todos`);
-        const q = query(todosRef); // Add orderBy('createdAt', 'desc') if you add timestamps
-        
-        unsubscribeTodos = onSnapshot(q, (snapshot) => {
-            todoItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderTodos();
-        }, (error) => {
-            console.error("Error listening to todos:", error);
-            showModal("Error", "Could not load tasks.");
+        if (!currentUserId) return; unsubscribeTodos();
+        unsubscribeTodos = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`)), (snapshot) => {
+            todoItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTodos();
         });
     }
 
-    // --- Firestore Handlers (Write, Update, Delete) ---
     async function handleAddEvent(e) {
         e.preventDefault();
-        const eventDesc = eventDescInput.value.trim();
-        const eventTime = eventTimeInput.value;
-        const selectedDateStr = eventDateInput.value;
+        const eventDesc = eventDescInput.value.trim(); const eventTime = eventTimeInput.value; const selectedDateStr = eventDateInput.value;
+        if (!eventDesc || !eventTime || !selectedDateStr) { showModal('Error', 'Please fill in all event fields.'); return; }
         const isPublic = publicEventCheckbox.checked && currentUserRole === 'teacher';
-
-        if (!eventDesc || !eventTime || !selectedDateStr) {
-            showModal('Error', 'Please fill in all event fields.');
-            return;
-        }
-
         try {
-            const newEvent = {
-                date: selectedDateStr,
-                time: eventTime,
-                description: eventDesc,
-                isPublic: isPublic,
-                createdAt: serverTimestamp(),
-                userId: currentUserId // Store creator ID even for public events
-            };
-
-            const collectionPath = isPublic 
-                ? `artifacts/${appId}/public/data/public_events`
-                : `artifacts/${appId}/users/${currentUserId}/events`;
-            
-            await addDoc(collection(db, collectionPath), newEvent);
-            
-            // Clear form
-            eventDescInput.value = '';
-            eventTimeInput.value = '';
-            publicEventCheckbox.checked = false;
-            
-        } catch (error) {
-            console.error("Error adding event:", error);
-            showModal('Error', `Could not add event: ${error.message}`);
-        }
+            const collectionPath = isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
+            await addDoc(collection(db, collectionPath), { date: selectedDateStr, time: eventTime, description: eventDesc, isPublic, createdAt: serverTimestamp(), userId: currentUserId });
+            eventDescInput.value = ''; eventTimeInput.value = ''; publicEventCheckbox.checked = false;
+        } catch (error) { showModal('Error', `Could not add event: ${error.message}`); }
     }
-    
     async function handleDeleteEvent(e) {
         const eventEl = e.target.closest('.event-item');
-        const eventId = eventEl.dataset.id;
-        const isPublicEvent = eventEl.dataset.isPublic === 'true';
-
-        if (!eventId) return;
-
-        // Confirmation
-        showModal(
-            'Delete Event', 
-            'Are you sure you want to delete this event?', 
-            [
-                { 
-                    text: 'Cancel', 
-                    className: 'logout-btn' 
-                },
-                { 
-                    text: 'Delete', 
-                    className: 'btn-primary', 
-                    onClick: async () => {
-                        try {
-                            const collectionPath = isPublicEvent
-                                ? `artifacts/${appId}/public/data/public_events`
-                                : `artifacts/${appId}/users/${currentUserId}/events`;
-                            
-                            await deleteDoc(doc(db, collectionPath, eventId));
-                        } catch (error) {
-                            console.error("Error deleting event:", error);
-                            showModal('Error', `Could not delete event: ${error.message}`);
-                        }
-                    }
-                }
-            ]
-        );
+        showModal('Delete Event', 'Are you sure?', [{ text: 'Cancel', className: 'logout-btn' }, { text: 'Delete', className: 'btn-primary', onClick: async () => {
+            try {
+                const path = eventEl.dataset.isPublic === 'true' ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
+                await deleteDoc(doc(db, path, eventEl.dataset.id));
+            } catch (error) { showModal('Error', `Error: ${error.message}`); }
+        }}]);
     }
-    
     async function handleAddTodo(e) {
         e.preventDefault();
         const description = todoInput.value.trim();
-        const deadline = todoDeadlineInput.value || null; // Store as null if empty
-        
-        if (!description) {
-            showModal('Error', 'Please enter a task description.');
-            return;
-        }
-
+        if (!description) { showModal('Error', 'Please enter a task description.'); return; }
         try {
-            const newTodo = {
-                description: description,
-                status: 'not-started', // Default status
-                deadline: deadline,
-                createdAt: serverTimestamp(),
-                userId: currentUserId
-            };
-            
-            const todosRef = collection(db, `artifacts/${appId}/users/${currentUserId}/todos`);
-            await addDoc(todosRef, newTodo);
-            
-            todoInput.value = '';
-            todoDeadlineInput.value = '';
-
-        } catch (error) {
-            console.error("Error adding todo:", error);
-            showModal('Error', `Could not add task: ${error.message}`);
-        }
+            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`), { description, status: 'not-started', deadline: todoDeadlineInput.value || null, createdAt: serverTimestamp(), userId: currentUserId });
+            todoInput.value = ''; todoDeadlineInput.value = '';
+        } catch (error) { showModal('Error', `Error: ${error.message}`); }
     }
-
-    // *** NEW: Handle immediate status change from dropdown
     function handleTodoStatusChange(e) {
         if (!e.target.classList.contains('status-select')) return;
-        
         const todoItem = e.target.closest('.todo-item');
-        const docId = todoItem.dataset.id;
-        const newStatus = e.target.value;
-        
-        if (!docId) return;
-
-        // Update visuals immediately
-        const details = todoItem.querySelector('.todo-item-details');
-        details.classList.remove('status-half-done', 'status-full-done');
-        if (newStatus === 'half-done') details.classList.add('status-half-done');
-        if (newStatus === 'full-done') details.classList.add('status-full-done');
-        
-        // Update Firestore in the background
-        handleUpdateTodoStatus(docId, newStatus);
-        
-        // Re-render todos to update deadline styles (e.g., hide "OVERDUE" if now "full-done")
-        // This is a simple way to ensure UI consistency.
-        renderTodos();
+        handleUpdateTodoStatus(todoItem.dataset.id, e.target.value);
+        renderTodos(); // Immediate UI update
     }
-    
     async function handleUpdateTodoStatus(docId, newStatus) {
-        try {
-            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId);
-            await updateDoc(todoRef, { status: newStatus });
-        } catch (error) {
-            console.error("Error updating todo status:", error);
-            showModal('Error', `Could not update task: ${error.message}`);
-        }
+        try { await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId), { status: newStatus }); } catch (e) { console.error(e); }
     }
-
-    // *** NEW: Handle editing a todo item
     function handleEditTodo(todoItem, descriptionSpan, todo) {
         const detailsDiv = todoItem.querySelector('.todo-item-details');
-        
-        // Check if already editing
         if (detailsDiv.classList.contains('is-editing')) return;
-        
         detailsDiv.classList.add('is-editing');
-        
-        // Create input
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'edit-input';
-        input.value = todo.description;
-        
-        // Insert input before the description span
-        detailsDiv.insertBefore(input, descriptionSpan);
-        input.focus();
-        input.select();
-
-        const saveChanges = async () => {
-            // Check if element still exists (in case of race condition with delete)
+        const input = document.createElement('input'); input.type = 'text'; input.className = 'edit-input'; input.value = todo.description;
+        detailsDiv.insertBefore(input, descriptionSpan); input.focus(); input.select();
+        const save = async () => {
             if (!detailsDiv.contains(input)) return;
-
-            const newDescription = input.value.trim();
-            
-            // Clean up UI first
-            detailsDiv.classList.remove('is-editing');
-            if (detailsDiv.contains(input)) {
-                detailsDiv.removeChild(input);
-            }
-            // Remove listeners
-            input.removeEventListener('blur', saveChanges);
-            input.removeEventListener('keydown', handleKey);
-
-            // If description is empty or unchanged, don't hit Firestore
-            if (!newDescription || newDescription === todo.description) {
-                return;
-            }
-
-            // Save to Firestore
-            try {
-                const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todo.id);
-                await updateDoc(todoRef, { description: newDescription });
-                // Listener will update the UI
-            } catch (error) {
-                console.error("Error updating todo:", error);
-                showModal('Error', `Could not update task: ${error.message}`);
-                // Listener will revert to old description on error
+            const newDesc = input.value.trim();
+            detailsDiv.classList.remove('is-editing'); detailsDiv.removeChild(input);
+            if (newDesc && newDesc !== todo.description) {
+                try { await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, todo.id), { description: newDesc }); }
+                catch (e) { showModal('Error', e.message); }
             }
         };
-
-        const handleKey = (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveChanges();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                // Revert
-                detailsDiv.classList.remove('is-editing');
-                if (detailsDiv.contains(input)) {
-                    detailsDiv.removeChild(input);
-                }
-                // Remove listeners
-                input.removeEventListener('blur', saveChanges);
-                input.removeEventListener('keydown', handleKey);
-            }
-        };
-
-        input.addEventListener('blur', saveChanges);
-        input.addEventListener('keydown', handleKey);
+        input.addEventListener('blur', save);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') { detailsDiv.classList.remove('is-editing'); detailsDiv.removeChild(input); } });
     }
-
-
     async function handleDeleteTodo(docId) {
-        if (!docId) return;
-        
-        // Confirmation
-        showModal(
-            'Delete Task', 
-            'Are you sure you want to delete this task?', 
-            [
-                { 
-                    text: 'Cancel', 
-                    className: 'logout-btn' 
-                },
-                { 
-                    text: 'Delete', 
-                    className: 'btn-primary', 
-                    onClick: async () => {
-                        try {
-                            const todoRef = doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId);
-                            await deleteDoc(todoRef);
-                        } catch (error) {
-                            console.error("Error deleting todo:", error);
-                            showModal('Error', `Could not delete task: ${error.message}`);
-                        }
-                    }
-                }
-            ]
-        );
+        showModal('Delete Task', 'Sure?', [{ text: 'Cancel', className: 'logout-btn' }, { text: 'Delete', className: 'btn-primary', onClick: async () => {
+             try { await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, docId)); } catch (e) { showModal('Error', e.message); }
+        }}]);
     }
+    // #endregion
 
-    // --- XP SYSTEM FUNCTIONS ---
-    
+    // #region XP SYSTEM
     function listenForProfileChanges() {
-        if (!currentUserId) return;
-        unsubscribeProfile(); // Detach old listener
-        
-        const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-        
-        unsubscribeProfile = onSnapshot(profileRef, (doc) => {
+        if (!currentUserId) return; unsubscribeProfile();
+        unsubscribeProfile = onSnapshot(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
                 xpBalance = data.xpBalance || 0;
-                // *** FIX: Round the display value to 1 decimal place
                 document.getElementById('xpBalanceDisplay').textContent = parseFloat(xpBalance.toFixed(1));
+                
+                // LEVEL CALCULATION
+                const xpPerLevel = 1000;
+                const currentLevel = Math.floor(xpBalance / xpPerLevel) + 1;
+                const currentLevelStartXp = (currentLevel - 1) * xpPerLevel;
+                const xpInCurrentLevel = xpBalance - currentLevelStartXp;
+                let progressPercent = (xpInCurrentLevel / xpPerLevel) * 100;
+                if (progressPercent > 100) progressPercent = 100;
+
+                document.getElementById('xpProgressBar').style.width = `${progressPercent}%`;
+                document.getElementById('xpProgressText').textContent = `Lvl ${currentLevel}: ${Math.floor(xpInCurrentLevel)} / ${xpPerLevel} XP`;
+                
                 updateRedeemButtons();
             } else {
-                // This case should be handled by onAuthStateChanged, but as a fallback:
-                xpBalance = 0;
-                document.getElementById('xpBalanceDisplay').textContent = '0';
-                updateRedeemButtons();
+                xpBalance = 0; document.getElementById('xpBalanceDisplay').textContent = '0';
+                document.getElementById('xpProgressBar').style.width = `0%`;
+                document.getElementById('xpProgressText').textContent = `Lvl 1: 0 / 1000 XP`;
             }
-        }, (error) => {
-            console.error("Error listening to profile:", error);
-            showModal("Error", "Could not load XP balance.");
         });
     }
-
     function listenForStudyHistory() {
-        if (!currentUserId) return;
-        unsubscribeStudyHistory(); // Detach old listener
-
-        const studyHistoryRef = collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`);
-        // Get the latest 50 logs. We will sort them by date in JS.
-        const q = query(studyHistoryRef, limit(50));
-        
-        unsubscribeStudyHistory = onSnapshot(q, (snapshot) => {
-            studyHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // Sort by date descending (newest first)
-            studyHistory.sort((a, b) => b.date.localeCompare(a.date));
+        if (!currentUserId) return; unsubscribeStudyHistory();
+        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(50)), (snapshot) => {
+            studyHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => b.date.localeCompare(a.date));
             renderStudyHistory();
-        }, (error) => {
-            console.error("Error listening to study history:", error);
-            showModal("Error", "Could not load study history.");
         });
     }
-
     function renderStudyHistory() {
-        const listEl = document.getElementById('study-history-list');
-        listEl.innerHTML = ''; // Clear list
-        
-        if (studyHistory.length === 0) {
-            listEl.innerHTML = `<p style="color: var(--text-secondary); text-align: center;">No study logs yet.</p>`;
-            return;
-        }
-
-        // Show only the 10 most recent logs from our sorted list
-        const recentLogs = studyHistory.slice(0, 10);
-        
-        recentLogs.forEach(log => {
-            const itemEl = document.createElement('div');
-            itemEl.className = 'study-log-item';
-            
-            const isRedemption = log.description;
-            const pointsClass = log.pointsEarned > 0 ? 'positive' : 'negative';
-            const displayHours = log.hours ? log.hours.toFixed(2) : '0';
-            const displayPoints = log.pointsEarned ? log.pointsEarned.toFixed(1) : '0';
-
-            itemEl.innerHTML = `
-                <div>
-                    <span class="log-date">${log.date} ${isRedemption ? '- ' + log.description : ''}</span>
-                    <span class="log-hours">${isRedemption ? '' : `(${displayHours} hrs)`}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="log-points ${pointsClass}">${log.pointsEarned > 0 ? '+' : ''}${displayPoints} XP</span>
-                    ${isRedemption ? '' : `<button class="delete-log-btn" data-id="${log.id}" data-points="${log.pointsEarned}">&times;</button>`}
-                </div>
-            `;
-
+        const listEl = document.getElementById('study-history-list'); listEl.innerHTML = '';
+        if (studyHistory.length === 0) { listEl.innerHTML = `<p style="color: var(--text-secondary); text-align: center;">No study logs yet.</p>`; return; }
+        studyHistory.slice(0, 10).forEach(log => {
+            const itemEl = document.createElement('div'); itemEl.className = 'study-log-item';
+            const isRedemption = log.pointsEarned < 0;
+            itemEl.innerHTML = `<div><span class="log-date">${log.date} ${isRedemption ? '- ' + log.description : ''}</span><span class="log-hours">${isRedemption ? '' : `(${log.hours.toFixed(2)} hrs)`}</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span class="log-points ${log.pointsEarned > 0 ? 'positive' : 'negative'}">${log.pointsEarned > 0 ? '+' : ''}${log.pointsEarned.toFixed(1)} XP</span>
+            ${isRedemption ? '' : `<button class="delete-log-btn" data-id="${log.id}" data-points="${log.pointsEarned}">&times;</button>`}</div>`;
             listEl.appendChild(itemEl);
         });
     }
-
     function updateRedeemButtons() {
         document.getElementById('redeemHalfDayBtn').disabled = xpBalance < 150;
         document.getElementById('redeemFullDayBtn').disabled = xpBalance < 300;
     }
-
     async function handleLogStudy() {
         const date = document.getElementById('study-date').value;
-        const hoursInput = parseInt(document.getElementById('study-hours-input').value) || 0;
-        const minutesInput = parseInt(document.getElementById('study-minutes-input').value) || 0;
-
-        if (hoursInput < 0 || minutesInput < 0 || minutesInput > 59) {
-            showModal('Error', 'Please enter valid hours (0 or more) and minutes (0-59).');
-            return;
-        }
-
-        // Convert to decimal hours and round to 2 places
-        const totalDecimalHours = hoursInput + (minutesInput / 60);
-        const hours = parseFloat(totalDecimalHours.toFixed(2));
-
-        if (!date || isNaN(hours) || hours <= 0) {
-            showModal('Error', 'Please enter a valid date and a total time greater than 0 minutes.');
-            return;
-        }
-
-        // Check if a log for this date already exists
-        const existingLog = studyHistory.find(log => log.date === date && log.hours > 0);
-        if (existingLog) {
-            showModal('Error', 'A study log for this date already exists. You can only log study time once per day.');
-            return;
-        }
-
+        const hours = parseFloat((parseInt(document.getElementById('study-hours-input').value||0) + (parseInt(document.getElementById('study-minutes-input').value||0)/60)).toFixed(2));
+        if (!date || hours <= 0) { showModal('Error', 'Invalid time.'); return; }
+        if (studyHistory.find(log => log.date === date && log.hours > 0)) { showModal('Error', 'Already logged today.'); return; }
         try {
-            // Calculate points from hours, rounded to 1 decimal place
-            const pointsFromHours = parseFloat((hours * 10).toFixed(1));
-            
-            // Create a temporary log to pass to the bonus checker
-            const tempLogForBonusCheck = {
-                date: date,
-                hours: hours,
-                pointsEarned: pointsFromHours // This is temporary, just for the check
-            };
-
-            // Check for bonus. Pass the new log and the *current* history.
-            const bonusPoints = await checkConsecutiveBonus(tempLogForBonusCheck, studyHistory);
-            const totalPointsForThisLog = pointsFromHours + bonusPoints;
-
-            // This is the final log object to be saved
-            const newLog = {
-                date: date,
-                hours: hours,
-                pointsEarned: totalPointsForThisLog, // Store the total (hours + bonus)
-                createdAt: serverTimestamp(),
-                userId: currentUserId
-            };
-
-            // Update profile balance
-            const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-            // Use increment for safer concurrent updates
-            await updateDoc(profileRef, { xpBalance: increment(totalPointsForThisLog) });
-
-            // Add the new log to history (this will trigger the listener to update the UI)
-            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), newLog);
-
-            let successMessage = `Logged ${hours.toFixed(2)} hours and earned ${pointsFromHours.toFixed(1)} XP!`;
-            if (bonusPoints > 0) {
-                successMessage = `Logged ${hours.toFixed(2)} hours, earned ${pointsFromHours.toFixed(1)} XP + ${bonusPoints} bonus for a 5-day streak! Total: ${totalPointsForThisLog.toFixed(1)} XP`;
-            }
-            showModal('Success', successMessage);
-            
-            // Clear inputs
-            document.getElementById('study-hours-input').value = '';
-            document.getElementById('study-minutes-input').value = '';
-
-        } catch (error) {
-            console.error("Error logging study time:", error);
-            showModal('Error', `Could not log study time: ${error.message}`);
-        }
+            const points = parseFloat((hours * 10).toFixed(1));
+            const bonus = await checkConsecutiveBonus({ date, hours }, studyHistory);
+            const total = points + bonus;
+            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(total) });
+            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date, hours, pointsEarned: total, createdAt: serverTimestamp(), userId: currentUserId });
+            showModal('Success', bonus > 0 ? `Logged! ${points} XP + ${bonus} Bonus!` : `Logged! ${points} XP.`);
+            document.getElementById('study-hours-input').value = ''; document.getElementById('study-minutes-input').value = '';
+        } catch (e) { showModal('Error', e.message); }
     }
-
-    async function checkConsecutiveBonus(newLog, currentHistory) {
-        if (newLog.hours < 3) return 0; // No bonus if study time is less than 3 hours
-
-        // Combine new log with history, filter for >3hr logs, and sort by date
-        const allLogs = [...currentHistory, newLog]
-            .filter(log => log.hours >= 3)
-            .sort((a, b) => b.date.localeCompare(a.date));
-
-        // Find the index of our new log
-        const newLogIndex = allLogs.findIndex(log => log.date === newLog.date);
-        
-        // This should not happen, but as a safeguard
-        if (newLogIndex === -1) return 0; 
-        
-        let consecutiveDays = 1; // Start with the new log
-        let lastDate = new Date(allLogs[newLogIndex].date);
-
-        // Iterate through older logs
-        for (let i = newLogIndex + 1; i < allLogs.length; i++) {
-            const currentDate = new Date(allLogs[i].date);
-            const diffTime = lastDate.getTime() - currentDate.getTime();
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 1) {
-                // This day is exactly 1 day before the last
-                consecutiveDays++;
-                lastDate = currentDate;
-            } else if (diffDays > 1) {
-                // Gap in days, break streak
-                break;
-            }
-            // If diffDays is 0, it's a duplicate (should be filtered, but good to handle)
-            
-            if (consecutiveDays === 5) {
-                // As soon as we hit 5, award bonus and stop.
-                // This awards the bonus *on* the 5th day.
-                return 50;
-            }
+    async function checkConsecutiveBonus(newLog, history) {
+        if (newLog.hours < 3) return 0;
+        const logs = [...history, newLog].filter(l => l.hours >= 3).sort((a,b) => b.date.localeCompare(a.date));
+        const idx = logs.findIndex(l => l.date === newLog.date);
+        let streak = 1; let lastDate = new Date(logs[idx].date);
+        for (let i = idx + 1; i < logs.length; i++) {
+            const curr = new Date(logs[i].date); const diff = Math.round((lastDate - curr)/(86400000));
+            if (diff === 1) { streak++; lastDate = curr; } else if (diff > 1) break;
+            if (streak === 5) return 50;
         }
-        
-        return 0; // No 5-day streak found
+        return 0;
     }
-
-    function handleRedeemPoints(e) {
+    async function handleRedeemPoints(e) {
         const cost = parseInt(e.target.dataset.cost);
-        const itemName = cost === 150 ? "Half Day Off" : "Full Day Off";
-
-        if (xpBalance < cost) {
-            showModal('Error', 'Not enough XP to redeem this item.');
-            return;
-        }
-
-        showModal(
-            'Confirm Redemption',
-            `Are you sure you want to redeem a "${itemName}" for ${cost} XP?`,
-            [
-                { text: 'Cancel', className: 'logout-btn' },
-                {
-                    text: 'Redeem',
-                    className: 'btn-primary',
-                    onClick: async () => {
-                        try {
-                            // 1. Update profile balance
-                            const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                            // Use increment (negative) for safer concurrent updates
-                            await updateDoc(profileRef, { xpBalance: increment(-cost) });
-                            
-                            // 2. Add a redemption log to history
-                            const redemptionLog = {
-                                date: toLocalISODate(new Date()), // FIX: Use new local-aware function
-                                hours: 0,
-                                pointsEarned: -cost, // Negative points
-                                description: `Redeemed ${itemName}`,
-                                createdAt: serverTimestamp(),
-                                userId: currentUserId
-                            };
-                            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), redemptionLog);
-
-                            // *** FIX: Round the new balance in the success message
-                            const newBalance = xpBalance - cost; // xpBalance is the high-precision value from state
-                            showModal('Success', `Redeemed ${itemName}! Your new balance is ${parseFloat(newBalance.toFixed(1))} XP.`);
-                            // The listeners will handle updating the main UI display
-                        } catch (error) {
-                             console.error("Error redeeming points:", error);
-                             showModal('Error', `Could not redeem item: ${error.message}`);
-                        }
-                    }
-                }
-            ]
-        );
+        if (xpBalance < cost) { showModal('Error', 'Not enough XP.'); return; }
+        showModal('Confirm', `Redeem for ${cost} XP?`, [{ text: 'Cancel', className: 'logout-btn'}, { text: 'Redeem', className: 'btn-primary', onClick: async () => {
+             try {
+                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(-cost) });
+                await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date: toLocalISODate(new Date()), hours: 0, pointsEarned: -cost, description: `Redeemed Reward`, createdAt: serverTimestamp(), userId: currentUserId });
+                showModal('Success', 'Redeemed!');
+             } catch (e) { showModal('Error', e.message); }
+        }}]);
     }
-
-    // *** NEW: Function to delete a study log
-    function handleDeleteStudyLog(e) {
+    async function handleDeleteStudyLog(e) {
         if (!e.target.classList.contains('delete-log-btn')) return;
-
-        const button = e.target;
-        const logId = button.dataset.id;
-        const pointsEarned = parseFloat(button.dataset.points);
-
-        if (!logId || isNaN(pointsEarned)) return;
-
-        showModal(
-            'Delete Study Log',
-            `Are you sure you want to delete this log? This will subtract ${pointsEarned.toFixed(1)} XP from your balance. This action cannot be undone.`,
-            [
-                { text: 'Cancel', className: 'logout-btn' },
-                {
-                    text: 'Delete',
-                    className: 'btn-primary',
-                    onClick: async () => {
-                        try {
-                            // 1. Remove the points from the user's profile
-                            const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                            await updateDoc(profileRef, { xpBalance: increment(-pointsEarned) });
-
-                            // 2. Delete the log document
-                            const logRef = doc(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`, logId);
-                            await deleteDoc(logRef);
-
-                            showModal('Success', 'Study log deleted and XP balance updated.');
-                            // The listeners will automatically update the UI
-                        } catch (error) {
-                            console.error("Error deleting study log:", error);
-                            showModal('Error', `Could not delete log: ${error.message}`);
-                        }
-                    }
-                }
-            ]
-        );
+        const pts = parseFloat(e.target.dataset.points); const id = e.target.dataset.id;
+        showModal('Delete Log', `Remove log and deduct ${pts} XP?`, [{ text: 'Cancel', className: 'logout-btn' }, { text: 'Delete', className: 'btn-primary', onClick: async () => {
+            try {
+                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(-pts) });
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`, id));
+                showModal('Success', 'Deleted.');
+            } catch (e) { showModal('Error', e.message); }
+        }}]);
     }
+    // #endregion
 
-    // --- NEW: STOPWATCH FUNCTIONS ---
-    
+    // #region STUDY TOOLS (Stopwatch & Timer)
     function startStopwatch() {
-        if (stopwatchRunning) return;
-        stopwatchRunning = true;
-        stopwatchStartTime = Date.now() - stopwatchElapsedTime;
-        stopwatchInterval = setInterval(updateStopwatchDisplay, 10); // Update every 10ms
-        
-        document.getElementById('startStopwatchBtn').style.display = 'none';
-        document.getElementById('stopStopwatchBtn').style.display = 'inline-block';
+        if (stopwatchRunning) return; stopwatchRunning = true; stopwatchStartTime = Date.now() - stopwatchElapsedTime;
+        stopwatchInterval = setInterval(() => {
+            const elapsed = Date.now() - stopwatchStartTime;
+            let ms = elapsed % 1000, s = Math.floor((elapsed / 1000) % 60), m = Math.floor((elapsed / 60000) % 60), h = Math.floor(elapsed / 3600000);
+            document.getElementById('stopwatchDisplay').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+        }, 10);
+        document.getElementById('startStopwatchBtn').style.display = 'none'; document.getElementById('stopStopwatchBtn').style.display = 'inline-block';
     }
-    
     function stopStopwatch() {
-        if (!stopwatchRunning) return;
-        stopwatchRunning = false;
-        clearInterval(stopwatchInterval);
-        stopwatchElapsedTime = Date.now() - stopwatchStartTime;
-        
-        document.getElementById('startStopwatchBtn').style.display = 'inline-block';
-        document.getElementById('stopStopwatchBtn').style.display = 'none';
+        if (!stopwatchRunning) return; stopwatchRunning = false; clearInterval(stopwatchInterval); stopwatchElapsedTime = Date.now() - stopwatchStartTime;
+        document.getElementById('startStopwatchBtn').style.display = 'inline-block'; document.getElementById('stopStopwatchBtn').style.display = 'none';
     }
-    
-    function resetStopwatch() {
-        stopStopwatch();
-        stopwatchElapsedTime = 0;
-        document.getElementById('stopwatchDisplay').textContent = '00:00:00.000';
-    }
-    
-    function updateStopwatchDisplay() {
-        if (!stopwatchRunning) return;
-        const elapsed = Date.now() - stopwatchStartTime;
-        
-        let totalMilliseconds = elapsed;
-        let hours = Math.floor(totalMilliseconds / 3600000);
-        totalMilliseconds %= 3600000;
-        let minutes = Math.floor(totalMilliseconds / 60000);
-        totalMilliseconds %= 60000;
-        let seconds = Math.floor(totalMilliseconds / 1000);
-        let milliseconds = totalMilliseconds % 1000;
-        
-        document.getElementById('stopwatchDisplay').textContent = 
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
-    }
-
-    // --- NEW: TIMER FUNCTIONS ---
+    function resetStopwatch() { stopStopwatch(); stopwatchElapsedTime = 0; document.getElementById('stopwatchDisplay').textContent = '00:00:00.000'; }
     
     function startTimer() {
         if (timerRunning) return;
-
-        // Try to initialize audio context if it hasn't been already
-        if (!timerAudioContext) {
-             try {
-                timerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-             } catch (e) {
-                console.warn("Could not initialize AudioContext for timer beep.");
-             }
-        }
-
-        const hours = parseInt(document.getElementById('timerHours').value) || 0;
-        const minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
-        const seconds = parseInt(document.getElementById('timerSeconds').value) || 0;
-        
-        timerTotalTime = (hours * 3600) + (minutes * 60) + seconds;
-        
-        if (timerTotalTime <= 0) {
-            showModal('Timer Error', 'Please set a time greater than 0 seconds.');
-            return;
-        }
-        
-        // If timer was stopped, resume. Otherwise, start from total.
+        if (!timerAudioContext) try { timerAudioContext = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+        const h = parseInt(document.getElementById('timerHours').value)||0, m = parseInt(document.getElementById('timerMinutes').value)||0, s = parseInt(document.getElementById('timerSeconds').value)||0;
+        timerTotalTime = (h * 3600) + (m * 60) + s;
+        if (timerTotalTime <= 0) { showModal('Error', 'Set time > 0'); return; }
         timerTimeRemaining = timerTimeRemaining > 0 ? timerTimeRemaining : timerTotalTime;
-        
-        timerRunning = true;
-        toggleTimerInputs(false); // Disable inputs
-        timerInterval = setInterval(updateTimerDisplay, 1000);
-        
-        document.getElementById('startTimerBtn').style.display = 'none';
-        document.getElementById('stopTimerBtn').style.display = 'inline-block';
+        timerRunning = true; toggleTimerInputs(false);
+        timerInterval = setInterval(() => {
+            if (timerTimeRemaining <= 0) { stopTimer(); document.getElementById('timerDisplay').textContent = '00:00:00'; showModal('Done', 'Timer Finished!'); playTimerBeep(); timerTimeRemaining = 0; return; }
+            timerTimeRemaining--;
+            let r = timerTimeRemaining, th = Math.floor(r / 3600); r %= 3600; let tm = Math.floor(r / 60), ts = r % 60;
+            document.getElementById('timerDisplay').textContent = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}:${String(ts).padStart(2,'0')}`;
+        }, 1000);
+        document.getElementById('startTimerBtn').style.display = 'none'; document.getElementById('stopTimerBtn').style.display = 'inline-block';
     }
-    
-    function stopTimer() {
-        if (!timerRunning) return;
-        timerRunning = false;
-        clearInterval(timerInterval);
-        
-        document.getElementById('startTimerBtn').style.display = 'inline-block';
-        document.getElementById('stopTimerBtn').style.display = 'none';
-    }
-    
-    function resetTimer() {
-        stopTimer();
-        timerTimeRemaining = 0;
-        timerTotalTime = 0;
-        document.getElementById('timerDisplay').textContent = '00:00:00';
-        toggleTimerInputs(true); // Enable inputs
-        
-        // Reset input fields
-        document.getElementById('timerHours').value = '0';
-        document.getElementById('timerMinutes').value = '0';
-        document.getElementById('timerSeconds').value = '0';
-    }
-    
-    function updateTimerDisplay() {
-        if (!timerRunning) return;
-        
-        if (timerTimeRemaining <= 0) {
-            stopTimer();
-            document.getElementById('timerDisplay').textContent = '00:00:00';
-            toggleTimerInputs(true);
-            showModal('Timer Finished!', 'Your study timer has ended.');
-            playTimerBeep();
-            
-            // Reset timer values after it finishes
-            timerTimeRemaining = 0;
-            timerTotalTime = 0;
-            document.getElementById('timerHours').value = '0';
-            document.getElementById('timerMinutes').value = '0';
-            document.getElementById('timerSeconds').value = '0';
-            return;
-        }
-        
-        timerTimeRemaining--;
-        
-        let remaining = timerTimeRemaining;
-        let hours = Math.floor(remaining / 3600);
-        remaining %= 3600;
-        let minutes = Math.floor(remaining / 60);
-        let seconds = remaining % 60;
-        
-        document.getElementById('timerDisplay').textContent = 
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-    
-    function toggleTimerInputs(enabled) {
-        document.getElementById('timerHours').disabled = !enabled;
-        document.getElementById('timerMinutes').disabled = !enabled;
-        document.getElementById('timerSeconds').disabled = !enabled;
-    }
-    
+    function stopTimer() { if (!timerRunning) return; timerRunning = false; clearInterval(timerInterval); document.getElementById('startTimerBtn').style.display = 'inline-block'; document.getElementById('stopTimerBtn').style.display = 'none'; }
+    function resetTimer() { stopTimer(); timerTimeRemaining = 0; document.getElementById('timerDisplay').textContent = '00:00:00'; toggleTimerInputs(true); }
+    function toggleTimerInputs(en) { document.querySelectorAll('.timer-inputs input').forEach(i => i.disabled = !en); }
     function playTimerBeep() {
-        if (!timerAudioContext) {
-            console.warn("AudioContext not initialized. Click anywhere on the page first.");
-            return;
-        }
-
-        // Stop any previous beep
-        if (timerBeepNode) {
-            try {
-                timerBeepNode.stop();
-            } catch (e) {} // Ignore error if already stopped
-        }
-
-        // Create an oscillator
-        timerBeepNode = timerAudioContext.createOscillator();
-        const gainNode = timerAudioContext.createGain();
-
-        timerBeepNode.connect(gainNode);
-        gainNode.connect(timerAudioContext.destination);
-
-        // Set beep properties
-        timerBeepNode.type = 'sine';
-        timerBeepNode.frequency.setValueAtTime(880, timerAudioContext.currentTime); // A5 note
-        gainNode.gain.setValueAtTime(0.5, timerAudioContext.currentTime); // Volume
-
-        // Start and stop the beep
-        timerBeepNode.start(timerAudioContext.currentTime);
-        timerBeepNode.stop(timerAudioContext.currentTime + 0.5); // 500ms beep
+        if (!timerAudioContext) return;
+        if (timerBeepNode) try { timerBeepNode.stop(); } catch(e){}
+        timerBeepNode = timerAudioContext.createOscillator(); const g = timerAudioContext.createGain();
+        timerBeepNode.connect(g); g.connect(timerAudioContext.destination);
+        timerBeepNode.type = 'sine'; timerBeepNode.frequency.setValueAtTime(880, timerAudioContext.currentTime);
+        g.gain.setValueAtTime(0.5, timerAudioContext.currentTime);
+        timerBeepNode.start(timerAudioContext.currentTime); timerBeepNode.stop(timerAudioContext.currentTime + 0.5);
     }
+    // #endregion
 
-
-    // --- UTILITY FUNCTIONS ---
+    // #region UTILS & MODALS
+    function toLocalISODate(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+    function isSameDay(d1, d2) { return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
     
-    // FIX: Replaced toISODate with a new function that correctly handles local dates
-    // to avoid timezone conversion errors.
-    function toLocalISODate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    function showModal(title, msg, buttons = []) {
+        const m = document.getElementById('messageModal'); document.getElementById('modalTitle').textContent = title; document.getElementById('modalMessage').innerHTML = msg;
+        const bDiv = document.getElementById('modalButtons'); bDiv.innerHTML = '';
+        if (buttons.length === 0) buttons = [{ text: 'OK', className: 'btn-primary' }];
+        buttons.forEach(b => {
+            const btn = document.createElement('button'); btn.textContent = b.text; btn.className = b.className;
+            btn.onclick = () => { m.style.display = 'none'; if(b.onClick) b.onClick(); }; bDiv.appendChild(btn);
+        });
+        m.style.display = 'flex';
     }
-
-    function isSameDay(date1, date2) {
-        return date1.getFullYear() === date2.getFullYear() &&
-               date1.getMonth() === date2.getMonth() &&
-               date1.getDate() === date2.getDate();
+    function showInputModal(title, label, cb) {
+        showModal(title, `<label>${label}</label><input id="mInput" class="modal-input">`, [
+            { text: 'Save', className: 'btn-primary', onClick: () => { const v = document.getElementById('mInput').value.trim(); if(v) cb(v); } },
+            { text: 'Cancel', className: 'logout-btn' }
+        ]);
+        setTimeout(() => document.getElementById('mInput').focus(), 50);
     }
-    
-    // --- MODAL FUNCTIONS ---
-    function showModal(title, message, buttons = []) {
-        const messageModal = document.getElementById('messageModal');
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = message;
-        const modalButtons = document.getElementById('modalButtons');
-        modalButtons.innerHTML = '';
-
-        if (buttons.length === 0) {
-             const okButton = document.createElement('button');
-             okButton.textContent = 'OK';
-             okButton.className = 'btn-primary';
-             okButton.onclick = () => { messageModal.style.display = 'none'; };
-             modalButtons.appendChild(okButton);
-        } else {
-             buttons.forEach(btnConfig => {
-                const button = document.createElement('button');
-                button.textContent = btnConfig.text;
-                button.className = btnConfig.className;
-                button.onclick = () => { 
-                    messageModal.style.display = 'none';
-                    if (btnConfig.onClick) btnConfig.onClick();
-                };
-                modalButtons.appendChild(button);
-            });
-        }
-        messageModal.style.display = 'flex';
-    }
-    
-    function showInputModal(title, label, callback) {
-        const messageModal = document.getElementById('messageModal');
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = `<label for="modalInput" style="display:block; margin-bottom:8px;">${label}</label><input type="text" id="modalInput" class="modal-input" required>`;
-        const modalButtons = document.getElementById('modalButtons');
-        modalButtons.innerHTML = ''; 
-
-        const modalInput = document.getElementById('modalInput');
-        const saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.className = 'btn-primary';
-        saveButton.onclick = () => {
-            const value = modalInput.value.trim();
-            if (value) {
-                messageModal.style.display = 'none';
-                callback(value);
-            } else {
-                modalInput.style.border = '1px solid var(--accent-red)';
-                modalInput.focus();
-            }
-        };
-        modalButtons.appendChild(saveButton);
-
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
-        cancelButton.className = 'logout-btn';
-        cancelButton.onclick = () => { messageModal.style.display = 'none'; };
-        modalButtons.appendChild(cancelButton);
-
-        messageModal.style.display = 'flex';
-        modalInput.focus();
-        modalInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveButton.click(); } });
-    }
-
-    document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => { 
-        const modal = btn.closest('.modal');
-        modal.style.display = 'none'; 
-    });
+    document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => btn.closest('.modal').style.display = 'none');
+    // #endregion
   </script>
 </body>
 </html>
