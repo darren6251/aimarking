@@ -6,6 +6,13 @@
   <title>AI Marker - Dashboard</title>
   <!-- Chart.js for the nerd stats -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Markdown & Math Support (KaTeX + Marked) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -321,6 +328,9 @@
         font-size: 0.9rem;
         line-height: 1.4;
     }
+    .chat-msg p { margin-bottom: 8px; }
+    .chat-msg p:last-child { margin-bottom: 0; }
+    
     .chat-msg.user {
         align-self: flex-end;
         background: var(--text-main);
@@ -335,6 +345,10 @@
         border-bottom-left-radius: 2px;
     }
     .chat-msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+    
+    /* KaTeX Adjustments */
+    .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
+    
     .chat-input-area { display: flex; gap: 10px; align-items: center; }
     .chat-input-area input[type="text"] { flex: 1; }
     
@@ -800,13 +814,13 @@
                     const data = userProfileDoc.data();
                     currentUserRole = data.role;
                     currentUserName = data.name || user.displayName;
-                    showApp();
                 } else {
+                    // AUTO-ASSIGN ROLE 'student' NO CODE NEEDED
+                    currentUserRole = 'student';
                     currentUserName = user.displayName;
-                    currentUserRole = 'unassigned';
-                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: 'unassigned', xpBalance: 0 }, { merge: true });
-                    showCodeEntry();
+                    await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: 'student', xpBalance: 0 }, { merge: true });
                 }
+                showApp();
             } catch (e) { console.error(e); showLogin(); }
         } else {
             showLogin();
@@ -821,6 +835,7 @@
     function showLogin() {
         appSection.style.display = 'none';
         authWrapper.style.display = 'flex';
+        // Simplified Login - Removed Code Input Logic
         document.getElementById('authContainer').innerHTML = `
             <h1>Sign In</h1>
             <button id="googleSignInButton" class="btn-primary" style="background: #fff; color: #000; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -834,33 +849,7 @@
         hideAnimation();
     }
 
-    function showCodeEntry() {
-        appSection.style.display = 'none';
-        authWrapper.style.display = 'flex';
-        document.getElementById('authContainer').innerHTML = `
-            <h1>Access Code</h1>
-            <input type="text" id="accessCodeInput" placeholder="Enter Code..." style="margin-bottom: 15px; text-align: center; font-size: 1.2rem; width:100%; padding:10px;">
-            <button id="submitCodeButton" class="btn-primary" style="width:100%">Submit</button>
-            <p id="codeError" style="color: var(--danger); margin-top: 10px;"></p>
-        `;
-        document.getElementById('submitCodeButton').addEventListener('click', handleCodeSubmit);
-        hideAnimation();
-    }
-
-    async function handleCodeSubmit() {
-        const code = document.getElementById('accessCodeInput').value.trim();
-        let role = null;
-        if (code === TEACHER_CODE) role = 'teacher';
-        else if (code === STUDENT_CODE) role = 'student';
-        
-        if (!role) { document.getElementById('codeError').textContent = 'Invalid Code'; return; }
-        
-        try {
-            await setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { role }, { merge: true });
-            currentUserRole = role;
-            showApp();
-        } catch (e) { document.getElementById('codeError').textContent = e.message; }
-    }
+    // Removed showCodeEntry() and handleCodeSubmit() entirely.
 
     async function showApp() {
         authWrapper.style.display = 'none';
@@ -1144,7 +1133,23 @@
             historyEl.removeChild(loadingDiv);
             const aiDiv = document.createElement('div');
             aiDiv.className = 'chat-msg ai';
-            aiDiv.textContent = reply;
+            
+            // MATH & MARKDOWN RENDERING
+            // 1. Parse Markdown with marked.js
+            const rawHtml = marked.parse(reply);
+            aiDiv.innerHTML = rawHtml;
+            
+            // 2. Render Math with KaTeX
+            renderMathInElement(aiDiv, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+            
             historyEl.appendChild(aiDiv);
             
             // Reset
