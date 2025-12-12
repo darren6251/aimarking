@@ -140,6 +140,14 @@
         width: 100%;
     }
     input:focus, select:focus { outline: none; border-color: var(--text-muted); }
+    
+    /* File Input Styling */
+    input[type="file"] {
+        padding: 10px;
+        border: 1px dashed var(--border-color);
+        background: rgba(125,125,125,0.05);
+        cursor: pointer;
+    }
     /* #endregion */
 
     /* #region 3. LAYOUT & HEADER */
@@ -268,12 +276,57 @@
     .hero-card {
         background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255,255,255,0.03) 100%);
         display: flex; flex-direction: column; justify-content: center; min-height: 240px;
+        transition: all 0.4s ease; /* Smooth expansion */
     }
     .hero-greeting { font-size: 2.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 10px; letter-spacing: -1px; }
     .hero-greeting span { color: var(--text-muted); }
     .hero-sub { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; }
     .hero-actions { margin-top: 2rem; display: flex; gap: 10px; flex-wrap: wrap; }
 
+    /* CHAT STYLES */
+    #heroChatSection {
+        display: none; /* Hidden by default */
+        flex-direction: column;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+        animation: fadeIn 0.3s ease;
+    }
+    .chat-history {
+        height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background: rgba(0,0,0,0.2);
+        border-radius: var(--radius-sm);
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .chat-msg {
+        max-width: 80%;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    .chat-msg.user {
+        align-self: flex-end;
+        background: var(--text-main);
+        color: var(--bg-body);
+        border-bottom-right-radius: 2px;
+    }
+    .chat-msg.ai {
+        align-self: flex-start;
+        background: var(--bg-tool);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        border-bottom-left-radius: 2px;
+    }
+    .chat-msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+    .chat-input-area { display: flex; gap: 10px; align-items: center; }
+    .chat-input-area input[type="text"] { flex: 1; }
+    
     /* Stat Cards (Time & Countdown) */
     .stat-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     .stat-value { font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; letter-spacing: -1px; }
@@ -347,6 +400,19 @@
     .status-half-done .todo-text { text-decoration: line-through; opacity: 0.9; color: var(--text-main); }
     .is-due { color: var(--danger); font-weight: 700; }
     .is-due-soon { color: var(--warning); font-weight: 700; }
+    
+    /* Upload Spinner */
+    .loading-spinner {
+        border: 3px solid rgba(125,125,125,0.3);
+        border-radius: 50%;
+        border-top: 3px solid var(--text-main);
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     /* #endregion */
     
     /* #region 5. MODALS & UTILS */
@@ -389,7 +455,7 @@
       
       <nav class="nav-links" id="navLinks">
         <a href="#" class="nav-link active">Dashboard</a>
-        <a href="https://gemini.google.com" class="nav-link">AI Chat</a>
+        <!-- REMOVED AI CHAT FROM NAV -->
         <a href="submissions.html" class="nav-link">Tasks</a>
         <div class="dropdown">
             <a href="#" class="nav-link">Resources ▾</a>
@@ -420,12 +486,27 @@
     <div class="main-grid">
         
         <!-- 1. Hero Section -->
-        <div class="card area-hero hero-card">
+        <div class="card area-hero hero-card" id="heroCard">
             <h2 id="dynamicGreeting" class="hero-greeting">Welcome back, <br><span id="homeUserNamePlaceholder" style="color: var(--text-main);">Student</span>.</h2>
             <p class="hero-sub">Ready to crush the DSE? "You don't have to see the whole staircase, just take the first step."</p>
             <div class="hero-actions">
                 <button id="viewAnalyticsBtn" class="btn-primary" style="background: rgba(125,125,125,0.2); border: 1px solid var(--border-color);">View Analytics 📈</button>
-                <a href="https://gemini.google.com" class="btn-primary">Ask AI Tutor →</a>
+                <!-- CHANGED: Ask AI Tutor now toggles expand -->
+                <button id="toggleChatBtn" class="btn-primary">Ask AI Tutor →</button>
+            </div>
+            
+            <!-- CHAT EXPANSION SECTION -->
+            <div id="heroChatSection">
+                <div id="chatHistory" class="chat-history">
+                    <div class="chat-msg ai">Hello! I'm your AI Tutor. How can I help you study for the DSE today? Upload a question or just ask away!</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="file" id="chatImageInput" accept="image/*" style="display:none;">
+                    <button id="chatAttachBtn" class="btn-ghost" style="padding: 8px; border-radius: 50%; width: 40px; height: 40px;" title="Attach Image">📎</button>
+                    <input type="text" id="chatInput" placeholder="Type your question..." autocomplete="off">
+                    <button id="chatSendBtn" class="btn-primary" style="padding: 8px 16px;">Send</button>
+                </div>
+                <div id="chatImagePreview" style="display:none; margin-top: 10px; color: var(--success); font-size: 0.8rem;">Image attached!</div>
             </div>
             
             <!-- XP System Integrated -->
@@ -569,6 +650,14 @@
           <span class="close-button study-close-button" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
           <h3 style="margin-bottom: 15px;">Log Study Session</h3>
           <p style="color: var(--text-muted); margin-bottom: 15px;">How long did you study?</p>
+          
+          <!-- Gemini Upload Section -->
+           <div style="margin-bottom: 20px; padding: 15px; background: rgba(125,125,125,0.05); border-radius: 12px; border: 1px dashed var(--border-color);">
+               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Lazy? Upload a screenshot (YPT, Forest, etc.) and let AI read it.</p>
+               <input type="file" id="studyScreenshotInput" accept="image/*" style="width: 100%;">
+               <div id="aiAnalysisStatus" style="margin-top: 8px; font-size: 0.8rem; color: var(--success); display: none;"></div>
+           </div>
+
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">
               <div style="flex:1">
                   <label style="font-size:0.8rem; color:var(--text-muted)">Hours</label>
@@ -642,6 +731,7 @@
       measurementId: "G-CHKLKSM17S"
     };
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const apiKey = ""; // Provided by environment for study scan, separate from chat proxy
 
     let app, db, auth;
     let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
@@ -665,6 +755,11 @@
     // Analytics State
     let studyChart = null;
     let analyticsWeekOffset = 0; // 0 = current, 1 = future, -1 = past
+    
+    // Chat State
+    const PROXY_URL = "https://gemini-proxy-513372702506.us-central1.run.app/";
+    let chatImageBase64 = null;
+    let chatImageMime = null;
 
     // #region INITIALIZATION
     try {
@@ -796,9 +891,9 @@
              greeting = "Ready to start your day?";
         } else if (h >= 12 && h < 18) {
              greeting = "Keep crushing it!";
-             quote = "Consistency beats intensity.";
+             quote = "Don't stop when you're tired. Stop when you're done.";
         } else if (h >= 18 && h < 24) {
-             greeting = "How's ur progress, almost finished? Sleep!";
+             greeting = "How's ur progress, almost finish? Sleep!";
              quote = "Rest is part of the process.";
         } else {
              greeting = "Go to sleep!";
@@ -920,10 +1015,14 @@
         document.getElementById('openLogStudyBtn').addEventListener('click', () => {
             document.getElementById('logStudyModal').style.display = 'flex';
             document.getElementById('study-date-visible').value = toLocalISODate(new Date());
+            document.getElementById('aiAnalysisStatus').style.display = 'none'; // Reset status
         });
         document.querySelectorAll('.study-close-button').forEach(b => b.onclick = () => document.getElementById('logStudyModal').style.display = 'none');
         document.getElementById('confirmLogStudyBtn').addEventListener('click', handleLogStudy);
         
+        // Screenshot Upload
+        document.getElementById('studyScreenshotInput').addEventListener('change', handleScreenshotUpload);
+
         document.getElementById('redeemHalfDayBtn').addEventListener('click', () => handleRedeem(150, "Half Day Off"));
         document.getElementById('redeemFullDayBtn').addEventListener('click', () => handleRedeem(300, "Full Day Off"));
         
@@ -937,6 +1036,32 @@
         document.getElementById('analyticsPrevWeek').addEventListener('click', () => { analyticsWeekOffset++; renderAnalyticsChart(); });
         document.getElementById('analyticsNextWeek').addEventListener('click', () => { analyticsWeekOffset--; renderAnalyticsChart(); });
         
+        // Chat Toggle
+        document.getElementById('toggleChatBtn').addEventListener('click', () => {
+             const chatSection = document.getElementById('heroChatSection');
+             const isHidden = chatSection.style.display === 'none';
+             chatSection.style.display = isHidden ? 'flex' : 'none';
+             document.getElementById('toggleChatBtn').textContent = isHidden ? 'Hide AI Tutor' : 'Ask AI Tutor →';
+        });
+        
+        // Chat Functionality
+        document.getElementById('chatAttachBtn').addEventListener('click', () => document.getElementById('chatImageInput').click());
+        document.getElementById('chatImageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                 const reader = new FileReader();
+                 reader.onloadend = () => {
+                     chatImageBase64 = reader.result.split(',')[1];
+                     chatImageMime = file.type;
+                     document.getElementById('chatImagePreview').style.display = 'block';
+                 };
+                 reader.readAsDataURL(file);
+            }
+        });
+        
+        document.getElementById('chatSendBtn').addEventListener('click', handleChatSend);
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleChatSend(); });
+
         // Profile Modal Listeners
         document.getElementById('userDisplayName').addEventListener('click', openProfileModal);
         document.getElementById('switchRoleButton').addEventListener('click', () => {
@@ -945,6 +1070,74 @@
         });
         document.querySelector('.profile-close-button').addEventListener('click', () => document.getElementById('profileEditModal').style.display = 'none');
         document.getElementById('cancelProfileButton').addEventListener('click', () => document.getElementById('profileEditModal').style.display = 'none');
+    }
+    
+    // Chat Handler
+    async function handleChatSend() {
+        const inputEl = document.getElementById('chatInput');
+        const text = inputEl.value.trim();
+        const historyEl = document.getElementById('chatHistory');
+        
+        if(!text && !chatImageBase64) return;
+        
+        // Add User Message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'chat-msg user';
+        userDiv.textContent = text;
+        if(chatImageBase64) {
+             const img = document.createElement('img');
+             img.src = `data:${chatImageMime};base64,${chatImageBase64}`;
+             userDiv.appendChild(img);
+        }
+        historyEl.appendChild(userDiv);
+        historyEl.scrollTop = historyEl.scrollHeight;
+        inputEl.value = '';
+        
+        // Loading State
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-msg ai';
+        loadingDiv.textContent = '...';
+        historyEl.appendChild(loadingDiv);
+        
+        try {
+            // Construct Payload for Gemini
+            const parts = [];
+            if(text) parts.push({ text: text });
+            if(chatImageBase64) parts.push({ inlineData: { mimeType: chatImageMime, data: chatImageBase64 } });
+            
+            const payload = {
+                contents: [{ parts: parts }]
+            };
+            
+            // Proxy Fetch
+            const res = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if(!res.ok) throw new Error('Proxy Error');
+            const data = await res.json();
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't understand that.";
+            
+            // Update UI
+            historyEl.removeChild(loadingDiv);
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'chat-msg ai';
+            aiDiv.textContent = reply;
+            historyEl.appendChild(aiDiv);
+            
+            // Reset
+            chatImageBase64 = null;
+            chatImageMime = null;
+            document.getElementById('chatImageInput').value = '';
+            document.getElementById('chatImagePreview').style.display = 'none';
+            historyEl.scrollTop = historyEl.scrollHeight;
+            
+        } catch(e) {
+            console.error(e);
+            loadingDiv.textContent = "Error connecting to AI Tutor. Please try again.";
+        }
     }
 
     function updateCalendarState(d) {
@@ -1051,11 +1244,12 @@
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (dueDate < today && !isDone) {
-                    deadlineDisplay = '<span class="is-due">Overdue</span>';
+                    // SHOW DATE WITH OVERDUE TEXT
+                    deadlineDisplay = `<span class="is-due">Overdue (${t.deadline})</span>`;
                 } else if (diffDays >= 0 && diffDays <= 3 && !isDone) {
-                    // 0 = Today, 1 = Tomorrow, etc.
+                    // SHOW DATE WITH RELATIVE TEXT
                     let relativeText = diffDays === 0 ? 'Due Today!' : (diffDays === 1 ? 'Due Tomorrow!' : `Due in ${diffDays} days`);
-                    deadlineDisplay = `<span class="is-due-soon">${relativeText}</span>`;
+                    deadlineDisplay = `<span class="is-due-soon">${relativeText} (${t.deadline})</span>`;
                 } else {
                     deadlineDisplay = t.deadline;
                 }
@@ -1206,6 +1400,78 @@
              await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date: toLocalISODate(new Date()), hours: 0, pointsEarned: -cost, description: `Redeemed ${itemName}`, createdAt: serverTimestamp() });
         }
     }
+    
+    // #region GEMINI SCREENSHOT ANALYSIS
+    async function handleScreenshotUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('aiAnalysisStatus');
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<span class="loading-spinner"></span> Analyzing screenshot...';
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64Data = reader.result.split(',')[1];
+            const mimeType = file.type;
+
+            try {
+                const result = await callGeminiVision(base64Data, mimeType);
+                if (result) {
+                    document.getElementById('log-hours').value = result.hours;
+                    document.getElementById('log-minutes').value = result.minutes;
+                    statusEl.innerHTML = `✅ Found: ${result.hours}h ${result.minutes}m`;
+                } else {
+                    statusEl.innerHTML = `❌ Couldn't find time. Try manually.`;
+                }
+            } catch (e) {
+                console.error(e);
+                statusEl.innerHTML = `❌ Error: ${e.message}`;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function callGeminiVision(base64Data, mimeType) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
+        const prompt = `
+            Analyze this screenshot from a study timer app (like YPT, Forest, etc.). 
+            Find the TOTAL study time for today. 
+            Return ONLY a JSON object with 'hours' and 'minutes'. 
+            Example: {"hours": 5, "minutes": 30}
+            If you see '3h 15m', return {"hours": 3, "minutes": 15}.
+            If you see just '45m', return {"hours": 0, "minutes": 45}.
+            Do not output markdown code blocks. Just the raw JSON string.
+        `;
+
+        const payload = {
+            contents: [{
+                parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: mimeType, data: base64Data } }
+                ]
+            }]
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Gemini API Failed");
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!text) return null;
+
+        // Clean up markdown code blocks if Gemini ignores instructions
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    }
+    // #endregion
 
     // Chart
     function renderAnalyticsChart() {
