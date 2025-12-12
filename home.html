@@ -285,13 +285,24 @@
 
     /* CHAT STYLES */
     #heroChatSection {
-        display: none; /* Hidden by default */
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 1px solid transparent;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex; 
         flex-direction: column;
+    }
+    #heroChatSection.open {
+        max-height: 600px; /* Arbitrary large height */
+        opacity: 1;
         margin-top: 20px;
         padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-        animation: fadeIn 0.3s ease;
+        border-top-color: var(--border-color);
     }
+    
     .chat-history {
         height: 300px;
         overflow-y: auto;
@@ -498,7 +509,7 @@
             <!-- CHAT EXPANSION SECTION -->
             <div id="heroChatSection">
                 <div id="chatHistory" class="chat-history">
-                    <div class="chat-msg ai">Hello! I'm your AI Tutor. How can I help you study for the DSE today? Upload a question or just ask away!</div>
+                    <!-- Removed unnecessary explanation msg -->
                 </div>
                 <div class="chat-input-area">
                     <input type="file" id="chatImageInput" accept="image/*" style="display:none;">
@@ -684,7 +695,8 @@
           <span class="close-button analytics-close-button" style="float: right; cursor: pointer;">&times;</span>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
               <h3>Study Analytics</h3>
-              <div style="display:flex; gap:10px;">
+              <div style="display:flex; gap:10px; align-items:center;">
+                  <button id="analyzeWithAiBtn" class="btn-primary" style="font-size:0.8rem; padding: 6px 12px; background: linear-gradient(90deg, #8A2387, #E94057, #F27121); border:none;">✨ Analyze with AI</button>
                   <button id="analyticsPrevWeek" class="btn-ghost" style="padding:4px 10px;">&lt;</button>
                   <span id="analyticsDateRange" style="font-size:0.9rem; color:var(--text-muted); align-self:center;">Last 7 Days</span>
                   <button id="analyticsNextWeek" class="btn-ghost" style="padding:4px 10px;">&gt;</button>
@@ -757,7 +769,7 @@
     let analyticsWeekOffset = 0; // 0 = current, 1 = future, -1 = past
     
     // Chat State
-    const PROXY_URL = "https://gemini-proxy-513372702506.us-central1.run.app";
+    const PROXY_URL = "https://gemini-proxy-513372702506.us-central1.run.app/proxy";
     let chatImageBase64 = null;
     let chatImageMime = null;
 
@@ -1032,17 +1044,13 @@
             analyticsWeekOffset = 0;
             renderAnalyticsChart();
         });
+        document.getElementById('analyzeWithAiBtn').addEventListener('click', handleAnalyzeWithAI);
         document.querySelector('.analytics-close-button').addEventListener('click', () => document.getElementById('analyticsModal').style.display = 'none');
         document.getElementById('analyticsPrevWeek').addEventListener('click', () => { analyticsWeekOffset++; renderAnalyticsChart(); });
         document.getElementById('analyticsNextWeek').addEventListener('click', () => { analyticsWeekOffset--; renderAnalyticsChart(); });
         
         // Chat Toggle
-        document.getElementById('toggleChatBtn').addEventListener('click', () => {
-             const chatSection = document.getElementById('heroChatSection');
-             const isHidden = chatSection.style.display === 'none';
-             chatSection.style.display = isHidden ? 'flex' : 'none';
-             document.getElementById('toggleChatBtn').textContent = isHidden ? 'Hide AI Tutor' : 'Ask AI Tutor →';
-        });
+        document.getElementById('toggleChatBtn').addEventListener('click', toggleChat);
         
         // Chat Functionality
         document.getElementById('chatAttachBtn').addEventListener('click', () => document.getElementById('chatImageInput').click());
@@ -1059,7 +1067,7 @@
             }
         });
         
-        document.getElementById('chatSendBtn').addEventListener('click', handleChatSend);
+        document.getElementById('chatSendBtn').addEventListener('click', () => handleChatSend());
         document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleChatSend(); });
 
         // Profile Modal Listeners
@@ -1073,9 +1081,21 @@
     }
     
     // Chat Handler
-    async function handleChatSend() {
+    function toggleChat() {
+         const chatSection = document.getElementById('heroChatSection');
+         const isHidden = !chatSection.classList.contains('open');
+         if(isHidden) {
+             chatSection.classList.add('open');
+             document.getElementById('toggleChatBtn').textContent = 'Hide AI Tutor';
+         } else {
+             chatSection.classList.remove('open');
+             document.getElementById('toggleChatBtn').textContent = 'Ask AI Tutor →';
+         }
+    }
+
+    async function handleChatSend(overrideText = null) {
         const inputEl = document.getElementById('chatInput');
-        const text = inputEl.value.trim();
+        const text = overrideText || inputEl.value.trim();
         const historyEl = document.getElementById('chatHistory');
         
         if(!text && !chatImageBase64) return;
@@ -1084,14 +1104,14 @@
         const userDiv = document.createElement('div');
         userDiv.className = 'chat-msg user';
         userDiv.textContent = text;
-        if(chatImageBase64) {
+        if(chatImageBase64 && !overrideText) {
              const img = document.createElement('img');
              img.src = `data:${chatImageMime};base64,${chatImageBase64}`;
              userDiv.appendChild(img);
         }
         historyEl.appendChild(userDiv);
         historyEl.scrollTop = historyEl.scrollHeight;
-        inputEl.value = '';
+        if(!overrideText) inputEl.value = '';
         
         // Loading State
         const loadingDiv = document.createElement('div');
@@ -1103,7 +1123,7 @@
             // Construct Payload for Gemini
             const parts = [];
             if(text) parts.push({ text: text });
-            if(chatImageBase64) parts.push({ inlineData: { mimeType: chatImageMime, data: chatImageBase64 } });
+            if(chatImageBase64 && !overrideText) parts.push({ inlineData: { mimeType: chatImageMime, data: chatImageBase64 } });
             
             const payload = {
                 contents: [{ parts: parts }]
@@ -1116,7 +1136,7 @@
                 body: JSON.stringify(payload)
             });
             
-            if(!res.ok) throw new Error('Proxy Error');
+            if(!res.ok) throw new Error(`Proxy Error: ${res.status}`);
             const data = await res.json();
             const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't understand that.";
             
@@ -1128,16 +1148,51 @@
             historyEl.appendChild(aiDiv);
             
             // Reset
-            chatImageBase64 = null;
-            chatImageMime = null;
-            document.getElementById('chatImageInput').value = '';
-            document.getElementById('chatImagePreview').style.display = 'none';
+            if(!overrideText) {
+                chatImageBase64 = null;
+                chatImageMime = null;
+                document.getElementById('chatImageInput').value = '';
+                document.getElementById('chatImagePreview').style.display = 'none';
+            }
             historyEl.scrollTop = historyEl.scrollHeight;
             
         } catch(e) {
             console.error(e);
-            loadingDiv.textContent = "Error connecting to AI Tutor. Please try again.";
+            historyEl.removeChild(loadingDiv);
+            const errDiv = document.createElement('div');
+            errDiv.className = 'chat-msg ai';
+            errDiv.style.color = 'var(--danger)';
+            errDiv.textContent = `Error: ${e.message}`;
+            historyEl.appendChild(errDiv);
         }
+    }
+    
+    // AI Analytics Handler
+    function handleAnalyzeWithAI() {
+        // 1. Close Analytics Modal
+        document.getElementById('analyticsModal').style.display = 'none';
+        
+        // 2. Open Chat if not open
+        const chatSection = document.getElementById('heroChatSection');
+        if(!chatSection.classList.contains('open')) toggleChat();
+        
+        // 3. Prepare Data
+        // Get last 7 days of data
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() - (analyticsWeekOffset * 7));
+        const reportData = [];
+        for(let i=6; i>=0; i--) {
+            const d = new Date(endDate); 
+            d.setDate(d.getDate() - i);
+            const ds = toLocalISODate(d);
+            const entry = studyHistory.find(l => l.date === ds && l.hours > 0);
+            reportData.push({ date: ds, hours: entry ? entry.hours : 0 });
+        }
+        
+        const prompt = `Here is my study log for the last 7 days: ${JSON.stringify(reportData)}. analyze my performance, roast me if I'm lazy, praise me if I'm good. Keep it short and funny.`;
+        
+        // 4. Send to Chat
+        handleChatSend(prompt);
     }
 
     function updateCalendarState(d) {
