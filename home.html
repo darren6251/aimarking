@@ -1498,10 +1498,6 @@
             list.appendChild(div);
         });
     }
-
-    window.deleteEvent = async (id, isPublic) => {
-        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
-    };
     
     // EDIT EVENT LOGIC
     window.openEditEventModal = (id, isPublic) => {
@@ -1521,17 +1517,13 @@
         
         document.getElementById('editEventModal').style.display = 'flex';
     };
-
-    // --- FIX: RESTORED MISSING DELETE FUNCTIONS ---
+    
+    // RESTORED DELETE FUNCTION FOR EVENTS
     window.deleteEvent = async (id, isPublic) => {
-        if(!confirm("Delete this event?")) return;
+        if(!confirm("Are you sure you want to delete this event?")) return;
         try { 
             await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); 
-        } catch(e){ console.error(e); }
-    };
-
-    window.deleteTodo = async (id) => { 
-        try { await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id)); } catch(e){} 
+        } catch(e){console.error(e);}
     };
     
     async function handleUpdateEvent() {
@@ -1563,13 +1555,8 @@
             document.getElementById('editEventModal').style.display = 'none';
         } catch(e) { console.error(e); alert("Failed to update event."); }
     }
-
     
-        window.deleteEvent = async (id, isPublic) => {
-        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
-    };
-    
-        function renderTodos() {
+    function renderTodos() {
         const list = document.getElementById('todo-list');
         list.innerHTML = '';
         
@@ -1640,8 +1627,13 @@
             list.appendChild(el);
         });
     }
-    window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
     
+    // RESTORED DELETE FUNCTION FOR TODOS
+    window.deleteTodo = async (id) => { 
+        if(!confirm("Delete this task?")) return;
+        try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} 
+    };
+
     // #region HANDLERS
     async function handleAddEvent(e) {
         e.preventDefault();
