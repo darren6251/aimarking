@@ -678,7 +678,7 @@
           
           <!-- Gemini Upload Section -->
            <div style="margin-bottom: 20px; padding: 15px; background: rgba(125,125,125,0.05); border-radius: 12px; border: 1px dashed var(--border-color);">
-               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Lazy? Upload a screenshot (YPT, Forest, etc.) and let AI read it.</p>
+               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Lazy? Upload a YPT calendar screenshot & pick a date.</p>
                <input type="file" id="studyScreenshotInput" accept="image/*" style="width: 100%;">
                <div id="aiAnalysisStatus" style="margin-top: 8px; font-size: 0.8rem; color: var(--success); display: none;"></div>
            </div>
@@ -696,6 +696,7 @@
           <div style="margin-bottom: 20px;">
              <label style="font-size:0.8rem; color:var(--text-muted)">Date</label>
              <input type="date" id="study-date-visible">
+             <div id="dateMatchStatus" style="font-size: 0.75rem; color: var(--warning); margin-top: 4px; min-height: 1.2em;"></div>
           </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
               <button class="btn-ghost study-close-button">Cancel</button>
@@ -786,6 +787,9 @@
     const PROXY_URL = "https://gemini-proxy-513372702506.us-central1.run.app/proxy";
     let chatImageBase64 = null;
     let chatImageMime = null;
+    
+    // Global variable to store scanned study data
+    let scannedStudyData = {}; 
 
     // #region INITIALIZATION
     try {
@@ -1017,12 +1021,18 @@
             document.getElementById('logStudyModal').style.display = 'flex';
             document.getElementById('study-date-visible').value = toLocalISODate(new Date());
             document.getElementById('aiAnalysisStatus').style.display = 'none'; // Reset status
+            document.getElementById('dateMatchStatus').textContent = '';
+            scannedStudyData = {}; // Clear previous scan
+            document.getElementById('studyScreenshotInput').value = ''; // Clear file input
         });
         document.querySelectorAll('.study-close-button').forEach(b => b.onclick = () => document.getElementById('logStudyModal').style.display = 'none');
         document.getElementById('confirmLogStudyBtn').addEventListener('click', handleLogStudy);
         
         // Screenshot Upload
         document.getElementById('studyScreenshotInput').addEventListener('change', handleScreenshotUpload);
+        
+        // Date Change Listener for Auto-fill
+        document.getElementById('study-date-visible').addEventListener('change', handleDateSelectionChange);
 
         document.getElementById('redeemHalfDayBtn').addEventListener('click', () => handleRedeem(150, "Half Day Off"));
         document.getElementById('redeemFullDayBtn').addEventListener('click', () => handleRedeem(300, "Full Day Off"));
@@ -1468,7 +1478,7 @@
 
         const statusEl = document.getElementById('aiAnalysisStatus');
         statusEl.style.display = 'block';
-        statusEl.innerHTML = '<span class="loading-spinner"></span> Analyzing screenshot...';
+        statusEl.innerHTML = '<span class="loading-spinner"></span> Scanning entire calendar...';
         
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -1478,11 +1488,20 @@
             try {
                 const result = await callGeminiVision(base64Data, mimeType);
                 if (result) {
-                    document.getElementById('log-hours').value = result.hours;
-                    document.getElementById('log-minutes').value = result.minutes;
-                    statusEl.innerHTML = `✅ Found: ${result.hours}h ${result.minutes}m`;
+                    scannedStudyData = result; // Store the map of dates to times
+                    
+                    // Count how many days were found
+                    const daysFound = Object.keys(scannedStudyData).length;
+                    
+                    if (daysFound > 0) {
+                        statusEl.innerHTML = `✅ Scanned ${daysFound} days! Pick a date below to auto-fill.`;
+                        // Trigger the check immediately for the currently selected date
+                        handleDateSelectionChange();
+                    } else {
+                        statusEl.innerHTML = `⚠️ AI saw the image but couldn't find specific dates. Try a clearer view.`;
+                    }
                 } else {
-                    statusEl.innerHTML = `❌ Couldn't find time. Try manually.`;
+                    statusEl.innerHTML = `❌ AI couldn't read the study logs.`;
                 }
             } catch (e) {
                 console.error(e);
@@ -1491,17 +1510,56 @@
         };
         reader.readAsDataURL(file);
     }
+    
+    function handleDateSelectionChange() {
+        const selectedDate = document.getElementById('study-date-visible').value;
+        const statusEl = document.getElementById('dateMatchStatus');
+        
+        if (!selectedDate || Object.keys(scannedStudyData).length === 0) {
+            statusEl.textContent = '';
+            return;
+        }
+        
+        const foundData = scannedStudyData[selectedDate];
+        
+        if (foundData) {
+            document.getElementById('log-hours').value = foundData.hours;
+            document.getElementById('log-minutes').value = foundData.minutes;
+            statusEl.style.color = 'var(--success)';
+            statusEl.textContent = `✨ Auto-filled: ${foundData.hours}h ${foundData.minutes}m from screenshot`;
+            // Optional: flash the inputs to show they updated
+            document.getElementById('log-hours').style.borderColor = 'var(--success)';
+            setTimeout(() => document.getElementById('log-hours').style.borderColor = 'var(--border-color)', 1000);
+        } else {
+            statusEl.style.color = 'var(--text-muted)';
+            statusEl.textContent = 'No data found for this specific date in screenshot.';
+        }
+    }
 
     async function callGeminiVision(base64Data, mimeType) {
         const url = `https://gemini-proxy-513372702506.us-central1.run.app/proxy`;
         
         const prompt = `
-            Analyze this screenshot from a study timer app (like YPT, Forest, etc.). 
-            Find the TOTAL study time for today. 
-            Return ONLY a JSON object with 'hours' and 'minutes'. 
-            Example: {"hours": 5, "minutes": 30}
-            If you see '3h 15m', return {"hours": 3, "minutes": 15}.
-            If you see just '45m', return {"hours": 0, "minutes": 45}.
+            Analyze this screenshot from a study timer app (like YPT/Yeolpumta). 
+            
+            GOAL: Extract study times for ALL visible dates.
+            
+            1. Identify the Month and Year visible (e.g., "Dec", "2025"). If Year is missing, assume 2025.
+            2. Look at the calendar grid. Each day usually has a number (date) and a time (e.g., "5:06").
+            3. Return a JSON Object where keys are dates in 'YYYY-MM-DD' format and values are objects with 'hours' and 'minutes'.
+            
+            Example Format:
+            {
+              "2025-12-01": {"hours": 3, "minutes": 42},
+              "2025-12-08": {"hours": 5, "minutes": 6},
+              "2025-12-10": {"hours": 3, "minutes": 9}
+            }
+            
+            - If a time is "5:06", hours=5, minutes=6.
+            - If a time is just "45m", hours=0, minutes=45.
+            - IGNORE days with no time or "00:00".
+            - Be precise with the dates.
+            
             Do not output markdown code blocks. Just the raw JSON string.
         `;
 
