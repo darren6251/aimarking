@@ -1521,6 +1521,18 @@
         
         document.getElementById('editEventModal').style.display = 'flex';
     };
+
+    // --- FIX: RESTORED MISSING DELETE FUNCTIONS ---
+    window.deleteEvent = async (id, isPublic) => {
+        if(!confirm("Delete this event?")) return;
+        try { 
+            await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); 
+        } catch(e){ console.error(e); }
+    };
+
+    window.deleteTodo = async (id) => { 
+        try { await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id)); } catch(e){} 
+    };
     
     async function handleUpdateEvent() {
         const id = document.getElementById('edit-event-id').value;
