@@ -682,6 +682,13 @@
                <input type="file" id="studyScreenshotInput" accept="image/*" style="width: 100%;">
                <div id="aiAnalysisStatus" style="margin-top: 8px; font-size: 0.8rem; color: var(--success); display: none;"></div>
            </div>
+           
+           <div id="bulkLogSection" style="display:none; margin-bottom: 20px;">
+                <button id="logAllScannedBtn" class="btn-primary" style="width:100%; background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%); color: #000; border: none; font-weight: 800;">
+                    Log All Found Dates 🚀
+                </button>
+                <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">(Skips dates already logged)</p>
+           </div>
 
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">
               <div style="flex:1">
@@ -1024,6 +1031,7 @@
             document.getElementById('dateMatchStatus').textContent = '';
             scannedStudyData = {}; // Clear previous scan
             document.getElementById('studyScreenshotInput').value = ''; // Clear file input
+            document.getElementById('bulkLogSection').style.display = 'none'; // Hide bulk btn
         });
         document.querySelectorAll('.study-close-button').forEach(b => b.onclick = () => document.getElementById('logStudyModal').style.display = 'none');
         document.getElementById('confirmLogStudyBtn').addEventListener('click', handleLogStudy);
@@ -1033,6 +1041,9 @@
         
         // Date Change Listener for Auto-fill
         document.getElementById('study-date-visible').addEventListener('change', handleDateSelectionChange);
+        
+        // Bulk Log Button
+        document.getElementById('logAllScannedBtn').addEventListener('click', handleLogAllScannedData);
 
         document.getElementById('redeemHalfDayBtn').addEventListener('click', () => handleRedeem(150, "Half Day Off"));
         document.getElementById('redeemFullDayBtn').addEventListener('click', () => handleRedeem(300, "Full Day Off"));
@@ -1451,6 +1462,70 @@
         } catch(e) { console.error(e); }
     }
     
+    // BULK LOGIC
+    async function handleLogAllScannedData() {
+        if (Object.keys(scannedStudyData).length === 0) return;
+
+        let totalXP = 0;
+        let loggedCount = 0;
+        const batchPromises = [];
+        
+        // Sort dates to maintain order
+        const sortedDates = Object.keys(scannedStudyData).sort();
+
+        for (const date of sortedDates) {
+            const { hours, minutes } = scannedStudyData[date];
+            const totalHours = hours + (minutes / 60);
+            
+            if (totalHours <= 0) continue;
+
+            // Check duplicate against existing history
+            if (studyHistory.find(l => l.date === date && l.hours > 0)) {
+                console.log(`Skipping ${date}, already logged.`);
+                continue;
+            }
+
+            let points = parseFloat((totalHours * 10).toFixed(1));
+            
+            // Streak Logic (Optimistic check)
+            const streak = calculateStreak(date); 
+            let bonus = 0;
+            if (totalHours >= 3 && streak === 4) bonus = 50; 
+
+            const dailyTotal = points + bonus;
+            totalXP += dailyTotal;
+            loggedCount++;
+
+            // Add to DB
+            batchPromises.push(
+                addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), {
+                    date, 
+                    hours: totalHours, 
+                    pointsEarned: dailyTotal, 
+                    createdAt: serverTimestamp() 
+                })
+            );
+            
+            // Update local history optimistically so subsequent dates in this loop see it for streak calcs
+            studyHistory.push({ date, hours: totalHours }); 
+        }
+
+        if (loggedCount === 0) {
+            alert("All found dates are already logged!");
+            return;
+        }
+
+        // Update Total XP
+        await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { 
+            xpBalance: increment(totalXP) 
+        });
+        
+        await Promise.all(batchPromises);
+
+        alert(`Successfully logged ${loggedCount} days! Earned ${totalXP.toFixed(1)} XP.`);
+        document.getElementById('logStudyModal').style.display = 'none';
+    }
+    
     function calculateStreak(todayDateStr) {
         // Simple streak calc based on history
         let streak = 0;
@@ -1477,8 +1552,11 @@
         if (!file) return;
 
         const statusEl = document.getElementById('aiAnalysisStatus');
+        const bulkBtnDiv = document.getElementById('bulkLogSection');
+        
         statusEl.style.display = 'block';
         statusEl.innerHTML = '<span class="loading-spinner"></span> Scanning entire calendar...';
+        bulkBtnDiv.style.display = 'none';
         
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -1494,7 +1572,9 @@
                     const daysFound = Object.keys(scannedStudyData).length;
                     
                     if (daysFound > 0) {
-                        statusEl.innerHTML = `✅ Scanned ${daysFound} days! Pick a date below to auto-fill.`;
+                        statusEl.innerHTML = `✅ Scanned ${daysFound} days! Pick a date below or Log All.`;
+                        document.getElementById('logAllScannedBtn').textContent = `Log All ${daysFound} Days 🚀`;
+                        bulkBtnDiv.style.display = 'block';
                         // Trigger the check immediately for the currently selected date
                         handleDateSelectionChange();
                     } else {
