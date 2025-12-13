@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>darStudy - Dashboard</title>
+  <title>AI Marker - Dashboard</title>
   <!-- Chart.js for the nerd stats -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
@@ -492,7 +492,7 @@
 <body>
 
   <!-- Startup Loader -->
-  <div id="startupAnimation"><div id="animatedLogo">darStudy</div></div>
+  <div id="startupAnimation"><div id="animatedLogo">AI MARKER</div></div>
 
   <!-- Login Screen -->
   <div id="authWrapper" style="display: none;">
@@ -508,7 +508,7 @@
     <header>
       <div class="brand">
         <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
-        <h1>darStudy</h1>
+        <h1>AI MARKER</h1>
       </div>
       
       <nav class="nav-links" id="navLinks">
@@ -659,12 +659,16 @@
                 <h4 id="event-list-header" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Selected Date</h4>
                 <div id="event-list" style="min-height: 50px;"></div>
                 
-                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                    <input type="time" id="event-time" style="width: auto;">
+                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center;">
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="time" id="event-time" title="Start Time" style="width: auto;">
+                        <span style="color:var(--text-muted); font-size: 0.8rem;">to</span>
+                        <input type="time" id="event-end-time" title="End Time (Optional)" style="width: auto;">
+                    </div>
                     <input type="text" id="event-desc" placeholder="Add new event..." required style="flex:1; min-width: 150px;">
                     <input type="date" id="event-date" style="display:none;"> <!-- Hidden, handled by JS -->
                     <button type="submit" id="add-event-btn" class="btn-primary" style="padding: 0 15px;">+</button>
-                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox"></div>
+                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox" title="Make Public"></div>
                 </form>
             </div>
         </div>
@@ -758,6 +762,65 @@
               <button id="confirmLogStudyBtn" class="btn-primary">Log Time</button>
           </div>
       </div>
+  </div>
+  
+  <!-- Edit Event Modal -->
+  <div id="editEventModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button edit-event-close" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+        <h3 style="margin-bottom: 15px;">Fix Your Schedule</h3>
+        <input type="hidden" id="edit-event-id">
+        <input type="hidden" id="edit-event-public-flag">
+        
+        <label style="font-size:0.8rem; color:var(--text-muted)">Description</label>
+        <input type="text" id="edit-event-desc" style="margin-bottom: 10px;">
+        
+        <div style="display:flex; gap:10px; margin-bottom: 10px;">
+            <div style="flex:1">
+               <label style="font-size:0.8rem; color:var(--text-muted)">Date</label>
+               <input type="date" id="edit-event-date">
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom: 10px;">
+            <div style="flex:1">
+               <label style="font-size:0.8rem; color:var(--text-muted)">Start</label>
+               <input type="time" id="edit-event-time">
+            </div>
+            <div style="flex:1">
+               <label style="font-size:0.8rem; color:var(--text-muted)">End</label>
+               <input type="time" id="edit-event-end-time">
+            </div>
+        </div>
+        
+        <div id="edit-event-public-wrapper" style="margin-top:15px; display:none;">
+            <input type="checkbox" id="edit-event-isPublic" style="width: auto;"> <label style="font-size:0.9rem;">Public Event</label>
+        </div>
+  
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button class="btn-ghost edit-event-close">Nah</button>
+            <button id="saveEventChangesBtn" class="btn-primary">Save It</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- Edit Todo Modal -->
+  <div id="editTodoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button edit-todo-close" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+        <h3 style="margin-bottom: 15px;">Edit Task</h3>
+        <input type="hidden" id="edit-todo-id">
+        
+        <label style="font-size:0.8rem; color:var(--text-muted)">Task Description</label>
+        <input type="text" id="edit-todo-desc" style="margin-bottom: 10px;">
+        
+        <label style="font-size:0.8rem; color:var(--text-muted)">Deadline</label>
+        <input type="date" id="edit-todo-deadline">
+  
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button class="btn-ghost edit-todo-close">Cancel</button>
+            <button id="saveTodoChangesBtn" class="btn-primary">Update</button>
+        </div>
+    </div>
   </div>
   
   <div id="analyticsModal" class="modal">
@@ -919,6 +982,7 @@
         if (currentUserRole === 'teacher') {
             document.getElementById('teacher-controls').style.display = 'block';
             document.getElementById('public-event-container').style.display = 'block';
+            document.getElementById('edit-event-public-wrapper').style.display = 'block';
         }
 
         hideAnimation();
@@ -1138,6 +1202,12 @@
         
         // Quick Plan Magic Add
         document.getElementById('quickPlanMagicBtn').addEventListener('click', handleQuickPlanMagic);
+
+        // Edit Modal Toggles
+        document.querySelector('.edit-event-close').addEventListener('click', () => document.getElementById('editEventModal').style.display = 'none');
+        document.getElementById('saveEventChangesBtn').addEventListener('click', handleUpdateEvent);
+        document.querySelector('.edit-todo-close').addEventListener('click', () => document.getElementById('editTodoModal').style.display = 'none');
+        document.getElementById('saveTodoChangesBtn').addEventListener('click', handleUpdateTodo);
 
         // Profile Modal Listeners
         document.getElementById('userDisplayName').addEventListener('click', openProfileModal);
@@ -1428,12 +1498,70 @@
         if(!evs.length) list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; padding:10px;">No events.</p>`;
         else evs.forEach(e => {
             const div = document.createElement('div');
-            div.innerHTML = `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color);">
-                <div><div style="font-size:0.75rem; color:var(--text-muted)">${e.time} ${e.isPublic?'• PUBLIC':''}</div><div style="font-weight:600;">${e.description}</div></div>
-                ${(currentUserRole === 'teacher' || !e.isPublic) ? `<button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>` : ''}
+            
+            // Time logic
+            let timeStr = e.time || 'All Day';
+            if (e.endTime) timeStr += ` - ${e.endTime}`;
+            
+            div.innerHTML = `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color); align-items:center;">
+                <div>
+                    <div style="font-size:0.75rem; color:var(--text-muted)">${timeStr} ${e.isPublic?'• PUBLIC':''}</div>
+                    <div style="font-weight:600;">${e.description}</div>
+                </div>
+                ${(currentUserRole === 'teacher' || !e.isPublic) ? `
+                <div style="display:flex; gap:5px;">
+                    <button onclick="openEditEventModal('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-main); cursor:pointer;">✎</button>
+                    <button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>
+                </div>` : ''}
             </div>`;
             list.appendChild(div);
         });
+    }
+    
+    // EDIT EVENT HANDLERS
+    window.openEditEventModal = (id, isPublic) => {
+        const event = isPublic ? publicEvents.find(e => e.id === id) : personalEvents.find(e => e.id === id);
+        if(!event) return;
+        
+        document.getElementById('edit-event-id').value = id;
+        document.getElementById('edit-event-public-flag').value = isPublic; 
+        document.getElementById('edit-event-desc').value = event.description;
+        document.getElementById('edit-event-date').value = event.date;
+        document.getElementById('edit-event-time').value = event.time || '';
+        document.getElementById('edit-event-end-time').value = event.endTime || '';
+        document.getElementById('edit-event-isPublic').checked = event.isPublic || false;
+        
+        document.getElementById('editEventModal').style.display = 'flex';
+    };
+    
+    async function handleUpdateEvent() {
+        const id = document.getElementById('edit-event-id').value;
+        const originalIsPublic = document.getElementById('edit-event-public-flag').value === 'true';
+        const desc = document.getElementById('edit-event-desc').value.trim();
+        const date = document.getElementById('edit-event-date').value;
+        const time = document.getElementById('edit-event-time').value;
+        const endTime = document.getElementById('edit-event-end-time').value;
+        const newIsPublic = document.getElementById('edit-event-isPublic').checked;
+        
+        if(!desc || !date) { alert("Description and Date are required."); return; }
+        
+        try {
+            const eventData = { description: desc, date, time, endTime, isPublic: newIsPublic };
+            
+            // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
+            if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
+                await deleteDoc(doc(db, originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id));
+                await addDoc(collection(db, newIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
+                    ...eventData, createdAt: serverTimestamp()
+                });
+            } 
+            // Case 2: Just update existing doc
+            else {
+                const path = originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
+                await updateDoc(doc(db, path, id), eventData);
+            }
+            document.getElementById('editEventModal').style.display = 'none';
+        } catch(e) { console.error(e); alert("Failed to update event."); }
     }
     
     window.deleteEvent = async (id, isPublic) => {
@@ -1506,11 +1634,43 @@
                     <option value="half-done" ${t.status==='half-done'?'selected':''}>DOING</option>
                     <option value="full-done" ${t.status==='full-done'?'selected':''}>DONE</option>
                 </select>
-                <div class="todo-actions"><button onclick="deleteTodo('${t.id}')">🗑</button></div>
+                <div class="todo-actions" style="display:flex; gap:2px;">
+                    <button onclick="openEditTodoModal('${t.id}')" style="color:var(--text-main);">✎</button>
+                    <button onclick="deleteTodo('${t.id}')">🗑</button>
+                </div>
             `;
             list.appendChild(el);
         });
     }
+    
+    // EDIT TODO HANDLERS
+    window.openEditTodoModal = (id) => {
+        const todo = todoItems.find(t => t.id === id);
+        if(!todo) return;
+        
+        document.getElementById('edit-todo-id').value = id;
+        document.getElementById('edit-todo-desc').value = todo.description;
+        document.getElementById('edit-todo-deadline').value = todo.deadline || '';
+        
+        document.getElementById('editTodoModal').style.display = 'flex';
+    };
+    
+    async function handleUpdateTodo() {
+        const id = document.getElementById('edit-todo-id').value;
+        const desc = document.getElementById('edit-todo-desc').value.trim();
+        const deadline = document.getElementById('edit-todo-deadline').value;
+        
+        if(!desc) { alert("Description required!"); return; }
+        
+        try {
+            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id), {
+                description: desc,
+                deadline: deadline
+            });
+            document.getElementById('editTodoModal').style.display = 'none';
+        } catch(e) { console.error(e); alert("Failed to update task."); }
+    }
+    
     window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
 
     // #region FIRESTORE LISTENERS
@@ -1564,11 +1724,12 @@
         e.preventDefault();
         const desc = document.getElementById('event-desc').value.trim();
         const time = document.getElementById('event-time').value;
+        const endTime = document.getElementById('event-end-time').value; // NEW
         const date = document.getElementById('event-date').value;
         const isPub = document.getElementById('public-event-checkbox').checked && currentUserRole === 'teacher';
         if(desc && time && date) {
             await addDoc(collection(db, isPub ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
-                description: desc, time, date, isPublic: isPub, createdAt: serverTimestamp()
+                description: desc, time, endTime, date, isPublic: isPub, createdAt: serverTimestamp()
             });
             document.getElementById('event-desc').value = '';
         }
