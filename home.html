@@ -1498,7 +1498,85 @@
             list.appendChild(div);
         });
     }
-    
+
+        window.deleteEvent = async (id, isPublic) => {
+        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
+    };
+
+    function renderTodos() {
+        const list = document.getElementById('todo-list');
+        list.innerHTML = '';
+        
+        // Sorting Logic: 
+        // 1. Split into "Active" (Not Started/Doing) and "Done"
+        // 2. Sort "Active" by deadline (closest first). Null deadlines go last.
+        // 3. Sort "Done" by deadline.
+        // 4. Combine.
+        
+        const activeTasks = todoItems.filter(t => t.status !== 'full-done');
+        const doneTasks = todoItems.filter(t => t.status === 'full-done');
+        
+        const sortByDeadline = (a, b) => {
+            if (!a.deadline && !b.deadline) return 0;
+            if (!a.deadline) return 1; // a last
+            if (!b.deadline) return -1; // b last
+            return new Date(a.deadline) - new Date(b.deadline);
+        };
+        
+        activeTasks.sort(sortByDeadline);
+        doneTasks.sort(sortByDeadline);
+        
+        const sorted = [...activeTasks, ...doneTasks];
+        
+        if(!sorted.length) list.innerHTML = `<p style="color:var(--text-muted); text-align:center;">No tasks.</p>`;
+        
+        sorted.forEach(t => {
+            const el = document.createElement('div'); el.className = 'todo-item'; el.dataset.id = t.id;
+            const isDone = t.status === 'full-done';
+            const isHalfDone = t.status === 'half-done';
+            
+            // Logic for Due Date Warning
+            let deadlineDisplay = 'No Deadline';
+            if (t.deadline) {
+                const now = new Date();
+                const due = new Date(t.deadline);
+                // Reset times to midnight for accurate day comparison
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const dueDate = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+                
+                const diffTime = dueDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (dueDate < today && !isDone) {
+                    // SHOW DATE WITH OVERDUE TEXT
+                    deadlineDisplay = `<span class="is-due">Overdue (${t.deadline})</span>`;
+                } else if (diffDays >= 0 && diffDays <= 3 && !isDone) {
+                    // SHOW DATE WITH RELATIVE TEXT
+                    let relativeText = diffDays === 0 ? 'Due Today!' : (diffDays === 1 ? 'Due Tomorrow!' : `Due in ${diffDays} days`);
+                    deadlineDisplay = `<span class="is-due-soon">${relativeText} (${t.deadline})</span>`;
+                } else {
+                    deadlineDisplay = t.deadline;
+                }
+            }
+
+            el.innerHTML = `
+                <div class="todo-content ${isDone?'status-done':(isHalfDone?'status-half-done':'')}">
+                    <span class="todo-text">${t.description}</span>
+                    <div class="todo-meta">${deadlineDisplay}</div>
+                </div>
+                <select class="todo-status" style="background:transparent; border:none; color:var(--text-muted);">
+                    <option value="not-started" ${t.status==='not-started'?'selected':''}>TODO</option>
+                    <option value="half-done" ${t.status==='half-done'?'selected':''}>DOING</option>
+                    <option value="full-done" ${t.status==='full-done'?'selected':''}>DONE</option>
+                </select>
+                <div class="todo-actions"><button onclick="deleteTodo('${t.id}')">🗑</button></div>
+            `;
+            list.appendChild(el);
+        });
+    }
+    window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
+
+  
     // EDIT EVENT LOGIC
     window.openEditEventModal = (id, isPublic) => {
         const event = isPublic ? publicEvents.find(e => e.id === id) : personalEvents.find(e => e.id === id);
