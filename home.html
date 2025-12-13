@@ -659,16 +659,20 @@
                 <h4 id="event-list-header" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Selected Date</h4>
                 <div id="event-list" style="min-height: 50px;"></div>
                 
-                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center;">
-                    <div style="display: flex; gap: 5px; align-items: center;">
+                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-direction: column;">
+                    <div style="display: flex; gap: 5px; align-items: center; width: 100%;">
                         <input type="time" id="event-time" title="Start Time" style="width: auto;">
                         <span style="color:var(--text-muted); font-size: 0.8rem;">to</span>
                         <input type="time" id="event-end-time" title="End Time (Optional)" style="width: auto;">
                     </div>
-                    <input type="text" id="event-desc" placeholder="Add new event..." required style="flex:1; min-width: 150px;">
-                    <input type="date" id="event-date" style="display:none;"> <!-- Hidden, handled by JS -->
-                    <button type="submit" id="add-event-btn" class="btn-primary" style="padding: 0 15px;">+</button>
-                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox" title="Make Public"></div>
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <input type="text" id="event-desc" placeholder="Add new event..." required style="flex:1;">
+                        <input type="date" id="event-date" style="display:none;"> <!-- Hidden, handled by JS -->
+                        <button type="submit" id="add-event-btn" class="btn-primary" style="padding: 0 15px;">+</button>
+                    </div>
+                    <textarea id="event-notes" placeholder="Notes (optional)" style="width: 100%; height: 60px; resize: none; background: rgba(125,125,125,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.85rem;"></textarea>
+                    
+                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox" title="Make Public"> Public Event</div>
                 </form>
             </div>
         </div>
@@ -791,6 +795,9 @@
                <input type="time" id="edit-event-end-time">
             </div>
         </div>
+        
+        <label style="font-size:0.8rem; color:var(--text-muted)">Notes</label>
+        <textarea id="edit-event-notes" style="width: 100%; height: 80px; resize: none; background: rgba(125,125,125,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem; margin-bottom: 10px;"></textarea>
         
         <div id="edit-event-public-wrapper" style="margin-top:15px; display:none;">
             <input type="checkbox" id="edit-event-isPublic" style="width: auto;"> <label style="font-size:0.9rem;">Public Event</label>
@@ -1503,16 +1510,25 @@
             let timeStr = e.time || 'All Day';
             if (e.endTime) timeStr += ` - ${e.endTime}`;
             
-            div.innerHTML = `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color); align-items:center;">
-                <div>
-                    <div style="font-size:0.75rem; color:var(--text-muted)">${timeStr} ${e.isPublic?'• PUBLIC':''}</div>
-                    <div style="font-weight:600;">${e.description}</div>
+            // Unique ID for toggling notes
+            const notesId = `notes-${e.id}`;
+            const hasNotes = e.notes && e.notes.trim().length > 0;
+            
+            div.innerHTML = `<div style="padding:8px; border-bottom:1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="cursor: pointer;" onclick="document.getElementById('${notesId}').style.display = document.getElementById('${notesId}').style.display === 'none' ? 'block' : 'none'">
+                        <div style="font-size:0.75rem; color:var(--text-muted)">${timeStr} ${e.isPublic?'• PUBLIC':''}</div>
+                        <div style="font-weight:600;">${e.description} ${hasNotes ? '<span style="font-size:0.7rem; color:var(--text-muted);">▼</span>' : ''}</div>
+                    </div>
+                    ${(currentUserRole === 'teacher' || !e.isPublic) ? `
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="openEditEventModal('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-main); cursor:pointer;">✎</button>
+                        <button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>
+                    </div>` : ''}
                 </div>
-                ${(currentUserRole === 'teacher' || !e.isPublic) ? `
-                <div style="display:flex; gap:5px;">
-                    <button onclick="openEditEventModal('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-main); cursor:pointer;">✎</button>
-                    <button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>
-                </div>` : ''}
+                <div id="${notesId}" style="display:none; margin-top:5px; font-size:0.85rem; color:var(--text-muted); background:rgba(255,255,255,0.03); padding:8px; border-radius:4px;">
+                    ${e.notes ? e.notes.replace(/\n/g, '<br>') : 'No notes.'}
+                </div>
             </div>`;
             list.appendChild(div);
         });
@@ -1529,6 +1545,7 @@
         document.getElementById('edit-event-date').value = event.date;
         document.getElementById('edit-event-time').value = event.time || '';
         document.getElementById('edit-event-end-time').value = event.endTime || '';
+        document.getElementById('edit-event-notes').value = event.notes || '';
         document.getElementById('edit-event-isPublic').checked = event.isPublic || false;
         
         document.getElementById('editEventModal').style.display = 'flex';
@@ -1541,12 +1558,13 @@
         const date = document.getElementById('edit-event-date').value;
         const time = document.getElementById('edit-event-time').value;
         const endTime = document.getElementById('edit-event-end-time').value;
+        const notes = document.getElementById('edit-event-notes').value;
         const newIsPublic = document.getElementById('edit-event-isPublic').checked;
         
         if(!desc || !date) { alert("Description and Date are required."); return; }
         
         try {
-            const eventData = { description: desc, date, time, endTime, isPublic: newIsPublic };
+            const eventData = { description: desc, date, time, endTime, notes, isPublic: newIsPublic };
             
             // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
             if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
@@ -1724,14 +1742,16 @@
         e.preventDefault();
         const desc = document.getElementById('event-desc').value.trim();
         const time = document.getElementById('event-time').value;
-        const endTime = document.getElementById('event-end-time').value; // NEW
+        const endTime = document.getElementById('event-end-time').value;
+        const notes = document.getElementById('event-notes').value;
         const date = document.getElementById('event-date').value;
         const isPub = document.getElementById('public-event-checkbox').checked && currentUserRole === 'teacher';
         if(desc && time && date) {
             await addDoc(collection(db, isPub ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
-                description: desc, time, endTime, date, isPublic: isPub, createdAt: serverTimestamp()
+                description: desc, time, endTime, notes, date, isPublic: isPub, createdAt: serverTimestamp()
             });
             document.getElementById('event-desc').value = '';
+            document.getElementById('event-notes').value = '';
         }
     }
     async function handleAddTodo(e) {
