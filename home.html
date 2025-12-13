@@ -911,6 +911,7 @@
             currentUserId = user.uid;
             currentUserEmail = user.email;
             try {
+                // CORRECTED PATH
                 const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 const userProfileDoc = await getDoc(userProfileRef);
                 
@@ -922,6 +923,7 @@
                     // AUTO-ASSIGN ROLE 'student' NO CODE NEEDED
                     currentUserRole = 'student';
                     currentUserName = user.displayName;
+                    // CORRECTED PATH
                     await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, role: 'student', xpBalance: 0 }, { merge: true });
                 }
                 showApp();
@@ -1044,6 +1046,7 @@
     }
 
     function listenForCountdownChanges() {
+        // CORRECTED PATH
         onSnapshot(doc(db, `artifacts/${appId}/public/data/settings/countdown`), (doc) => {
             if (doc.exists() && doc.data().target) {
                 updateCountdown(doc.data().target.toDate());
@@ -1055,6 +1058,7 @@
     
     document.getElementById('set-countdown-btn').addEventListener('click', async () => {
         const val = document.getElementById('countdown-datetime').value;
+        // CORRECTED PATH
         if(val) await setDoc(doc(db, `artifacts/${appId}/public/data/settings/countdown`), { target: new Date(val) });
     });
     // #endregion
@@ -1392,6 +1396,7 @@
             // Add Events
             if (result.events && Array.isArray(result.events)) {
                 for (const ev of result.events) {
+                    // CORRECTED PATH
                     await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/events`), {
                         description: ev.description,
                         date: ev.date,
@@ -1407,6 +1412,7 @@
             // Add Todos
             if (result.todos && Array.isArray(result.todos)) {
                 for (const t of result.todos) {
+                    // CORRECTED PATH
                     await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`), {
                         description: t.description,
                         deadline: t.deadline || '',
@@ -1534,13 +1540,16 @@
             
             // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
             if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
+                // CORRECTED PATH
                 await deleteDoc(doc(db, originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id));
+                // CORRECTED PATH
                 await addDoc(collection(db, newIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
                     ...eventData, createdAt: serverTimestamp()
                 });
             } 
             // Case 2: Just update existing doc
             else {
+                // CORRECTED PATH
                 const path = originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
                 await updateDoc(doc(db, path, id), eventData);
             }
@@ -1558,6 +1567,7 @@
         const isPub = document.getElementById('public-event-checkbox').checked && currentUserRole === 'teacher';
         
         if(desc && date) {
+            // CORRECTED PATH
             await addDoc(collection(db, isPub ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
                 description: desc, time, endTime, date, isPublic: isPub, createdAt: serverTimestamp()
             });
@@ -1571,6 +1581,7 @@
         const desc = document.getElementById('todo-input').value.trim();
         const dl = document.getElementById('todo-deadline').value;
         if(desc) {
+            // CORRECTED PATH
             await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`), {
                 description: desc, deadline: dl, status: 'not-started', createdAt: serverTimestamp()
             });
@@ -1578,6 +1589,7 @@
         }
     }
     async function handleUpdateTodoStatus(id, status) {
+        // CORRECTED PATH
         await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id), { status });
     }
     
@@ -1607,7 +1619,9 @@
         const total = points + bonus;
         
         try {
+            // CORRECTED PATH
             await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(total) });
+            // CORRECTED PATH
             await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date, hours: totalHours, pointsEarned: total, createdAt: serverTimestamp() });
             document.getElementById('logStudyModal').style.display = 'none';
             document.getElementById('log-hours').value = 0; document.getElementById('log-minutes').value = 0;
@@ -1650,6 +1664,7 @@
             loggedCount++;
 
             // Add to DB
+            // CORRECTED PATH
             batchPromises.push(
                 addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), {
                     date, 
@@ -1669,6 +1684,7 @@
         }
 
         // Update Total XP
+        // CORRECTED PATH
         await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { 
             xpBalance: increment(totalXP) 
         });
@@ -1694,7 +1710,9 @@
 
     async function handleRedeem(cost, itemName) {
         if(confirm(`Redeem ${itemName} for ${cost} XP?`)) {
+            // CORRECTED PATH
             await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { xpBalance: increment(-cost) });
+             // CORRECTED PATH
              await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), { date: toLocalISODate(new Date()), hours: 0, pointsEarned: -cost, description: `Redeemed ${itemName}`, createdAt: serverTimestamp() });
         }
     }
@@ -1844,7 +1862,6 @@
             const d = new Date(endDate); 
             d.setDate(d.getDate() - i);
             const ds = toLocalISODate(d);
-            labels.push(d.toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'}));
             const entry = studyHistory.find(l => l.date === ds && l.hours > 0);
             data.push(entry ? entry.hours : 0);
         }
@@ -1933,6 +1950,7 @@
         document.getElementById('saveProfileButton').onclick = async () => {
             const name = document.getElementById('editUserName').value.trim();
             if(name) {
+                // CORRECTED PATH
                 await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { name });
                 currentUserName = name; document.getElementById('userDisplayName').textContent = name;
                 document.getElementById('homeUserNamePlaceholder').textContent = name;
