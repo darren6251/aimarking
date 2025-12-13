@@ -1502,8 +1502,62 @@
     window.deleteEvent = async (id, isPublic) => {
         try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
     };
+    
+    // EDIT EVENT LOGIC
+    window.openEditEventModal = (id, isPublic) => {
+        const event = isPublic ? publicEvents.find(e => e.id === id) : personalEvents.find(e => e.id === id);
+        if(!event) return;
+        
+        document.getElementById('edit-event-id').value = id;
+        document.getElementById('edit-event-public-flag').value = isPublic; 
+        document.getElementById('edit-event-desc').value = event.description;
+        document.getElementById('edit-event-date').value = event.date;
+        document.getElementById('edit-event-time').value = event.time || '';
+        document.getElementById('edit-event-end-time').value = event.endTime || '';
+        document.getElementById('edit-event-isPublic').checked = event.isPublic || false;
+        
+        // Only teacher can toggle public
+        document.getElementById('edit-event-isPublic').disabled = currentUserRole !== 'teacher';
+        
+        document.getElementById('editEventModal').style.display = 'flex';
+    };
+    
+    async function handleUpdateEvent() {
+        const id = document.getElementById('edit-event-id').value;
+        const originalIsPublic = document.getElementById('edit-event-public-flag').value === 'true';
+        const desc = document.getElementById('edit-event-desc').value.trim();
+        const date = document.getElementById('edit-event-date').value;
+        const time = document.getElementById('edit-event-time').value;
+        const endTime = document.getElementById('edit-event-end-time').value;
+        const newIsPublic = document.getElementById('edit-event-isPublic').checked;
+        
+        if(!desc || !date) { alert("Description and Date are required."); return; }
+        
+        try {
+            const eventData = { description: desc, date, time, endTime, isPublic: newIsPublic };
+            
+            // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
+            if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
+                await deleteDoc(doc(db, originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id));
+                await addDoc(collection(db, newIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
+                    ...eventData, createdAt: serverTimestamp()
+                });
+            } 
+            // Case 2: Just update existing doc
+            else {
+                const path = originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
+                await updateDoc(doc(db, path, id), eventData);
+            }
+            document.getElementById('editEventModal').style.display = 'none';
+        } catch(e) { console.error(e); alert("Failed to update event."); }
+    }
 
-    function renderTodos() {
+    
+        window.deleteEvent = async (id, isPublic) => {
+        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
+    };
+    
+        function renderTodos() {
         const list = document.getElementById('todo-list');
         list.innerHTML = '';
         
@@ -1575,61 +1629,7 @@
         });
     }
     window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
-
-  
-    // EDIT EVENT LOGIC
-    window.openEditEventModal = (id, isPublic) => {
-        const event = isPublic ? publicEvents.find(e => e.id === id) : personalEvents.find(e => e.id === id);
-        if(!event) return;
-        
-        document.getElementById('edit-event-id').value = id;
-        document.getElementById('edit-event-public-flag').value = isPublic; 
-        document.getElementById('edit-event-desc').value = event.description;
-        document.getElementById('edit-event-date').value = event.date;
-        document.getElementById('edit-event-time').value = event.time || '';
-        document.getElementById('edit-event-end-time').value = event.endTime || '';
-        document.getElementById('edit-event-isPublic').checked = event.isPublic || false;
-        
-        // Only teacher can toggle public
-        document.getElementById('edit-event-isPublic').disabled = currentUserRole !== 'teacher';
-        
-        document.getElementById('editEventModal').style.display = 'flex';
-    };
     
-    async function handleUpdateEvent() {
-        const id = document.getElementById('edit-event-id').value;
-        const originalIsPublic = document.getElementById('edit-event-public-flag').value === 'true';
-        const desc = document.getElementById('edit-event-desc').value.trim();
-        const date = document.getElementById('edit-event-date').value;
-        const time = document.getElementById('edit-event-time').value;
-        const endTime = document.getElementById('edit-event-end-time').value;
-        const newIsPublic = document.getElementById('edit-event-isPublic').checked;
-        
-        if(!desc || !date) { alert("Description and Date are required."); return; }
-        
-        try {
-            const eventData = { description: desc, date, time, endTime, isPublic: newIsPublic };
-            
-            // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
-            if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
-                await deleteDoc(doc(db, originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id));
-                await addDoc(collection(db, newIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
-                    ...eventData, createdAt: serverTimestamp()
-                });
-            } 
-            // Case 2: Just update existing doc
-            else {
-                const path = originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
-                await updateDoc(doc(db, path, id), eventData);
-            }
-            document.getElementById('editEventModal').style.display = 'none';
-        } catch(e) { console.error(e); alert("Failed to update event."); }
-    }
-
-        window.deleteEvent = async (id, isPublic) => {
-        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
-    };
-
     // #region HANDLERS
     async function handleAddEvent(e) {
         e.preventDefault();
