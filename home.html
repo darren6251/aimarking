@@ -23,10 +23,10 @@
     :root {
         /* Base Colors */
         --bg-body: #050505;
-        --bg-header: rgba(5, 5, 5, 0.7);
+        --bg-header: rgba(5, 5, 5, 0.7); /* Default dark header */
         --bg-card: rgba(20, 20, 20, 0.7);
         --bg-card-hover: rgba(30, 30, 30, 0.8);
-        --bg-tool: rgba(10, 10, 10, 0.5);
+        --bg-tool: rgba(10, 10, 10, 0.5); /* Dark tool widget */
         --bg-input: #111;
         --bg-dropdown: #000;
         
@@ -57,10 +57,10 @@
 
     body.light-theme {
         --bg-body: #f0f2f5;
-        --bg-header: rgba(255, 255, 255, 0.85);
+        --bg-header: rgba(255, 255, 255, 0.85); /* Light header */
         --bg-card: rgba(255, 255, 255, 0.8);
         --bg-card-hover: rgba(255, 255, 255, 1);
-        --bg-tool: rgba(255, 255, 255, 0.6);
+        --bg-tool: rgba(255, 255, 255, 0.6); /* Light tool widget */
         --bg-input: #f5f5f5;
         --bg-dropdown: #fff;
         
@@ -242,7 +242,6 @@
     .area-tools { grid-column: span 12; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .area-calendar { grid-column: span 7; }
     .area-todo { grid-column: span 5; }
-    .area-quick-plan { grid-column: span 12; }
     .area-xp { grid-column: span 12; }
 
     @media (max-width: 1024px) {
@@ -385,7 +384,7 @@
         font-family: var(--font-main); font-size: 1rem;
     }
     .quick-plan-input:focus { border-color: var(--text-main); outline: none; }
-    
+
     /* Stat Cards (Time & Countdown) */
     .stat-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     .stat-value { font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; letter-spacing: -1px; }
@@ -660,16 +659,12 @@
                 <h4 id="event-list-header" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Selected Date</h4>
                 <div id="event-list" style="min-height: 50px;"></div>
                 
-                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center;">
-                    <div style="display: flex; gap: 5px; align-items: center;">
-                        <input type="time" id="event-time" title="Start Time" style="width: auto;">
-                        <span style="color:var(--text-muted);">-</span>
-                        <input type="time" id="event-end-time" title="End Time (Optional)" style="width: auto;">
-                    </div>
+                <form id="add-event-form" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <input type="time" id="event-time" style="width: auto;">
                     <input type="text" id="event-desc" placeholder="Add new event..." required style="flex:1; min-width: 150px;">
                     <input type="date" id="event-date" style="display:none;"> <!-- Hidden, handled by JS -->
                     <button type="submit" id="add-event-btn" class="btn-primary" style="padding: 0 15px;">+</button>
-                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox" title="Make Public"></div>
+                    <div id="public-event-container" style="display:none;"><input type="checkbox" id="public-event-checkbox"></div>
                 </form>
             </div>
         </div>
@@ -761,46 +756,6 @@
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
               <button class="btn-ghost study-close-button">Cancel</button>
               <button id="confirmLogStudyBtn" class="btn-primary">Log Time</button>
-          </div>
-      </div>
-  </div>
-  
-  <!-- Edit Event Modal -->
-  <div id="editEventModal" class="modal">
-      <div class="modal-content">
-          <span class="close-button edit-event-close" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
-          <h3 style="margin-bottom: 15px;">Edit Event</h3>
-          <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
-              <input type="hidden" id="edit-event-id">
-              <input type="hidden" id="edit-event-public-flag">
-              <div>
-                  <label style="font-size:0.8rem; color:var(--text-muted)">Description</label>
-                  <input type="text" id="edit-event-desc">
-              </div>
-              <div style="display: flex; gap: 10px;">
-                  <div style="flex:1">
-                      <label style="font-size:0.8rem; color:var(--text-muted)">Date</label>
-                      <input type="date" id="edit-event-date">
-                  </div>
-              </div>
-              <div style="display: flex; gap: 10px;">
-                  <div style="flex:1">
-                      <label style="font-size:0.8rem; color:var(--text-muted)">Start Time</label>
-                      <input type="time" id="edit-event-time">
-                  </div>
-                  <div style="flex:1">
-                      <label style="font-size:0.8rem; color:var(--text-muted)">End Time</label>
-                      <input type="time" id="edit-event-end-time">
-                  </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                  <input type="checkbox" id="edit-event-isPublic" style="width: auto;">
-                  <label for="edit-event-isPublic" style="font-size:0.9rem;">Public Event</label>
-              </div>
-          </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px;">
-              <button class="btn-ghost edit-event-close">Cancel</button>
-              <button id="saveEventChangesBtn" class="btn-primary">Save Changes</button>
           </div>
       </div>
   </div>
@@ -1183,10 +1138,6 @@
         
         // Quick Plan Magic Add
         document.getElementById('quickPlanMagicBtn').addEventListener('click', handleQuickPlanMagic);
-        
-        // Event Edit Modal
-        document.querySelectorAll('.edit-event-close').forEach(b => b.onclick = () => document.getElementById('editEventModal').style.display = 'none');
-        document.getElementById('saveEventChangesBtn').addEventListener('click', handleUpdateEvent);
 
         // Profile Modal Listeners
         document.getElementById('userDisplayName').addEventListener('click', openProfileModal);
@@ -1472,90 +1423,23 @@
         const dStr = toLocalISODate(currentSelectedDate);
         document.getElementById('event-list-header').textContent = currentSelectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         
-        const evs = [...personalEvents.filter(e => e.date === dStr), ...publicEvents.filter(e => e.date === dStr)].sort((a,b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+        const evs = [...personalEvents.filter(e => e.date === dStr), ...publicEvents.filter(e => e.date === dStr)].sort((a,b) => a.time.localeCompare(b.time));
         
         if(!evs.length) list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; padding:10px;">No events.</p>`;
         else evs.forEach(e => {
             const div = document.createElement('div');
-            // Format Time Display
-            let timeDisplay = 'All Day';
-            if (e.time) {
-                timeDisplay = e.time;
-                if (e.endTime) {
-                    timeDisplay += ` - ${e.endTime}`;
-                }
-            }
-            
-            div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid var(--border-color);">
-                <div><div style="font-size:0.75rem; color:var(--text-muted)">${timeDisplay} ${e.isPublic?'• PUBLIC':''}</div><div style="font-weight:600;">${e.description}</div></div>
-                <div style="display:flex; gap:5px;">
-                    ${(currentUserRole === 'teacher' || !e.isPublic) ? `
-                    <button onclick="openEditEventModal('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✎</button>
-                    <button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">&times;</button>
-                    ` : ''}
-                </div>
+            div.innerHTML = `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid var(--border-color);">
+                <div><div style="font-size:0.75rem; color:var(--text-muted)">${e.time} ${e.isPublic?'• PUBLIC':''}</div><div style="font-weight:600;">${e.description}</div></div>
+                ${(currentUserRole === 'teacher' || !e.isPublic) ? `<button onclick="deleteEvent('${e.id}', ${e.isPublic})" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">&times;</button>` : ''}
             </div>`;
             list.appendChild(div);
         });
     }
     
-    // EDIT EVENT LOGIC
-    window.openEditEventModal = (id, isPublic) => {
-        const event = isPublic ? publicEvents.find(e => e.id === id) : personalEvents.find(e => e.id === id);
-        if(!event) return;
-        
-        document.getElementById('edit-event-id').value = id;
-        document.getElementById('edit-event-public-flag').value = isPublic; 
-        document.getElementById('edit-event-desc').value = event.description;
-        document.getElementById('edit-event-date').value = event.date;
-        document.getElementById('edit-event-time').value = event.time || '';
-        document.getElementById('edit-event-end-time').value = event.endTime || '';
-        document.getElementById('edit-event-isPublic').checked = event.isPublic || false;
-        
-        // Only teacher can toggle public
-        document.getElementById('edit-event-isPublic').disabled = currentUserRole !== 'teacher';
-        
-        document.getElementById('editEventModal').style.display = 'flex';
-    };
-    
-    // RESTORED DELETE FUNCTION FOR EVENTS
     window.deleteEvent = async (id, isPublic) => {
-        if(!confirm("Are you sure you want to delete this event?")) return;
-        try { 
-            await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); 
-        } catch(e){console.error(e);}
+        try { await deleteDoc(doc(db, isPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id)); } catch(e){console.error(e);}
     };
-    
-    async function handleUpdateEvent() {
-        const id = document.getElementById('edit-event-id').value;
-        const originalIsPublic = document.getElementById('edit-event-public-flag').value === 'true';
-        const desc = document.getElementById('edit-event-desc').value.trim();
-        const date = document.getElementById('edit-event-date').value;
-        const time = document.getElementById('edit-event-time').value;
-        const endTime = document.getElementById('edit-event-end-time').value;
-        const newIsPublic = document.getElementById('edit-event-isPublic').checked;
-        
-        if(!desc || !date) { alert("Description and Date are required."); return; }
-        
-        try {
-            const eventData = { description: desc, date, time, endTime, isPublic: newIsPublic };
-            
-            // Case 1: Public status changed (Delete old -> Create new) - Only if teacher
-            if(originalIsPublic !== newIsPublic && currentUserRole === 'teacher') {
-                await deleteDoc(doc(db, originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`, id));
-                await addDoc(collection(db, newIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
-                    ...eventData, createdAt: serverTimestamp()
-                });
-            } 
-            // Case 2: Just update existing doc
-            else {
-                const path = originalIsPublic ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`;
-                await updateDoc(doc(db, path, id), eventData);
-            }
-            document.getElementById('editEventModal').style.display = 'none';
-        } catch(e) { console.error(e); alert("Failed to update event."); }
-    }
-    
+
     function renderTodos() {
         const list = document.getElementById('todo-list');
         list.innerHTML = '';
@@ -1627,29 +1511,66 @@
             list.appendChild(el);
         });
     }
-    
-    // RESTORED DELETE FUNCTION FOR TODOS
-    window.deleteTodo = async (id) => { 
-        if(!confirm("Delete this task?")) return;
-        try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} 
-    };
+    window.deleteTodo = async (id) => { try{await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/todos`, id));}catch(e){} };
+
+    // #region FIRESTORE LISTENERS
+    function listenForPersonalEvents() {
+        unsubscribePersonalEvents();
+        unsubscribePersonalEvents = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/events`)), (s) => {
+            personalEvents = s.docs.map(d => ({id:d.id, ...d.data()})); renderCalendar(); renderEventsForDay();
+        });
+    }
+    function listenForPublicEvents() {
+        unsubscribePublicEvents();
+        unsubscribePublicEvents = onSnapshot(query(collection(db, `artifacts/${appId}/public/data/public_events`)), (s) => {
+            publicEvents = s.docs.map(d => ({id:d.id, ...d.data()})); renderCalendar(); renderEventsForDay();
+        });
+    }
+    function listenForTodos() {
+        unsubscribeTodos();
+        unsubscribeTodos = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/todos`)), (s) => {
+            todoItems = s.docs.map(d => ({id:d.id, ...d.data()})); renderTodos();
+        });
+    }
+    function listenForProfileChanges() {
+        unsubscribeProfile();
+        unsubscribeProfile = onSnapshot(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), (d) => {
+            if(d.exists()) {
+                xpBalance = d.data().xpBalance || 0;
+                document.getElementById('xpBalanceDisplay').textContent = `${parseFloat(xpBalance.toFixed(1))} XP`;
+                const level = Math.floor(xpBalance/1000)+1;
+                document.getElementById('xpProgressText').textContent = `Lvl ${level}`;
+                document.getElementById('xpProgressBar').style.width = `${((xpBalance%1000)/1000)*100}%`;
+                
+                document.getElementById('redeemHalfDayBtn').disabled = xpBalance < 150;
+                document.getElementById('redeemHalfDayBtn').style.opacity = xpBalance < 150 ? 0.5 : 1;
+                document.getElementById('redeemFullDayBtn').disabled = xpBalance < 300;
+                document.getElementById('redeemFullDayBtn').style.opacity = xpBalance < 300 ? 0.5 : 1;
+            }
+        });
+    }
+    function listenForStudyHistory() {
+        unsubscribeStudyHistory();
+        unsubscribeStudyHistory = onSnapshot(query(collection(db, `artifacts/${appId}/users/${currentUserId}/studyHistory`), limit(100)), (s) => {
+            studyHistory = s.docs.map(d => ({id:d.id, ...d.data()}));
+            // If chart is open, refresh it
+            if(document.getElementById('analyticsModal').style.display === 'flex') renderAnalyticsChart();
+        });
+    }
+    // #endregion
 
     // #region HANDLERS
     async function handleAddEvent(e) {
         e.preventDefault();
         const desc = document.getElementById('event-desc').value.trim();
         const time = document.getElementById('event-time').value;
-        const endTime = document.getElementById('event-end-time').value;
         const date = document.getElementById('event-date').value;
         const isPub = document.getElementById('public-event-checkbox').checked && currentUserRole === 'teacher';
-        
-        if(desc && date) {
+        if(desc && time && date) {
             await addDoc(collection(db, isPub ? `artifacts/${appId}/public/data/public_events` : `artifacts/${appId}/users/${currentUserId}/events`), {
-                description: desc, time, endTime, date, isPublic: isPub, createdAt: serverTimestamp()
+                description: desc, time, date, isPublic: isPub, createdAt: serverTimestamp()
             });
             document.getElementById('event-desc').value = '';
-            document.getElementById('event-time').value = '';
-            document.getElementById('event-end-time').value = '';
         }
     }
     async function handleAddTodo(e) {
