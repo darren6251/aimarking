@@ -1,874 +1,1010 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>darStudy - Tutorial Videos</title>
+    <title>AI Marker - Tutorial Videos</title>
+    <!-- PDF.js library for rendering PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- HLS.js for .m3u8 video streaming -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>function onYouTubeIframeAPIReady(){window.isYouTubeApiReady=true;}</script>
+    <!-- Define the YouTube API callback *before* loading the API -->
+    <script>
+        function onYouTubeIframeAPIReady() {
+            window.isYouTubeApiReady = true;
+        }
+    </script>
+    <!-- YouTube Iframe API -->
     <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Vimeo Player API -->
     <script src="https://player.vimeo.com/api/player.js"></script>
+    <!-- Google Font: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* MODERN MONOCHROME THEME */
-            --bg-primary: #050505;       /* Deepest Black */
-            --bg-secondary: #0f0f0f;     /* Slightly lighter black for panels */
-            --bg-tertiary: #1a1a1a;      /* Hover states */
-            --text-primary: #ffffff;     /* Pure White */
-            --text-secondary: #888888;   /* Cool Grey */
-            --accent-primary: #ffffff;   /* STARK WHITE ACCENT */
-            --accent-hover: #e5e5e5;     /* Slightly dim white */
-            --accent-green: #33ff33;     /* Terminal Green for success */
-            --accent-red: #ff3333;       /* Terminal Red for danger */
-            --border-color: #262626;     /* Subtle borders */
-            --glass-bg: rgba(255, 255, 255, 0.03);
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --accent-primary: #00ffff;
+            --accent-green: #28c840;
+            --accent-red: #ef4444;
+            --border-color: #222222;
+            --focus-ring-color: rgba(0, 255, 255, 0.5);
         }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.3s ease; }
         body {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: var(--text-primary); background-color: var(--bg-primary);
-            overflow-x: hidden; scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 100vh;
-            letter-spacing: -0.02em; /* Modern tight tracking */
+            font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        
-        /* Typography Updates */
-        h1, h2, h3, h4, .logo-container h1 { font-weight: 700; letter-spacing: -0.04em; }
-        button, input, textarea, select, .playlist-item, .material-card-content h3 { font-family: "Inter", sans-serif; }
-        .difficulty-badge, #accessCodeInput { font-family: "JetBrains Mono", monospace; }
-
+        button, input, textarea, select { font-family: inherit; }
         button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Login Styles */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* Auth Styles */
         #authWrapper {
             display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;
             opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001;
-            background: var(--bg-primary);
         }
         .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
-        .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; border-right: 1px solid var(--border-color); }
-        .login-left-panel h1 { font-size: 4rem; margin-bottom: 0.5rem; background: linear-gradient(to bottom right, #fff, #666); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .login-left-panel p { font-size: 1.1rem; color: var(--text-secondary); font-weight: 400; }
+        .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; }
+        .login-left-panel h1 { font-size: 3.5rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 1rem; }
+        .login-left-panel p { font-size: 1.25rem; font-weight: 400; line-height: 1.5; margin-bottom: .5rem; color: var(--text-secondary); }
         .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
-        
         #authContainer {
-            width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: stretch;
-            background-color: var(--bg-primary); padding: 3rem; border-radius: 24px; border: 1px solid var(--border-color);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: stretch;
+            background-color: var(--bg-primary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color);
         }
-        #authContainer h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
-        
-        /* Modern Inputs */
-        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], 
-        textarea, input[type="date"], input[type="datetime-local"] {
-            width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color);
-            color: var(--text-primary); padding: 14px 20px; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem;
-        }
-        input:focus, textarea:focus, select:focus { 
-            outline: none; border-color: var(--accent-primary); background-color: var(--bg-tertiary);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Modern Buttons (Black & White Style) */
-        .btn-primary, .logout-btn {
-            background: transparent; color: var(--text-primary); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 10px 24px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
-            text-decoration: none; display: inline-block; text-align: center; transition: all 0.2s ease;
-        }
-        .btn-primary:hover {
-            background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary);
-            transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,255,255,0.1);
-        }
-        .logout-btn:hover {
-            border-color: var(--accent-red); color: var(--accent-red); background: rgba(255, 51, 51, 0.1);
-        }
+        #authContainer h2 { font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
         .google-btn {
             display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1rem; cursor: pointer; background: var(--bg-secondary);
-            color: var(--text-primary); font-size: 1rem; font-weight: 500; margin-bottom: 1rem;
+            border-radius: 8px; padding: .75rem; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary);
+            font-size: 1rem; font-weight: 500; margin-bottom: 1rem;
         }
-        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-primary); }
-
-        #appSection {
-            display: none; flex-direction: column; height: 100vh;
-            background-color: var(--bg-primary); animation: fadeIn .6s ease-out both;
+        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-secondary); }
+        .google-btn img { height: 20px; }
+        #accessCodeInput {
+             background-color: var(--bg-secondary); border: 2px solid var(--accent-primary); color: var(--text-primary);
+             padding: 12px 18px; border-radius: 30px; width: 100%; margin-bottom: 1rem; text-align: center; font-size: 1rem;
         }
-        
-        /* Header Overhaul */
+        #accessCodeInput:focus { outline: none; box-shadow: 0 0 10px var(--accent-primary); }
+        .btn-primary, .logout-btn {
+            background: none; color: var(--text-primary); border: 2px solid var(--accent-primary); border-radius: 30px;
+            padding: 10px 20px; cursor: pointer; font-weight: 600; position: relative; overflow: hidden;
+            text-decoration: none; display: inline-block; text-align: center;
+        }
+        .btn-primary::before, .logout-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(120deg, transparent, var(--accent-primary), transparent); transition: all 0.5s ease;
+        }
+        .btn-primary:hover::before, .logout-btn:hover::before { left: 100%; }
+        .btn-primary:hover, .logout-btn:hover { color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); opacity: 1; transform: none; }
+        .logout-btn { border-color: var(--text-secondary); }
+        .logout-btn:hover { border-color: var(--accent-red); color: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .logout-btn:hover::before { background: linear-gradient(120deg, transparent, var(--accent-red), transparent); }
+        #appSection { display: none; flex-direction: column; height: 100vh; background-color: var(--bg-primary); animation: fadeIn .6s ease-out both; }
+        /* Header */
         header {
-            background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            display: flex; align-items: center; padding: 16px 32px; height: 70px; border-bottom: 1px solid var(--border-color);
+            background: rgba(10, 10, 10, 0.5); backdrop-filter: blur(8px); color: var(--text-primary); display: flex;
+            align-items: center; padding: 16px 28px; height: auto; border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; position: sticky; top: 0; z-index: 100;
         }
-        .logo-container h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        .logo-container h1 { font-size: 2rem; font-weight: 700; letter-spacing: 1px; }
+        .logo-container p { font-weight: 400; color: var(--text-secondary); }
         .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
         .header-actions .tab, .header-actions .dropdown-menu-content a {
-            padding: 8px 16px; color: var(--text-secondary); text-decoration: none; border-radius: 8px;
-            font-weight: 500; font-size: 0.9rem; transition: color 0.2s; background: transparent; border: none; cursor: pointer;
+            padding: 8px 10px; color: var(--text-primary); text-decoration: none; border: none; border-radius: 0;
+            background: transparent; font-weight: 500; cursor: pointer; font-size: 1rem; display: block;
+            width: 100%; text-align: left; position: relative;
         }
-        .header-actions .tab:hover, .header-actions .dropdown-menu-content a:hover { color: var(--text-primary); background: var(--bg-tertiary); }
-        .header-actions .tab.active, .header-actions .dropdown-menu-content a.active { color: var(--bg-primary); background: var(--text-primary); }
-        
-        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid var(--border-color); }
-        #userDisplayName { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
-
-        .dropdown-menu { position: relative; }
+        .header-actions .tab::after, .header-actions .dropdown-menu-content a::after {
+            content: ''; position: absolute; left: 0; bottom: -4px; height: 2px; width: 0;
+            background: var(--accent-primary); transition: width 0.3s ease;
+        }
+        .header-actions .tab:hover, .header-actions .dropdown-menu-content a:hover { background: transparent; color: var(--accent-primary); }
+        .header-actions .tab:hover::after, .header-actions .dropdown-menu-content a:hover::after { width: 100%; }
+        .header-actions .tab.active, .header-actions .dropdown-menu-content a.active { background: transparent; color: var(--accent-primary); font-weight: 600; }
+        .header-actions .tab.active::after, .header-actions .dropdown-menu-content a.active::after { width: 100%; }
+        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+        #userDisplayName { font-weight: 500; cursor: pointer; color: var(--text-primary); }
+        #switchRoleButton {
+            background: none; color: var(--text-primary); border: 2px solid var(--text-secondary); border-radius: 30px;
+            padding: 6px 12px; cursor: pointer; font-weight: 600; position: relative; overflow: hidden;
+        }
+        #switchRoleButton:hover { border-color: var(--accent-primary); color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .dropdown-menu { position: relative; display: inline-block; }
         .dropdown-menu-content {
-            display: none; position: absolute; top: 120%; right: 0; background-color: var(--bg-primary);
-            min-width: 200px; box-shadow: 0px 10px 40px rgba(0,0,0,0.8); z-index: 10;
-            border-radius: 12px; border: 1px solid var(--border-color); padding: 8px;
+            display: none; position: absolute; top: 110%; left: 0; background-color: var(--bg-secondary);
+            min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 10; border-radius: 8px;
+            border: 1px solid var(--border-color); padding: 4px; animation: fadeIn 0.2s ease-out;
         }
-        .dropdown-menu:hover .dropdown-menu-content { display: flex; flex-direction: column; gap: 4px; }
-
-        /* Main Layout */
-        main { flex: 1; display: flex; overflow-y: auto; padding: 40px; gap: 32px; justify-content: center; }
-        #tutorialSection { display: none; width: 100%; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
-        
-        .section-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem; letter-spacing: -0.05em; color: var(--text-primary); }
-        
-        /* Filters & Cards */
-        .viewer-filters-container {
-            display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 1.5rem; 
-            background: var(--bg-secondary); border: 1px solid var(--border-color); 
-            border-radius: 16px; margin-bottom: 2rem;
+        .dropdown-menu:hover .dropdown-menu-content { display: block; }
+        .dropdown-menu-content a { color: var(--text-primary); }
+        .dropdown-menu-content a::after { bottom: 0; }
+        /* Main Content */
+        main { flex: 1; display: flex; overflow-y: auto; padding: 32px; gap: 32px; justify-content: center; }
+        #tutorialSection { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; width: 100%; max-width: 1200px; margin: 0 auto; }
+        #videoPlayerSection { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; width: 100%; max-width: none; padding: 0; margin: -32px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
+        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], textarea, input[type="date"], input[type="datetime-local"] {
+            width: 100%; background-color: transparent; border: 2px solid var(--border-color); color: var(--text-primary);
+            padding: 12px 18px; border-radius: 30px; margin-bottom: 1.5rem; font-size: 1rem;
         }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
-        
+        textarea { resize: vertical; min-height: 120px; border-radius: 16px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .drop-zone { 
+            border: 2px dashed var(--border-color); border-radius: 16px; min-height: 140px; display: flex; 
+            flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); 
+            font-size: 1rem; margin-bottom: 1.5rem; cursor: pointer; padding: 1rem; text-align: center; 
+        }
+        .drop-zone.highlight { border-color: var(--accent-primary); background: rgba(0, 255, 255, .05); }
+        .file-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; }
+        .error-message { color: var(--accent-red); font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem; }
+        .loading-indicator { text-align: center; padding: 1rem; color: var(--text-secondary); }
+        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.5px; }
+        .form-container { 
+            max-width: 100%; margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; 
+            border-radius: 16px; border: 1px solid var(--border-color); 
+        }
+        .grid-container { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; transition: opacity 0.5s ease-out;
+        }
         .material-card { 
-            background: var(--bg-secondary); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color);
-            display: flex; flex-direction: column; position: relative; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); 
+            display: flex; flex-direction: column; position:relative; text-decoration: none; color: var(--text-primary); cursor: pointer; 
         }
-        .material-card:hover { 
-            transform: translateY(-8px); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
-            border-color: var(--text-secondary);
+        .material-card:hover { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(0, 255, 255, 0.1); border-color: var(--accent-primary); }
+        .material-card-thumbnail { position: relative; }
+        .material-card-thumbnail img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+        .material-card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+        .material-card-content h3 { font-size: 1.25rem; margin: 0; padding: 0; padding-right: 50px; }
+        .completion-status { 
+            position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.7); 
+            color: var(--accent-green); border-radius: 50%; width: 28px; height: 28px; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
         }
-        .material-card-thumbnail img { width: 100%; aspect-ratio: 16/9; object-fit: cover; filter: grayscale(20%); transition: filter 0.3s; }
-        .material-card:hover .material-card-thumbnail img { filter: grayscale(0%); }
-        .material-card-content { padding: 1.2rem; }
-        .material-card-content h3 { font-size: 1.1rem; font-weight: 600; margin: 0; line-height: 1.4; color: #eee; }
         .difficulty-badge {
-            position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8);
-            color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; 
-            padding: 4px 8px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(4px);
+            position: absolute; bottom: 1.5rem; right: 1.5rem; background-color: var(--bg-primary); 
+            color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; 
+            padding: 4px 8px; font-size: 0.75rem; font-weight: 600;
         }
-        
-        /* Teacher Manager UI */
+        .difficulty-badge-teacher { color: var(--text-secondary); font-weight: 400; font-size: 0.9rem; margin-left: 8px; }
+        .tab-btn-container { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .tab-btn {
+            background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary);
+            padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; margin-bottom: -1px;
+        }
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); font-weight: 600; }
+        .viewer-filters-container {
+            display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 1.5rem; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 2rem; animation: slideInUp 0.5s ease-out;
+        }
+        .filter-step { flex: 1; min-width: 200px; display: flex; flex-direction: column; transition: opacity 0.5s ease; }
+        .filter-step label { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; padding-left: 1rem; }
+        .viewer-filters-container select {
+            width: 100%; background-color: transparent; border: 2px solid var(--border-color); color: var(--text-primary);
+            padding: 12px 18px; border-radius: 30px; font-size: 1rem; transition: all 0.3s ease;
+        }
+        .viewer-filters-container select:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .viewer-filters-container select:disabled { background: rgba(0,0,0,0.2); color: var(--text-secondary); }
+        .teacher-sort-container { padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; display: none; }
+        .teacher-sort-filter {
+            background-color: transparent; border: 2px solid var(--border-color); color: var(--text-primary);
+            padding: 8px 12px; border-radius: 30px; font-size: 0.9rem;
+        }
+        .teacher-sort-filter:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .teacher-group-heading {
+            font-size: 1.5rem; font-weight: 600; color: var(--text-secondary); margin-top: 2rem; margin-bottom: 1rem;
+            padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .form-container .teacher-group-heading { margin-top: 0; }
         .content-item { 
-            background: var(--bg-secondary); border: 1px solid var(--border-color); 
-            border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+            padding: 1rem; border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 1rem; 
+            background: rgba(255,255,255,0.03); transition: all 0.3s ease; 
         }
-        .content-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; cursor: pointer; }
-        .content-header:hover h3 { color: var(--text-primary); }
-        .content-header h3 { color: var(--text-secondary); transition: color 0.2s; font-size: 1.1rem; }
-        .sub-item { 
-            border-left: 2px solid var(--border-color); padding-left: 1rem; margin-left: 0.5rem; 
-            display: flex; justify-content: space-between; align-items: center; padding-top: 0.8rem; padding-bottom: 0.8rem;
+        .content-item:hover { border-color: var(--text-secondary); }
+        .content-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; }
+        .content-header h3, .content-header h4 { margin: 0; }
+        .item-actions button { margin-left: 0.5rem; padding: 6px 10px; font-size: 0.8rem; border-radius: 20px; }
+        .item-actions .btn-primary { border-color: var(--accent-primary); }
+        .item-actions .logout-btn { border-color: var(--text-secondary); }
+        .item-actions .logout-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
+        .nested-container { 
+            padding-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border-color); overflow: hidden;
+            transition: max-height 0.4s ease-out, padding-top 0.4s ease-out, padding-bottom 0.4s ease-out;
+            max-height: 0; padding-top: 0; padding-bottom: 0;
         }
-
-        /* Video Player & Chat Layout */
-        #videoPlayerSection { 
-            display: none; flex-direction: row; height: calc(100vh - 71px); 
-            width: 100vw; margin: -40px; /* Counteract main padding */
+        .nested-container.expanded { max-height: 1500px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 6px; }
+        .sub-item:hover { background-color: var(--bg-tertiary); }
+        .sub-item span { color: var(--text-primary); }
+        .collapse-arrow {
+            margin-left: 10px; transition: transform 0.3s ease-out; display: inline-block; width: 0; height: 0;
+            border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--text-secondary);
         }
-        .video-main-content { 
-            flex-grow: 1; display: flex; flex-direction: column; background-color: #000; 
-            border-right: 1px solid var(--border-color);
+        .content-header[aria-expanded="true"] .collapse-arrow { transform: rotate(90deg); }
+        .content-header[aria-expanded="false"] .collapse-arrow { transform: rotate(0deg); }
+        /* Video Player */
+        #videoPlayerSection { display: none; flex-direction: row; height: calc(100vh - 64px); }
+        .video-main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: #000; }
+        #videoPlayerContainer { 
+            flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
         }
-        #videoPlayerContainer { flex-grow: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center;}
         #videoPlayerContainer > iframe, #videoPlayerContainer > video, #videoPlayerContainer > #youtube-player-div {
-            width: 100%; height: 100%; border: none; max-width: none; max-height: none; aspect-ratio: auto; position: static; transform: none;
+            width: 100%; height: auto; max-width: 1280px; max-height: 80vh; aspect-ratio: 16/9; border: none;
+            border-radius: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 100%;
         }
-        
-        .video-player-header { padding: 1rem 2rem; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center;}
-
-        /* Sidebar & Chat */
+        #videoPlayerContainer > #youtube-player-div > iframe { width: 100%; height: 100%; position: static; transform: none; aspect-ratio: auto; }
+        #videoPlayerContainer > video { height: 100%; width: 100%; object-fit: contain; }
+        .video-player-header { padding: 1rem; background: var(--bg-primary); }
         .video-sidebar { 
-            width: 400px; flex-shrink: 0; background-color: var(--bg-primary); 
-            display: flex; flex-direction: column; height: 100%;
+            width: 350px; flex-shrink: 0; background-color: var(--bg-secondary); border-left: 1px solid var(--border-color); 
+            padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; 
         }
-        
-        .sidebar-scroll-area {
-            flex: 1; overflow-y: auto; padding: 2rem;
-            display: flex; flex-direction: column; gap: 2rem;
-        }
-
-        #videoInfoTitle { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.2; }
-        #videoInfoDescription { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
-        
+        #videoInfoTitle { font-size: 1.75rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 0.5rem; }
+        #videoInfoDescription { color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+        #materialsLinkContainer a { width: 100%; box-sizing: border-box; padding: 1rem; font-size: 1rem; font-weight: 600; }
+        .completion-control button { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 600; border-radius: 30px; cursor: pointer; border: 2px solid; }
+        .completion-control button.mark-complete { background-color: transparent; color: var(--text-primary); border-color: var(--border-color); }
+        .completion-control button.mark-complete:hover { border-color: var(--accent-primary); color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .completion-control button.mark-incomplete { background-color: var(--accent-green); color: var(--bg-primary); border-color: var(--accent-green); }
+        .completion-control button.mark-incomplete:hover { box-shadow: 0 0 10px var(--accent-green); }
+        .completion-control button:hover { opacity: 0.9; }
         .topic-playlist { border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
-        .topic-playlist h3 { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .playlist-item {
-            display: flex; padding: 12px 16px; border-radius: 8px; color: var(--text-secondary); text-decoration: none;
-            cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; align-items: center; font-size: 0.95rem;
+        .topic-playlist h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .topic-playlist .playlist-item {
+            display: block; padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-primary); text-decoration: none;
+            cursor: pointer; margin-bottom: 0.5rem; transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .playlist-item:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
-        .playlist-item.active { background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); font-weight: 600; }
-        
-        /* CHAT BOX STYLES */
-        .chat-container {
-            flex: 1; /* Take remaining height in sidebar if needed, or fixed height */
-            min-height: 400px;
-            border-top: 1px solid var(--border-color);
-            display: flex; flex-direction: column;
-            background: var(--bg-secondary);
+        .topic-playlist .playlist-item:hover { background-color: var(--bg-tertiary); color: var(--accent-primary); }
+        .topic-playlist .playlist-item.active { background-color: rgba(0, 255, 255, 0.1); color: var(--accent-primary); font-weight: 600; pointer-events: none; }
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; animation: fadeIn 0.3s ease-out; }
+        .modal-content { 
+            background-color: var(--bg-secondary); padding: 30px; border-radius: 16px; border: 1px solid var(--border-color); 
+            max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; animation: slideInUp 0.3s ease-out; 
         }
-        .chat-header {
-            padding: 10px 20px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color);
-            font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);
-            display: flex; align-items: center; gap: 8px;
-        }
-        .chat-indicator { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
-        .chat-frame {
-            flex-grow: 1; border: none; width: 100%; height: 100%; background: #fff; /* Proxy might be white */
-            filter: invert(0.92) hue-rotate(180deg); /* DARK MODE HACK for external iframes */
-        }
-        /* Since we can't control the iframe content's CSS, using filter invert is a common dark mode hack. 
-           If the proxy is already dark, remove the filter. Assuming it's light based on standard web. */
-
-        /* Footer */
-        footer { 
-            text-align: center; padding: 24px; border-top: 1px solid var(--border-color); 
-            color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-primary);
-        }
-        footer a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px dotted var(--text-secondary); }
-        footer a:hover { color: var(--text-primary); border-bottom-style: solid; }
-
-        /* Mobile */
+        #modalTitle { margin-bottom: 1rem; font-size: 1.5rem; font-weight: 600; }
+        .close-button { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-button:hover { color: var(--text-primary); }
+        #modalButtons { display:flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+        #pdfPreviewModal .modal-content { max-width: 90vw; max-height: 90vh; width: auto; height: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        #pdfCanvasContainer { width: 100%; flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: auto; margin-bottom: 10px; }
+        #pdfCanvas { border: 1px solid var(--border-color); display: block; max-width: 100%; height: auto; }
+        #pdfControls button { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        #pdfControls button:hover:not(:disabled) { background-color: #444; }
+        footer { text-align: center; padding: 20px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.875rem; z-index: 100; position: static; }
+        footer a { color: var(--text-secondary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; color: var(--text-primary); }
+        .finder-window-wrapper { display: none !important; }
         @media (max-width: 992px) {
-            #videoPlayerSection { flex-direction: column; height: auto; margin: 0; width: 100%; }
-            .video-sidebar { width: 100%; height: auto; border-left: none; border-top: 1px solid var(--border-color);}
-            .video-main-content { height: 50vh; }
-            main { padding: 16px; }
-            header { padding: 16px; }
-            .viewer-filters-container { flex-direction: column; }
+            #videoPlayerSection { flex-direction: column; }
+            .video-sidebar { width: 100%; height: auto; min-height: 250px; border-left: none; border-top: 1px solid var(--border-color);}
         }
-        
-        /* Modal Polish */
-        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); box-shadow: 0 40px 80px rgba(0,0,0,0.8); }
-        .close-button:hover { color: var(--accent-red); }
+        @media (max-width: 768px) {
+            #authWrapper { flex-direction: column; position: static; height: auto; }
+            .login-left-panel, .login-right-panel { width: 100%; }
+            header { flex-direction: column; height: auto; padding: 1rem; align-items: flex-start; }
+            .header-actions { margin-left: 0; margin-top: 1rem; flex-wrap: wrap; }
+            main { flex-direction: column; padding: 16px; }
+            .viewer-filters-container { flex-direction: column; gap: 1rem; }
+            .filter-step { min-width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <!-- Auth Screen -->
     <div id="authWrapper" style="display: none;">
         <div class="login-left-panel">
-            <h1>darStudy</h1>
-            <p>Master your subjects.</p>
+            <h1>AI Marker</h1><p>Your Materials Hub</p><p>Rome wasn't built in a day</p>
         </div>
         <div class="login-right-panel"><div id="authContainer"></div></div>
     </div>
-
-    <!-- Main App -->
     <div id="appSection" style="display: none;">
         <header>
-            <div class="logo-container"><h1>darStudy</h1></div>
+            <div class="logo-container"><h1>AI Marker</h1><p>Operated by Darren Ng</p></div>
             <div class="header-actions">
                 <a href="home.html" class="tab">Home</a>
+                <button id="themeToggleButton" class="tab" style="padding-left: 10px; padding-right: 10px;">Theme</button>
                 <div class="dropdown-menu">
-                    <button class="tab active" id="materialsButton">Library</button>
+                    <button class="tab active" id="materialsButton">Materials</button>
                     <div class="dropdown-menu-content">
                         <a href="tutorials.html" class="tab active">Tutorial Videos</a>
                         <a href="pastpaper.html" class="tab">Past Papers</a>
-                        <a href="exercises.html" class="tab">Exercises</a>
-                        <a href="lessonhistory.html" class="tab">History</a>
+                        <a href="exercises.html" class="tab">Exercises for Sale</a>
+                        <a href="lessonhistory.html" class="tab">Lesson History</a>
                     </div>
                 </div>
                 <div class="user-info">
                      <span id="userDisplayName"></span>
-                     <button id="switchRoleButton" style="margin-left: 10px;" class="btn-primary">Switch</button>
-                     <button id="logoutButton" class="logout-btn" style="margin-left: 5px;">Log Out</button>
+                     <button id="switchRoleButton">Switch Role</button>
+                     <button id="logoutButton" class="logout-btn">Log Out</button>
                 </div>
             </div>
         </header>
-
         <main>
-            <!-- Gallery View -->
             <div id="tutorialSection"></div>
-
-            <!-- Player View -->
             <div id="videoPlayerSection">
                 <div class="video-main-content">
-                    <div class="video-player-header">
-                        <button class="back-button btn-primary" id="backToTutorialsBtn">← Back to Gallery</button>
-                    </div>
+                    <div class="video-player-header"><button class="back-button btn-primary" id="backToTutorialsBtn">← Back to Tutorials</button></div>
                     <div id="videoPlayerContainer"></div>
                 </div>
                 <div class="video-sidebar">
-                    <div class="sidebar-scroll-area">
-                        <h2 id="videoInfoTitle"></h2>
-                        <p id="videoInfoDescription"></p>
-                        
-                        <div id="materialsLinkContainer" style="display: none;">
-                            <a id="materialsLink" href="#" target="_blank" class="btn-primary" style="width:100%; display:block;">Download Materials</a>
-                        </div>
-                        
-                        <div class="completion-control" style="margin-top: 1rem;">
-                            <button id="completionToggleButton" style="width:100%"></button>
-                        </div>
-                        
-                        <div id="topicPlaylist" class="topic-playlist"></div>
+                    <h2 id="videoInfoTitle"></h2>
+                    <p id="videoInfoDescription"></p>
+                    <div id="materialsLinkContainer" style="display: none;">
+                        <a id="materialsLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">Download Materials</a>
                     </div>
-                    
-                    <!-- NEW: AI Chat Integration -->
-                    <div class="chat-container">
-                        <div class="chat-header">
-                            <span class="chat-indicator"></span> darStudy AI
-                        </div>
-                        <iframe src="https://gemini-proxy-513372702506.us-central1.run.app/proxy" class="chat-frame" title="AI Assistant"></iframe>
-                    </div>
+                    <div class="completion-control"><button id="completionToggleButton"></button></div>
+                    <div id="topicPlaylist" class="topic-playlist"></div>
                 </div>
             </div>
+            <div id="finderMaterialsSection" class="finder-window-wrapper"></div>
         </main>
-        
-        <footer><a href="mailto:darren_0625@mc-zero.com">Support</a> | © 2025 darStudy</footer>
+        <footer><a href="mailto:darren_0625@mc-zero.com">Contact: darren_0625@mc-zero.com</a> | Copyright © 2025 Operated by Darren Ng</footer>
     </div>
-
-    <!-- Modals -->
     <div id="messageModal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle"></h3><div id="modalMessage" style="margin-top:10px; color:var(--text-secondary);"></div><div id="modalButtons"></div>
+            <span class="close-button">&times;</span><h3 id="modalTitle"></h3><div id="modalMessage"></div><div id="modalButtons"></div>
         </div>
     </div>
-    
     <div id="addVideoModal" class="modal">
         <div class="modal-content">
-             <span class="close-button">&times;</span><h3>Add Video</h3>
+             <span class="close-button">&times;</span><h3>Add New Tutorial Video</h3>
              <form id="addVideoForm">
                 <input type="hidden" id="videoParentId1"><input type="hidden" id="videoParentId2">
                  <div style="margin-bottom: 1rem;">
-                     <label for="tutorialLink">Video Link</label><textarea id="tutorialLink" required placeholder="YouTube, Vimeo, or Direct URL"></textarea>
-                     <img id="tutorialThumbnailPreview" style="max-width:200px; display:none; margin-top:10px; border-radius:8px;"/>
+                     <label for="tutorialLink">YouTube Link or Embed Code</label>
+                     <textarea id="tutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
+                     <img id="tutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
                  </div>
-                 <div style="margin-bottom: 1rem;"><label>Title</label><input type="text" id="tutorialTitle" required></div>
-                 <div style="margin-bottom: 1rem;"><label>Notes</label><textarea id="tutorialNotes"></textarea></div>
-                 <div style="margin-bottom: 1rem;"><label>Materials URL</label><input type="url" id="tutorialMaterialsLink"></div>
+                 <div style="margin-bottom: 1rem;"><label for="tutorialTitle">Video Title</label><input type="text" id="tutorialTitle" required></div>
+                 <div style="margin-bottom: 1rem;"><label for="tutorialNotes">Notes (Optional)</label><textarea id="tutorialNotes" placeholder="Add any notes for this video..."></textarea></div>
+                 <div style="margin-bottom: 1rem;"><label for="tutorialMaterialsLink">Materials Link (Optional)</label><input type="url" id="tutorialMaterialsLink" placeholder="e.g., https://drive.google.com/..."></div>
                  <div style="margin-bottom: 1.5rem;">
-                     <label>Difficulty</label>
+                     <label for="tutorialDifficulty">Difficulty Level</label>
                      <select id="tutorialDifficulty">
-                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option>
-                         <option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option>
-                         <option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
+                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option><option value="3/5">3/5</option>
+                         <option value="4/5">4/5</option><option value="5/5">5/5</option><option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
                      </select>
                  </div>
-                 <div class="modal-form-buttons"><button type="submit" class="btn-primary" style="width:100%">Add to Library</button></div>
+                 <div class="modal-form-buttons"><button type="submit" class="btn-primary">Add Video</button></div>
              </form>
         </div>
     </div>
-    
     <div id="editVideoModal" class="modal">
         <div class="modal-content">
-             <span class="close-button">&times;</span><h3>Edit Video</h3>
+             <span class="close-button">&times;</span><h3>Edit Tutorial Video</h3>
              <form id="editVideoForm">
                 <input type="hidden" id="editVideoParentId1"><input type="hidden" id="editVideoParentId2"><input type="hidden" id="editVideoId">
                  <div style="margin-bottom: 1rem;">
-                     <label>Video Link</label><textarea id="editTutorialLink" required></textarea>
-                     <img id="editTutorialThumbnailPreview" style="max-width:200px; display:none; margin-top:10px; border-radius:8px;"/>
+                     <label for="editTutorialLink">YouTube Link or Embed Code</label>
+                     <textarea id="editTutorialLink" required placeholder="Paste a YouTube URL or an <iframe> embed code here..."></textarea>
+                     <img id="editTutorialThumbnailPreview" style="max-width:200px; margin-top:10px; border-radius:8px; display:none;" alt="Video Thumbnail Preview"/>
                  </div>
-                 <div style="margin-bottom: 1rem;"><label>Title</label><input type="text" id="editTutorialTitle" required></div>
-                 <div style="margin-bottom: 1rem;"><label>Notes</label><textarea id="editTutorialNotes"></textarea></div>
-                 <div style="margin-bottom: 1rem;"><label>Materials URL</label><input type="url" id="editTutorialMaterialsLink"></div>
+                 <div style="margin-bottom: 1rem;"><label for="editTutorialTitle">Video Title</label><input type="text" id="editTutorialTitle" required></div>
+                 <div style="margin-bottom: 1rem;"><label for="editTutorialNotes">Notes (Optional)</label><textarea id="editTutorialNotes" placeholder="Add any notes for this video..."></textarea></div>
+                 <div style="margin-bottom: 1rem;"><label for="editTutorialMaterialsLink">Materials Link (Optional)</label><input type="url" id="editTutorialMaterialsLink" placeholder="e.g., https://drive.google.com/..."></div>
                  <div style="margin-bottom: 1.5rem;">
-                     <label>Difficulty</label>
+                     <label for="editTutorialDifficulty">Difficulty Level</label>
                      <select id="editTutorialDifficulty">
-                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option>
-                         <option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option>
-                         <option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
+                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option><option value="3/5">3/5</option>
+                         <option value="4/5">4/5</option><option value="5/5">5/5</option><option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
                      </select>
                  </div>
-                 <div class="modal-form-buttons"><button type="submit" class="btn-primary" style="width:100%">Save Changes</button></div>
+                 <div class="modal-form-buttons"><button type="submit" class="btn-primary">Save Changes</button></div>
              </form>
         </div>
     </div>
-
-    <!-- Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, onSnapshot, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", authDomain: "ai-grading-9bb30.firebaseapp.com",
           projectId: "ai-grading-9bb30", storageBucket: "ai-grading-9bb30.appspot.com",
           messagingSenderId: "298162112230", appId: "1:298162112230:web:529d3f95536991be685d27", measurementId: "G-CHKLKSM17S"
         };
-        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const TEACHER_CODE = "Derren0625"; const STUDENT_CODE = "STUDENT456";
-        let app, db, auth, currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
-        let currentUserProfile = null; let ytPlayer = null, vimeoPlayer = null, directPlayer = null, hls = null; 
-        let currentVideoItem = null; let saveTimeInterval = null, saveTimeTimeout = null; const SAVE_TIME_DEBOUNCE = 5000;
 
-        const authWrapper = document.getElementById('authWrapper'), appSection = document.getElementById('appSection');
+        let app, db, auth, storage;
+        let currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null, currentUserProfile = null;
+        let ytPlayer = null, vimeoPlayer = null, directPlayer = null, hls = null, currentVideoItem = null, saveTimeInterval = null, saveTimeTimeout = null;
+        const SAVE_TIME_DEBOUNCE = 5000;
+        const authWrapper = document.getElementById('authWrapper');
+        const appSection = document.getElementById('appSection');
         const authContainer = document.getElementById('authContainer');
 
-        try { app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); } 
-        catch (e) { console.error("Firebase Error:", e); showModal('Error', `Firebase Init Failed: ${e.message}`); }
+        const googleSignInTemplate = `
+            <h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
+        const codeEntryTemplate = `
+            <h2>Enter Access Code</h2><p style="color: var(--text-secondary); text-align: center; margin-bottom: 1rem;">Please enter the access code provided by your administrator.</p>
+            <input type="text" id="accessCodeInput" placeholder="Enter code here"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button><p id="codeError" class="error-message"></p>`;
+
+        try {
+            app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); storage = getStorage(app);
+            console.log("Firebase initialized successfully.");
+        } catch (error) { console.error("Error initializing Firebase:", error); showModal('Firebase Configuration Error', `Failed to initialize Firebase. Error: ${error.message}`); }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid; currentUserEmail = user.email;
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
                 try {
-                    const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
-                    const docSnap = await getDoc(profileRef);
-                    if (docSnap.exists() && docSnap.data().role) {
-                        currentUserProfile = docSnap.data(); currentUserRole = currentUserProfile.role;
-                        currentUserName = currentUserProfile.name || user.displayName;
-                        await setDoc(profileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                    const userProfileDoc = await getDoc(userProfileRef);
+                    if (userProfileDoc.exists() && userProfileDoc.data().role) {
+                        const profileData = userProfileDoc.data();
+                        currentUserProfile = profileData; currentUserRole = profileData.role; currentUserName = profileData.name || user.displayName;
+                        await setDoc(userProfileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
                         showApp();
                     } else {
-                        currentUserName = user.displayName; currentUserRole = 'unassigned'; currentUserProfile = {}; showCodeEntry();
+                        currentUserName = user.displayName; currentUserRole = 'unassigned'; currentUserProfile = {};
+                        showCodeEntry();
                     }
-                } catch (e) { showModal('Error', `Profile Load Failed: ${e.message}`); showLogin(); }
-            } else { currentUserId = null; currentUserRole = null; currentUserProfile = null; showLogin(); }
+                } catch (e) { console.error("Error checking user profile:", e); showModal('Profile Error', `Could not load user profile. Error: ${e.message}`); showLogin(); }
+            } else {
+                currentUserId = null; currentUserRole = null; currentUserName = null; currentUserProfile = null; showLogin();
+            }
         });
 
         function showLogin() {
             appSection.style.display = 'none'; authWrapper.style.display = 'flex'; authWrapper.style.opacity = '1';
-            authContainer.innerHTML = `<h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
-            document.getElementById('googleSignInButton')?.addEventListener('click', async () => {
-                try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { document.getElementById('authError').textContent = e.message; }
-            });
+            authContainer.innerHTML = googleSignInTemplate; document.getElementById('googleSignInButton')?.addEventListener('click', handleGoogleSignIn);
         }
-
         function showCodeEntry() {
             appSection.style.display = 'none'; authWrapper.style.display = 'flex'; authWrapper.style.opacity = '1';
-            authContainer.innerHTML = `<h2>Enter Access Code</h2><input type="text" id="accessCodeInput" placeholder="Enter code"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button><p id="codeError" class="error-message"></p>`;
+            authContainer.innerHTML = codeEntryTemplate;
             document.getElementById('submitCodeButton')?.addEventListener('click', () => handleSubmitCode());
+            document.getElementById('accessCodeInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmitCode(); } });
+            document.getElementById('accessCodeInput')?.focus();
         }
-
-        async function handleSubmitCode() {
-            const code = document.getElementById('accessCodeInput').value.trim();
-            const role = code === TEACHER_CODE ? 'teacher' : code === STUDENT_CODE ? 'student' : null;
-            if (!role) { document.getElementById('codeError').textContent = 'Invalid code.'; return; }
-            try {
-                const data = { role, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() };
-                if (role === 'student') data.unlockedTeachers = [];
-                await setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), data, { merge: true });
-                currentUserRole = role; currentUserProfile = data; showApp();
-            } catch (e) { document.getElementById('codeError').textContent = e.message; }
-        }
-
         async function showApp() {
             authWrapper.style.display = 'none'; appSection.style.display = 'flex';
-            document.getElementById('userDisplayName').textContent = `${currentUserName}`;
+            document.getElementById('userDisplayName').textContent = `${currentUserName} (${currentUserRole})`;
             initializeAllMaterialSections();
             
-            // URL Routing Logic
-            const urlParams = new URLSearchParams(window.location.search);
-            const vid = urlParams.get('v'), sid = urlParams.get('s'), tid = urlParams.get('t');
-            if (vid && sid && tid) {
-                try {
-                    const itemRef = doc(db, `artifacts/${appId}/public/data/tutorials/${sid}/topics/${tid}/videos/${vid}`);
-                    const snap = await getDoc(itemRef);
-                    if (snap.exists()) {
-                        const item = snap.data(); item.id = snap.id; item.level1Id = sid; item.level2Id = tid;
-                        showVideoPlayer(item);
-                    } else { resetUrlState(); showSection('tutorialSection'); }
-                } catch(e) { console.error("Routing error", e); resetUrlState(); showSection('tutorialSection'); }
-            } else { showSection('tutorialSection'); }
+            // Check for deep link params (URL Routing)
+            await checkDeepLink();
+            
+            // If no deep link loaded the video player, show the tutorial section
+            if (document.getElementById('videoPlayerSection').style.display !== 'flex') {
+                showSection('tutorialSection');
+            }
         }
 
-        function updateUrlState(item) {
-            const url = new URL(window.location);
-            url.searchParams.set('v', item.id); url.searchParams.set('s', item.level1Id); url.searchParams.set('t', item.level2Id);
-            window.history.pushState({id: item.id}, '', url);
+        // --- NEW: URL Routing Logic ---
+        async function checkDeepLink() {
+            const params = new URLSearchParams(window.location.search);
+            const vId = params.get('v'); // Video ID
+            const sId = params.get('s'); // Subject ID (Level 1)
+            const tId = params.get('t'); // Topic ID (Level 2)
+
+            if (vId && tId && sId) {
+                try {
+                    // Fetch the specific video doc
+                    const videoRef = doc(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics/${tId}/videos/${vId}`);
+                    const videoSnap = await getDoc(videoRef);
+                    
+                    if (videoSnap.exists()) {
+                        const item = videoSnap.data();
+                        item.id = videoSnap.id;
+                        item.level1Id = sId; // Inject parent IDs for playlist
+                        item.level2Id = tId;
+                        
+                        console.log("Deep link found, loading video:", item.title);
+                        showVideoPlayer(item);
+                    } else {
+                        console.log("Deep link video not found, clearing params");
+                        // Clear invalid params
+                        window.history.replaceState({}, '', window.location.pathname);
+                    }
+                } catch (e) {
+                    console.error("Error loading deep link:", e);
+                }
+            }
         }
-        function resetUrlState() {
-            const url = new URL(window.location);
-            url.searchParams.delete('v'); url.searchParams.delete('s'); url.searchParams.delete('t');
-            window.history.pushState({}, '', url);
+
+        // Handle browser Back/Forward buttons
+        window.addEventListener('popstate', async (event) => {
+            const params = new URLSearchParams(window.location.search);
+            const vId = params.get('v');
+            
+            if (vId) {
+                // If popping state puts us back to a video URL, load it
+                await checkDeepLink();
+            } else {
+                // Otherwise go back to the list view
+                showSection('tutorialSection');
+                cleanupPlayers();
+            }
+        });
+
+        async function handleGoogleSignIn() {
+            const provider = new GoogleAuthProvider();
+            try { await signInWithPopup(auth, provider); } catch (error) { 
+                const authError = document.getElementById('authError'); if (authError) authError.textContent = `Sign-in failed. Error: ${error.message}`; 
+            }
+        }
+        async function handleSubmitCode(codeValue) {
+            const code = (codeValue || document.getElementById('accessCodeInput').value).trim();
+            const codeError = document.getElementById('codeError'); if(codeError) codeError.textContent = '';
+            let roleToSet = null;
+            if (code === TEACHER_CODE) roleToSet = 'teacher'; else if (code === STUDENT_CODE) roleToSet = 'student';
+            else { if(codeError) codeError.textContent = 'Invalid access code.'; return; }
+            try {
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                const profileData = { role: roleToSet, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() };
+                if (roleToSet === 'student') profileData.unlockedTeachers = [];
+                await setDoc(userProfileRef, profileData, { merge: true });
+                currentUserRole = roleToSet; currentUserProfile = profileData; showModal('Success!', `Your role has been set to ${roleToSet}.`); showApp();
+            } catch (error) { if(codeError) codeError.textContent = `Could not set role. Error: ${error.message}`; }
         }
 
         document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
-        document.getElementById('switchRoleButton').addEventListener('click', () => showInputModal('Switch Role', 'Enter code:', handleSubmitCode));
+        document.getElementById('switchRoleButton').addEventListener('click', () => { showInputModal('Switch Role', 'Enter new access code:', async (code) => { await handleSubmitCode(code); }); });
 
-        const materialsConfig = { tutorials: { sectionId: 'tutorialSection', collectionName: 'tutorials', title: 'Library', level1: 'Subject', level2: 'Topic', level3: 'Video', modalId: 'addVideoModal' } };
+        const materialsConfig = { tutorials: { sectionId: 'tutorialSection', collectionName: 'tutorials', title: 'Tutorial Videos', level1: 'Subject', level2: 'Topic', level3: 'Video', modalId: 'addVideoModal' } };
         function getPath(type, ids = []) {
-            let parts = [`artifacts/${appId}/public/data/${materialsConfig[type].collectionName}`];
-            if (ids[0]) parts.push(ids[0], materialsConfig[type].level2.toLowerCase() + 's');
-            if (ids[1]) parts.push(ids[1], materialsConfig[type].level3.toLowerCase() + 's');
-            return parts.join('/');
+            const config = materialsConfig[type]; const collection = config.collectionName;
+            let pathParts = [`artifacts/${appId}/public/data/${collection}`];
+            if (ids[0]) pathParts.push(ids[0], config.level2.toLowerCase() + 's');
+            if (ids[1]) pathParts.push(ids[1], config.level3.toLowerCase() + 's');
+            return pathParts.join('/');
         }
-        
         function initializeAllMaterialSections() { setupMaterialSection('tutorials'); }
-        function showSection(id) { 
-            document.querySelectorAll('main > div').forEach(d => d.style.display = 'none'); 
-            const t = document.getElementById(id); if(t) { t.style.display = id === 'videoPlayerSection' ? 'flex' : 'block'; setTimeout(()=>t.style.opacity=1,50); }
+        function showSection(sectionId) {
+             document.querySelectorAll('main > div').forEach(div => { if (div.id !== 'finderMaterialsSection') { div.style.display = 'none'; } });
+             const target = document.getElementById(sectionId);
+             if(target) { target.style.display = (sectionId === 'videoPlayerSection') ? 'flex' : 'block'; setTimeout(() => target.style.opacity = 1, 50); }
         }
-
         function setupMaterialSection(type) {
-            const config = materialsConfig[type], section = document.getElementById(config.sectionId);
+            const config = materialsConfig[type]; const section = document.getElementById(config.sectionId); if (!section) return;
             section.innerHTML = `
                 <h2 class="section-title">${config.title}</h2>
-                <div id="teacher-tabs-${type}" class="tab-btn-container" style="display:none; gap:1rem; margin-bottom:2rem;">
-                    <button class="btn-primary" data-tab="viewer">Gallery View</button>
-                    <button class="btn-primary" data-tab="manager">Manage Content</button>
-                </div>
+                <div id="teacher-tabs-${type}" class="tab-btn-container" style="display:none;"><button class="tab-btn active" data-tab="viewer">View Materials</button><button class="tab-btn" data-tab="manager">Manage Content</button></div>
                 <div id="viewer-${type}-view" style="display:none;">
                     <div class="viewer-filters-container">
-                        <div class="filter-step" style="flex-direction:row;align-items:center;gap:1rem;"><div style="flex-grow:1;"><label>Teacher</label><select id="teacher-${type}-filter"><option value="">-- Unlock --</option></select></div><button id="unlock-teacher-btn-${type}" class="btn-primary" style="padding:12px;margin-top:1.5rem;">Unlock</button></div>
-                        <div class="filter-step" id="step1-${type}" style="opacity:0.5;pointer-events:none;"><label>${config.level1}</label><select id="l1-${type}" disabled></select></div>
-                        <div class="filter-step" id="step2-${type}" style="opacity:0.5;pointer-events:none;"><label>${config.level2}</label><select id="l2-${type}" disabled></select></div>
-                        <div class="filter-step" id="step3-${type}" style="opacity:0.5;pointer-events:none;"><label>Sort</label><select id="sort-${type}" disabled><option value="name-asc">A-Z</option><option value="name-desc">Z-A</option><option value="diff-asc">Easy-Hard</option><option value="diff-desc">Hard-Easy</option></select></div>
+                        <div class="filter-step" style="flex-direction: row; align-items: center; gap: 1rem;"><div style="flex-grow: 1;"><label for="teacher-${type}-filter">1. Select Teacher</label><select id="teacher-${type}-filter"><option value="">-- Unlock a Teacher --</option></select></div><button id="unlock-teacher-btn-${type}" class="btn-primary" style="padding: 12px 18px; margin-top: 1.5rem;">Unlock</button></div>
+                        <div class="filter-step" id="filter-step-1-${type}" style="opacity: 0.5; pointer-events: none;"><label for="level1-${type}-filter">2. Select ${config.level1}</label><select id="level1-${type}-filter" disabled><option value="">-- Select ${config.level1} --</option></select></div>
+                        <div class="filter-step" id="filter-step-2-${type}" style="opacity: 0.5; pointer-events: none;"><label for="level2-${type}-filter">3. Select ${config.level2}</label><select id="level2-${type}-filter" disabled><option value="">-- Select ${config.level2} --</option></select></div>
+                        <div class="filter-step" id="filter-step-3-${type}" style="opacity: 0.5; pointer-events: none;"><label for="sort-${type}-filter">4. Sort By</label><select id="sort-${type}-filter" disabled><option value="name-asc">Sort by Name (A-Z)</option><option value="name-desc">Sort by Name (Z-A)</option><option value="diff-asc">Difficulty (Low to High)</option><option value="diff-desc">Difficulty (High to Low)</option></select></div>
                     </div>
-                    <div id="l3-${type}-grid" class="grid-container" style="display:none;opacity:0;"></div>
+                    <div id="level3-${type}-grid" class="grid-container" style="display: none; opacity: 0;"></div>
                 </div>
                 <div id="manager-${type}-view" style="display:none;">
-                     <div class="form-container" id="code-manager"><h3 class="teacher-group-heading">Teacher Code</h3><div style="display:flex;gap:1rem;"><input id="teacherAccessCode" placeholder="Code"><button id="saveCodeBtn" class="btn-primary">Save</button></div><p id="codeStatus"></p></div>
-                     <div class="form-container" style="max-width:initial;"><h3 id="my-subjects-${type}" class="teacher-group-heading">My Subjects</h3><div id="l1-${type}-mine"></div><button id="add-l1-${type}" class="btn-primary" style="margin-top:1rem;">Add Subject</button><button id="migrate-btn" class="btn-primary" style="margin-left:1rem;background:var(--accent-red);border-color:var(--accent-red);display:none;">Fix Old Subjects</button></div>
+                     <div class="form-container" id="teacher-code-manager"><h3 class="teacher-group-heading">My Teacher Access Code</h3><p style="color: var(--text-secondary); margin-bottom: 1rem;">Students will use this code to unlock your content. (e.g., ${currentUserName ? currentUserName.split(' ')[0] : 'User'}123)</p><div style="display: flex; gap: 1rem; align-items: center;"><input type="text" id="teacherAccessCodeInput" placeholder="Enter your code..." style="margin-bottom: 0;"><button id="saveTeacherAccessCodeBtn" class="btn-primary">Save Code</button></div><p id="teacherAccessCodeStatus" style="margin-top: 1rem;"></p></div>
+                     <div class="form-container" style="max-width: initial;"><h3 id="my-subjects-heading-${type}" class="teacher-group-heading">My Subjects</h3><div id="level1-${type}-container-mine"></div><button id="add-level1-${type}-btn" class="btn-primary" style="margin-top: 1rem;">Add New ${config.level1}</button><button id="migrate-data-btn" class="btn-primary" style="margin-top: 1rem; margin-left: 1rem; background-color: var(--accent-red); border-color: var(--accent-red); display: none;">Fix My Old Subjects</button></div>
                 </div>`;
-
-            const viewer = document.getElementById(`viewer-${type}-view`), manager = document.getElementById(`manager-${type}-view`);
-            const tabs = document.getElementById(`teacher-tabs-${type}`);
-
-            if (currentUserRole === 'teacher') {
-                tabs.style.display = 'flex'; viewer.style.display = 'block'; document.getElementById('code-manager').style.display = 'block';
-                tabs.addEventListener('click', e => { if(e.target.dataset.tab) { if(e.target.dataset.tab==='viewer'){viewer.style.display='block';manager.style.display='none';}else{viewer.style.display='none';manager.style.display='block';} }});
-                renderTeacherManagerView(type);
-                document.getElementById(`add-l1-${type}`).onclick = () => showAddItemModal(type, 1);
-                manager.addEventListener('click', e => handleTeacherClick(e, type));
-                manager.addEventListener('change', e => handleTeacherSort(e, type));
-                document.getElementById('migrate-btn').onclick = () => runMigration(type);
-                document.getElementById('saveCodeBtn').onclick = () => saveTeacherAccessCode();
-                if (currentUserProfile?.contentAccessCode) document.getElementById('teacherAccessCode').value = currentUserProfile.contentAccessCode;
-            } else { viewer.style.display = 'block'; }
-
-            viewer.addEventListener('click', e => {
+            const isTeacher = currentUserRole === 'teacher'; const viewerSection = document.getElementById(`viewer-${type}-view`);
+            const managerSection = document.getElementById(`manager-${type}-view`); const teacherTabs = document.getElementById(`teacher-tabs-${type}`);
+            const teacherCodeManager = document.getElementById(`teacher-code-manager`);
+            if (isTeacher) {
+                teacherTabs.style.display = 'flex'; viewerSection.style.display = 'block'; managerSection.style.display = 'none'; teacherCodeManager.style.display = 'block';
+                teacherTabs.addEventListener('click', (e) => {
+                    if (e.target.matches('.tab-btn')) {
+                        teacherTabs.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active');
+                        if (e.target.dataset.tab === 'viewer') { viewerSection.style.display = 'block'; managerSection.style.display = 'none'; } else { viewerSection.style.display = 'none'; managerSection.style.display = 'block'; }
+                    }
+                });
+                renderTeacherManagerView(type); document.getElementById(`add-level1-${type}-btn`).onclick = () => showAddItemModal(type, 1);
+                managerSection.addEventListener('click', (e) => handleTeacherClick(e, type)); managerSection.addEventListener('change', (e) => handleTeacherSort(e, type));
+                document.getElementById(`migrate-data-btn`).onclick = () => runMigration(type);
+                document.getElementById('saveTeacherAccessCodeBtn').onclick = () => saveTeacherAccessCode();
+                if (currentUserProfile && currentUserProfile.contentAccessCode) document.getElementById('teacherAccessCodeInput').value = currentUserProfile.contentAccessCode;
+            } else { teacherTabs.style.display = 'none'; viewerSection.style.display = 'block'; managerSection.style.display = 'none'; teacherCodeManager.style.display = 'none'; }
+            
+            viewerSection.addEventListener('click', (e) => {
                 if (e.target.id === `unlock-teacher-btn-${type}`) {
-                    showInputModal('Unlock', 'Enter teacher code:', async (code) => {
-                        const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code", "==", code.trim()));
-                        const snap = await getDocs(q);
-                        if (snap.empty) { showModal('Error', 'Invalid code.'); return; }
-                        const tId = snap.docs[0].id; const tName = snap.docs[0].data().teacherName;
-                        let unlocked = (currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
-                        if (!unlocked.includes(tId)) {
-                            unlocked.push(tId); await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { unlockedTeachers: unlocked });
-                            currentUserProfile.unlockedTeachers = unlocked; setupViewerFilters(type);
-                            showModal('Success', `Unlocked ${tName}.`);
-                        } else showModal('Info', 'Already unlocked.');
+                    showInputModal('Unlock Teacher Content', 'Enter the teacher\'s access code:', async (code) => {
+                        if (!code) return;
+                        try {
+                            const publicCodesRef = collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`);
+                            const q = query(publicCodesRef, where("code", "==", code.trim()));
+                            const snapshot = await getDocs(q);
+                            if (snapshot.empty) { showModal('Invalid Code', 'That access code was not found. Please check the code and try again.'); return; }
+                            const teacherDoc = snapshot.docs[0]; const teacherId = teacherDoc.id; const teacherName = teacherDoc.data().teacherName;
+                            const studentProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                            let unlocked = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+                            if (unlocked.includes(teacherId)) { showModal('Already Unlocked', `You have already unlocked content from ${teacherName}.`); return; }
+                            unlocked.push(teacherId); await updateDoc(studentProfileRef, { unlockedTeachers: unlocked });
+                            currentUserProfile.unlockedTeachers = unlocked; showModal('Success!', `You have unlocked content from ${teacherName}. Their subjects will now appear.`);
+                            setupViewerFilters(type);
+                        } catch (error) { console.error("Error unlocking teacher:", error); showModal('Error', `An error occurred: ${error.message}.`); }
                     });
                 }
             });
+            const unlockBtn = document.getElementById(`unlock-teacher-btn-${type}`); if (unlockBtn) unlockBtn.style.display = 'inline-block';
             setupViewerFilters(type);
         }
 
         async function renderTeacherManagerView(type) {
-            const container = document.getElementById(`l1-${type}-mine`);
+            const config = materialsConfig[type]; const myContainer = document.getElementById(`level1-${type}-container-mine`); if (!myContainer) return;
+            myContainer.innerHTML = `<p class="loading-indicator">Loading...</p>`; document.getElementById(`my-subjects-heading-${type}`).textContent = `My Subjects (${currentUserName})`;
             try {
-                const subRef = collection(db, getPath(type));
-                const [mySnap, orphanSnap] = await Promise.all([
-                    getDocs(query(subRef, where('teacherId', '==', currentUserId), orderBy('name'))),
-                    getDocs(query(subRef, where('teacherId', '==', null)))
-                ]);
-                
-                if (!orphanSnap.empty) document.getElementById('migrate-btn').style.display = 'inline-block';
-                if (mySnap.empty) { container.innerHTML = '<p>No subjects yet.</p>'; return; }
-                
-                container.innerHTML = mySnap.docs.map(doc => {
-                    const d = doc.data(); d.id = doc.id;
-                    return `<div class="content-item">
-                        <div class="content-header" data-level="1" data-id="${d.id}" data-parent-ids='[]' aria-expanded="false">
-                            <h3>${d.name} <span class="collapse-arrow"></span></h3>
-                            <div class="item-actions"><button class="add-item-btn btn-primary" data-level="2" data-parent-ids='["${d.id}"]'>Add Topic</button><button class="delete-item-btn logout-btn" data-level="1" data-id="${d.id}">Delete</button></div>
-                        </div>
-                        <div class="teacher-sort-container"><select class="teacher-sort-filter" data-level="3" data-parent-ids='["${d.id}"]'><option value="name-asc">A-Z</option><option value="diff-desc">Hardest</option></select></div>
-                        <div class="nested-container" id="container-level2-${type}-${d.id}"></div>
-                    </div>`;
-                }).join('');
-            } catch (e) { container.innerHTML = '<p>Error loading.</p>'; console.error(e); }
-        }
-
-        async function renderContent(type, cId, level, pIds, sortBy) {
-            const container = document.getElementById(cId); if(!container) return;
-            container.innerHTML = `<p class="loading-indicator">Loading...</p>`;
-            try {
-                let q = query(collection(db, getPath(type, pIds)));
-                if(level !== 3) q = query(q, orderBy('name'));
-                const snap = await getDocs(q);
-                if (snap.empty) { container.innerHTML = '<p>Empty.</p>'; return; }
-                
-                let items = []; snap.forEach(d => { let i = d.data(); i.id = d.id; i.level1Id = pIds[0]; i.level2Id = pIds[1]; items.push(i); });
-                if (level === 3) {
-                     const order = { 'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7 };
-                     items.sort((a,b) => (sortBy==='diff-desc'? (order[b.difficulty]||0)-(order[a.difficulty]||0) : (a.name||a.title).localeCompare(b.name||b.title)));
-                     container.innerHTML = items.map(i => `
-                        <div class="sub-item"><span>${i.title} <small>(${i.difficulty})</small></span>
-                        <div class="item-actions"><button class="edit-item-btn btn-primary" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}' data-item='${JSON.stringify(i)}'>Edit</button><button class="preview-item-btn btn-primary" data-item='${JSON.stringify(i)}'>Preview</button><button class="delete-item-btn logout-btn" data-level="3" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}'>Delete</button></div></div>
-                     `).join('');
-                } else {
-                    container.innerHTML = items.map(i => {
-                        const nIds = [...pIds, i.id];
-                        return `<div class="content-item"><div class="content-header" data-level="${level}" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}' aria-expanded="false">
-                            <h3>${i.name} <span class="collapse-arrow"></span></h3>
-                            <div class="item-actions"><button class="add-item-btn btn-primary" data-level="${level+1}" data-parent-ids='${JSON.stringify(nIds)}'>Add Video</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}'>Delete</button></div>
-                        </div><div class="teacher-sort-container"><select class="teacher-sort-filter" data-level="3" data-parent-ids='${JSON.stringify(nIds)}'><option value="name-asc">A-Z</option><option value="diff-desc">Hardest</option></select></div><div class="nested-container" id="container-level${level+1}-${type}-${i.id}"></div></div>`;
-                    }).join('');
+                const subjectsRef = collection(db, getPath(type));
+                const mySubjectsQuery = query(subjectsRef, where('teacherId', '==', currentUserId), orderBy('name', 'asc'));
+                const orphanSubjectsQuery = query(subjectsRef, where('teacherId', '==', null));
+                const [mySubjectsSnapshot, orphanSubjectsSnapshot] = await Promise.all([ getDocs(mySubjectsQuery), getDocs(orphanSubjectsQuery) ]);
+                if (mySubjectsSnapshot.empty) { myContainer.innerHTML = `<p>No ${config.level1.toLowerCase()}s created yet.</p>`; } else {
+                    let myHtml = '';
+                    mySubjectsSnapshot.forEach(doc => {
+                        const item = doc.data(); item.id = doc.id; const newParentIds = [item.id]; const nextLevel = 2;
+                        let sortDropdownHtml = `<div class="teacher-sort-container"><select id="sort-teacher-${type}-${item.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(newParentIds)}'><option value="name-asc">Sort by Name (A-Z)</option><option value="name-desc">Sort by Name (Z-A)</option><option value="diff-asc">Difficulty (Low to High)</option><option value="diff-desc">Difficulty (High to Low)</option></select></div>`;
+                        myHtml += `<div class="content-item"><div class="content-header" data-level="1" data-id="${item.id}" data-parent-ids='[]' aria-expanded="false"><h3>${item.name} <span class="collapse-arrow"></span></h3><div class="item-actions"><button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button><button class="delete-item-btn logout-btn" data-level="1" data-id="${item.id}" data-parent-ids='[]'>Delete</button></div></div>${sortDropdownHtml}<div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div></div>`;
+                    });
+                    myContainer.innerHTML = myHtml;
                 }
-            } catch(e) { container.innerHTML = '<p>Error.</p>'; }
+                const migrateBtn = document.getElementById('migrate-data-btn');
+                if (!orphanSubjectsSnapshot.empty) { migrateBtn.style.display = 'inline-block'; showModal('Action Required', 'We found some subjects that were created before the new Teacher update. Please click the red "Fix My Old Subjects" button to assign them to your account.'); } else { migrateBtn.style.display = 'none'; }
+            } catch (error) { console.error(`Error rendering teacher manager view for ${type}:`, error); myContainer.innerHTML = `<p class="error-message">Error loading content.</p>`; }
         }
 
-        function handleTeacherClick(e, type) {
-            const h = e.target.closest('.content-header'), b = e.target.closest('button');
-            if(b) {
-                e.stopPropagation(); const {level,parentIds,id,item} = b.dataset; const pArr = JSON.parse(parentIds||'[]');
-                if(b.matches('.add-item-btn')) parseInt(level)<3 ? showAddItemModal(type,parseInt(level),pArr) : showAddFinalItemModal(type,pArr);
-                else if(b.matches('.edit-item-btn')) showEditFinalItemModal(type,pArr,id,JSON.parse(item));
-                else if(b.matches('.delete-item-btn')) handleDeleteItem(type,parseInt(level),id,pArr);
-                else if(b.matches('.preview-item-btn')) handlePreview(type,JSON.parse(item));
-            } else if(h) {
-                const {level,id,parentIds} = h.dataset; const c = document.getElementById(`container-level${parseInt(level)+1}-${type}-${id}`);
-                const exp = h.getAttribute('aria-expanded')==='true'; h.setAttribute('aria-expanded',!exp); c.classList.toggle('expanded',!exp);
-                const sortDiv = h.parentElement.querySelector('.teacher-sort-container'); if(sortDiv) sortDiv.style.display = !exp ? 'block' : 'none';
-                if(!exp && !c.dataset.loaded) { renderContent(type,c.id,parseInt(level)+1,[...JSON.parse(parentIds),id], sortDiv?sortDiv.querySelector('select').value:'name-asc'); c.dataset.loaded='true'; }
+        async function renderContent(type, containerId, level, parentIds = [], sortBy = 'name-asc') {
+            const container = document.getElementById(containerId); if (!container) return;
+            const config = materialsConfig[type]; const levelName = config[`level${level}`];
+            if (container.innerHTML.includes('loading') || container.innerHTML === '') container.innerHTML = `<p class="loading-indicator">Loading ${levelName.toLowerCase()}s...</p>`;
+            const collectionRef = collection(db, getPath(type, parentIds));
+            if (level === 3) {
+                 try {
+                    const q = query(collectionRef); const snapshot = await getDocs(q);
+                    if (snapshot.empty) { container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`; return; }
+                    let items = [];
+                    snapshot.forEach(doc => { const item = doc.data(); item.id = doc.id; item.level1Id = parentIds[0]; item.level2Id = parentIds[1]; items.push(item); });
+                    const difficultySortOrder = { 'U': 0, '1/5': 1, '2/5': 2, '3/5': 3, '4/5': 4, '5/5': 5, '5/5*': 6, '5/5**': 7 };
+                    items.sort((a, b) => {
+                        const diffA = difficultySortOrder[a.difficulty] ?? 0; const diffB = difficultySortOrder[b.difficulty] ?? 0;
+                        const titleA = a.title || a.name || ''; const titleB = b.title || b.name || '';
+                        switch (sortBy) { case 'name-desc': return titleB.localeCompare(titleA); case 'diff-asc': return diffA - diffB; case 'diff-desc': return diffB - diffA; case 'name-asc': default: return titleA.localeCompare(titleB); }
+                    });
+                    container.innerHTML = '';
+                    items.forEach(item => {
+                        const el = document.createElement('div'); el.className = 'sub-item';
+                        el.innerHTML = `<span>${item.name || item.title} <span class="difficulty-badge-teacher">(${item.difficulty || 'U'})</span></span><div class="item-actions"><button class="edit-item-btn btn-primary" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}' data-item='${JSON.stringify(item)}'>Edit</button><button class="preview-item-btn btn-primary" data-item='${JSON.stringify(item)}'>Preview</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${item.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div>`;
+                        container.appendChild(el);
+                    });
+                 } catch (error) { console.error(`Error rendering level ${level} for ${type}:`, error); container.innerHTML = `<p class="error-message">Error loading content.</p>`; }
+            } else {
+                const q = query(collectionRef, orderBy('name', 'asc'));
+                try {
+                    const snapshot = await getDocs(q); if (snapshot.empty) { container.innerHTML = `<p>No ${levelName.toLowerCase()}s added yet.</p>`; return; }
+                    container.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const item = doc.data(); item.id = doc.id; const el = document.createElement('div'); el.className = 'content-item';
+                        const nextLevel = level + 1; const newParentIds = [...parentIds, doc.id];
+                        let sortDropdownHtml = '';
+                        if (nextLevel === 3) { sortDropdownHtml = `<div class="teacher-sort-container"><select id="sort-teacher-${type}-${doc.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(newParentIds)}'><option value="name-asc">Sort by Name (A-Z)</option><option value="name-desc">Sort by Name (Z-A)</option><option value="diff-asc">Difficulty (Low to High)</option><option value="diff-desc">Difficulty (High to Low)</option></select></div>`; }
+                        el.innerHTML = `<div class="content-header" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}' aria-expanded="false"><h3>${item.name} <span class="collapse-arrow"></span></h3><div class="item-actions"><button class="add-item-btn btn-primary" data-level="${nextLevel}" data-parent-ids='${JSON.stringify(newParentIds)}'>Add ${config[`level${nextLevel}`]}</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${doc.id}" data-parent-ids='${JSON.stringify(parentIds)}'>Delete</button></div></div>${sortDropdownHtml}<div class="nested-container" id="container-level${nextLevel}-${type}-${doc.id}"></div>`;
+                        container.appendChild(el);
+                    });
+                } catch (error) { console.error(`Error rendering level ${level} for ${type}:`, error); container.innerHTML = `<p class="error-message">Error loading content.</p>`; }
             }
         }
-        function handleTeacherSort(e, type) { const s=e.target.closest('select'); if(s){ const {level,parentIds}=s.dataset; renderContent(type,`container-level${level}-${type}-${JSON.parse(parentIds).slice(-1)[0]}`,parseInt(level),JSON.parse(parentIds),s.value); } }
-        function handlePreview(type, item) { if(type==='tutorials') showVideoPlayer(item); }
+        function handleTeacherClick(e, type) {
+            const header = e.target.closest('.content-header'); const button = e.target.closest('button');
+            if(button) {
+                e.stopPropagation(); const { level, parentIds } = button.dataset; const parentIdsArray = JSON.parse(parentIds || '[]');
+                if(button.matches('.add-item-btn')) { const nextLevel = parseInt(level); if (nextLevel < 3) showAddItemModal(type, nextLevel, parentIdsArray); else showAddFinalItemModal(type, parentIdsArray); } 
+                else if (button.matches('.edit-item-btn')) { const { id, parentIds, item } = button.dataset; showEditFinalItemModal(type, JSON.parse(parentIds), id, JSON.parse(item)); } 
+                else if (button.matches('.delete-item-btn')) { handleDeleteItem(type, parseInt(level), button.dataset.id, parentIdsArray); } 
+                else if(button.matches('.preview-item-btn')) { handlePreview(type, JSON.parse(button.dataset.item)); }
+            } else if (header) {
+                const { level, id, parentIds } = header.dataset; const container = document.getElementById(`container-level${parseInt(level) + 1}-${type}-${id}`);
+                if (!container) return;
+                const sortContainer = header.parentElement.querySelector('.teacher-sort-container'); const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                header.setAttribute('aria-expanded', !isExpanded); container.classList.toggle('expanded', !isExpanded);
+                if (sortContainer) sortContainer.style.display = !isExpanded ? 'block' : 'none';
+                if (!isExpanded && !container.dataset.loaded) { const sortBy = sortContainer ? sortContainer.querySelector('select').value : 'name-asc'; renderContent(type, container.id, parseInt(level) + 1, [...JSON.parse(parentIds), id], sortBy); container.dataset.loaded = 'true'; }
+            }
+        }
+        async function runMigration(type) {
+            if (!currentUserId) return; showModal('Migrating...', 'Please wait, updating your existing subjects...');
+            try {
+                const collectionRef = collection(db, getPath(type)); const q = query(collectionRef); const snapshot = await getDocs(q);
+                if (snapshot.empty) return; const batch = writeBatch(db); let count = 0;
+                snapshot.forEach(doc => { const item = doc.data(); if (!item.teacherId) { batch.update(doc.ref, { teacherId: currentUserId, teacherName: currentUserName }); count++; } });
+                if (count > 0) { await batch.commit(); showModal('Success!', `Updated ${count} subjects.`); } else { showModal('All Set!', 'No migration needed.'); }
+                renderTeacherManagerView(type); setupViewerFilters(type);
+            } catch (error) { console.error(error); showModal('Migration Error', error.message); }
+        }
+        function handleTeacherSort(e, type) {
+            const select = e.target.closest('select.teacher-sort-filter');
+            if (select) { e.stopPropagation(); const { level, parentIds } = select.dataset; const parentIdsArray = JSON.parse(parentIds || '[]'); const containerId = `container-level${level}-${type}-${parentIdsArray[parentIdsArray.length - 1]}`; renderContent(type, containerId, parseInt(level), parentIdsArray, select.value); }
+        }
+        function handlePreview(type, item) { if (type === 'tutorials') showVideoPlayer(item); }
 
         async function setupViewerFilters(type) {
-            const tf=document.getElementById(`teacher-${type}-filter`), l1=document.getElementById(`l1-${type}`), l2=document.getElementById(`l2-${type}`), srt=document.getElementById(`sort-${type}`), g=document.getElementById(`l3-${type}-grid`);
-            const s1=document.getElementById(`step1-${type}`), s2=document.getElementById(`step2-${type}`), s3=document.getElementById(`step3-${type}`);
-            
-            let allSubs = []; let tMap = new Map();
-            try { const snap = await getDocs(query(collection(db, getPath(type)), orderBy('name'))); snap.forEach(d=>{allSubs.push({id:d.id,...d.data()}); if(d.data().teacherId) tMap.set(d.data().teacherId, d.data().teacherName);}); } catch(e){}
-            
-            let uT = (currentUserProfile?.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
-            if(currentUserRole==='teacher' && !uT.includes(currentUserId)) uT.push(currentUserId);
-            
-            tf.innerHTML = '<option value="">-- Select Teacher --</option>';
-            [...new Set([...uT].map(id=>tMap.get(id)).filter(Boolean))].sort().forEach(n => tf.add(new Option(n,n)));
-
-            tf.onchange = () => {
-                l1.innerHTML='<option value="">-- Select Subject --</option>'; l1.disabled=true; l2.disabled=true; srt.disabled=true; g.style.display='none';
-                s1.style.opacity=0.5; s2.style.opacity=0.5; s3.style.opacity=0.5;
-                if(tf.value) { allSubs.filter(s=>s.teacherName===tf.value).forEach(s=>l1.add(new Option(s.name,s.id))); l1.disabled=false; s1.style.opacity=1; s1.style.pointerEvents='auto'; }
-            };
-            l1.onchange = async () => {
-                l2.innerHTML='<option value="">Loading...</option>'; l2.disabled=true; srt.disabled=true; g.style.display='none';
-                if(l1.value) { 
-                    const snap = await getDocs(query(collection(db, getPath(type, [l1.value])), orderBy('name')));
-                    l2.innerHTML='<option value="">-- Select Topic --</option>';
-                    snap.forEach(d=>l2.add(new Option(d.data().name, d.id)));
-                    l2.disabled=false; s2.style.opacity=1; s2.style.pointerEvents='auto';
+            const config = materialsConfig[type]; const teacherFilter = document.getElementById(`teacher-${type}-filter`);
+            const level1Filter = document.getElementById(`level1-${type}-filter`); const level2Filter = document.getElementById(`level2-${type}-filter`);
+            const sortFilter = document.getElementById(`sort-${type}-filter`); const grid = document.getElementById(`level3-${type}-grid`);
+            const step1 = document.getElementById(`filter-step-1-${type}`); const step2 = document.getElementById(`filter-step-2-${type}`); const step3 = document.getElementById(`filter-step-3-${type}`);
+            let allSubjects = []; let teacherIdToNameMap = new Map(); teacherFilter.innerHTML = `<option value="">-- Loading... --</option>`;
+            try {
+                const subjectsQuery = query(collection(db, getPath(type)), orderBy('name', 'asc')); const snapshot = await getDocs(subjectsQuery);
+                snapshot.forEach(doc => { const subject = doc.data(); subject.id = doc.id; allSubjects.push(subject); if (subject.teacherId) teacherIdToNameMap.set(subject.teacherId, subject.teacherName); });
+            } catch (e) { console.error(e); }
+            let unlockedTeacherIds = (currentUserProfile && currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+            if (currentUserRole === 'teacher' && !unlockedTeacherIds.includes(currentUserId)) unlockedTeacherIds.push(currentUserId);
+            teacherFilter.innerHTML = `<option value="">-- Select a Teacher --</option>`;
+            if (unlockedTeacherIds.length === 0) { teacherFilter.innerHTML += (currentUserRole === 'teacher') ? `<option value="" disabled>-- No subjects exist yet --</option>` : `<option value="" disabled>-- Use 'Unlock' to add a teacher --</option>`; }
+            else { [...new Set(unlockedTeacherIds.map(id => teacherIdToNameMap.get(id)))].filter(Boolean).sort().forEach(name => teacherFilter.add(new Option(name, name))); }
+            teacherFilter.onchange = async () => {
+                const selectedTeacher = teacherFilter.value;
+                level1Filter.innerHTML = `<option value="">-- Select ${config.level1} --</option>`; level1Filter.disabled = true;
+                level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`; level2Filter.disabled = true;
+                sortFilter.disabled = true; grid.style.display = 'none'; grid.style.opacity = 0; grid.innerHTML = '';
+                step1.style.opacity = '0.5'; step1.style.pointerEvents = 'none'; step2.style.opacity = '0.5'; step2.style.pointerEvents = 'none'; step3.style.opacity = '0.5'; step3.style.pointerEvents = 'none';
+                if (selectedTeacher) {
+                    level1Filter.innerHTML = `<option value="">-- Select a ${config.level1} --</option>`;
+                    const filteredSubjects = allSubjects.filter(s => s.teacherName === selectedTeacher);
+                    if (filteredSubjects.length === 0) level1Filter.innerHTML += `<option value="" disabled>-- No ${config.level1}s Found --</option>`;
+                    else filteredSubjects.forEach(subject => level1Filter.add(new Option(subject.name, subject.id)));
+                    level1Filter.disabled = false; step1.style.opacity = '1'; step1.style.pointerEvents = 'auto';
                 }
             };
-            l2.onchange = () => { if(l2.value) { srt.disabled=false; s3.style.opacity=1; s3.style.pointerEvents='auto'; renderViewerItems(type); } };
-            srt.onchange = () => renderViewerItems(type);
+            level1Filter.onchange = () => {
+                const level1Id = level1Filter.value; level2Filter.innerHTML = `<option value="">-- Select ${config.level2} --</option>`;
+                level2Filter.disabled = true; sortFilter.disabled = true; grid.style.display = 'none';
+                step2.style.opacity = '0.5'; step3.style.opacity = '0.5';
+                if (level1Id) { populateFilter(level2Filter, collection(db, getPath(type, [level1Id])), config.level2); level2Filter.disabled = false; step2.style.opacity = '1'; step2.style.pointerEvents = 'auto'; }
+            };
+            level2Filter.onchange = () => { if(level2Filter.value) { sortFilter.disabled = false; step3.style.opacity = '1'; step3.style.pointerEvents = 'auto'; renderViewerItems(type); } else { sortFilter.disabled = true; step3.style.opacity = '0.5'; } };
+            sortFilter.onchange = () => renderViewerItems(type);
         }
 
         async function renderViewerItems(type) {
-             const g = document.getElementById(`l3-${type}-grid`), l1 = document.getElementById(`l1-${type}`).value, l2 = document.getElementById(`l2-${type}`).value, srt = document.getElementById(`sort-${type}`).value;
-             g.innerHTML = '<p class="loading-indicator">Loading...</p>'; g.style.display='grid'; g.style.opacity=1;
+             const config = materialsConfig[type]; const grid = document.getElementById(`level3-${type}-grid`);
+             const level1Id = document.getElementById(`level1-${type}-filter`).value; const level2Id = document.getElementById(`level2-${type}-filter`).value; const sortValue = document.getElementById(`sort-${type}-filter`).value;
+             grid.innerHTML = `<p class="loading-indicator">Loading...</p>`; grid.style.display = 'grid'; grid.style.opacity = 1;
+             if (!level1Id || !level2Id) { grid.style.display = 'none'; return; }
+             const itemsRef = collection(db, getPath(type, [level1Id, level2Id])); const q = query(itemsRef);
+             let videoStatuses = {}; if(type === 'tutorials' && currentUserId) { const sSnap = await getDocs(collection(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`)); sSnap.forEach(d => videoStatuses[d.id] = d.data().completed); }
              try {
-                const snap = await getDocs(collection(db, getPath(type,[l1,l2])));
-                if(snap.empty) { g.innerHTML='<p>No videos.</p>'; return; }
-                let items=[]; snap.forEach(d=>items.push({id:d.id, level1Id:l1, level2Id:l2, ...d.data()}));
-                const order={'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7};
-                items.sort((a,b)=>(srt==='diff-asc'? (order[a.difficulty]||0)-(order[b.difficulty]||0) : srt==='diff-desc'? (order[b.difficulty]||0)-(order[a.difficulty]||0) : srt==='name-desc'? (b.title||'').localeCompare(a.title||'') : (a.title||'').localeCompare(b.title||'')));
-                g.innerHTML = items.map(i => {
-                    let thumb = i.videoType==='vimeo' ? `https://placehold.co/480x360/0a0a0a/888888?text=Vimeo` : i.videoType==='html' ? `https://placehold.co/480x360/0a0a0a/888888?text=HTML` : `https://img.youtube.com/vi/${i.videoId||i.youtubeId}/mqdefault.jpg`;
-                    return `<div class="material-card" onclick="window.previewItem('${type}','${i.id}','${l1}','${l2}')">
-                        <div class="material-card-thumbnail"><img src="${thumb}" onerror="this.src='https://placehold.co/480x360/333/ccc?text=No+Img'"><span class="difficulty-badge">${i.difficulty||'U'}</span></div>
-                        <div class="material-card-content"><h3>${i.title}</h3></div></div>`;
-                }).join('');
-                window.previewItem = (t, id, l1, l2) => handlePreview(t, items.find(x=>x.id===id));
-             } catch(e) { g.innerHTML='<p>Error.</p>'; }
+                const snapshot = await getDocs(q); if (snapshot.empty) { grid.innerHTML = `<p>No ${config.level3.toLowerCase()}s found.</p>`; return; }
+                let items = []; snapshot.forEach(doc => { const item = doc.data(); item.id = doc.id; item.level1Id = level1Id; item.level2Id = level2Id; items.push(item); });
+                const difficultySortOrder = { 'U': 0, '1/5': 1, '2/5': 2, '3/5': 3, '4/5': 4, '5/5': 5, '5/5*': 6, '5/5**': 7 };
+                items.sort((a, b) => {
+                    const diffA = difficultySortOrder[a.difficulty] ?? 0; const diffB = difficultySortOrder[b.difficulty] ?? 0;
+                    const titleA = a.title || a.name || ''; const titleB = b.title || b.name || '';
+                    switch (sortValue) { case 'name-desc': return titleB.localeCompare(titleA); case 'diff-asc': return diffA - diffB; case 'diff-desc': return diffB - diffA; case 'name-asc': default: return titleA.localeCompare(titleB); }
+                });
+                grid.innerHTML = '';
+                items.forEach(item => {
+                    const card = document.createElement('div'); card.className = 'material-card'; card.style.animation = 'slideInUp 0.5s ease-out both'; card.addEventListener('click', () => handlePreview(type, item));
+                    const isCompleted = videoStatuses[item.id];
+                    let thumbnailUrl; const videoId = item.videoId || item.youtubeId;
+                    if (item.videoType === 'vimeo') thumbnailUrl = `https://placehold.co/480x360/0a0a0a/888888?text=Vimeo+Video`;
+                    else if (item.videoType === 'direct') thumbnailUrl = `https://placehold.co/480x360/0a0a0a/888888?text=Direct+Video`;
+                    else if (item.videoType === 'html') thumbnailUrl = `https://placehold.co/480x360/0a0a0a/888888?text=HTML+Content`;
+                    else thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                    card.innerHTML = `<div class="material-card-thumbnail" data-video-id="${videoId}"><img src="${thumbnailUrl}" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">${isCompleted ? '<div class="completion-status">✓</div>' : ''}</div><div class="material-card-content"><h3>${item.title || 'Untitled Video'}</h3><span class="difficulty-badge">${item.difficulty || 'U'}</span></div>`;
+                    grid.appendChild(card);
+                });
+             } catch(e) { console.error("Error loading student items:", e); grid.innerHTML = "<p class='error-message'>Error loading items.</p>" }
+        }
+        async function populateFilter(selectElement, queryOrRef, levelName) {
+            selectElement.innerHTML = `<option value="">-- Loading ${levelName}s --</option>`;
+            try {
+                let q = (queryOrRef.type === 'collection') ? query(queryOrRef, orderBy('name', 'asc')) : queryOrRef;
+                const snapshot = await getDocs(q); selectElement.innerHTML = `<option value="">-- Select a ${levelName} --</option>`;
+                if(snapshot.empty) { selectElement.innerHTML += `<option value="" disabled>-- No ${levelName}s Available --</option>`; return; }
+                snapshot.forEach(doc => selectElement.add(new Option(doc.data().name, doc.id)));
+            } catch (e) { console.error(e); selectElement.innerHTML = `<option value="">-- Error --</option>`; }
         }
 
-        function cleanupPlayers() {
-            if (ytPlayer) { ytPlayer.destroy(); ytPlayer=null; }
-            if (vimeoPlayer) { vimeoPlayer.destroy(); vimeoPlayer=null; }
-            if (directPlayer) { if(hls) hls.destroy(); directPlayer.pause(); directPlayer=null; }
-            if (saveTimeInterval) clearInterval(saveTimeInterval);
+        function savePlaybackTime(videoId, currentTime) {
+            if (!currentUserId || !videoId || currentTime < 1) return;
             if (saveTimeTimeout) clearTimeout(saveTimeTimeout);
+            saveTimeTimeout = setTimeout(async () => {
+                try { await setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, videoId), { lastPlayedTime: currentTime, timestamp: Date.now() }, { merge: true }); } 
+                catch (error) { console.error("Error saving playback time:", error); } saveTimeTimeout = null;
+            }, SAVE_TIME_DEBOUNCE);
+        }
+        async function getPlaybackTime(videoId) {
+            if (!currentUserId || !videoId) return 0;
+            try { const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, videoId)); return (docSnap.exists() && docSnap.data().lastPlayedTime) ? docSnap.data().lastPlayedTime : 0; } catch (error) { return 0; }
+        }
+        function cleanupPlayers() {
+            if (ytPlayer) { ytPlayer.destroy(); ytPlayer = null; }
+            if (vimeoPlayer) { vimeoPlayer.destroy().catch(e=>console.warn(e)); vimeoPlayer = null; }
+            if (directPlayer) { if (hls) { hls.destroy(); hls = null; } directPlayer.pause(); directPlayer.src = ''; directPlayer = null; }
+            if (saveTimeInterval) { clearInterval(saveTimeInterval); saveTimeInterval = null; }
+            if (saveTimeTimeout) { clearTimeout(saveTimeTimeout); saveTimeTimeout = null; }
             document.getElementById('videoPlayerContainer').innerHTML = '';
         }
 
         async function showVideoPlayer(item) {
-            currentVideoItem = item; showSection('videoPlayerSection');
-            updateUrlState(item);
-
+            currentVideoItem = item;
+            showSection('videoPlayerSection');
             document.getElementById('videoInfoTitle').textContent = item.title;
-            document.getElementById('videoInfoDescription').textContent = item.notes || '';
-            const mLink = document.getElementById('materialsLinkContainer'); 
-            if(item.materialsLink) { mLink.style.display='block'; document.getElementById('materialsLink').href = item.materialsLink; } else mLink.style.display='none';
-            
-            const pc = document.getElementById('videoPlayerContainer'); cleanupPlayers();
-            const savedTime = await getPlaybackTime(item.id);
-            const vId = item.videoId || item.youtubeId;
+            document.getElementById('videoInfoDescription').textContent = item.notes || 'No notes for this video.';
+            const materialsLinkEl = document.getElementById('materialsLink');
+            if (item.materialsLink) { materialsLinkEl.href = item.materialsLink; document.getElementById('materialsLinkContainer').style.display = 'block'; } else document.getElementById('materialsLinkContainer').style.display = 'none';
 
+            // --- NEW: Update URL to include video params ---
+            if (item.level1Id && item.level2Id) {
+                const newUrl = `${window.location.pathname}?s=${item.level1Id}&t=${item.level2Id}&v=${item.id}`;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+
+            cleanupPlayers();
+            const savedTime = await getPlaybackTime(item.id); const playerContainer = document.getElementById('videoPlayerContainer');
+            const videoId = item.videoId || item.youtubeId;
             if (item.videoType === 'vimeo') {
-                pc.innerHTML = `<iframe src="https://player.vimeo.com/video/${vId}?muted=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-                vimeoPlayer = new Vimeo.Player(pc.querySelector('iframe'));
-                vimeoPlayer.on('ready', () => { if(savedTime>0) vimeoPlayer.setCurrentTime(savedTime); vimeoPlayer.play().catch(()=>{}); vimeoPlayer.setVolume(1); });
-                vimeoPlayer.on('timeupdate', d => savePlaybackTime(item.id, d.seconds));
+                playerContainer.innerHTML = `<iframe src="https://player.vimeo.com/video/${videoId}?muted=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                vimeoPlayer = new Vimeo.Player(playerContainer.querySelector('iframe'));
+                vimeoPlayer.on('ready', () => { if (savedTime > 0.5) vimeoPlayer.setCurrentTime(savedTime).catch(e=>console.warn(e)); vimeoPlayer.play().catch(e=>console.warn(e)); vimeoPlayer.setVolume(1); });
+                vimeoPlayer.on('timeupdate', (data) => savePlaybackTime(item.id, data.seconds));
             } else if (item.videoType === 'direct') {
-                pc.innerHTML = `<video id="dv" controls autoplay muted style="background:#000;"></video>`;
-                directPlayer = document.getElementById('dv');
-                directPlayer.addEventListener('timeupdate', () => savePlaybackTime(item.id, directPlayer.currentTime));
-                directPlayer.addEventListener('loadedmetadata', () => { if(savedTime>0) directPlayer.currentTime=savedTime; directPlayer.play().catch(()=>{}); directPlayer.muted=false; });
-                if (item.videoId.includes('.m3u8') && Hls.isSupported()) { hls = new Hls(); hls.loadSource(item.videoId); hls.attachMedia(directPlayer); } else directPlayer.src = item.videoId;
+                playerContainer.innerHTML = `<video id="directVideoPlayer" controls autoplay muted style="background-color: #000;"></video>`;
+                directPlayer = document.getElementById('directVideoPlayer');
+                directPlayer.addEventListener('timeupdate', () => { if(directPlayer) savePlaybackTime(item.id, directPlayer.currentTime); });
+                directPlayer.addEventListener('loadedmetadata', () => { if (savedTime > 0 && directPlayer) directPlayer.currentTime = savedTime; if(directPlayer) { directPlayer.play().catch(e=>console.warn(e)); directPlayer.muted = false; } });
+                if (item.videoId.includes('.m3u8') && Hls.isSupported()) { hls = new Hls(); hls.loadSource(item.videoId); hls.attachMedia(directPlayer); } else { directPlayer.src = item.videoId; }
             } else if (item.videoType === 'html') {
-                pc.innerHTML = `<iframe src="${item.videoId}" frameborder="0" allowfullscreen></iframe>`;
+                playerContainer.innerHTML = `<iframe src="${item.videoId}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
             } else {
-                pc.innerHTML = `<div id="youtube-player-div"></div>`;
-                const initYT = () => {
-                    ytPlayer = new YT.Player('youtube-player-div', {
-                        height:'100%', width:'100%', videoId: vId,
-                        playerVars: { 'autoplay':1, 'playsinline':1, 'start': Math.floor(savedTime) },
-                        events: { 
-                            'onStateChange': e => {
-                                if(e.data===YT.PlayerState.PLAYING) saveTimeInterval=setInterval(()=>savePlaybackTime(item.id,ytPlayer.getCurrentTime()), 5000);
-                                else clearInterval(saveTimeInterval);
-                            }
-                        }
-                    });
+                playerContainer.innerHTML = `<div id="youtube-player-div" style="width: 100%; height: 100%;"></div>`;
+                const createPlayer = () => {
+                    ytPlayer = new YT.Player('youtube-player-div', { height: '100%', width: '100%', videoId: videoId, playerVars: { 'autoplay': 1, 'playsinline': 1, 'start': Math.floor(savedTime) }, events: {
+                        'onReady': (event) => event.target.playVideo(),
+                        'onStateChange': (event) => { if (event.data == YT.PlayerState.PLAYING) { if (saveTimeInterval) clearInterval(saveTimeInterval); saveTimeInterval = setInterval(() => { if (ytPlayer?.getCurrentTime) savePlaybackTime(item.id, ytPlayer.getCurrentTime()); }, SAVE_TIME_DEBOUNCE); } else { if (saveTimeInterval) clearInterval(saveTimeInterval); if (ytPlayer?.getCurrentTime) savePlaybackTime(item.id, ytPlayer.getCurrentTime()); } }
+                    }});
                 };
-                if(window.isYouTubeApiReady) initYT(); else { const i=setInterval(()=>{if(window.isYouTubeApiReady){clearInterval(i);initYT();}},100); }
+                if (window.isYouTubeApiReady) createPlayer(); else { const i = setInterval(() => { if (window.isYouTubeApiReady) { clearInterval(i); createPlayer(); } }, 100); }
             }
-            updateCompletionButtonUI(item.id); loadTopicPlaylist(item.level1Id, item.level2Id, item.id);
+            await updateCompletionButtonUI(item.id); if (item.level1Id && item.level2Id) await loadTopicPlaylist(item.level1Id, item.level2Id, item.id);
         }
 
-        document.getElementById('backToTutorialsBtn').addEventListener('click', () => { 
-            cleanupPlayers(); currentVideoItem=null; resetUrlState();
-            showSection('tutorialSection'); renderViewerItems('tutorials'); 
+        document.getElementById('backToTutorialsBtn').addEventListener('click', () => {
+            showSection('tutorialSection'); cleanupPlayers(); currentVideoItem = null;
+            // --- NEW: Clear URL params ---
+            window.history.pushState({}, '', window.location.pathname);
+            renderViewerItems('tutorials');
         });
 
-        async function loadTopicPlaylist(l1, l2, cId) {
-            const c = document.getElementById('topicPlaylist'); c.innerHTML = '<h3>Topic Playlist</h3>';
+        async function loadTopicPlaylist(level1Id, level2Id, currentVideoId) {
+            const container = document.getElementById('topicPlaylist'); if (!container) return;
+            container.innerHTML = `<h3>In this Topic</h3><p class="loading-indicator" style="padding: 0;">Loading...</p>`;
             try {
-                const snap = await getDocs(query(collection(db, getPath('tutorials', [l1,l2])), orderBy('name')));
-                snap.forEach(d => {
-                    const i = d.data(); i.id = d.id; i.level1Id = l1; i.level2Id = l2;
-                    const el = document.createElement('a'); el.className = `playlist-item ${i.id===cId?'active':''}`;
-                    el.textContent = i.title; el.onclick = (e) => { e.preventDefault(); showVideoPlayer(i); };
-                    c.appendChild(el);
+                const q = query(collection(db, getPath('tutorials', [level1Id, level2Id])), orderBy('name', 'asc'));
+                const snapshot = await getDocs(q); if (snapshot.empty) { container.innerHTML = '<h3>In this Topic</h3><p>No other videos found.</p>'; return; }
+                container.innerHTML = '<h3>In this Topic</h3>';
+                snapshot.forEach(doc => {
+                    const videoData = doc.data(); videoData.id = doc.id; videoData.level1Id = level1Id; videoData.level2Id = level2Id;
+                    const itemEl = document.createElement('a'); itemEl.className = 'playlist-item'; if (videoData.id === currentVideoId) itemEl.classList.add('active');
+                    itemEl.textContent = videoData.title || 'Untitled Video'; itemEl.onclick = (e) => { e.preventDefault(); showVideoPlayer(videoData); };
+                    container.appendChild(itemEl);
                 });
-            } catch(e){}
+            } catch (error) { console.error(error); container.innerHTML = '<h3>In this Topic</h3><p class="error-message">Could not load playlist.</p>'; }
         }
 
-        async function getPlaybackTime(vid) { 
-            try { const d = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, vid)); return d.exists()?d.data().lastPlayedTime:0; } catch{return 0;} 
-        }
-        function savePlaybackTime(vid, t) {
-            if(saveTimeTimeout) clearTimeout(saveTimeTimeout);
-            saveTimeTimeout = setTimeout(() => setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, vid), { lastPlayedTime: t, timestamp: Date.now() }, { merge: true }), SAVE_TIME_DEBOUNCE);
-        }
-
-        async function updateCompletionButtonUI(vid) {
-            const btn = document.getElementById('completionToggleButton');
-            try { const d = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, vid));
-            if(d.exists() && d.data().completed) { 
-                btn.textContent = "✓ Completed"; 
-                btn.style.borderColor='var(--accent-green)'; btn.style.color='var(--accent-green)'; 
-            } else { 
-                btn.textContent = "Mark as Complete"; 
-                btn.style.borderColor='var(--border-color)'; btn.style.color='var(--text-primary)'; 
-            }
-            } catch { btn.textContent = "Error"; }
-        }
         document.getElementById('completionToggleButton').addEventListener('click', async () => {
-             if(!currentVideoItem) return;
-             const ref = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, currentVideoItem.id);
-             const s = await getDoc(ref); const c = s.exists() && s.data().completed;
-             await setDoc(ref, { completed: !c, videoTitle: currentVideoItem.title, timestamp: Date.now() }, { merge: true });
-             updateCompletionButtonUI(currentVideoItem.id);
+            if (!currentVideoItem || !currentUserId) return;
+            const statusRef = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, currentVideoItem.id);
+            try {
+                const docSnap = await getDoc(statusRef);
+                await setDoc(statusRef, { completed: !(docSnap.exists() && docSnap.data().completed), timestamp: Date.now(), videoTitle: currentVideoItem.title, videoId: currentVideoItem.id }, { merge: true });
+                await updateCompletionButtonUI(currentVideoItem.id);
+            } catch (error) { console.error(error); showModal("Error", "Could not update completion status."); }
         });
-
-        function showModal(t, m, b=[]) {
-            const mod=document.getElementById('messageModal'), mb=document.getElementById('modalButtons');
-            document.getElementById('modalTitle').textContent=t; document.getElementById('modalMessage').innerHTML=m; mb.innerHTML='';
-            if(!b.length) b=[{text:'OK', class:'btn-primary'}];
-            b.forEach(cf => { const btn=document.createElement('button'); btn.textContent=cf.text; btn.className=cf.class; btn.onclick=()=>{if(cf.callback)cf.callback(); closeModal(mod.id);}; mb.appendChild(btn); });
-            mod.style.display='flex';
+        async function updateCompletionButtonUI(videoId) {
+            if (!currentUserId) return; const button = document.getElementById('completionToggleButton');
+            try { const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, videoId));
+                if (docSnap.exists() && docSnap.data().completed) { button.textContent = "✓ Completed"; button.className = 'mark-incomplete'; } else { button.textContent = "Mark as Complete"; button.className = 'mark-complete'; }
+            } catch (error) { button.textContent = "Status Error"; button.disabled = true; }
         }
-        function showInputModal(t, l, cb) { showModal(t, `<label>${l}</label><input id="dynIn" style="width:100%">`, [{text:'Cancel',class:'logout-btn'},{text:'Submit',class:'btn-primary',callback:()=>cb(document.getElementById('dynIn').value)}]); }
-        function closeModal(id) { document.getElementById(id).style.display='none'; }
-        document.querySelectorAll('.close-button').forEach(b=>b.onclick=()=>closeModal(b.closest('.modal').id));
+        document.getElementById('themeToggleButton').addEventListener('click', () => showModal("Theme", "This application currently supports dark theme only."));
+        document.body.classList.remove('light-theme');
 
-        function parseVideoLink(url) {
-            if(!url) return null;
-            if(url.includes('youtube.com/embed/')) return {type:'youtube', id:url.split('embed/')[1].split('"')[0]};
-            if(url.includes('player.vimeo.com/video/')) return {type:'vimeo', id:url.match(/video\/([^"?]+)/)[1]};
-            const yt = url.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-            if(yt && yt[1].length===11) return {type:'youtube', id:yt[1]};
-            const vim = url.match(/(?:vimeo\.com\/)([^#\&\?\/]+)/);
-            if(vim) return {type:'vimeo', id:vim[1]};
-            if(url.match(/\.(m3u8|mp4|webm|ogv)$/)) return {type:'direct', id:url};
-            if(url.match(/\.(html|htm)$/)) return {type:'html', id:url};
-            return null;
-        }
-
+        // --- Helper Functions ---
         async function saveTeacherAccessCode() {
-             const c = document.getElementById('teacherAccessCode').value.trim();
-             const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code","==",c));
-             const snap = await getDocs(q); let taken=false; snap.forEach(d=>{if(d.id!==currentUserId)taken=true;});
-             if(taken) { showModal('Error','Code taken.'); return; }
-             const b = writeBatch(db);
-             b.update(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), {contentAccessCode:c});
-             b.set(doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, currentUserId), {code:c, teacherName:currentUserName});
-             await b.commit(); currentUserProfile.contentAccessCode=c; showModal('Success','Code saved.');
+            const input = document.getElementById('teacherAccessCodeInput'); const status = document.getElementById('teacherAccessCodeStatus'); const newCode = input.value.trim();
+            if (!newCode) { status.textContent = "Please enter a code."; status.style.color = "var(--accent-red)"; return; }
+            status.textContent = "Checking code..."; status.style.color = "var(--text-secondary)";
+            try {
+                const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code", "==", newCode)); const snapshot = await getDocs(q);
+                let codeTaken = false; snapshot.forEach(doc => { if (doc.id !== currentUserId) codeTaken = true; });
+                if (codeTaken) { status.textContent = "Code already taken."; status.style.color = "var(--accent-red)"; return; }
+                const batch = writeBatch(db); batch.update(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { contentAccessCode: newCode });
+                batch.set(doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, currentUserId), { code: newCode, teacherName: currentUserName });
+                await batch.commit(); currentUserProfile.contentAccessCode = newCode; status.textContent = "Saved!"; status.style.color = "var(--accent-green)";
+            } catch (error) { status.textContent = `Error: ${error.message}`; status.style.color = "var(--accent-red)"; }
         }
 
-        async function runMigration(type) {
-             const b = writeBatch(db); let c=0;
-             const snap = await getDocs(query(collection(db, getPath(type))));
-             snap.forEach(d=>{ if(!d.data().teacherId){ b.update(d.ref, {teacherId:currentUserId, teacherName:currentUserName}); c++; } });
-             if(c>0) { await b.commit(); showModal('Success', 'Migrated '+c+' items.'); renderTeacherManagerView(type); } else showModal('Info', 'Nothing to migrate.');
-        }
-        
-        function showAddItemModal(type, lvl, pIds=[]) { showInputModal(`Add ${materialsConfig[type][`level${lvl}`]}`, 'Name:', async n=>{ if(!n)return; await addDoc(collection(db, getPath(type, pIds)), {name:n, createdAt:Date.now(), ...(lvl===1?{teacherId:currentUserId,teacherName:currentUserName}:{})}); if(lvl===1) renderTeacherManagerView(type); else { const cid=`container-level${lvl}-${type}-${pIds.slice(-1)[0]}`; renderContent(type,cid,lvl,pIds,'name-asc'); } }); }
-
-        function showAddFinalItemModal(type, pIds) {
-             const m=document.getElementById('addVideoModal'), f=m.querySelector('form'); f.reset();
-             document.getElementById('videoParentId1').value=pIds[0]; document.getElementById('videoParentId2').value=pIds[1];
-             m.style.display='flex';
-             f.onsubmit = async e => { e.preventDefault();
-                 const v = parseVideoLink(document.getElementById('tutorialLink').value);
-                 if(!v) { showModal('Error','Invalid link.'); return; }
-                 await addDoc(collection(db, getPath(type, pIds)), {
-                     title:document.getElementById('tutorialTitle').value, name:document.getElementById('tutorialTitle').value,
-                     videoType:v.type, videoId:v.id, link:document.getElementById('tutorialLink').value,
-                     difficulty:document.getElementById('tutorialDifficulty').value, notes:document.getElementById('tutorialNotes').value,
-                     materialsLink:document.getElementById('tutorialMaterialsLink').value, createdAt:Date.now()
-                 });
-                 renderContent(type,`container-level3-${type}-${pIds[1]}`,3,pIds,'name-asc'); closeModal(m.id);
-             };
+        function showModal(title, message, buttons = []) {
+            const modal = document.getElementById('messageModal'); if (!modal) return;
+            document.getElementById('modalTitle').textContent = title; document.getElementById('modalMessage').innerHTML = message;
+            const modalButtons = document.getElementById('modalButtons'); modalButtons.innerHTML = '';
+            const createBtn = (text, cls, cb) => { const b = document.createElement('button'); b.textContent = text; b.className = cls; b.onclick = () => { if (cb) cb(); closeModal(modal.id); }; modalButtons.appendChild(b); };
+            if (buttons.length === 0) createBtn('OK', 'btn-primary'); else buttons.forEach(b => createBtn(b.text, b.class || 'btn-primary', b.callback));
+            modal.querySelector('.close-button').onclick = () => closeModal(modal.id); modal.style.display = 'flex';
         }
 
-        function showEditFinalItemModal(type, pIds, id, item) {
-             const m=document.getElementById('editVideoModal'), f=m.querySelector('form');
-             document.getElementById('editVideoParentId1').value=pIds[0]; document.getElementById('editVideoParentId2').value=pIds[1]; document.getElementById('editVideoId').value=id;
-             document.getElementById('editTutorialLink').value=item.link; document.getElementById('editTutorialTitle').value=item.title;
-             document.getElementById('editTutorialNotes').value=item.notes; document.getElementById('editTutorialMaterialsLink').value=item.materialsLink;
-             document.getElementById('editTutorialDifficulty').value=item.difficulty; m.style.display='flex';
-             f.onsubmit = async e => { e.preventDefault();
-                 const v = parseVideoLink(document.getElementById('editTutorialLink').value);
-                 if(!v) { showModal('Error','Invalid link.'); return; }
-                 await updateDoc(doc(db, getPath(type, pIds), id), {
-                     title:document.getElementById('editTutorialTitle').value, name:document.getElementById('editTutorialTitle').value,
-                     videoType:v.type, videoId:v.id, link:document.getElementById('editTutorialLink').value,
-                     difficulty:document.getElementById('editTutorialDifficulty').value, notes:document.getElementById('editTutorialNotes').value,
-                     materialsLink:document.getElementById('editTutorialMaterialsLink').value
-                 });
-                 renderContent(type,`container-level3-${type}-${pIds[1]}`,3,pIds,'name-asc'); closeModal(m.id);
-             };
+        async function showAddItemModal(type, level, parentIds = []) {
+            const levelName = materialsConfig[type][`level${level}`];
+            showInputModal(`Add New ${levelName}`, `${levelName} Name:`, async (name) => {
+                if (!name) return; const newItem = { name: name, createdAt: Date.now() };
+                if (level === 1) { newItem.teacherId = currentUserId; newItem.teacherName = currentUserName; }
+                try { await addDoc(collection(db, getPath(type, parentIds)), newItem); showModal('Success', `${levelName} added.`); if (level === 1) renderTeacherManagerView(type); else { const sortBy = document.getElementById(`sort-teacher-${type}-${parentIds[parentIds.length-1]}`)?.value || 'name-asc'; renderContent(type, `container-level${level}-${type}-${parentIds[parentIds.length-1]}`, level, parentIds, sortBy); } } catch (error) { showModal('Error', error.message); }
+            });
         }
 
-        async function handleDeleteItem(type, lvl, id, pIds) {
-             showModal('Confirm', 'Delete this item?', [{text:'Cancel',class:'btn-primary'}, {text:'Delete',class:'logout-btn', callback:async()=>{
-                 await deleteDoc(doc(db, getPath(type, pIds), id));
-                 if(lvl===1) renderTeacherManagerView(type); else renderContent(type,`container-level${lvl}-${type}-${pIds.slice(-1)[0]}`,lvl,pIds,'name-asc');
-             }}]);
+        function showAddFinalItemModal(type, parentIds = []) {
+            const modal = document.getElementById('addVideoModal'); if (!modal) return;
+            const form = modal.querySelector('form'); if (form) form.reset();
+            document.getElementById('tutorialDifficulty').value = 'U'; document.getElementById('tutorialThumbnailPreview').style.display = 'none';
+            document.getElementById('videoParentId1').value = parentIds[0] || ''; document.getElementById('videoParentId2').value = parentIds[1] || '';
+            modal.style.display = 'flex'; modal.querySelector('.close-button').onclick = () => closeModal(modal.id);
+            if (!form.dataset.listenerAttached) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const link = document.getElementById('tutorialLink').value; const videoInfo = parseVideoLink(link);
+                    if (!videoInfo) { showModal("Invalid Link", "Use valid YouTube, Vimeo, HTML, or direct video link."); return; }
+                    const newItem = { title: document.getElementById('tutorialTitle').value, name: document.getElementById('tutorialTitle').value, videoType: videoInfo.type, videoId: videoInfo.id, link: link, difficulty: document.getElementById('tutorialDifficulty').value, notes: document.getElementById('tutorialNotes').value || '', materialsLink: document.getElementById('tutorialMaterialsLink').value || '', createdAt: Date.now() };
+                    try { await addDoc(collection(db, getPath(type, parentIds)), newItem); const sortBy = document.getElementById(`sort-teacher-${type}-${parentIds[1]}`)?.value || 'name-asc'; renderContent(type, `container-level3-${type}-${parentIds[1]}`, 3, parentIds, sortBy); closeModal(modal.id); showModal('Success', 'Video added.'); } catch (error) { showModal('Error', error.message); }
+                }); form.dataset.listenerAttached = 'true';
+            }
+        }
+        function parseVideoLink(url) {
+            if (!url) return null;
+            try {
+                if (url.includes('<iframe')) {
+                    let m = url.match(/src="https:\/\/www\.youtube\.com\/embed\/([^"?]+)/); if (m && m[1]) return { type: 'youtube', id: m[1] };
+                    m = url.match(/src="https:\/\/player\.vimeo\.com\/video\/([^"]+)"/); if (m && m[1]) return { type: 'vimeo', id: m[1] };
+                }
+                let m = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); if (m && m[2].length === 11) return { type: 'youtube', id: m[2] };
+                m = url.match(/https:\/\/player\.vimeo\.com\/video\/([^#\&\?\/]+(?:[?][^ ]*)?)/); if (m && m[1]) return { type: 'vimeo', id: m[1].trim() };
+                m = url.match(/^.*(vimeo\.com\/)([^#\&\?\/]+).*/); if (m && m[2]) return { type: 'vimeo', id: m[2] };
+                if (url.startsWith('http') && (url.includes('.m3u8') || url.includes('.mp4') || url.includes('.webm') || url.includes('.ogv'))) return { type: 'direct', id: url };
+                if (url.startsWith('http') && (url.endsWith('.html') || url.endsWith('.htm'))) return { type: 'html', id: url };
+            } catch (e) { return null; } return null;
+        }
+
+        const tutorialLinkInput = document.getElementById('tutorialLink');
+        if (tutorialLinkInput) { tutorialLinkInput.addEventListener('input', () => { const info = parseVideoLink(tutorialLinkInput.value); const img = document.getElementById('tutorialThumbnailPreview'); if (info && info.type === 'youtube') { img.src = `https://img.youtube.com/vi/${info.id}/mqdefault.jpg`; img.style.display = 'block'; } else img.style.display = 'none'; }); }
+
+        function showInputModal(title, label, callback) {
+            const inputId = 'dynamicInput';
+            showModal(title, `<label for="${inputId}" style="display:block; margin-bottom: 8px;">${label}</label><input type="text" id="${inputId}" class="modal-input-style" style="width:100%;">`, 
+            [{ text: 'Cancel', class: 'logout-btn' }, { text: 'Submit', class: 'btn-primary', callback: () => callback(document.getElementById(inputId).value) }]);
+            setTimeout(() => { const i = document.getElementById(inputId); if(i) { i.style.background='transparent'; i.style.border='2px solid var(--border-color)'; i.style.color='var(--text-primary)'; i.style.padding='12px 18px'; i.style.borderRadius='30px'; i.focus(); i.onfocus=()=>i.style.borderColor='var(--accent-primary)'; i.onblur=()=>i.style.borderColor='var(--border-color)'; } }, 50);
+        }
+
+        function showEditFinalItemModal(type, parentIds, id, item) {
+            const modal = document.getElementById('editVideoModal'); if (!modal) return;
+            document.getElementById('editVideoParentId1').value = parentIds[0] || ''; document.getElementById('editVideoParentId2').value = parentIds[1] || ''; document.getElementById('editVideoId').value = id || '';
+            document.getElementById('editTutorialLink').value = item.link || ''; document.getElementById('editTutorialTitle').value = item.title || ''; document.getElementById('editTutorialNotes').value = item.notes || ''; document.getElementById('editTutorialMaterialsLink').value = item.materialsLink || ''; document.getElementById('editTutorialDifficulty').value = item.difficulty || 'U';
+            const vInfo = parseVideoLink(item.link || ''); const img = document.getElementById('editTutorialThumbnailPreview');
+            if (vInfo && vInfo.type === 'youtube') { img.src = `https://img.youtube.com/vi/${vInfo.id}/mqdefault.jpg`; img.style.display = 'block'; } else img.style.display = 'none';
+            modal.style.display = 'flex'; modal.querySelector('.close-button').onclick = () => closeModal(modal.id);
+            const form = modal.querySelector('form');
+            if (!form.dataset.listenerAttached) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const link = document.getElementById('editTutorialLink').value; const vInfo = parseVideoLink(link); if (!vInfo) { showModal("Invalid Link", "Use valid video link."); return; }
+                    const updatedItem = { title: document.getElementById('editTutorialTitle').value, name: document.getElementById('editTutorialTitle').value, videoType: vInfo.type, videoId: vInfo.id, link: link, difficulty: document.getElementById('editTutorialDifficulty').value, notes: document.getElementById('editTutorialNotes').value || '', materialsLink: document.getElementById('editTutorialMaterialsLink').value || '' };
+                    try { await updateDoc(doc(db, getPath(type, parentIds), document.getElementById('editVideoId').value), updatedItem); const sortBy = document.getElementById(`sort-teacher-${type}-${parentIds[1]}`)?.value || 'name-asc'; renderContent(type, `container-level3-${type}-${parentIds[1]}`, 3, parentIds, sortBy); closeModal(modal.id); showModal('Success', 'Video updated.'); } catch (error) { showModal('Error', error.message); }
+                }); form.dataset.listenerAttached = 'true';
+            }
+        }
+        function closeModal(modalId) { const modal = document.getElementById(modalId); if (modal) modal.style.display = 'none'; }
+        document.querySelectorAll('.modal .close-button').forEach(btn => btn.onclick = () => closeModal(btn.closest('.modal').id));
+        async function handleDeleteItem(type, level, id, parentIds = []) {
+            const levelName = materialsConfig[type][`level${level}`];
+            showModal('Confirm Deletion', `Delete this ${levelName.toLowerCase()}? Cannot be undone.`, 
+            [{ text: 'Cancel', class: 'logout-btn' }, { text: 'Delete', class: 'logout-btn', callback: async () => { try { await deleteDoc(doc(db, getPath(type, parentIds), id)); if (level === 1) renderTeacherManagerView(type); else { const sortBy = document.getElementById(`sort-teacher-${type}-${parentIds[parentIds.length-1]}`)?.value || 'name-asc'; renderContent(type, `container-level${level}-${type}-${parentIds[parentIds.length-1]}`, level, parentIds, sortBy); } showModal('Success', 'Deleted.'); } catch (error) { showModal('Error', error.message); } } }]);
+            setTimeout(() => { const btn = document.querySelector('#modalButtons .logout-btn:not(:first-child)'); if(btn) { btn.style.borderColor = 'var(--accent-red)'; btn.style.color = 'var(--accent-red)'; } }, 0);
         }
     </script>
 </body>
-</html>
