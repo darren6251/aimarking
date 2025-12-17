@@ -1,252 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>darStudy - Tutorial Videos</title>
-    <!-- Link to the monochrome CSS -->
-    <link rel="stylesheet" href="css/tutorials.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>function onYouTubeIframeAPIReady(){window.isYouTubeApiReady=true;}</script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://player.vimeo.com/api/player.js"></script>
-    
-    <!-- Modern Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* MODERN MONOCHROME THEME */
+            --bg-primary: #050505;       /* Deepest Black */
+            --bg-secondary: #0f0f0f;     /* Slightly lighter black for panels */
+            --bg-tertiary: #1a1a1a;      /* Hover states */
+            --text-primary: #ffffff;     /* Pure White */
+            --text-secondary: #888888;   /* Cool Grey */
+            --accent-primary: #ffffff;   /* STARK WHITE ACCENT */
+            --accent-hover: #e5e5e5;     /* Slightly dim white */
+            --accent-green: #33ff33;     /* Terminal Green for success */
+            --accent-red: #ff3333;       /* Terminal Red for danger */
+            --border-color: #262626;     /* Subtle borders */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-primary); background-color: var(--bg-primary);
+            overflow-x: hidden; scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 100vh;
+            letter-spacing: -0.02em; /* Modern tight tracking */
+        }
+        
+        /* Typography Updates */
+        h1, h2, h3, h4, .logo-container h1 { font-weight: 700; letter-spacing: -0.04em; }
+        button, input, textarea, select, .playlist-item, .material-card-content h3 { font-family: "Inter", sans-serif; }
+        .difficulty-badge, #accessCodeInput { font-family: "JetBrains Mono", monospace; }
+
+        button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Login Styles */
+        #authWrapper {
+            display: flex; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;
+            opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1001;
+            background: var(--bg-primary);
+        }
+        .login-left-panel, .login-right-panel { width: 50%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .login-left-panel { background: var(--bg-primary); color: var(--text-primary); flex-direction: column; text-align: center; border-right: 1px solid var(--border-color); }
+        .login-left-panel h1 { font-size: 4rem; margin-bottom: 0.5rem; background: linear-gradient(to bottom right, #fff, #666); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .login-left-panel p { font-size: 1.1rem; color: var(--text-secondary); font-weight: 400; }
+        .login-right-panel { background: var(--bg-secondary); flex-direction: column; }
+        
+        #authContainer {
+            width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: stretch;
+            background-color: var(--bg-primary); padding: 3rem; border-radius: 24px; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        #authContainer h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 2rem; text-align: center; }
+        
+        /* Modern Inputs */
+        input[type="text"], input[type="number"], input[type="email"], select, input[type="url"], 
+        textarea, input[type="date"], input[type="datetime-local"] {
+            width: 100%; background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 14px 20px; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem;
+        }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; border-color: var(--accent-primary); background-color: var(--bg-tertiary);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Modern Buttons (Black & White Style) */
+        .btn-primary, .logout-btn {
+            background: transparent; color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 10px 24px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            text-decoration: none; display: inline-block; text-align: center; transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary);
+            transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+        }
+        .logout-btn:hover {
+            border-color: var(--accent-red); color: var(--accent-red); background: rgba(255, 51, 51, 0.1);
+        }
+        .google-btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 1rem; cursor: pointer; background: var(--bg-secondary);
+            color: var(--text-primary); font-size: 1rem; font-weight: 500; margin-bottom: 1rem;
+        }
+        .google-btn:hover { background-color: var(--bg-tertiary); border-color: var(--text-primary); }
+
+        #appSection {
+            display: none; flex-direction: column; height: 100vh;
+            background-color: var(--bg-primary); animation: fadeIn .6s ease-out both;
+        }
+        
+        /* Header Overhaul */
+        header {
+            background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: flex; align-items: center; padding: 16px 32px; height: 70px; border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; position: sticky; top: 0; z-index: 100;
+        }
+        .logo-container h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; }
+        .header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+        .header-actions .tab, .header-actions .dropdown-menu-content a {
+            padding: 8px 16px; color: var(--text-secondary); text-decoration: none; border-radius: 8px;
+            font-weight: 500; font-size: 0.9rem; transition: color 0.2s; background: transparent; border: none; cursor: pointer;
+        }
+        .header-actions .tab:hover, .header-actions .dropdown-menu-content a:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .header-actions .tab.active, .header-actions .dropdown-menu-content a.active { color: var(--bg-primary); background: var(--text-primary); }
+        
+        .user-info { display: flex; align-items: center; gap: 1rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid var(--border-color); }
+        #userDisplayName { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+
+        .dropdown-menu { position: relative; }
+        .dropdown-menu-content {
+            display: none; position: absolute; top: 120%; right: 0; background-color: var(--bg-primary);
+            min-width: 200px; box-shadow: 0px 10px 40px rgba(0,0,0,0.8); z-index: 10;
+            border-radius: 12px; border: 1px solid var(--border-color); padding: 8px;
+        }
+        .dropdown-menu:hover .dropdown-menu-content { display: flex; flex-direction: column; gap: 4px; }
+
+        /* Main Layout */
+        main { flex: 1; display: flex; overflow-y: auto; padding: 40px; gap: 32px; justify-content: center; }
+        #tutorialSection { display: none; width: 100%; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
+        
+        .section-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem; letter-spacing: -0.05em; color: var(--text-primary); }
+        
+        /* Filters & Cards */
+        .viewer-filters-container {
+            display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 1.5rem; 
+            background: var(--bg-secondary); border: 1px solid var(--border-color); 
+            border-radius: 16px; margin-bottom: 2rem;
+        }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+        
+        .material-card { 
+            background: var(--bg-secondary); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; position: relative; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .material-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+            border-color: var(--text-secondary);
+        }
+        .material-card-thumbnail img { width: 100%; aspect-ratio: 16/9; object-fit: cover; filter: grayscale(20%); transition: filter 0.3s; }
+        .material-card:hover .material-card-thumbnail img { filter: grayscale(0%); }
+        .material-card-content { padding: 1.2rem; }
+        .material-card-content h3 { font-size: 1.1rem; font-weight: 600; margin: 0; line-height: 1.4; color: #eee; }
+        .difficulty-badge {
+            position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8);
+            color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; 
+            padding: 4px 8px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(4px);
+        }
+        
+        /* Teacher Manager UI */
+        .content-item { 
+            background: var(--bg-secondary); border: 1px solid var(--border-color); 
+            border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+        }
+        .content-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; cursor: pointer; }
+        .content-header:hover h3 { color: var(--text-primary); }
+        .content-header h3 { color: var(--text-secondary); transition: color 0.2s; font-size: 1.1rem; }
+        .sub-item { 
+            border-left: 2px solid var(--border-color); padding-left: 1rem; margin-left: 0.5rem; 
+            display: flex; justify-content: space-between; align-items: center; padding-top: 0.8rem; padding-bottom: 0.8rem;
+        }
+
+        /* Video Player & Chat Layout */
+        #videoPlayerSection { 
+            display: none; flex-direction: row; height: calc(100vh - 71px); 
+            width: 100vw; margin: -40px; /* Counteract main padding */
+        }
+        .video-main-content { 
+            flex-grow: 1; display: flex; flex-direction: column; background-color: #000; 
+            border-right: 1px solid var(--border-color);
+        }
+        #videoPlayerContainer { flex-grow: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center;}
+        #videoPlayerContainer > iframe, #videoPlayerContainer > video, #videoPlayerContainer > #youtube-player-div {
+            width: 100%; height: 100%; border: none; max-width: none; max-height: none; aspect-ratio: auto; position: static; transform: none;
+        }
+        
+        .video-player-header { padding: 1rem 2rem; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center;}
+
+        /* Sidebar & Chat */
+        .video-sidebar { 
+            width: 400px; flex-shrink: 0; background-color: var(--bg-primary); 
+            display: flex; flex-direction: column; height: 100%;
+        }
+        
+        .sidebar-scroll-area {
+            flex: 1; overflow-y: auto; padding: 2rem;
+            display: flex; flex-direction: column; gap: 2rem;
+        }
+
+        #videoInfoTitle { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.2; }
+        #videoInfoDescription { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+        
+        .topic-playlist { border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+        .topic-playlist h3 { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .playlist-item {
+            display: flex; padding: 12px 16px; border-radius: 8px; color: var(--text-secondary); text-decoration: none;
+            cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; align-items: center; font-size: 0.95rem;
+        }
+        .playlist-item:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .playlist-item.active { background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); font-weight: 600; }
+        
+        /* CHAT BOX STYLES */
+        .chat-container {
+            flex: 1; /* Take remaining height in sidebar if needed, or fixed height */
+            min-height: 400px;
+            border-top: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            background: var(--bg-secondary);
+        }
+        .chat-header {
+            padding: 10px 20px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .chat-indicator { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
+        .chat-frame {
+            flex-grow: 1; border: none; width: 100%; height: 100%; background: #fff; /* Proxy might be white */
+            filter: invert(0.92) hue-rotate(180deg); /* DARK MODE HACK for external iframes */
+        }
+        /* Since we can't control the iframe content's CSS, using filter invert is a common dark mode hack. 
+           If the proxy is already dark, remove the filter. Assuming it's light based on standard web. */
+
+        /* Footer */
+        footer { 
+            text-align: center; padding: 24px; border-top: 1px solid var(--border-color); 
+            color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-primary);
+        }
+        footer a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px dotted var(--text-secondary); }
+        footer a:hover { color: var(--text-primary); border-bottom-style: solid; }
+
+        /* Mobile */
+        @media (max-width: 992px) {
+            #videoPlayerSection { flex-direction: column; height: auto; margin: 0; width: 100%; }
+            .video-sidebar { width: 100%; height: auto; border-left: none; border-top: 1px solid var(--border-color);}
+            .video-main-content { height: 50vh; }
+            main { padding: 16px; }
+            header { padding: 16px; }
+            .viewer-filters-container { flex-direction: column; }
+        }
+        
+        /* Modal Polish */
+        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); box-shadow: 0 40px 80px rgba(0,0,0,0.8); }
+        .close-button:hover { color: var(--accent-red); }
+    </style>
 </head>
 <body>
-<!-- Auth Screen -->
-<div id="authWrapper" style="display:none;">
-    <div class="login-left-panel">
-        <h1>darStudy</h1>
-        <p>Modern Learning Hub</p>
-    </div>
-    <div class="login-right-panel">
-        <div id="authContainer"></div>
-    </div>
-</div>
-
-<!-- Main App -->
-<div id="appSection" style="display:none;">
-    <header>
-        <div class="logo-container"><h1>darStudy</h1></div>
-        <div class="header-actions">
-            <a href="home.html" class="tab">Home</a>
-            <div class="dropdown-menu">
-                <button class="tab active" id="materialsButton">Materials</button>
-                <div class="dropdown-menu-content">
-                    <a href="tutorials.html" class="tab active">Tutorial Videos</a>
-                    <a href="pastpaper.html" class="tab">Past Papers</a>
-                    <a href="exercises.html" class="tab">Exercises for Sale</a>
-                    <a href="lessonhistory.html" class="tab">Lesson History</a>
-                </div>
-            </div>
-            <div class="user-info">
-                <span id="userDisplayName"></span>
-                <button id="switchRoleButton" style="background:none;border:none;color:var(--text-secondary);margin-left:10px;cursor:pointer;font-size:0.8rem">Switch</button>
-                <button id="logoutButton" class="logout-btn">Log Out</button>
-            </div>
+    <!-- Auth Screen -->
+    <div id="authWrapper" style="display: none;">
+        <div class="login-left-panel">
+            <h1>darStudy</h1>
+            <p>Master your subjects.</p>
         </div>
-    </header>
+        <div class="login-right-panel"><div id="authContainer"></div></div>
+    </div>
 
-    <main>
-        <!-- Tutorial List -->
-        <div id="tutorialSection"></div>
+    <!-- Main App -->
+    <div id="appSection" style="display: none;">
+        <header>
+            <div class="logo-container"><h1>darStudy</h1></div>
+            <div class="header-actions">
+                <a href="home.html" class="tab">Home</a>
+                <div class="dropdown-menu">
+                    <button class="tab active" id="materialsButton">Library</button>
+                    <div class="dropdown-menu-content">
+                        <a href="tutorials.html" class="tab active">Tutorial Videos</a>
+                        <a href="pastpaper.html" class="tab">Past Papers</a>
+                        <a href="exercises.html" class="tab">Exercises</a>
+                        <a href="lessonhistory.html" class="tab">History</a>
+                    </div>
+                </div>
+                <div class="user-info">
+                     <span id="userDisplayName"></span>
+                     <button id="switchRoleButton" style="margin-left: 10px;" class="btn-primary">Switch</button>
+                     <button id="logoutButton" class="logout-btn" style="margin-left: 5px;">Log Out</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Gallery View -->
+            <div id="tutorialSection"></div>
+
+            <!-- Player View -->
+            <div id="videoPlayerSection">
+                <div class="video-main-content">
+                    <div class="video-player-header">
+                        <button class="back-button btn-primary" id="backToTutorialsBtn">← Back to Gallery</button>
+                    </div>
+                    <div id="videoPlayerContainer"></div>
+                </div>
+                <div class="video-sidebar">
+                    <div class="sidebar-scroll-area">
+                        <h2 id="videoInfoTitle"></h2>
+                        <p id="videoInfoDescription"></p>
+                        
+                        <div id="materialsLinkContainer" style="display: none;">
+                            <a id="materialsLink" href="#" target="_blank" class="btn-primary" style="width:100%; display:block;">Download Materials</a>
+                        </div>
+                        
+                        <div class="completion-control" style="margin-top: 1rem;">
+                            <button id="completionToggleButton" style="width:100%"></button>
+                        </div>
+                        
+                        <div id="topicPlaylist" class="topic-playlist"></div>
+                    </div>
+                    
+                    <!-- NEW: AI Chat Integration -->
+                    <div class="chat-container">
+                        <div class="chat-header">
+                            <span class="chat-indicator"></span> darStudy AI
+                        </div>
+                        <iframe src="https://gemini-proxy-513372702506.us-central1.run.app/proxy" class="chat-frame" title="AI Assistant"></iframe>
+                    </div>
+                </div>
+            </div>
+        </main>
         
-        <!-- Video Player & Chat -->
-        <div id="videoPlayerSection">
-            <div class="video-main-content">
-                <div class="video-player-header">
-                    <button class="back-button" id="backToTutorialsBtn">← Back</button>
-                </div>
-                <div id="videoPlayerContainer"></div>
-            </div>
-            
-            <div class="video-sidebar">
-                <!-- Top Half: Info & Playlist -->
-                <div class="video-info-scroll">
-                    <h2 id="videoInfoTitle"></h2>
-                    <p id="videoInfoDescription"></p>
-                    
-                    <div id="materialsLinkContainer" style="display:none;margin-bottom:1rem;">
-                        <a id="materialsLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary" style="width:100%">Download Materials</a>
-                    </div>
-                    
-                    <div class="completion-control">
-                        <button id="completionToggleButton" class="logout-btn" style="width:100%">Mark Complete</button>
-                    </div>
-                    
-                    <div id="topicPlaylist" class="topic-playlist"></div>
-                </div>
-                
-                <!-- Bottom Half: Fixed Chat -->
-                <div class="mini-chat-wrapper">
-                    <div class="mini-chat-header">
-                        <span>Class Chat</span>
-                        <span style="color:#00ff00;">● Live</span>
-                    </div>
-                    <!-- The Mini Chat Iframe -->
-                    <iframe src="https://gemini-proxy-513372702506.us-central1.run.app/proxy" class="mini-chat-frame"></iframe>
-                </div>
-            </div>
+        <footer><a href="mailto:darren_0625@mc-zero.com">Support</a> | © 2025 darStudy</footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modalTitle"></h3><div id="modalMessage" style="margin-top:10px; color:var(--text-secondary);"></div><div id="modalButtons"></div>
         </div>
-        
-        <div id="finderMaterialsSection" class="finder-window-wrapper"></div>
-    </main>
+    </div>
     
-    <footer>
-        <a href="mailto:darren_0625@mc-zero.com">Contact Support</a> | Copyright © 2025 darStudy
-    </footer>
-</div>
+    <div id="addVideoModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span><h3>Add Video</h3>
+             <form id="addVideoForm">
+                <input type="hidden" id="videoParentId1"><input type="hidden" id="videoParentId2">
+                 <div style="margin-bottom: 1rem;">
+                     <label for="tutorialLink">Video Link</label><textarea id="tutorialLink" required placeholder="YouTube, Vimeo, or Direct URL"></textarea>
+                     <img id="tutorialThumbnailPreview" style="max-width:200px; display:none; margin-top:10px; border-radius:8px;"/>
+                 </div>
+                 <div style="margin-bottom: 1rem;"><label>Title</label><input type="text" id="tutorialTitle" required></div>
+                 <div style="margin-bottom: 1rem;"><label>Notes</label><textarea id="tutorialNotes"></textarea></div>
+                 <div style="margin-bottom: 1rem;"><label>Materials URL</label><input type="url" id="tutorialMaterialsLink"></div>
+                 <div style="margin-bottom: 1.5rem;">
+                     <label>Difficulty</label>
+                     <select id="tutorialDifficulty">
+                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option>
+                         <option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option>
+                         <option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
+                     </select>
+                 </div>
+                 <div class="modal-form-buttons"><button type="submit" class="btn-primary" style="width:100%">Add to Library</button></div>
+             </form>
+        </div>
+    </div>
+    
+    <div id="editVideoModal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span><h3>Edit Video</h3>
+             <form id="editVideoForm">
+                <input type="hidden" id="editVideoParentId1"><input type="hidden" id="editVideoParentId2"><input type="hidden" id="editVideoId">
+                 <div style="margin-bottom: 1rem;">
+                     <label>Video Link</label><textarea id="editTutorialLink" required></textarea>
+                     <img id="editTutorialThumbnailPreview" style="max-width:200px; display:none; margin-top:10px; border-radius:8px;"/>
+                 </div>
+                 <div style="margin-bottom: 1rem;"><label>Title</label><input type="text" id="editTutorialTitle" required></div>
+                 <div style="margin-bottom: 1rem;"><label>Notes</label><textarea id="editTutorialNotes"></textarea></div>
+                 <div style="margin-bottom: 1rem;"><label>Materials URL</label><input type="url" id="editTutorialMaterialsLink"></div>
+                 <div style="margin-bottom: 1.5rem;">
+                     <label>Difficulty</label>
+                     <select id="editTutorialDifficulty">
+                         <option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option>
+                         <option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option>
+                         <option value="5/5*">5/5*</option><option value="5/5**">5/5**</option>
+                     </select>
+                 </div>
+                 <div class="modal-form-buttons"><button type="submit" class="btn-primary" style="width:100%">Save Changes</button></div>
+             </form>
+        </div>
+    </div>
 
-<!-- Modals -->
-<div id="messageModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3 id="modalTitle"></h3><div id="modalMessage"></div><div id="modalButtons"></div></div></div>
+    <!-- Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, deleteDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-<div id="addVideoModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3>Add New Video</h3><form id="addVideoForm"><input type="hidden" id="videoParentId1"><input type="hidden" id="videoParentId2"><div style="margin-bottom:1rem;"><label for="tutorialLink">Link/Embed</label><input type="text" id="tutorialLink" required placeholder="URL or Embed Code"><img id="tutorialThumbnailPreview" style="max-width:200px;margin-top:10px;border-radius:6px;display:none;"/></div><div style="margin-bottom:1rem;"><label for="tutorialTitle">Title</label><input type="text" id="tutorialTitle" required></div><div style="margin-bottom:1rem;"><label for="tutorialNotes">Notes</label><input type="text" id="tutorialNotes" placeholder="Optional notes"></div><div style="margin-bottom:1rem;"><label for="tutorialMaterialsLink">Materials URL</label><input type="url" id="tutorialMaterialsLink" placeholder="Google Drive, etc."></div><div style="margin-bottom:1.5rem;"><label for="tutorialDifficulty">Difficulty</label><select id="tutorialDifficulty"><option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option><option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option><option value="5/5*">5/5*</option><option value="5/5**">5/5**</option></select></div><div class="modal-form-buttons"><button type="submit" class="btn-primary">Add Video</button></div></form></div></div>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", authDomain: "ai-grading-9bb30.firebaseapp.com",
+          projectId: "ai-grading-9bb30", storageBucket: "ai-grading-9bb30.appspot.com",
+          messagingSenderId: "298162112230", appId: "1:298162112230:web:529d3f95536991be685d27", measurementId: "G-CHKLKSM17S"
+        };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const TEACHER_CODE = "Derren0625"; const STUDENT_CODE = "STUDENT456";
+        let app, db, auth, currentUserId = null, currentUserEmail = null, currentUserRole = null, currentUserName = null;
+        let currentUserProfile = null; let ytPlayer = null, vimeoPlayer = null, directPlayer = null, hls = null; 
+        let currentVideoItem = null; let saveTimeInterval = null, saveTimeTimeout = null; const SAVE_TIME_DEBOUNCE = 5000;
 
-<div id="editVideoModal" class="modal"><div class="modal-content"><span class="close-button">&times;</span><h3>Edit Video</h3><form id="editVideoForm"><input type="hidden" id="editVideoParentId1"><input type="hidden" id="editVideoParentId2"><input type="hidden" id="editVideoId"><div style="margin-bottom:1rem;"><label for="editTutorialLink">Link/Embed</label><input type="text" id="editTutorialLink" required placeholder="URL or Embed Code"><img id="editTutorialThumbnailPreview" style="max-width:200px;margin-top:10px;border-radius:6px;display:none;"/></div><div style="margin-bottom:1rem;"><label for="editTutorialTitle">Title</label><input type="text" id="editTutorialTitle" required></div><div style="margin-bottom:1rem;"><label for="editTutorialNotes">Notes</label><input type="text" id="editTutorialNotes"></div><div style="margin-bottom:1rem;"><label for="editTutorialMaterialsLink">Materials URL</label><input type="url" id="editTutorialMaterialsLink"></div><div style="margin-bottom:1.5rem;"><label for="editTutorialDifficulty">Difficulty</label><select id="editTutorialDifficulty"><option value="U">Unspecified</option><option value="1/5">1/5</option><option value="2/5">2/5</option><option value="3/5">3/5</option><option value="4/5">4/5</option><option value="5/5">5/5</option><option value="5/5*">5/5*</option><option value="5/5**">5/5**</option></select></div><div class="modal-form-buttons"><button type="submit" class="btn-primary">Save Changes</button></div></form></div></div>
+        const authWrapper = document.getElementById('authWrapper'), appSection = document.getElementById('appSection');
+        const authContainer = document.getElementById('authContainer');
 
-<!-- Logic -->
-<script type="module">
-import {initializeApp}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";import {getAuth,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";import {getFirestore,doc,getDoc,addDoc,setDoc,updateDoc,collection,query,orderBy,getDocs,deleteDoc,where,onSnapshot,writeBatch}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";import {getStorage,ref,uploadBytes,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
-const firebaseConfig={apiKey:"AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI",authDomain:"ai-grading-9bb30.firebaseapp.com",projectId:"ai-grading-9bb30",storageBucket:"ai-grading-9bb30.appspot.com",messagingSenderId:"298162112230",appId:"1:298162112230:web:529d3f95536991be685d27",measurementId:"G-CHKLKSM17S"};
-const appId=typeof __app_id!=='undefined'?__app_id:'default-app-id';const TEACHER_CODE="Derren0625";const STUDENT_CODE="STUDENT456";
-let app,db,auth,storage,currentUserId=null,currentUserEmail=null,currentUserRole=null,currentUserName=null,currentUserProfile=null,ytPlayer=null,vimeoPlayer=null,directPlayer=null,hls=null,currentVideoItem=null,saveTimeInterval=null,saveTimeTimeout=null;const SAVE_TIME_DEBOUNCE=5000;
-const materialsConfig={tutorials:{sectionId:'tutorialSection',collectionName:'tutorials',title:'Tutorial Videos',level1:'Subject',level2:'Topic',level3:'Video',modalId:'addVideoModal'}};
-const authWrapper=document.getElementById('authWrapper'),appSection=document.getElementById('appSection'),authContainer=document.getElementById('authContainer');
+        try { app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); } 
+        catch (e) { console.error("Firebase Error:", e); showModal('Error', `Firebase Init Failed: ${e.message}`); }
 
-// Templates
-const googleSignInTemplate=`<h2>Welcome Back</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
-const codeEntryTemplate=`<h2>Access Code</h2><p style="color:var(--text-secondary);text-align:center;margin-bottom:1rem;">Enter your access code.</p><input type="text" id="accessCodeInput" placeholder="Code..."><button id="submitCodeButton" class="btn-primary" style="width:100%">Enter</button><p id="codeError" class="error-message"></p>`;
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid; currentUserEmail = user.email;
+                try {
+                    const profileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`);
+                    const docSnap = await getDoc(profileRef);
+                    if (docSnap.exists() && docSnap.data().role) {
+                        currentUserProfile = docSnap.data(); currentUserRole = currentUserProfile.role;
+                        currentUserName = currentUserProfile.name || user.displayName;
+                        await setDoc(profileRef, { name: currentUserName, email: currentUserEmail, lastLogin: Date.now() }, { merge: true });
+                        showApp();
+                    } else {
+                        currentUserName = user.displayName; currentUserRole = 'unassigned'; currentUserProfile = {}; showCodeEntry();
+                    }
+                } catch (e) { showModal('Error', `Profile Load Failed: ${e.message}`); showLogin(); }
+            } else { currentUserId = null; currentUserRole = null; currentUserProfile = null; showLogin(); }
+        });
 
-try{app=initializeApp(firebaseConfig);db=getFirestore(app);auth=getAuth(app);storage=getStorage(app);}catch(e){console.error(e);showModal('Config Error',e.message);}
+        function showLogin() {
+            appSection.style.display = 'none'; authWrapper.style.display = 'flex'; authWrapper.style.opacity = '1';
+            authContainer.innerHTML = `<h2>Sign In</h2><button id="googleSignInButton" class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"><span>Sign in with Google</span></button><p id="authError" class="error-message"></p>`;
+            document.getElementById('googleSignInButton')?.addEventListener('click', async () => {
+                try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { document.getElementById('authError').textContent = e.message; }
+            });
+        }
 
-async function checkDeepLink(){const p=new URLSearchParams(window.location.search),s=p.get('s'),t=p.get('t'),v=p.get('v');if(s&&t&&v&&currentUserId){try{const d=await getDoc(doc(db,`artifacts/${appId}/public/data/tutorials/${s}/topics/${t}/videos`,v));if(d.exists()){const i=d.data();i.id=d.id;i.level1Id=s;i.level2Id=t;showVideoPlayer(i);return true;}}catch(e){console.error(e);}}return false;}
-onAuthStateChanged(auth,async(u)=>{if(u){currentUserId=u.uid;currentUserEmail=u.email;try{const r=doc(db,`artifacts/${appId}/users/${currentUserId}/profile/data`),d=await getDoc(r);if(d.exists()&&d.data().role){const p=d.data();currentUserProfile=p;currentUserRole=p.role;currentUserName=p.name||u.displayName;await setDoc(r,{name:currentUserName,email:currentUserEmail,lastLogin:Date.now()},{merge:true});showApp();}else{currentUserName=u.displayName;currentUserRole='unassigned';currentUserProfile={};showCodeEntry();}}catch(e){showModal('Error',e.message);showLogin();}}else{currentUserId=null;currentUserRole=null;currentUserName=null;currentUserProfile=null;showLogin();}});
+        function showCodeEntry() {
+            appSection.style.display = 'none'; authWrapper.style.display = 'flex'; authWrapper.style.opacity = '1';
+            authContainer.innerHTML = `<h2>Enter Access Code</h2><input type="text" id="accessCodeInput" placeholder="Enter code"><button id="submitCodeButton" class="btn-primary" style="width:100%">Submit Code</button><p id="codeError" class="error-message"></p>`;
+            document.getElementById('submitCodeButton')?.addEventListener('click', () => handleSubmitCode());
+        }
 
-function showLogin(){appSection.style.display='none';authWrapper.style.display='flex';authWrapper.style.opacity='1';authContainer.innerHTML=googleSignInTemplate;document.getElementById('googleSignInButton')?.addEventListener('click',handleGoogleSignIn);}
-function showCodeEntry(){appSection.style.display='none';authWrapper.style.display='flex';authWrapper.style.opacity='1';authContainer.innerHTML=codeEntryTemplate;document.getElementById('submitCodeButton')?.addEventListener('click',()=>handleSubmitCode());document.getElementById('accessCodeInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleSubmitCode();}});document.getElementById('accessCodeInput')?.focus();}
-async function showApp(){authWrapper.style.display='none';appSection.style.display='flex';document.getElementById('userDisplayName').textContent=`${currentUserName}`;initializeAllMaterialSections();if(!(await checkDeepLink()))showSection('tutorialSection');}
-async function handleGoogleSignIn(){try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){const el=document.getElementById('authError');if(el)el.textContent=e.message;}}
-async function handleSubmitCode(val){const c=(val||document.getElementById('accessCodeInput').value).trim(),err=document.getElementById('codeError');if(err)err.textContent='';let r=null;if(c===TEACHER_CODE)r='teacher';else if(c===STUDENT_CODE)r='student';else{if(err)err.textContent='Invalid code.';return;}try{const p={role:r,name:currentUserName,email:currentUserEmail,lastLogin:Date.now()};if(r==='student')p.unlockedTeachers=[];await setDoc(doc(db,`artifacts/${appId}/users/${currentUserId}/profile/data`),p,{merge:true});currentUserRole=r;currentUserProfile=p;showModal('Success!',`Role set to ${r}.`);showApp();}catch(e){if(err)err.textContent=e.message;}}
+        async function handleSubmitCode() {
+            const code = document.getElementById('accessCodeInput').value.trim();
+            const role = code === TEACHER_CODE ? 'teacher' : code === STUDENT_CODE ? 'student' : null;
+            if (!role) { document.getElementById('codeError').textContent = 'Invalid code.'; return; }
+            try {
+                const data = { role, name: currentUserName, email: currentUserEmail, lastLogin: Date.now() };
+                if (role === 'student') data.unlockedTeachers = [];
+                await setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), data, { merge: true });
+                currentUserRole = role; currentUserProfile = data; showApp();
+            } catch (e) { document.getElementById('codeError').textContent = e.message; }
+        }
 
-// Event Listeners with Null Checks to Prevent Errors
-const logoutBtn = document.getElementById('logoutButton');
-if (logoutBtn) logoutBtn.addEventListener('click', () => signOut(auth));
+        async function showApp() {
+            authWrapper.style.display = 'none'; appSection.style.display = 'flex';
+            document.getElementById('userDisplayName').textContent = `${currentUserName}`;
+            initializeAllMaterialSections();
+            
+            // URL Routing Logic
+            const urlParams = new URLSearchParams(window.location.search);
+            const vid = urlParams.get('v'), sid = urlParams.get('s'), tid = urlParams.get('t');
+            if (vid && sid && tid) {
+                try {
+                    const itemRef = doc(db, `artifacts/${appId}/public/data/tutorials/${sid}/topics/${tid}/videos/${vid}`);
+                    const snap = await getDoc(itemRef);
+                    if (snap.exists()) {
+                        const item = snap.data(); item.id = snap.id; item.level1Id = sid; item.level2Id = tid;
+                        showVideoPlayer(item);
+                    } else { resetUrlState(); showSection('tutorialSection'); }
+                } catch(e) { console.error("Routing error", e); resetUrlState(); showSection('tutorialSection'); }
+            } else { showSection('tutorialSection'); }
+        }
 
-const switchRoleBtn = document.getElementById('switchRoleButton');
-if (switchRoleBtn) switchRoleBtn.addEventListener('click', () => showInputModal('Switch Role', 'Enter new code:', c => handleSubmitCode(c)));
+        function updateUrlState(item) {
+            const url = new URL(window.location);
+            url.searchParams.set('v', item.id); url.searchParams.set('s', item.level1Id); url.searchParams.set('t', item.level2Id);
+            window.history.pushState({id: item.id}, '', url);
+        }
+        function resetUrlState() {
+            const url = new URL(window.location);
+            url.searchParams.delete('v'); url.searchParams.delete('s'); url.searchParams.delete('t');
+            window.history.pushState({}, '', url);
+        }
 
-const backToTutBtn = document.getElementById('backToTutorialsBtn');
-if (backToTutBtn) backToTutBtn.addEventListener('click', () => {
-    history.pushState({}, '', window.location.pathname);
-    showSection('tutorialSection');
-    cleanupPlayers();
-    currentVideoItem = null;
-    renderViewerItems('tutorials');
-});
+        document.getElementById('logoutButton').addEventListener('click', () => signOut(auth));
+        document.getElementById('switchRoleButton').addEventListener('click', () => showInputModal('Switch Role', 'Enter code:', handleSubmitCode));
 
-const compToggleBtn = document.getElementById('completionToggleButton');
-if (compToggleBtn) compToggleBtn.addEventListener('click', async () => {
-    if (!currentVideoItem || !currentUserId) return;
-    const vid = currentVideoItem.id, r = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, vid);
-    try {
-        const d = await getDoc(r), c = d.exists() && d.data().completed;
-        if (c) await setDoc(r, { completed: false }, { merge: true });
-        else await setDoc(r, { completed: true, timestamp: Date.now(), videoTitle: currentVideoItem.title, videoId: currentVideoItem.id }, { merge: true });
-        await updateCompletionButtonUI(vid);
-    } catch (e) { showModal("Error", "Update failed."); }
-});
+        const materialsConfig = { tutorials: { sectionId: 'tutorialSection', collectionName: 'tutorials', title: 'Library', level1: 'Subject', level2: 'Topic', level3: 'Video', modalId: 'addVideoModal' } };
+        function getPath(type, ids = []) {
+            let parts = [`artifacts/${appId}/public/data/${materialsConfig[type].collectionName}`];
+            if (ids[0]) parts.push(ids[0], materialsConfig[type].level2.toLowerCase() + 's');
+            if (ids[1]) parts.push(ids[1], materialsConfig[type].level3.toLowerCase() + 's');
+            return parts.join('/');
+        }
+        
+        function initializeAllMaterialSections() { setupMaterialSection('tutorials'); }
+        function showSection(id) { 
+            document.querySelectorAll('main > div').forEach(d => d.style.display = 'none'); 
+            const t = document.getElementById(id); if(t) { t.style.display = id === 'videoPlayerSection' ? 'flex' : 'block'; setTimeout(()=>t.style.opacity=1,50); }
+        }
 
-const themeToggleBtn = document.getElementById('themeToggleButton');
-if (themeToggleBtn) themeToggleBtn.addEventListener('click', () => showModal("Theme", "Dark theme only."));
+        function setupMaterialSection(type) {
+            const config = materialsConfig[type], section = document.getElementById(config.sectionId);
+            section.innerHTML = `
+                <h2 class="section-title">${config.title}</h2>
+                <div id="teacher-tabs-${type}" class="tab-btn-container" style="display:none; gap:1rem; margin-bottom:2rem;">
+                    <button class="btn-primary" data-tab="viewer">Gallery View</button>
+                    <button class="btn-primary" data-tab="manager">Manage Content</button>
+                </div>
+                <div id="viewer-${type}-view" style="display:none;">
+                    <div class="viewer-filters-container">
+                        <div class="filter-step" style="flex-direction:row;align-items:center;gap:1rem;"><div style="flex-grow:1;"><label>Teacher</label><select id="teacher-${type}-filter"><option value="">-- Unlock --</option></select></div><button id="unlock-teacher-btn-${type}" class="btn-primary" style="padding:12px;margin-top:1.5rem;">Unlock</button></div>
+                        <div class="filter-step" id="step1-${type}" style="opacity:0.5;pointer-events:none;"><label>${config.level1}</label><select id="l1-${type}" disabled></select></div>
+                        <div class="filter-step" id="step2-${type}" style="opacity:0.5;pointer-events:none;"><label>${config.level2}</label><select id="l2-${type}" disabled></select></div>
+                        <div class="filter-step" id="step3-${type}" style="opacity:0.5;pointer-events:none;"><label>Sort</label><select id="sort-${type}" disabled><option value="name-asc">A-Z</option><option value="name-desc">Z-A</option><option value="diff-asc">Easy-Hard</option><option value="diff-desc">Hard-Easy</option></select></div>
+                    </div>
+                    <div id="l3-${type}-grid" class="grid-container" style="display:none;opacity:0;"></div>
+                </div>
+                <div id="manager-${type}-view" style="display:none;">
+                     <div class="form-container" id="code-manager"><h3 class="teacher-group-heading">Teacher Code</h3><div style="display:flex;gap:1rem;"><input id="teacherAccessCode" placeholder="Code"><button id="saveCodeBtn" class="btn-primary">Save</button></div><p id="codeStatus"></p></div>
+                     <div class="form-container" style="max-width:initial;"><h3 id="my-subjects-${type}" class="teacher-group-heading">My Subjects</h3><div id="l1-${type}-mine"></div><button id="add-l1-${type}" class="btn-primary" style="margin-top:1rem;">Add Subject</button><button id="migrate-btn" class="btn-primary" style="margin-left:1rem;background:var(--accent-red);border-color:var(--accent-red);display:none;">Fix Old Subjects</button></div>
+                </div>`;
 
-function getPath(t,i=[]){const c=materialsConfig[t],p=[`artifacts/${appId}/public/data/${c.collectionName}`];if(i[0])p.push(i[0],c.level2.toLowerCase()+'s');if(i[1])p.push(i[1],c.level3.toLowerCase()+'s');return p.join('/');}
-function initializeAllMaterialSections(){setupMaterialSection('tutorials');}
-function showSection(id){document.querySelectorAll('main > div').forEach(d=>{if(d.id!=='finderMaterialsSection')d.style.display='none';});const t=document.getElementById(id);if(t){t.style.display=(id==='videoPlayerSection')?'flex':'block';setTimeout(()=>t.style.opacity=1,50);}}
+            const viewer = document.getElementById(`viewer-${type}-view`), manager = document.getElementById(`manager-${type}-view`);
+            const tabs = document.getElementById(`teacher-tabs-${type}`);
 
-function setupMaterialSection(type){
-    const c=materialsConfig[type],s=document.getElementById(c.sectionId);if(!s)return;
-    // Updated HTML with Monochrome Styling Classes
-    s.innerHTML=`<h2 class="section-title">${c.title}</h2><div id="teacher-tabs-${type}" class="viewer-filters-container" style="display:none;margin-bottom:20px;border:none;padding:0;background:transparent;"><button class="btn-primary tab-btn active" data-tab="viewer" style="margin-right:10px;">Browse</button><button class="btn-primary tab-btn" data-tab="manager" style="background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);">Manage</button></div><div id="viewer-${type}-view" style="display:none;"><div class="viewer-filters-container"><div class="filter-step" style="flex-direction:row;align-items:center;gap:1rem;"><div style="flex-grow:1;"><label for="teacher-${type}-filter">1. Select Teacher</label><select id="teacher-${type}-filter"><option value="">-- Unlock a Teacher --</option></select></div><button id="unlock-teacher-btn-${type}" class="btn-primary" style="padding:12px 18px;margin-top:1.5rem;">Unlock</button></div><div class="filter-step" id="filter-step-1-${type}" style="opacity:0.5;pointer-events:none;"><label for="level1-${type}-filter">2. Select ${c.level1}</label><select id="level1-${type}-filter" disabled><option value="">-- Select ${c.level1} --</option></select></div><div class="filter-step" id="filter-step-2-${type}" style="opacity:0.5;pointer-events:none;"><label for="level2-${type}-filter">3. Select ${c.level2}</label><select id="level2-${type}-filter" disabled><option value="">-- Select ${c.level2} --</option></select></div><div class="filter-step" id="filter-step-3-${type}" style="opacity:0.5;pointer-events:none;"><label for="sort-${type}-filter">4. Sort By</label><select id="sort-${type}-filter" disabled><option value="name-asc">Sort by Name (A-Z)</option><option value="name-desc">Sort by Name (Z-A)</option><option value="diff-asc">Difficulty (Low to High)</option><option value="diff-desc">Difficulty (High to Low)</option></select></div></div><div id="level3-${type}-grid" class="grid-container" style="display:none;opacity:0;"></div></div><div id="manager-${type}-view" style="display:none;"><div class="viewer-filters-container" id="teacher-code-manager"><h3 style="width:100%;margin-bottom:10px;font-size:1rem;">My Access Code</h3><div style="display:flex;gap:1rem;align-items:center;width:100%;"><input type="text" id="teacherAccessCodeInput" placeholder="Enter code..." style="margin-bottom:0;flex:1;"><button id="saveTeacherAccessCodeBtn" class="btn-primary">Save</button></div><p id="teacherAccessCodeStatus" style="margin-top:1rem;width:100%;font-size:0.8rem;color:var(--text-secondary)"></p></div><div class="form-container" style="max-width:initial;border:none;padding:0;background:transparent;"><h3 id="my-subjects-heading-${type}" class="section-title" style="font-size:1.5rem;">My Subjects</h3><div id="level1-${type}-container-mine"></div><button id="add-level1-${type}-btn" class="btn-primary" style="margin-top:1rem;">Add New ${c.level1}</button><button id="migrate-data-btn" class="logout-btn" style="margin-top:1rem;margin-left:1rem;border-color:var(--accent-danger);color:var(--accent-danger);display:none;">Fix Legacy Data</button></div></div>`;
-    const isT=currentUserRole==='teacher',vS=document.getElementById(`viewer-${type}-view`),mS=document.getElementById(`manager-${type}-view`),tabs=document.getElementById(`teacher-tabs-${type}`),cm=document.getElementById(`teacher-code-manager`);
-    if(isT){tabs.style.display='flex';vS.style.display='block';mS.style.display='none';cm.style.display='flex';
-        tabs.addEventListener('click',e=>{if(e.target.matches('.tab-btn')){tabs.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.style.background='transparent';b.style.color='var(--text-secondary)';b.style.border='1px solid var(--border-color)';});e.target.classList.add('active');e.target.style.background='var(--text-primary)';e.target.style.color='black';e.target.style.border='none';if(e.target.dataset.tab==='viewer'){vS.style.display='block';mS.style.display='none';}else{vS.style.display='none';mS.style.display='block';}}});
-        renderTeacherManagerView(type);document.getElementById(`add-level1-${type}-btn`).onclick=()=>showAddItemModal(type,1);mS.addEventListener('click',e=>handleTeacherClick(e,type));mS.addEventListener('change',e=>handleTeacherSort(e,type));
-        document.getElementById(`migrate-data-btn`).onclick=()=>runMigration(type);document.getElementById('saveTeacherAccessCodeBtn').onclick=()=>saveTeacherAccessCode();if(currentUserProfile?.contentAccessCode)document.getElementById('teacherAccessCodeInput').value=currentUserProfile.contentAccessCode;
-    }else{tabs.style.display='none';vS.style.display='block';mS.style.display='none';cm.style.display='none';}
-    vS.addEventListener('click',e=>{if(e.target.id===`unlock-teacher-btn-${type}`){showInputModal('Unlock Teacher','Enter code:',async(c)=>{if(!c)return;try{const q=query(collection(db,`artifacts/${appId}/public/data/teacherAccessCodes`),where("code","==",c.trim())),s=await getDocs(q);if(s.empty){showModal('Invalid','Code not found.');return;}const t=s.docs[0],tid=t.id,tn=t.data().teacherName,ref=doc(db,`artifacts/${appId}/users/${currentUserId}/profile/data`);let u=(currentUserProfile?.unlockedTeachers)?[...currentUserProfile.unlockedTeachers]:[];if(u.includes(tid)){showModal('Unlocked',`Already unlocked ${tn}.`);return;}u.push(tid);await updateDoc(ref,{unlockedTeachers:u});currentUserProfile.unlockedTeachers=u;showModal('Success!',`Unlocked ${tn}.`);setupViewerFilters(type);}catch(err){showModal('Error',err.message);}});}});
-    const ub=document.getElementById(`unlock-teacher-btn-${type}`);if(ub)ub.style.display='inline-block';setupViewerFilters(type);
-}
+            if (currentUserRole === 'teacher') {
+                tabs.style.display = 'flex'; viewer.style.display = 'block'; document.getElementById('code-manager').style.display = 'block';
+                tabs.addEventListener('click', e => { if(e.target.dataset.tab) { if(e.target.dataset.tab==='viewer'){viewer.style.display='block';manager.style.display='none';}else{viewer.style.display='none';manager.style.display='block';} }});
+                renderTeacherManagerView(type);
+                document.getElementById(`add-l1-${type}`).onclick = () => showAddItemModal(type, 1);
+                manager.addEventListener('click', e => handleTeacherClick(e, type));
+                manager.addEventListener('change', e => handleTeacherSort(e, type));
+                document.getElementById('migrate-btn').onclick = () => runMigration(type);
+                document.getElementById('saveCodeBtn').onclick = () => saveTeacherAccessCode();
+                if (currentUserProfile?.contentAccessCode) document.getElementById('teacherAccessCode').value = currentUserProfile.contentAccessCode;
+            } else { viewer.style.display = 'block'; }
 
-async function renderTeacherManagerView(type){
-    const c=materialsConfig[type],mc=document.getElementById(`level1-${type}-container-mine`);if(!mc)return;
-    mc.innerHTML=`<p class="loading-indicator">Loading...</p>`;document.getElementById(`my-subjects-heading-${type}`).textContent=`My Subjects`;
-    try{const r=collection(db,getPath(type)),mq=query(r,where('teacherId','==',currentUserId),orderBy('name','asc')),oq=query(r,where('teacherId','==',null));const [ms,os]=await Promise.all([getDocs(mq),getDocs(oq)]);
-        if(ms.empty)mc.innerHTML=`<p style="color:var(--text-secondary)">No subjects yet.</p>`;else{let h='';ms.forEach(d=>{const i=d.data();i.id=d.id;const p=[i.id],n=2,sh=`<div class="teacher-sort-container" style="margin:10px 0;"><select id="sort-teacher-${type}-${i.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(p)}'><option value="name-asc">A-Z</option><option value="name-desc">Z-A</option><option value="diff-asc">Easy First</option><option value="diff-desc">Hard First</option></select></div>`;h+=`<div class="content-item" style="padding:15px;margin-bottom:15px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-panel);"><div class="content-header" data-level="1" data-id="${i.id}" data-parent-ids='[]' aria-expanded="false" style="display:flex;justify-content:space-between;cursor:pointer;"><h3 style="font-size:1.1rem;font-weight:600">${i.name} <span class="collapse-arrow" style="font-size:0.8rem;color:var(--text-secondary)">▼</span></h3><div class="item-actions"><button class="add-item-btn btn-primary" style="padding:4px 12px;font-size:0.8rem" data-level="${n}" data-parent-ids='${JSON.stringify(p)}'>+ Topic</button><button class="delete-item-btn logout-btn" style="padding:4px 12px;font-size:0.8rem" data-level="1" data-id="${i.id}" data-parent-ids='[]'>Del</button></div></div>${sh}<div class="nested-container" id="container-level${n}-${type}-${d.id}" style="margin-top:10px;padding-left:15px;border-left:2px solid var(--border-color);display:none;"></div></div>`;});mc.innerHTML=h;}
-        const mb=document.getElementById('migrate-data-btn');if(!os.empty){mb.style.display='inline-block';showModal('Action Required','Found old subjects. Click "Fix My Old Subjects".');}else mb.style.display='none';
-    }catch(e){console.error(e);mc.innerHTML=`<p class="error-message">Error loading.</p>`;}
-}
+            viewer.addEventListener('click', e => {
+                if (e.target.id === `unlock-teacher-btn-${type}`) {
+                    showInputModal('Unlock', 'Enter teacher code:', async (code) => {
+                        const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code", "==", code.trim()));
+                        const snap = await getDocs(q);
+                        if (snap.empty) { showModal('Error', 'Invalid code.'); return; }
+                        const tId = snap.docs[0].id; const tName = snap.docs[0].data().teacherName;
+                        let unlocked = (currentUserProfile.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+                        if (!unlocked.includes(tId)) {
+                            unlocked.push(tId); await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), { unlockedTeachers: unlocked });
+                            currentUserProfile.unlockedTeachers = unlocked; setupViewerFilters(type);
+                            showModal('Success', `Unlocked ${tName}.`);
+                        } else showModal('Info', 'Already unlocked.');
+                    });
+                }
+            });
+            setupViewerFilters(type);
+        }
 
-async function renderContent(type,cid,lvl,pids=[],sby='name-asc'){
-    const cnt=document.getElementById(cid);if(!cnt)return;const c=materialsConfig[type],ln=c[`level${lvl}`];
-    if(cnt.innerHTML.includes('loading')||cnt.innerHTML==='')cnt.innerHTML=`<p style="font-size:0.8rem;color:var(--text-tertiary)">Loading...</p>`;else if(lvl===3)cnt.innerHTML=`<p style="font-size:0.8rem;color:var(--text-tertiary)">Sorting...</p>`;
-    const ref=collection(db,getPath(type,pids));
-    if(lvl===3){try{const q=query(ref),s=await getDocs(q);if(s.empty){cnt.innerHTML=`<p style="font-size:0.8rem;color:var(--text-tertiary)">No videos.</p>`;return;}let items=[];s.forEach(d=>{const i=d.data();i.id=d.id;i.level1Id=pids[0];i.level2Id=pids[1];items.push(i);});const dO={'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7};items.sort((a,b)=>{const dA=dO[a.difficulty]??0,dB=dO[b.difficulty]??0,tA=a.title||a.name||'',tB=b.title||b.name||'';return sby==='name-desc'?tB.localeCompare(tA):sby==='diff-asc'?dA-dB:sby==='diff-desc'?dB-dA:tA.localeCompare(tB);});cnt.innerHTML='';items.forEach(i=>{const el=document.createElement('div');el.className='sub-item';el.style.cssText="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);";el.innerHTML=`<span style="font-size:0.9rem">${i.name||i.title} <span class="difficulty-badge" style="margin-left:5px;font-size:0.7rem;padding:2px 5px;border:1px solid var(--border-color);border-radius:4px;">${i.difficulty||'U'}</span></span><div class="item-actions"><button class="edit-item-btn btn-primary" style="padding:2px 8px;font-size:0.7rem;" data-id="${i.id}" data-parent-ids='${JSON.stringify(pids)}' data-item='${JSON.stringify(i)}'>Edit</button><button class="preview-item-btn btn-primary" style="padding:2px 8px;font-size:0.7rem;" data-item='${JSON.stringify(i)}'>View</button><button class="delete-item-btn logout-btn" style="padding:2px 8px;font-size:0.7rem;" data-level="${lvl}" data-id="${i.id}" data-parent-ids='${JSON.stringify(pids)}'>Del</button></div>`;cnt.appendChild(el);});}catch(e){cnt.innerHTML=`<p class="error-message">Error.</p>`;}}
-    else{const q=query(ref,orderBy('name','asc'));try{const s=await getDocs(q);if(s.empty){cnt.innerHTML=`<p style="font-size:0.8rem;color:var(--text-tertiary)">No topics.</p>`;return;}cnt.innerHTML='';s.forEach(d=>{const i=d.data();i.id=d.id;const el=document.createElement('div');el.style.marginBottom='10px';const n=lvl+1,np=[...pids,d.id];let sh='';if(n===3)sh=`<div class="teacher-sort-container" style="margin:5px 0;"><select id="sort-teacher-${type}-${d.id}" class="teacher-sort-filter" data-type="${type}" data-level="3" data-parent-ids='${JSON.stringify(np)}' style="padding:5px;"><option value="name-asc">A-Z</option><option value="name-desc">Z-A</option><option value="diff-asc">Easy First</option><option value="diff-desc">Hard First</option></select></div>`;el.innerHTML=`<div class="content-header" data-level="${lvl}" data-id="${d.id}" data-parent-ids='${JSON.stringify(pids)}' aria-expanded="false" style="cursor:pointer;display:flex;justify-content:space-between;background:var(--bg-hover);padding:8px;border-radius:6px;"><h4 style="margin:0;font-size:0.95rem;">${i.name} <span class="collapse-arrow" style="font-size:0.7rem">▼</span></h4><div class="item-actions"><button class="add-item-btn btn-primary" style="padding:2px 8px;font-size:0.7rem" data-level="${n}" data-parent-ids='${JSON.stringify(np)}'>+</button><button class="delete-item-btn logout-btn" style="padding:2px 8px;font-size:0.7rem" data-level="${lvl}" data-id="${d.id}" data-parent-ids='${JSON.stringify(pids)}'>Del</button></div></div>${sh}<div class="nested-container" id="container-level${n}-${type}-${d.id}" style="padding-left:10px;display:none;margin-top:5px;"></div>`;cnt.appendChild(el);});}catch(e){cnt.innerHTML=`<p class="error-message">Error.</p>`;}}
-}
-function handleTeacherClick(e,type){const h=e.target.closest('.content-header'),b=e.target.closest('button');if(b){e.stopPropagation();const {level,parentIds}=b.dataset,p=JSON.parse(parentIds||'[]');if(b.matches('.add-item-btn')){const n=parseInt(level);if(n<3)showAddItemModal(type,n,p);else showAddFinalItemModal(type,p);}else if(b.matches('.edit-item-btn')){const {id,parentIds,item}=b.dataset;showEditFinalItemModal(type,JSON.parse(parentIds),id,JSON.parse(item));}else if(b.matches('.delete-item-btn'))handleDeleteItem(type,parseInt(level),b.dataset.id,p);else if(b.matches('.preview-item-btn'))handlePreview(type,JSON.parse(b.dataset.item));}else if(h){const {level,id,parentIds}=h.dataset,c=document.getElementById(`container-level${parseInt(level)+1}-${type}-${id}`);if(!c)return;const sc=h.parentElement.querySelector('.teacher-sort-container'),exp=h.getAttribute('aria-expanded')==='true';h.setAttribute('aria-expanded',!exp);c.style.display=!exp?'block':'none';if(sc)sc.style.display=!exp?'block':'none';if(!exp&&!c.dataset.loaded){const sb=sc?sc.querySelector('select').value:'name-asc';renderContent(type,c.id,parseInt(level)+1,[...JSON.parse(parentIds),id],sb);c.dataset.loaded='true';}}}
-async function runMigration(type){if(!currentUserId||!currentUserName)return;showModal('Migrating...','Wait...');try{const r=collection(db,getPath(type)),s=await getDocs(query(r)),b=writeBatch(db);let c=0;if(s.empty){showModal('Complete','None found.');return;}s.forEach(d=>{const i=d.data();if(!i.teacherId||!i.teacherName){b.update(d.ref,{teacherId:currentUserId,teacherName:currentUserName});c++;}});if(c>0){await b.commit();showModal('Success!',`Updated ${c}.`);}else showModal('All Set!','No migration needed.');renderTeacherManagerView(type);setupViewerFilters(type);}catch(e){showModal('Error',e.message);}}
-function handleTeacherSort(e,type){const s=e.target.closest('select.teacher-sort-filter');if(s){e.stopPropagation();const {level,parentIds}=s.dataset,p=JSON.parse(parentIds||'[]');renderContent(type,`container-level${level}-${type}-${p[p.length-1]}`,parseInt(level),p,s.value);}}
-function handlePreview(type,item){if(type==='tutorials')showVideoPlayer(item);}
-async function setupViewerFilters(type){
-    const c=materialsConfig[type],tf=document.getElementById(`teacher-${type}-filter`),lf1=document.getElementById(`level1-${type}-filter`),lf2=document.getElementById(`level2-${type}-filter`),sf=document.getElementById(`sort-${type}-filter`),gr=document.getElementById(`level3-${type}-grid`);
-    const s1=document.getElementById(`filter-step-1-${type}`),s2=document.getElementById(`filter-step-2-${type}`),s3=document.getElementById(`filter-step-3-${type}`);
-    let ut=(currentUserProfile?.unlockedTeachers)?[...currentUserProfile.unlockedTeachers]:[];if(currentUserRole==='teacher'&&!ut.includes(currentUserId))ut.push(currentUserId);
-    let as=[],tm=new Map();tf.innerHTML=`<option value="">-- Loading... --</option>`;
-    try{const s=await getDocs(query(collection(db,getPath(type)),orderBy('name','asc')));s.forEach(d=>{const i=d.data();i.id=d.id;as.push(i);if(i.teacherId&&i.teacherName)tm.set(i.teacherId,i.teacherName);});}catch(e){console.error(e);tf.innerHTML=`<option value="">-- Error --</option>`;return;}
-    tf.innerHTML=`<option value="">-- Select a Teacher --</option>`;if(ut.length===0)tf.innerHTML+=currentUserRole==='teacher'?`<option value="" disabled>-- No subjects --</option>`:`<option value="" disabled>-- Unlock a teacher --</option>`;else{[...new Set(ut.map(id=>tm.get(id)).filter(n=>n))].sort().forEach(n=>tf.add(new Option(n,n)));}
-    tf.onchange=async()=>{const t=tf.value;lf1.innerHTML=`<option value="">-- Select ${c.level1} --</option>`;lf1.disabled=true;lf2.innerHTML=`<option value="">-- Select ${c.level2} --</option>`;lf2.disabled=true;sf.disabled=true;gr.style.display='none';gr.style.opacity=0;s1.style.opacity='0.5';s1.style.pointerEvents='none';s2.style.opacity='0.5';s2.style.pointerEvents='none';s3.style.opacity='0.5';s3.style.pointerEvents='none';if(t){lf1.innerHTML=`<option value="">-- Select a ${c.level1} --</option>`;const f=as.filter(s=>s.teacherName===t);if(f.length===0)lf1.innerHTML+=`<option value="" disabled>-- None --</option>`;else f.forEach(s=>lf1.add(new Option(s.name,s.id)));lf1.disabled=false;s1.style.opacity='1';s1.style.pointerEvents='auto';}};
-    lf1.onchange=()=>{const v=lf1.value;lf2.innerHTML=`<option value="">-- Select ${c.level2} --</option>`;lf2.disabled=true;sf.disabled=true;gr.style.display='none';gr.style.opacity=0;s2.style.opacity='0.5';s2.style.pointerEvents='none';s3.style.opacity='0.5';s3.style.pointerEvents='none';if(v){populateFilter(lf2,collection(db,getPath(type,[v])),c.level2);lf2.disabled=false;s2.style.opacity='1';s2.style.pointerEvents='auto';}};
-    lf2.onchange=()=>{if(lf2.value){sf.disabled=false;s3.style.opacity='1';s3.style.pointerEvents='auto';renderViewerItems(type);}else{sf.disabled=true;s3.style.opacity='0.5';s3.style.pointerEvents='none';gr.style.display='none';gr.style.opacity=0;}};sf.onchange=()=>renderViewerItems(type);
-}
-async function renderViewerItems(type){
-    const c=materialsConfig[type],g=document.getElementById(`level3-${type}-grid`),l1=document.getElementById(`level1-${type}-filter`).value,l2=document.getElementById(`level2-${type}-filter`).value,sv=document.getElementById(`sort-${type}-filter`).value;
-    g.innerHTML=`<p class="loading-indicator">Loading...</p>`;g.style.display='grid';g.style.opacity=1;if(!l1||!l2){g.style.display='none';return;}
-    const ref=collection(db,getPath(type,[l1,l2])),q=query(ref);let vs={};if(type==='tutorials'&&currentUserId){const snap=await getDocs(collection(db,`artifacts/${appId}/users/${currentUserId}/videoStatus`));snap.forEach(d=>vs[d.id]=d.data().completed);}
-    try{const s=await getDocs(q);if(s.empty){g.innerHTML=`<p>No ${c.level3.toLowerCase()}s found.</p>`;return;}let items=[];s.forEach(d=>{const i=d.data();i.id=d.id;i.level1Id=l1;i.level2Id=l2;items.push(i);});const dO={'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7};items.sort((a,b)=>{const dA=dO[a.difficulty]??0,dB=dO[b.difficulty]??0,tA=a.title||a.name||'',tB=b.title||b.name||'';return sv==='name-desc'?tB.localeCompare(tA):sv==='diff-asc'?dA-dB:sv==='diff-desc'?dB-dA:tA.localeCompare(tB);});g.innerHTML='';items.forEach(i=>{const card=document.createElement('div');card.className='material-card';card.style.animation='slideInUp 0.5s ease-out both';card.addEventListener('click',()=>showVideoPlayer(i));const done=vs[i.id],vid=i.videoId||i.youtubeId;let t;if(i.videoType==='vimeo')t=`https://placehold.co/480x360/0a0a0a/888888?text=Vimeo+Video`;else if(i.videoType==='direct')t=`https://placehold.co/480x360/0a0a0a/888888?text=Direct+Video`;else if(i.videoType==='html')t=`https://placehold.co/480x360/0a0a0a/888888?text=HTML+Content`;else t=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;card.innerHTML=`<div class="material-card-thumbnail" data-video-id="${vid}"><img src="${t}" alt="${i.title}" onerror="this.onerror=null; this.src='https://placehold.co/480x360/30363d/c9d1d9?text=No%20Thumbnail';">${done?'<div class="completion-status">✓</div>':''}</div><div class="material-card-content"><h3>${i.title||'Untitled'}</h3><span class="difficulty-badge">${i.difficulty||'U'}</span></div>`;g.appendChild(card);});}catch(e){g.innerHTML="<p class='error-message'>Error loading.</p>"}
-}
-async function populateFilter(sel,qRef,ln){sel.innerHTML=`<option value="">-- Loading... --</option>`;try{const q=(qRef.type==='collection')?query(qRef,orderBy('name','asc')):qRef,s=await getDocs(q);sel.innerHTML=`<option value="">-- Select ${ln} --</option>`;if(s.empty){sel.innerHTML+=`<option value="" disabled>-- No ${ln}s --</option>`;return;}s.forEach(d=>sel.add(new Option(d.data().name,d.id)));}catch(e){console.error(e);sel.innerHTML=`<option value="">-- Error --</option>`;}}
-function savePlaybackTime(vid,ct){if(!currentUserId||!vid||ct<1)return;if(saveTimeTimeout)clearTimeout(saveTimeTimeout);saveTimeTimeout=setTimeout(async()=>{try{await setDoc(doc(db,`artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`,vid),{lastPlayedTime:ct,timestamp:Date.now()},{merge:true});}catch(e){console.error(e);}saveTimeTimeout=null;},SAVE_TIME_DEBOUNCE);}
-async function getPlaybackTime(vid){if(!currentUserId||!vid)return Promise.resolve(0);try{const d=await getDoc(doc(db,`artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`,vid));return(d.exists()&&d.data().lastPlayedTime)?d.data().lastPlayedTime:0;}catch(e){return 0;}}
-window.onYouTubeIframeAPIReady=function(){window.isYouTubeApiReady=true;};
-function cleanupPlayers(){if(ytPlayer){ytPlayer.destroy();ytPlayer=null;}if(vimeoPlayer){vimeoPlayer.destroy().catch(e=>console.warn(e));vimeoPlayer=null;}if(directPlayer){if(hls){hls.destroy();hls=null;}directPlayer.pause();directPlayer.src='';directPlayer=null;}if(saveTimeInterval){clearInterval(saveTimeInterval);saveTimeInterval=null;}if(saveTimeTimeout){clearTimeout(saveTimeTimeout);saveTimeTimeout=null;}document.getElementById('videoPlayerContainer').innerHTML='';}
-async function showVideoPlayer(item){
-    currentVideoItem=item;showSection('videoPlayerSection');
-    if(item.level1Id&&item.level2Id&&item.id){const u=`${window.location.pathname}?s=${item.level1Id}&t=${item.level2Id}&v=${item.id}`;if(window.location.search!==`?s=${item.level1Id}&t=${item.level2Id}&v=${item.id}`)history.pushState({path:u},'',u);}
-    document.getElementById('videoInfoTitle').textContent=item.title;document.getElementById('videoInfoDescription').textContent=item.notes||'No notes.';const mc=document.getElementById('materialsLinkContainer');if(item.materialsLink){document.getElementById('materialsLink').href=item.materialsLink;mc.style.display='block';}else mc.style.display='none';
-    const pc=document.getElementById('videoPlayerContainer');cleanupPlayers();const st=await getPlaybackTime(item.id),vid=item.videoId||item.youtubeId;
-    if(item.videoType==='vimeo'){pc.innerHTML=`<iframe src="https://player.vimeo.com/video/${vid}${vid.includes('?')?'&':'?'}muted=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;vimeoPlayer=new Vimeo.Player(pc.querySelector('iframe'));vimeoPlayer.on('ready',()=>{if(st>0.5)vimeoPlayer.setCurrentTime(st).catch(console.warn);vimeoPlayer.play().catch(console.warn);vimeoPlayer.setVolume(1);});vimeoPlayer.on('timeupdate',d=>savePlaybackTime(item.id,d.seconds));}
-    else if(item.videoType==='direct'){pc.innerHTML=`<video id="directVideoPlayer" controls autoplay muted style="background-color:#000;"></video>`;directPlayer=document.getElementById('directVideoPlayer');directPlayer.addEventListener('timeupdate',()=>{if(directPlayer)savePlaybackTime(item.id,directPlayer.currentTime);});directPlayer.addEventListener('loadedmetadata',()=>{if(st>0&&directPlayer)directPlayer.currentTime=st;if(directPlayer){directPlayer.play().catch(console.warn);directPlayer.muted=false;}});if(item.videoId.includes('.m3u8')&&Hls.isSupported()){hls=new Hls();hls.loadSource(item.videoId);hls.attachMedia(directPlayer);}else{directPlayer.src=item.videoId;}}
-    else if(item.videoType==='html'){pc.innerHTML=`<iframe src="${item.videoId}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;}
-    else{pc.innerHTML=`<div id="youtube-player-div" style="width:100%;height:100%;"></div>`;const cp=()=>{if(!document.getElementById('youtube-player-div'))return;ytPlayer=new YT.Player('youtube-player-div',{height:'100%',width:'100%',videoId:vid,playerVars:{'autoplay':1,'playsinline':1,'start':Math.floor(st)},events:{'onReady':e=>e.target.playVideo(),'onStateChange':e=>{if(e.data==YT.PlayerState.PLAYING){if(saveTimeInterval)clearInterval(saveTimeInterval);saveTimeInterval=setInterval(()=>{if(ytPlayer?.getCurrentTime)savePlaybackTime(item.id,ytPlayer.getCurrentTime());},SAVE_TIME_DEBOUNCE);}else{if(saveTimeInterval){clearInterval(saveTimeInterval);saveTimeInterval=null;if(ytPlayer?.getCurrentTime)savePlaybackTime(item.id,ytPlayer.getCurrentTime());}}}}});};if(window.isYouTubeApiReady)cp();else{const i=setInterval(()=>{if(window.isYouTubeApiReady){clearInterval(i);cp();}},100);}}
-    await updateCompletionButtonUI(item.id);if(item.level1Id&&item.level2Id)await loadTopicPlaylist(item.level1Id,item.level2Id,item.id);
-}
-document.getElementById('backToTutorialsBtn').addEventListener('click',()=>{history.pushState({},'',window.location.pathname);showSection('tutorialSection');cleanupPlayers();currentVideoItem=null;renderViewerItems('tutorials');});
-async function loadTopicPlaylist(l1,l2,cvid){const c=document.getElementById('topicPlaylist');if(!c)return;c.innerHTML=`<h3>Topic Playlist</h3><p class="loading-indicator" style="padding:0;">Loading...</p>`;try{const s=await getDocs(query(collection(db,getPath('tutorials',[l1,l2])),orderBy('name','asc')));if(s.empty){c.innerHTML='<h3>Topic Playlist</h3><p>None found.</p>';return;}c.innerHTML='<h3>Topic Playlist</h3>';s.forEach(d=>{const v=d.data();v.id=d.id;v.level1Id=l1;v.level2Id=l2;const el=document.createElement('a');el.className='playlist-item';if(v.id===cvid)el.classList.add('active');el.textContent=v.title||'Untitled';el.onclick=e=>{e.preventDefault();showVideoPlayer(v);};c.appendChild(el);});}catch(e){c.innerHTML='<h3>Topic Playlist</h3><p class="error-message">Error.</p>';}}
-document.getElementById('completionToggleButton').addEventListener('click',async()=>{if(!currentVideoItem||!currentUserId)return;const vid=currentVideoItem.id,r=doc(db,`artifacts/${appId}/users/${currentUserId}/videoStatus`,vid);try{const d=await getDoc(r),c=d.exists()&&d.data().completed;if(c)await setDoc(r,{completed:false},{merge:true});else await setDoc(r,{completed:true,timestamp:Date.now(),videoTitle:currentVideoItem.title,videoId:currentVideoItem.id},{merge:true});await updateCompletionButtonUI(vid);}catch(e){showModal("Error","Update failed.");}});
-async function updateCompletionButtonUI(vid){if(!currentUserId)return;const b=document.getElementById('completionToggleButton'),r=doc(db,`artifacts/${appId}/users/${currentUserId}/videoStatus`,vid);try{const d=await getDoc(r);if(d.exists()&&d.data().completed){b.textContent="✓ Completed";b.style.color="var(--accent-success)";b.style.borderColor="var(--accent-success)";}else{b.textContent="Mark as Complete";b.style.color="var(--text-secondary)";b.style.borderColor="var(--border-color)";}}catch(e){b.textContent="Status Error";b.disabled=true;}}
-document.getElementById('themeToggleButton').addEventListener('click',()=>showModal("Theme","Dark theme only."));
-async function saveTeacherAccessCode(){const i=document.getElementById('teacherAccessCodeInput'),s=document.getElementById('teacherAccessCodeStatus'),c=i.value.trim();if(!c){s.textContent="Enter code.";s.style.color="var(--accent-danger)";return;}s.textContent="Checking...";s.style.color="var(--text-secondary)";try{const q=query(collection(db,`artifacts/${appId}/public/data/teacherAccessCodes`),where("code","==",c)),sn=await getDocs(q);let t=false;sn.forEach(d=>{if(d.id!==currentUserId)t=true;});if(t){s.textContent="Taken.";s.style.color="var(--accent-danger)";return;}const b=writeBatch(db);b.update(doc(db,`artifacts/${appId}/users/${currentUserId}/profile/data`),{contentAccessCode:c});b.set(doc(db,`artifacts/${appId}/public/data/teacherAccessCodes`,currentUserId),{code:c,teacherName:currentUserName});await b.commit();currentUserProfile.contentAccessCode=c;s.textContent="Saved!";s.style.color="var(--accent-success)";}catch(e){s.textContent=`Error:${e.message}`;s.style.color="var(--accent-danger)";}}
-function showModal(t,m,btns=[]){const md=document.getElementById('messageModal');if(!md)return;document.getElementById('modalTitle').textContent=t;document.getElementById('modalMessage').innerHTML=m;const mb=document.getElementById('modalButtons');mb.innerHTML='';if(btns.length===0){const b=document.createElement('button');b.textContent='OK';b.className='btn-primary';b.onclick=()=>closeModal(md.id);mb.appendChild(b);}else{btns.forEach(bc=>{const b=document.createElement('button');b.textContent=bc.text;b.className=bc.class||'btn-primary';b.onclick=()=>{if(bc.callback)bc.callback();closeModal(md.id);};mb.appendChild(b);});}md.style.display='flex';}
-async function showAddItemModal(t,l,pid=[]){const c=materialsConfig[t],ln=c[`level${l}`];showInputModal(`Add New ${ln}`,`${ln} Name:`,async(n)=>{if(!n)return;const i={name:n,createdAt:Date.now()};if(l===1){i.teacherId=currentUserId;i.teacherName=currentUserName;}try{await addDoc(collection(db,getPath(t,pid)),i);showModal('Success',`${ln} added.`);if(l===1)renderTeacherManagerView(t);else{const cid=`container-level${l}-${t}-${pid[pid.length-1]}`,s=document.getElementById(`sort-teacher-${t}-${pid[pid.length-1]}`);renderContent(t,cid,l,pid,s?s.value:'name-asc');}}catch(e){showModal('Error',e.message);}});}
-function showAddFinalItemModal(t,p=[]){const c=materialsConfig[t],m=document.getElementById(c.modalId);if(!m)return;const f=m.querySelector('form');if(f)f.reset();document.getElementById('tutorialDifficulty').value='U';document.getElementById('tutorialThumbnailPreview').style.display='none';document.getElementById('videoParentId1').value=p[0]||'';document.getElementById('videoParentId2').value=p[1]||'';m.style.display='flex';if(!f.dataset.l){f.addEventListener('submit',async(e)=>{e.preventDefault();const p1=document.getElementById('videoParentId1').value,p2=document.getElementById('videoParentId2').value,l=document.getElementById('tutorialLink').value,vi=parseVideoLink(l);if(!vi){showModal("Invalid","Bad Link.");return;}const i={title:document.getElementById('tutorialTitle').value,name:document.getElementById('tutorialTitle').value,videoType:vi.type,videoId:vi.id,link:l,difficulty:document.getElementById('tutorialDifficulty').value,notes:document.getElementById('tutorialNotes').value||'',materialsLink:document.getElementById('tutorialMaterialsLink').value||'',createdAt:Date.now()};try{await addDoc(collection(db,getPath(t,[p1,p2])),i);const cid=`container-level3-${t}-${p2}`,s=document.getElementById(`sort-teacher-${t}-${p2}`);renderContent(t,cid,3,[p1,p2],s?s.value:'name-asc');closeModal(m.id);showModal('Success','Added.');}catch(err){showModal('Error',err.message);}});f.dataset.l='true';}}
-const tli=document.getElementById('tutorialLink');if(tli){tli.addEventListener('input',()=>{const v=parseVideoLink(tli.value),p=document.getElementById('tutorialThumbnailPreview');if(v&&v.type==='youtube'){p.src=`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`;p.style.display='block';}else p.style.display='none';});}
-function parseVideoLink(u){if(!u)return null;try{if(u.includes('<iframe')){let m=u.match(/src="https:\/\/www\.youtube\.com\/embed\/([^"?]+)/);if(m&&m[1])return{type:'youtube',id:m[1]};m=u.match(/src="https:\/\/player\.vimeo\.com\/video\/([^"]+)"/);if(m&&m[1])return{type:'vimeo',id:m[1]};}let r=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/,m=u.match(r);if(m&&m[2].length===11)return{type:'youtube',id:m[2]};r=/https:\/\/player\.vimeo\.com\/video\/([^#\&\?\/]+(?:[?][^ ]*)?)/;m=u.match(r);if(m&&m[1])return{type:'vimeo',id:m[1].trim()};r=/^.*(vimeo\.com\/)([^#\&\?\/]+).*/;m=u.match(r);if(m&&m[2])return{type:'vimeo',id:m[2]};if(u.startsWith('http')&&(u.includes('.m3u8')||u.includes('.mp4')||u.includes('.webm')||u.includes('.ogv')))return{type:'direct',id:u};if(u.startsWith('http')&&(u.endsWith('.html')||u.endsWith('.htm')))return{type:'html',id:u};}catch(e){return null;}return null;}
-function showInputModal(t,l,cb){const iid='dynamicInput';showModal(t,`<label for="${iid}" style="display:block;margin-bottom:8px;">${l}</label><input type="text" id="${iid}" class="modal-input-style" style="width:100%;">`,[{text:'Cancel',class:'logout-btn'},{text:'Submit',class:'btn-primary',callback:()=>cb(document.getElementById(iid).value)}]);setTimeout(()=>{const i=document.getElementById(iid);if(i){i.style.cssText="background-color:transparent;border:2px solid var(--border-color);color:var(--text-primary);padding:12px 18px;border-radius:12px;font-size:1rem;";i.focus();}},50);}
-function showEditFinalItemModal(t,p,id,item){const c=materialsConfig[t],m=document.getElementById('editVideoModal');if(!m)return;document.getElementById('editVideoParentId1').value=p[0]||'';document.getElementById('editVideoParentId2').value=p[1]||'';document.getElementById('editVideoId').value=id||'';document.getElementById('editTutorialLink').value=item.link||'';document.getElementById('editTutorialTitle').value=item.title||'';document.getElementById('editTutorialNotes').value=item.notes||'';document.getElementById('editTutorialMaterialsLink').value=item.materialsLink||'';document.getElementById('editTutorialDifficulty').value=item.difficulty||'U';m.style.display='flex';const f=m.querySelector('form');if(!f.dataset.l){f.addEventListener('submit',async(e)=>{e.preventDefault();const p1=document.getElementById('editVideoParentId1').value,p2=document.getElementById('editVideoParentId2').value,vid=document.getElementById('editVideoId').value,l=document.getElementById('editTutorialLink').value,vi=parseVideoLink(l);if(!vi){showModal("Invalid","Bad Link.");return;}const u={title:document.getElementById('editTutorialTitle').value,name:document.getElementById('editTutorialTitle').value,videoType:vi.type,videoId:vi.id,link:l,difficulty:document.getElementById('editTutorialDifficulty').value,notes:document.getElementById('editTutorialNotes').value||'',materialsLink:document.getElementById('editTutorialMaterialsLink').value||''};try{await updateDoc(doc(db,getPath(t,[p1,p2]),vid),u);const cid=`container-level3-${t}-${p2}`,s=document.getElementById(`sort-teacher-${t}-${p2}`);renderContent(t,cid,3,[p1,p2],s?s.value:'name-asc');closeModal(m.id);showModal('Success','Updated.');}catch(e){showModal('Error',e.message);}});f.dataset.l='true';}}
-function closeModal(id){const m=document.getElementById(id);if(m)m.style.display='none';}document.querySelectorAll('.modal .close-button').forEach(b=>b.onclick=()=>closeModal(b.closest('.modal').id));
-async function handleDeleteItem(t,l,id,p=[]){const c=materialsConfig[t],ln=c[`level${l}`];showModal('Confirm',`Delete ${ln}?`,[{text:'Cancel',class:'logout-btn'},{text:'Delete',class:'logout-btn',callback:async()=>{try{await deleteDoc(doc(db,getPath(t,p),id));if(l===1)renderTeacherManagerView(t);else{const cid=`container-level${l}-${t}-${p[p.length-1]}`,s=document.getElementById(`sort-teacher-${t}-${p[p.length-1]}`);renderContent(t,cid,l,p,s?s.value:'name-asc');}showModal('Success','Deleted.');}catch(e){showModal('Error',e.message);}}}]);setTimeout(()=>{const b=document.getElementById('modalButtons').querySelector('.logout-btn:not(:first-child)');if(b){b.style.borderColor='var(--accent-danger)';b.style.color='var(--accent-danger)';}},0);}
-</script></body></html>
+        async function renderTeacherManagerView(type) {
+            const container = document.getElementById(`l1-${type}-mine`);
+            try {
+                const subRef = collection(db, getPath(type));
+                const [mySnap, orphanSnap] = await Promise.all([
+                    getDocs(query(subRef, where('teacherId', '==', currentUserId), orderBy('name'))),
+                    getDocs(query(subRef, where('teacherId', '==', null)))
+                ]);
+                
+                if (!orphanSnap.empty) document.getElementById('migrate-btn').style.display = 'inline-block';
+                if (mySnap.empty) { container.innerHTML = '<p>No subjects yet.</p>'; return; }
+                
+                container.innerHTML = mySnap.docs.map(doc => {
+                    const d = doc.data(); d.id = doc.id;
+                    return `<div class="content-item">
+                        <div class="content-header" data-level="1" data-id="${d.id}" data-parent-ids='[]' aria-expanded="false">
+                            <h3>${d.name} <span class="collapse-arrow"></span></h3>
+                            <div class="item-actions"><button class="add-item-btn btn-primary" data-level="2" data-parent-ids='["${d.id}"]'>Add Topic</button><button class="delete-item-btn logout-btn" data-level="1" data-id="${d.id}">Delete</button></div>
+                        </div>
+                        <div class="teacher-sort-container"><select class="teacher-sort-filter" data-level="3" data-parent-ids='["${d.id}"]'><option value="name-asc">A-Z</option><option value="diff-desc">Hardest</option></select></div>
+                        <div class="nested-container" id="container-level2-${type}-${d.id}"></div>
+                    </div>`;
+                }).join('');
+            } catch (e) { container.innerHTML = '<p>Error loading.</p>'; console.error(e); }
+        }
+
+        async function renderContent(type, cId, level, pIds, sortBy) {
+            const container = document.getElementById(cId); if(!container) return;
+            container.innerHTML = `<p class="loading-indicator">Loading...</p>`;
+            try {
+                let q = query(collection(db, getPath(type, pIds)));
+                if(level !== 3) q = query(q, orderBy('name'));
+                const snap = await getDocs(q);
+                if (snap.empty) { container.innerHTML = '<p>Empty.</p>'; return; }
+                
+                let items = []; snap.forEach(d => { let i = d.data(); i.id = d.id; i.level1Id = pIds[0]; i.level2Id = pIds[1]; items.push(i); });
+                if (level === 3) {
+                     const order = { 'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7 };
+                     items.sort((a,b) => (sortBy==='diff-desc'? (order[b.difficulty]||0)-(order[a.difficulty]||0) : (a.name||a.title).localeCompare(b.name||b.title)));
+                     container.innerHTML = items.map(i => `
+                        <div class="sub-item"><span>${i.title} <small>(${i.difficulty})</small></span>
+                        <div class="item-actions"><button class="edit-item-btn btn-primary" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}' data-item='${JSON.stringify(i)}'>Edit</button><button class="preview-item-btn btn-primary" data-item='${JSON.stringify(i)}'>Preview</button><button class="delete-item-btn logout-btn" data-level="3" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}'>Delete</button></div></div>
+                     `).join('');
+                } else {
+                    container.innerHTML = items.map(i => {
+                        const nIds = [...pIds, i.id];
+                        return `<div class="content-item"><div class="content-header" data-level="${level}" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}' aria-expanded="false">
+                            <h3>${i.name} <span class="collapse-arrow"></span></h3>
+                            <div class="item-actions"><button class="add-item-btn btn-primary" data-level="${level+1}" data-parent-ids='${JSON.stringify(nIds)}'>Add Video</button><button class="delete-item-btn logout-btn" data-level="${level}" data-id="${i.id}" data-parent-ids='${JSON.stringify(pIds)}'>Delete</button></div>
+                        </div><div class="teacher-sort-container"><select class="teacher-sort-filter" data-level="3" data-parent-ids='${JSON.stringify(nIds)}'><option value="name-asc">A-Z</option><option value="diff-desc">Hardest</option></select></div><div class="nested-container" id="container-level${level+1}-${type}-${i.id}"></div></div>`;
+                    }).join('');
+                }
+            } catch(e) { container.innerHTML = '<p>Error.</p>'; }
+        }
+
+        function handleTeacherClick(e, type) {
+            const h = e.target.closest('.content-header'), b = e.target.closest('button');
+            if(b) {
+                e.stopPropagation(); const {level,parentIds,id,item} = b.dataset; const pArr = JSON.parse(parentIds||'[]');
+                if(b.matches('.add-item-btn')) parseInt(level)<3 ? showAddItemModal(type,parseInt(level),pArr) : showAddFinalItemModal(type,pArr);
+                else if(b.matches('.edit-item-btn')) showEditFinalItemModal(type,pArr,id,JSON.parse(item));
+                else if(b.matches('.delete-item-btn')) handleDeleteItem(type,parseInt(level),id,pArr);
+                else if(b.matches('.preview-item-btn')) handlePreview(type,JSON.parse(item));
+            } else if(h) {
+                const {level,id,parentIds} = h.dataset; const c = document.getElementById(`container-level${parseInt(level)+1}-${type}-${id}`);
+                const exp = h.getAttribute('aria-expanded')==='true'; h.setAttribute('aria-expanded',!exp); c.classList.toggle('expanded',!exp);
+                const sortDiv = h.parentElement.querySelector('.teacher-sort-container'); if(sortDiv) sortDiv.style.display = !exp ? 'block' : 'none';
+                if(!exp && !c.dataset.loaded) { renderContent(type,c.id,parseInt(level)+1,[...JSON.parse(parentIds),id], sortDiv?sortDiv.querySelector('select').value:'name-asc'); c.dataset.loaded='true'; }
+            }
+        }
+        function handleTeacherSort(e, type) { const s=e.target.closest('select'); if(s){ const {level,parentIds}=s.dataset; renderContent(type,`container-level${level}-${type}-${JSON.parse(parentIds).slice(-1)[0]}`,parseInt(level),JSON.parse(parentIds),s.value); } }
+        function handlePreview(type, item) { if(type==='tutorials') showVideoPlayer(item); }
+
+        async function setupViewerFilters(type) {
+            const tf=document.getElementById(`teacher-${type}-filter`), l1=document.getElementById(`l1-${type}`), l2=document.getElementById(`l2-${type}`), srt=document.getElementById(`sort-${type}`), g=document.getElementById(`l3-${type}-grid`);
+            const s1=document.getElementById(`step1-${type}`), s2=document.getElementById(`step2-${type}`), s3=document.getElementById(`step3-${type}`);
+            
+            let allSubs = []; let tMap = new Map();
+            try { const snap = await getDocs(query(collection(db, getPath(type)), orderBy('name'))); snap.forEach(d=>{allSubs.push({id:d.id,...d.data()}); if(d.data().teacherId) tMap.set(d.data().teacherId, d.data().teacherName);}); } catch(e){}
+            
+            let uT = (currentUserProfile?.unlockedTeachers) ? [...currentUserProfile.unlockedTeachers] : [];
+            if(currentUserRole==='teacher' && !uT.includes(currentUserId)) uT.push(currentUserId);
+            
+            tf.innerHTML = '<option value="">-- Select Teacher --</option>';
+            [...new Set([...uT].map(id=>tMap.get(id)).filter(Boolean))].sort().forEach(n => tf.add(new Option(n,n)));
+
+            tf.onchange = () => {
+                l1.innerHTML='<option value="">-- Select Subject --</option>'; l1.disabled=true; l2.disabled=true; srt.disabled=true; g.style.display='none';
+                s1.style.opacity=0.5; s2.style.opacity=0.5; s3.style.opacity=0.5;
+                if(tf.value) { allSubs.filter(s=>s.teacherName===tf.value).forEach(s=>l1.add(new Option(s.name,s.id))); l1.disabled=false; s1.style.opacity=1; s1.style.pointerEvents='auto'; }
+            };
+            l1.onchange = async () => {
+                l2.innerHTML='<option value="">Loading...</option>'; l2.disabled=true; srt.disabled=true; g.style.display='none';
+                if(l1.value) { 
+                    const snap = await getDocs(query(collection(db, getPath(type, [l1.value])), orderBy('name')));
+                    l2.innerHTML='<option value="">-- Select Topic --</option>';
+                    snap.forEach(d=>l2.add(new Option(d.data().name, d.id)));
+                    l2.disabled=false; s2.style.opacity=1; s2.style.pointerEvents='auto';
+                }
+            };
+            l2.onchange = () => { if(l2.value) { srt.disabled=false; s3.style.opacity=1; s3.style.pointerEvents='auto'; renderViewerItems(type); } };
+            srt.onchange = () => renderViewerItems(type);
+        }
+
+        async function renderViewerItems(type) {
+             const g = document.getElementById(`l3-${type}-grid`), l1 = document.getElementById(`l1-${type}`).value, l2 = document.getElementById(`l2-${type}`).value, srt = document.getElementById(`sort-${type}`).value;
+             g.innerHTML = '<p class="loading-indicator">Loading...</p>'; g.style.display='grid'; g.style.opacity=1;
+             try {
+                const snap = await getDocs(collection(db, getPath(type,[l1,l2])));
+                if(snap.empty) { g.innerHTML='<p>No videos.</p>'; return; }
+                let items=[]; snap.forEach(d=>items.push({id:d.id, level1Id:l1, level2Id:l2, ...d.data()}));
+                const order={'U':0,'1/5':1,'2/5':2,'3/5':3,'4/5':4,'5/5':5,'5/5*':6,'5/5**':7};
+                items.sort((a,b)=>(srt==='diff-asc'? (order[a.difficulty]||0)-(order[b.difficulty]||0) : srt==='diff-desc'? (order[b.difficulty]||0)-(order[a.difficulty]||0) : srt==='name-desc'? (b.title||'').localeCompare(a.title||'') : (a.title||'').localeCompare(b.title||'')));
+                g.innerHTML = items.map(i => {
+                    let thumb = i.videoType==='vimeo' ? `https://placehold.co/480x360/0a0a0a/888888?text=Vimeo` : i.videoType==='html' ? `https://placehold.co/480x360/0a0a0a/888888?text=HTML` : `https://img.youtube.com/vi/${i.videoId||i.youtubeId}/mqdefault.jpg`;
+                    return `<div class="material-card" onclick="window.previewItem('${type}','${i.id}','${l1}','${l2}')">
+                        <div class="material-card-thumbnail"><img src="${thumb}" onerror="this.src='https://placehold.co/480x360/333/ccc?text=No+Img'"><span class="difficulty-badge">${i.difficulty||'U'}</span></div>
+                        <div class="material-card-content"><h3>${i.title}</h3></div></div>`;
+                }).join('');
+                window.previewItem = (t, id, l1, l2) => handlePreview(t, items.find(x=>x.id===id));
+             } catch(e) { g.innerHTML='<p>Error.</p>'; }
+        }
+
+        function cleanupPlayers() {
+            if (ytPlayer) { ytPlayer.destroy(); ytPlayer=null; }
+            if (vimeoPlayer) { vimeoPlayer.destroy(); vimeoPlayer=null; }
+            if (directPlayer) { if(hls) hls.destroy(); directPlayer.pause(); directPlayer=null; }
+            if (saveTimeInterval) clearInterval(saveTimeInterval);
+            if (saveTimeTimeout) clearTimeout(saveTimeTimeout);
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+        }
+
+        async function showVideoPlayer(item) {
+            currentVideoItem = item; showSection('videoPlayerSection');
+            updateUrlState(item);
+
+            document.getElementById('videoInfoTitle').textContent = item.title;
+            document.getElementById('videoInfoDescription').textContent = item.notes || '';
+            const mLink = document.getElementById('materialsLinkContainer'); 
+            if(item.materialsLink) { mLink.style.display='block'; document.getElementById('materialsLink').href = item.materialsLink; } else mLink.style.display='none';
+            
+            const pc = document.getElementById('videoPlayerContainer'); cleanupPlayers();
+            const savedTime = await getPlaybackTime(item.id);
+            const vId = item.videoId || item.youtubeId;
+
+            if (item.videoType === 'vimeo') {
+                pc.innerHTML = `<iframe src="https://player.vimeo.com/video/${vId}?muted=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+                vimeoPlayer = new Vimeo.Player(pc.querySelector('iframe'));
+                vimeoPlayer.on('ready', () => { if(savedTime>0) vimeoPlayer.setCurrentTime(savedTime); vimeoPlayer.play().catch(()=>{}); vimeoPlayer.setVolume(1); });
+                vimeoPlayer.on('timeupdate', d => savePlaybackTime(item.id, d.seconds));
+            } else if (item.videoType === 'direct') {
+                pc.innerHTML = `<video id="dv" controls autoplay muted style="background:#000;"></video>`;
+                directPlayer = document.getElementById('dv');
+                directPlayer.addEventListener('timeupdate', () => savePlaybackTime(item.id, directPlayer.currentTime));
+                directPlayer.addEventListener('loadedmetadata', () => { if(savedTime>0) directPlayer.currentTime=savedTime; directPlayer.play().catch(()=>{}); directPlayer.muted=false; });
+                if (item.videoId.includes('.m3u8') && Hls.isSupported()) { hls = new Hls(); hls.loadSource(item.videoId); hls.attachMedia(directPlayer); } else directPlayer.src = item.videoId;
+            } else if (item.videoType === 'html') {
+                pc.innerHTML = `<iframe src="${item.videoId}" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                pc.innerHTML = `<div id="youtube-player-div"></div>`;
+                const initYT = () => {
+                    ytPlayer = new YT.Player('youtube-player-div', {
+                        height:'100%', width:'100%', videoId: vId,
+                        playerVars: { 'autoplay':1, 'playsinline':1, 'start': Math.floor(savedTime) },
+                        events: { 
+                            'onStateChange': e => {
+                                if(e.data===YT.PlayerState.PLAYING) saveTimeInterval=setInterval(()=>savePlaybackTime(item.id,ytPlayer.getCurrentTime()), 5000);
+                                else clearInterval(saveTimeInterval);
+                            }
+                        }
+                    });
+                };
+                if(window.isYouTubeApiReady) initYT(); else { const i=setInterval(()=>{if(window.isYouTubeApiReady){clearInterval(i);initYT();}},100); }
+            }
+            updateCompletionButtonUI(item.id); loadTopicPlaylist(item.level1Id, item.level2Id, item.id);
+        }
+
+        document.getElementById('backToTutorialsBtn').addEventListener('click', () => { 
+            cleanupPlayers(); currentVideoItem=null; resetUrlState();
+            showSection('tutorialSection'); renderViewerItems('tutorials'); 
+        });
+
+        async function loadTopicPlaylist(l1, l2, cId) {
+            const c = document.getElementById('topicPlaylist'); c.innerHTML = '<h3>Topic Playlist</h3>';
+            try {
+                const snap = await getDocs(query(collection(db, getPath('tutorials', [l1,l2])), orderBy('name')));
+                snap.forEach(d => {
+                    const i = d.data(); i.id = d.id; i.level1Id = l1; i.level2Id = l2;
+                    const el = document.createElement('a'); el.className = `playlist-item ${i.id===cId?'active':''}`;
+                    el.textContent = i.title; el.onclick = (e) => { e.preventDefault(); showVideoPlayer(i); };
+                    c.appendChild(el);
+                });
+            } catch(e){}
+        }
+
+        async function getPlaybackTime(vid) { 
+            try { const d = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, vid)); return d.exists()?d.data().lastPlayedTime:0; } catch{return 0;} 
+        }
+        function savePlaybackTime(vid, t) {
+            if(saveTimeTimeout) clearTimeout(saveTimeTimeout);
+            saveTimeTimeout = setTimeout(() => setDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoPlaybackStatus`, vid), { lastPlayedTime: t, timestamp: Date.now() }, { merge: true }), SAVE_TIME_DEBOUNCE);
+        }
+
+        async function updateCompletionButtonUI(vid) {
+            const btn = document.getElementById('completionToggleButton');
+            try { const d = await getDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, vid));
+            if(d.exists() && d.data().completed) { 
+                btn.textContent = "✓ Completed"; 
+                btn.style.borderColor='var(--accent-green)'; btn.style.color='var(--accent-green)'; 
+            } else { 
+                btn.textContent = "Mark as Complete"; 
+                btn.style.borderColor='var(--border-color)'; btn.style.color='var(--text-primary)'; 
+            }
+            } catch { btn.textContent = "Error"; }
+        }
+        document.getElementById('completionToggleButton').addEventListener('click', async () => {
+             if(!currentVideoItem) return;
+             const ref = doc(db, `artifacts/${appId}/users/${currentUserId}/videoStatus`, currentVideoItem.id);
+             const s = await getDoc(ref); const c = s.exists() && s.data().completed;
+             await setDoc(ref, { completed: !c, videoTitle: currentVideoItem.title, timestamp: Date.now() }, { merge: true });
+             updateCompletionButtonUI(currentVideoItem.id);
+        });
+
+        function showModal(t, m, b=[]) {
+            const mod=document.getElementById('messageModal'), mb=document.getElementById('modalButtons');
+            document.getElementById('modalTitle').textContent=t; document.getElementById('modalMessage').innerHTML=m; mb.innerHTML='';
+            if(!b.length) b=[{text:'OK', class:'btn-primary'}];
+            b.forEach(cf => { const btn=document.createElement('button'); btn.textContent=cf.text; btn.className=cf.class; btn.onclick=()=>{if(cf.callback)cf.callback(); closeModal(mod.id);}; mb.appendChild(btn); });
+            mod.style.display='flex';
+        }
+        function showInputModal(t, l, cb) { showModal(t, `<label>${l}</label><input id="dynIn" style="width:100%">`, [{text:'Cancel',class:'logout-btn'},{text:'Submit',class:'btn-primary',callback:()=>cb(document.getElementById('dynIn').value)}]); }
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        document.querySelectorAll('.close-button').forEach(b=>b.onclick=()=>closeModal(b.closest('.modal').id));
+
+        function parseVideoLink(url) {
+            if(!url) return null;
+            if(url.includes('youtube.com/embed/')) return {type:'youtube', id:url.split('embed/')[1].split('"')[0]};
+            if(url.includes('player.vimeo.com/video/')) return {type:'vimeo', id:url.match(/video\/([^"?]+)/)[1]};
+            const yt = url.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+            if(yt && yt[1].length===11) return {type:'youtube', id:yt[1]};
+            const vim = url.match(/(?:vimeo\.com\/)([^#\&\?\/]+)/);
+            if(vim) return {type:'vimeo', id:vim[1]};
+            if(url.match(/\.(m3u8|mp4|webm|ogv)$/)) return {type:'direct', id:url};
+            if(url.match(/\.(html|htm)$/)) return {type:'html', id:url};
+            return null;
+        }
+
+        async function saveTeacherAccessCode() {
+             const c = document.getElementById('teacherAccessCode').value.trim();
+             const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code","==",c));
+             const snap = await getDocs(q); let taken=false; snap.forEach(d=>{if(d.id!==currentUserId)taken=true;});
+             if(taken) { showModal('Error','Code taken.'); return; }
+             const b = writeBatch(db);
+             b.update(doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`), {contentAccessCode:c});
+             b.set(doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, currentUserId), {code:c, teacherName:currentUserName});
+             await b.commit(); currentUserProfile.contentAccessCode=c; showModal('Success','Code saved.');
+        }
+
+        async function runMigration(type) {
+             const b = writeBatch(db); let c=0;
+             const snap = await getDocs(query(collection(db, getPath(type))));
+             snap.forEach(d=>{ if(!d.data().teacherId){ b.update(d.ref, {teacherId:currentUserId, teacherName:currentUserName}); c++; } });
+             if(c>0) { await b.commit(); showModal('Success', 'Migrated '+c+' items.'); renderTeacherManagerView(type); } else showModal('Info', 'Nothing to migrate.');
+        }
+        
+        function showAddItemModal(type, lvl, pIds=[]) { showInputModal(`Add ${materialsConfig[type][`level${lvl}`]}`, 'Name:', async n=>{ if(!n)return; await addDoc(collection(db, getPath(type, pIds)), {name:n, createdAt:Date.now(), ...(lvl===1?{teacherId:currentUserId,teacherName:currentUserName}:{})}); if(lvl===1) renderTeacherManagerView(type); else { const cid=`container-level${lvl}-${type}-${pIds.slice(-1)[0]}`; renderContent(type,cid,lvl,pIds,'name-asc'); } }); }
+
+        function showAddFinalItemModal(type, pIds) {
+             const m=document.getElementById('addVideoModal'), f=m.querySelector('form'); f.reset();
+             document.getElementById('videoParentId1').value=pIds[0]; document.getElementById('videoParentId2').value=pIds[1];
+             m.style.display='flex';
+             f.onsubmit = async e => { e.preventDefault();
+                 const v = parseVideoLink(document.getElementById('tutorialLink').value);
+                 if(!v) { showModal('Error','Invalid link.'); return; }
+                 await addDoc(collection(db, getPath(type, pIds)), {
+                     title:document.getElementById('tutorialTitle').value, name:document.getElementById('tutorialTitle').value,
+                     videoType:v.type, videoId:v.id, link:document.getElementById('tutorialLink').value,
+                     difficulty:document.getElementById('tutorialDifficulty').value, notes:document.getElementById('tutorialNotes').value,
+                     materialsLink:document.getElementById('tutorialMaterialsLink').value, createdAt:Date.now()
+                 });
+                 renderContent(type,`container-level3-${type}-${pIds[1]}`,3,pIds,'name-asc'); closeModal(m.id);
+             };
+        }
+
+        function showEditFinalItemModal(type, pIds, id, item) {
+             const m=document.getElementById('editVideoModal'), f=m.querySelector('form');
+             document.getElementById('editVideoParentId1').value=pIds[0]; document.getElementById('editVideoParentId2').value=pIds[1]; document.getElementById('editVideoId').value=id;
+             document.getElementById('editTutorialLink').value=item.link; document.getElementById('editTutorialTitle').value=item.title;
+             document.getElementById('editTutorialNotes').value=item.notes; document.getElementById('editTutorialMaterialsLink').value=item.materialsLink;
+             document.getElementById('editTutorialDifficulty').value=item.difficulty; m.style.display='flex';
+             f.onsubmit = async e => { e.preventDefault();
+                 const v = parseVideoLink(document.getElementById('editTutorialLink').value);
+                 if(!v) { showModal('Error','Invalid link.'); return; }
+                 await updateDoc(doc(db, getPath(type, pIds), id), {
+                     title:document.getElementById('editTutorialTitle').value, name:document.getElementById('editTutorialTitle').value,
+                     videoType:v.type, videoId:v.id, link:document.getElementById('editTutorialLink').value,
+                     difficulty:document.getElementById('editTutorialDifficulty').value, notes:document.getElementById('editTutorialNotes').value,
+                     materialsLink:document.getElementById('editTutorialMaterialsLink').value
+                 });
+                 renderContent(type,`container-level3-${type}-${pIds[1]}`,3,pIds,'name-asc'); closeModal(m.id);
+             };
+        }
+
+        async function handleDeleteItem(type, lvl, id, pIds) {
+             showModal('Confirm', 'Delete this item?', [{text:'Cancel',class:'btn-primary'}, {text:'Delete',class:'logout-btn', callback:async()=>{
+                 await deleteDoc(doc(db, getPath(type, pIds), id));
+                 if(lvl===1) renderTeacherManagerView(type); else renderContent(type,`container-level${lvl}-${type}-${pIds.slice(-1)[0]}`,lvl,pIds,'name-asc');
+             }}]);
+        }
+    </script>
+</body>
+</html>
