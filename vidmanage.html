@@ -3,477 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS // COMMAND</title>
+    <title>DarStudy | Studio</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- HIGH-TECH BLACK & WHITE THEME (MANAGER) --- */
+        /* --- PROFESSIONAL MONOCHROME THEME --- */
         :root {
-            --bg-deep: #050505;
-            --bg-card: #0f0f0f;
-            --border: #333;
-            --text-main: #fff;
-            --text-dim: #666;
-            --accent-white: #ffffff;
-            --danger: #ff3333;
+            --bg-body: #ffffff;
+            --bg-panel: #f5f5f5;
+            --border: #e0e0e0;
+            --text-dark: #111111;
+            --text-light: #666666;
+            --accent: #000000;
+        }
+        /* Dark Mode Override for consistency with Viewer */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0a0a0a;
+                --bg-panel: #111111;
+                --border: #333333;
+                --text-dark: #ffffff;
+                --text-light: #999999;
+                --accent: #ffffff;
+            }
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-deep);
-            color: var(--text-main);
-            min-height: 100vh;
-        }
-        
-        /* Headers */
-        h1, h2, h3, button { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+        body { background: var(--bg-body); color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Auth Container */
-        #auth-check-layer {
-            position: fixed; inset: 0; background: #000; z-index: 1000;
-            display: flex; align-items: center; justify-content: center;
+        /* Auth/Rickroll Container */
+        #blockerLayer {
+            position: fixed; inset: 0; background: var(--bg-body); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        
-        /* Main Layout */
-        .dashboard-container {
-            max-width: 1200px; margin: 0 auto; padding: 2rem;
-            display: none; animation: fadeIn 0.5s ease-out;
+        .login-box {
+            text-align: center; border: 1px solid var(--border); padding: 40px;
+            border-radius: 8px; background: var(--bg-panel); box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        
+        .google-btn {
+            margin-top: 20px; padding: 10px 20px; background: var(--text-dark); color: var(--bg-body);
+            border: none; cursor: pointer; font-weight: 600; border-radius: 4px;
+        }
+
+        /* Rickroll Frame */
+        #rickrollFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; }
+
+        /* Main Studio UI */
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;
+            height: 60px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+            background: var(--bg-panel);
         }
+        .logo { font-weight: 800; letter-spacing: -0.5px; font-size: 1.2rem; }
         
-        .code-display {
-            background: var(--bg-card); border: 1px solid var(--border);
-            padding: 10px 20px; border-radius: 4px; font-family: monospace;
-            color: var(--text-dim); display: flex; align-items: center; gap: 10px;
-        }
-        .code-display span { color: #fff; font-weight: bold; font-size: 1.1rem; }
+        main { flex: 1; display: flex; overflow: hidden; }
         
-        /* Buttons */
-        .btn {
-            background: transparent; border: 1px solid var(--border); color: #fff;
-            padding: 8px 16px; cursor: pointer; text-transform: uppercase;
-            font-size: 0.8rem; transition: 0.2s;
+        /* Left Sidebar (Tree) */
+        .sidebar { width: 300px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--bg-panel); padding: 20px; }
+        .sidebar h3 { font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 16px; letter-spacing: 1px; }
+        
+        .tree-item { margin-bottom: 4px; }
+        .tree-header {
+            padding: 8px 12px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.9rem; font-weight: 500; transition: background 0.2s;
         }
-        .btn:hover { background: #fff; color: #000; border-color: #fff; }
-        .btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
-        .btn-primary { background: #fff; color: #000; border-color: #fff; font-weight: bold; }
-        .btn-primary:hover { background: #ccc; border-color: #ccc; }
+        .tree-header:hover { background: rgba(128,128,128,0.1); }
+        .tree-header.active { background: var(--accent); color: var(--bg-body); }
+        
+        .tree-actions button {
+            background: none; border: none; color: inherit; opacity: 0.5; cursor: pointer; font-size: 1.1rem;
+        }
+        .tree-actions button:hover { opacity: 1; }
 
-        /* Tree/List Structure */
-        .item-row {
-            background: var(--bg-card); border: 1px solid var(--border);
-            margin-bottom: 1rem; border-radius: 4px;
-        }
-        
-        .row-header {
-            padding: 1.2rem; display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; transition: 0.2s;
-        }
-        .row-header:hover { background: #1a1a1a; }
-        
-        .row-title { font-weight: 600; font-size: 1.1rem; }
-        .row-actions { display: flex; gap: 0.5rem; }
-        
-        .nested-content {
-            border-top: 1px solid var(--border);
-            background: #0a0a0a;
-            padding: 0 1.5rem;
-            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;
-        }
-        .nested-content.expanded { max-height: 2000px; padding: 1.5rem; }
+        .nested { margin-left: 16px; padding-left: 8px; border-left: 1px solid var(--border); display: none; margin-top: 4px; }
+        .nested.open { display: block; }
 
-        /* Level 2 (Topics) */
-        .topic-row {
-            border: 1px dashed var(--border); margin-bottom: 0.8rem;
-            background: var(--bg-deep); padding: 0.8rem; border-radius: 4px;
-        }
-        .topic-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .topic-videos { margin-top: 0.8rem; padding-left: 1rem; display: none; }
-        .topic-videos.open { display: block; }
+        /* Right Content (Editor/List) */
+        .editor-area { flex: 1; padding: 40px; overflow-y: auto; }
         
-        /* Level 3 (Videos) */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .btn-primary {
+            background: var(--accent); color: var(--bg-body); border: none; padding: 10px 20px;
+            border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        
+        .video-list { display: flex; flex-direction: column; gap: 12px; }
         .video-item {
+            border: 1px solid var(--border); padding: 16px; border-radius: 6px; background: var(--bg-panel);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0.5rem 0; border-bottom: 1px solid #222; font-size: 0.9rem; color: #ccc;
         }
-        .video-item:last-child { border-bottom: none; }
-
+        .vid-info h4 { font-size: 1rem; margin-bottom: 4px; }
+        .vid-info span { font-size: 0.8rem; color: var(--text-light); }
+        
         /* Modals */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
-            z-index: 2000; display: none; align-items: center; justify-content: center;
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000;
+            display: none; align-items: center; justify-content: center;
         }
         .modal-box {
-            background: #111; border: 1px solid var(--border); width: 500px; max-width: 90%;
-            padding: 2rem; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            background: var(--bg-panel); width: 500px; padding: 30px; border-radius: 8px;
+            border: 1px solid var(--border);
         }
-        .modal-title { margin-bottom: 1.5rem; font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-        
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; }
-        .form-input, .form-select, textarea {
-            width: 100%; background: #000; border: 1px solid var(--border); color: #fff;
-            padding: 10px; font-family: 'Inter', sans-serif;
+        .modal-box h2 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; background: var(--bg-body); border: 1px solid var(--border);
+            color: var(--text-dark); border-radius: 4px;
         }
-        textarea { resize: vertical; min-height: 80px; }
-        .form-input:focus { border-color: #fff; outline: none; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-dark); padding: 10px 20px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- AUTH CHECK & RICKROLL LAYER -->
-    <div id="auth-check-layer">
-        <h2 style="animation: pulse 1s infinite;">VERIFYING CREDENTIALS...</h2>
+    <!-- BLOCKER / LOGIN -->
+    <div id="blockerLayer">
+        <div class="login-box" id="loginBox">
+            <h1>DARSTUDY STUDIO</h1>
+            <p>Instructors Only</p>
+            <button id="loginBtn" class="google-btn">Sign In with Google</button>
+            <p id="authMsg" style="margin-top:10px; color:#f00;"></p>
+        </div>
+        <!-- The Trap -->
+        <iframe id="rickrollFrame" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&loop=1&playlist=dQw4w9WgXcQ" allow="autoplay"></iframe>
     </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div class="dashboard-container" id="dashboard">
+    <!-- MAIN INTERFACE -->
+    <div id="mainInterface" style="display:none; height:100%;">
         <header>
-            <div>
-                <h1>NEXUS // COMMAND</h1>
-                <p style="color:var(--text-dim);">Content Management System</p>
-            </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <div class="code-display">
-                    ACCESS CODE: <span id="display-access-code">LOADING</span>
-                    <button class="btn" id="edit-code-btn" style="padding: 2px 8px; font-size:0.7rem;">EDIT</button>
-                </div>
-                <button class="btn" id="logout-btn">LOGOUT</button>
-            </div>
+            <div class="logo">STUDIO // MANAGE</div>
+            <button class="btn-cancel" id="logoutBtn">Logout</button>
         </header>
-
-        <div style="margin-bottom: 2rem;">
-            <button class="btn btn-primary" id="add-subject-btn">+ NEW SUBJECT</button>
-        </div>
-
-        <div id="content-tree">
-            <!-- Dynamic Content -->
-            <div style="text-align:center; color:#444; padding: 2rem;">INITIALIZING DATA STREAMS...</div>
-        </div>
+        <main>
+            <div class="sidebar">
+                <h3>My Curriculum</h3>
+                <div id="subjectList"></div>
+                <button id="addSubjectBtn" style="margin-top:20px; width:100%; padding:8px; border:1px dashed var(--border); cursor:pointer;">+ New Subject</button>
+            </div>
+            
+            <div class="editor-area">
+                <div id="welcomeState" style="text-align:center; color:var(--text-light); margin-top:100px;">
+                    <h2>Select a Topic to Manage Videos</h2>
+                    <p>Use the sidebar to navigate your subjects.</p>
+                </div>
+                
+                <div id="videoManagerState" style="display:none;">
+                    <div class="header-row">
+                        <h2 id="currentTopicTitle">Topic Name</h2>
+                        <button class="btn-primary" id="addVideoBtn">+ Add Video</button>
+                    </div>
+                    <div id="videoList" class="video-list"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- GENERIC MODAL -->
-    <div id="modal-container" class="modal-overlay">
+    <!-- MODAL: ADD/EDIT VIDEO -->
+    <div id="videoModal" class="modal">
         <div class="modal-box">
-            <h3 class="modal-title" id="modal-heading">TITLE</h3>
-            <div id="modal-body"></div>
+            <h2 id="modalTitle">Add Video</h2>
+            <form id="videoForm">
+                <input type="hidden" id="v_id">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="v_title" required>
+                </div>
+                <div class="form-group">
+                    <label>YouTube Link / URL</label>
+                    <input type="text" id="v_link" required placeholder="https://youtube.com/...">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="v_notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <select id="v_diff">
+                        <option value="1/5">1/5 - Easy</option>
+                        <option value="3/5">3/5 - Medium</option>
+                        <option value="5/5">5/5 - Hard</option>
+                        <option value="5/5**">5/5** - Nightmare</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Video</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-        // FIREBASE INIT
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // CONFIG
+        const firebaseConfig = {
+          apiKey: "", 
+          authDomain: "ai-grading-9bb30.firebaseapp.com",
+          projectId: "ai-grading-9bb30", storageBucket: "ai-grading-9bb30.appspot.com",
+          messagingSenderId: "298162112230", appId: "1:298162112230:web:529d3f95536991be685d27"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         let currentUser = null;
-        let globalDataMap = new Map(); // Store video objects by ID for easy editing
+        let selectedSubjectId = null;
+        let selectedTopicId = null;
 
-        // --- AUTH & SECURITY ---
+        // UI ELEMENTS
+        const blocker = document.getElementById('blockerLayer');
+        const loginBox = document.getElementById('loginBox');
+        const rickroll = document.getElementById('rickrollFrame');
+        const mainInterface = document.getElementById('mainInterface');
+        const subjectList = document.getElementById('subjectList');
+        const videoList = document.getElementById('videoList');
+        const videoModal = document.getElementById('videoModal');
+
+        // AUTH & ROLE CHECK
         onAuthStateChanged(auth, async (user) => {
-            const layer = document.getElementById('auth-check-layer');
             if (user) {
                 currentUser = user;
                 // Check Role
-                const pRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-                try {
-                    const snap = await getDoc(pRef);
-                    
-                    // If no role logic found, default to student (rickroll) or error
-                    if (snap.exists() && snap.data().role === 'teacher') {
-                        // ACCESS GRANTED
-                        layer.style.display = 'none';
-                        document.getElementById('dashboard').style.display = 'block';
-                        loadDashboard(snap.data());
-                    } else {
-                        // RICK ROLL (Students or others)
-                        document.body.innerHTML = `<iframe width="100%" height="100%" style="position:fixed; top:0; left:0; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&loop=1" allow="autoplay"></iframe>`;
-                    }
-                } catch(e) { console.error(e); alert("Auth Error"); }
+                const profileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+                const snap = await getDoc(profileRef);
+                const role = snap.exists() ? snap.data().role : 'student'; // Default to student if undefined
+
+                if (role === 'student') {
+                    // ACTIVATE TRAP
+                    loginBox.style.display = 'none';
+                    rickroll.style.display = 'block';
+                } else if (role === 'teacher') {
+                    // SHOW DASHBOARD
+                    blocker.style.display = 'none';
+                    mainInterface.style.display = 'flex';
+                    loadSubjects();
+                } else {
+                    document.getElementById('authMsg').textContent = "Access denied. Role Unknown.";
+                }
             } else {
-                // Not logged in -> Show Google Login
-                layer.innerHTML = `
-                    <div style="text-align:center;">
-                        <h2>RESTRICTED AREA</h2>
-                        <button class="btn btn-primary" id="g-login" style="margin-top:2rem; padding:15px 30px; font-size:1rem;">ADMIN LOGIN (GOOGLE)</button>
-                    </div>
-                `;
-                document.getElementById('g-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+                // RESET
+                blocker.style.display = 'flex';
+                loginBox.style.display = 'block';
+                rickroll.style.display = 'none';
+                mainInterface.style.display = 'none';
             }
         });
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
+        document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        document.getElementById('logoutBtn').onclick = () => signOut(auth);
 
         // --- DASHBOARD LOGIC ---
-        function loadDashboard(profileData) {
-            const codeSpan = document.getElementById('display-access-code');
-            codeSpan.textContent = profileData.contentAccessCode || "NOT SET";
+
+        async function loadSubjects() {
+            subjectList.innerHTML = 'Loading...';
+            // Only fetch subjects created by this teacher
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials`), where('teacherId', '==', currentUser.uid), orderBy('name'));
+            const snap = await getDocs(q);
             
-            document.getElementById('edit-code-btn').onclick = () => {
-                const newCode = prompt("Set new Student Access Code:", codeSpan.textContent);
-                if(newCode) {
-                    // 1. Save to Profile
-                    updateDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`), { contentAccessCode: newCode });
-                    // 2. Save to Public Lookup (so students can find it)
-                    setDoc(doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, currentUser.uid), { code: newCode, teacherName: profileData.name });
-                    codeSpan.textContent = newCode;
-                }
-            };
-            
-            refreshTree();
+            subjectList.innerHTML = '';
+            snap.forEach(d => {
+                const subId = d.id;
+                const div = document.createElement('div');
+                div.className = 'tree-item';
+                div.innerHTML = `
+                    <div class="tree-header">
+                        <span>${d.data().name}</span>
+                        <div class="tree-actions">
+                            <button onclick="addTopic('${subId}')" title="Add Topic">+</button>
+                        </div>
+                    </div>
+                    <div class="nested" id="subs-${subId}"></div>
+                `;
+                
+                // Toggle expansion
+                div.querySelector('.tree-header').onclick = (e) => {
+                    if(e.target.tagName === 'BUTTON') return; // Ignore button clicks
+                    const n = document.getElementById(`subs-${subId}`);
+                    const isOpen = n.classList.contains('open');
+                    document.querySelectorAll('.nested').forEach(x => x.classList.remove('open')); // Accordion style
+                    if(!isOpen) {
+                        n.classList.add('open');
+                        loadTopics(subId);
+                    }
+                };
+                subjectList.appendChild(div);
+            });
         }
 
-        async function refreshTree() {
-            const container = document.getElementById('content-tree');
-            container.innerHTML = '<div style="text-align:center; padding:1rem;">SYNCING...</div>';
-            
-            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials`), where("teacherId", "==", currentUser.uid), orderBy("name"));
+        async function loadTopics(subId) {
+            const container = document.getElementById(`subs-${subId}`);
+            container.innerHTML = 'Loading...';
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics`), orderBy('name'));
             const snap = await getDocs(q);
             
             container.innerHTML = '';
-            if(snap.empty) {
-                container.innerHTML = '<div style="text-align:center; color:#666;">NO SUBJECTS FOUND. START BY ADDING ONE.</div>';
-                return;
-            }
-
-            // Render Subjects
-            for (const d of snap.docs) {
-                const sub = d.data();
+            snap.forEach(d => {
+                const tId = d.id;
                 const div = document.createElement('div');
-                div.className = 'item-row';
-                div.innerHTML = `
-                    <div class="row-header" onclick="toggleSubject('${d.id}')">
-                        <div class="row-title">${sub.name}</div>
-                        <div class="row-actions">
-                            <button class="btn" onclick="event.stopPropagation(); addTopic('${d.id}')">ADD TOPIC</button>
-                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteItem('tutorials', ['${d.id}'])">DEL</button>
-                        </div>
-                    </div>
-                    <div class="nested-content" id="sub-${d.id}">
-                        <!-- Topics Load Here -->
-                    </div>
-                `;
+                div.className = 'tree-header';
+                div.style.paddingLeft = '24px';
+                div.style.fontSize = '0.85rem';
+                div.innerHTML = `<span>• ${d.data().name}</span>`;
+                div.onclick = () => selectTopic(subId, tId, d.data().name);
                 container.appendChild(div);
-            }
+            });
+            if(snap.empty) container.innerHTML = '<div style="padding:10px; font-size:0.8rem; color:#999;">No topics yet.</div>';
         }
 
-        // Exposed functions for HTML onclick attributes
-        window.toggleSubject = async (subId) => {
-            const content = document.getElementById(`sub-${subId}`);
-            if(content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                return;
-            }
+        async function selectTopic(sId, tId, tName) {
+            selectedSubjectId = sId; selectedTopicId = tId;
+            document.getElementById('welcomeState').style.display = 'none';
+            document.getElementById('videoManagerState').style.display = 'block';
+            document.getElementById('currentTopicTitle').textContent = tName;
             
-            // Load Topics
-            content.innerHTML = 'Loading Topics...';
-            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics`), orderBy("name"));
-            const snap = await getDocs(q);
-            
-            content.innerHTML = '';
-            snap.forEach(t => {
-                const topic = t.data();
-                const tDiv = document.createElement('div');
-                tDiv.className = 'topic-row';
-                tDiv.innerHTML = `
-                    <div class="topic-header" onclick="toggleTopic('${subId}', '${t.id}')">
-                        <span>${topic.name}</span>
-                        <div class="row-actions">
-                            <button class="btn" onclick="event.stopPropagation(); addVideo('${subId}', '${t.id}')">+ VID</button>
-                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteItem('tutorials', ['${subId}', '${t.id}', 'topics'])">DEL</button>
-                        </div>
-                    </div>
-                    <div class="topic-videos" id="top-${t.id}"></div>
-                `;
-                content.appendChild(tDiv);
-            });
-            content.classList.add('expanded');
-        };
+            loadVideos();
+        }
 
-        window.toggleTopic = async (subId, topId) => {
-            const vCont = document.getElementById(`top-${topId}`);
-            if(vCont.classList.contains('open')) {
-                vCont.classList.remove('open');
-                return;
-            }
+        async function loadVideos() {
+            if(!selectedSubjectId || !selectedTopicId) return;
+            videoList.innerHTML = 'Loading videos...';
             
-            // Load Videos
-            vCont.innerHTML = 'Loading Videos...';
-            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics/${topId}/videos`)); // order manually?
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${selectedSubjectId}/topics/${selectedTopicId}/videos`));
             const snap = await getDocs(q);
             
-            vCont.innerHTML = '';
-            if(snap.empty) vCont.innerHTML = '<div style="font-size:0.8rem; color:#444; padding:5px;">No videos yet.</div>';
-            
-            snap.forEach(v => {
-                const vid = v.data();
-                globalDataMap.set(v.id, vid); // Store for editing
+            videoList.innerHTML = '';
+            snap.forEach(doc => {
+                const v = doc.data();
+                const el = document.createElement('div');
+                el.className = 'video-item';
+                el.innerHTML = `
+                    <div class="vid-info">
+                        <h4>${v.title}</h4>
+                        <span>${v.difficulty} | ${v.videoType}</span>
+                    </div>
+                    <div class="tree-actions">
+                        <button class="edit-btn" style="opacity:1; margin-right:10px;">✎ Edit</button>
+                        <button class="del-btn" style="color:red; opacity:1;">🗑</button>
+                    </div>
+                `;
                 
-                const vRow = document.createElement('div');
-                vRow.className = 'video-item';
-                vRow.innerHTML = `
-                    <span>${vid.title}</span>
-                    <div class="row-actions">
-                        <button class="btn" onclick="editVideo('${subId}', '${topId}', '${v.id}')">EDIT</button>
-                        <button class="btn btn-danger" onclick="deleteItem('tutorials', ['${subId}', '${topId}', 'videos', '${v.id}'])">DEL</button>
-                    </div>
-                `;
-                vCont.appendChild(vRow);
+                // Bind Edit
+                el.querySelector('.edit-btn').onclick = () => openEditModal(doc.id, v);
+                
+                // Bind Delete
+                el.querySelector('.del-btn').onclick = async () => {
+                    if(confirm("Delete video?")) {
+                        await deleteDoc(doc.id); // Need full path
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/tutorials/${selectedSubjectId}/topics/${selectedTopicId}/videos`, doc.id));
+                        loadVideos();
+                    }
+                };
+                
+                videoList.appendChild(el);
             });
-            vCont.classList.add('open');
+            if(snap.empty) videoList.innerHTML = '<p>No videos found.</p>';
+        }
+
+        // --- ADD/EDIT LOGIC (Fixing the issue) ---
+        
+        window.addTopic = async (subId) => {
+            const n = prompt("Topic Name:");
+            if(n) {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics`), { name: n });
+                loadTopics(subId);
+            }
         };
 
-        // --- CRUD ACTIONS ---
-
-        // 1. ADD SUBJECT
-        document.getElementById('add-subject-btn').onclick = () => {
-            showFormModal('New Subject', [{id:'name', label:'Subject Name'}], async (data) => {
+        document.getElementById('addSubjectBtn').onclick = async () => {
+            const n = prompt("Subject Name:");
+            if(n) {
                 await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials`), {
-                    name: data.name, teacherId: currentUser.uid, teacherName: currentUser.displayName
+                    name: n, teacherId: currentUser.uid, teacherName: currentUser.displayName
                 });
-                refreshTree();
-            });
+                loadSubjects();
+            }
         };
 
-        // 2. ADD TOPIC
-        window.addTopic = (subId) => {
-            showFormModal('New Topic', [{id:'name', label:'Topic Name'}], async (data) => {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics`), {
-                    name: data.name
-                });
-                // Force reload of subject
-                document.getElementById(`sub-${subId}`).classList.remove('expanded');
-                toggleSubject(subId);
-            });
+        // Modal Open
+        document.getElementById('addVideoBtn').onclick = () => {
+            document.getElementById('videoForm').reset();
+            document.getElementById('v_id').value = '';
+            document.getElementById('modalTitle').textContent = 'Add Video';
+            videoModal.style.display = 'flex';
         };
 
-        // 3. ADD VIDEO
-        window.addVideo = (subId, topId) => {
-            const fields = [
-                {id:'title', label:'Video Title'},
-                {id:'link', label:'YouTube/Vimeo Link', type:'textarea'},
-                {id:'notes', label:'Notes', type:'textarea'},
-                {id:'diff', label:'Difficulty (1/5 - 5/5)', type:'select', opts:['1/5','2/5','3/5','4/5','5/5']}
-            ];
-            showFormModal('Add Video', fields, async (data) => {
-                let type = 'direct', vId = '';
-                if(data.link.includes('youtu')) { type='youtube'; vId=data.link.match(/v=([^&]+)/)?.[1]||data.link.split('/').pop(); }
-                if(data.link.includes('vimeo')) { type='vimeo'; vId=data.link.split('/').pop(); }
-
-                await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics/${topId}/videos`), {
-                    title: data.title, link: data.link, notes: data.notes, difficulty: data.diff,
-                    videoType: type, videoId: vId, createdAt: Date.now()
-                });
-                // Reload Topic
-                document.getElementById(`top-${topId}`).classList.remove('open');
-                toggleTopic(subId, topId);
-            });
+        window.openEditModal = (id, data) => {
+            document.getElementById('v_id').value = id;
+            document.getElementById('v_title').value = data.title;
+            document.getElementById('v_link').value = data.link;
+            document.getElementById('v_notes').value = data.notes || '';
+            document.getElementById('v_diff').value = data.difficulty;
+            document.getElementById('modalTitle').textContent = 'Edit Video';
+            videoModal.style.display = 'flex';
         };
 
-        // 4. EDIT VIDEO
-        window.editVideo = (subId, topId, vidId) => {
-            const v = globalDataMap.get(vidId);
-            if(!v) return;
-            
-            const fields = [
-                {id:'title', label:'Video Title', val: v.title},
-                {id:'link', label:'YouTube/Vimeo Link', type:'textarea', val: v.link},
-                {id:'notes', label:'Notes', type:'textarea', val: v.notes},
-                {id:'diff', label:'Difficulty', type:'select', opts:['1/5','2/5','3/5','4/5','5/5'], val: v.difficulty}
-            ];
-            
-            showFormModal('Edit Video', fields, async (data) => {
-                 let type = 'direct', vId = '';
-                if(data.link.includes('youtu')) { type='youtube'; vId=data.link.match(/v=([^&]+)/)?.[1]||data.link.split('/').pop(); }
-                if(data.link.includes('vimeo')) { type='vimeo'; vId=data.link.split('/').pop(); }
+        window.closeModal = () => videoModal.style.display = 'none';
 
-                await updateDoc(doc(db, `artifacts/${appId}/public/data/tutorials/${subId}/topics/${topId}/videos`, vidId), {
-                    title: data.title, link: data.link, notes: data.notes, difficulty: data.diff,
-                    videoType: type, videoId: vId
-                });
-                document.getElementById(`top-${topId}`).classList.remove('open');
-                toggleTopic(subId, topId);
-            });
+        // Form Submit
+        document.getElementById('videoForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('v_id').value;
+            const link = document.getElementById('v_link').value;
+            
+            // Parse Link
+            let type = 'youtube', vidId = '';
+            if(link.includes('vimeo')) { type='vimeo'; vidId=link.split('/').pop(); }
+            else if(link.includes('youtu')) { type='youtube'; vidId=link.match(/v=([^&]+)/)?.[1]||link.split('/').pop(); }
+            
+            const data = {
+                title: document.getElementById('v_title').value,
+                link: link,
+                videoType: type, videoId: vidId,
+                notes: document.getElementById('v_notes').value,
+                difficulty: document.getElementById('v_diff').value
+            };
+
+            const colRef = collection(db, `artifacts/${appId}/public/data/tutorials/${selectedSubjectId}/topics/${selectedTopicId}/videos`);
+
+            if(id) {
+                // Update
+                await updateDoc(doc(colRef, id), data);
+            } else {
+                // Add
+                await addDoc(colRef, data);
+            }
+            
+            closeModal();
+            loadVideos(); // Refresh list
         };
 
-        // 5. DELETE
-        window.deleteItem = async (col, pathIds) => {
-            if(!confirm("CONFIRM DELETION? This cannot be undone.")) return;
-            
-            // Logic to construct path based on nesting.
-            // pathIds = [subId] OR [subId, topId, 'topics'] OR [subId, topId, 'videos', vidId]
-            let ref;
-            if(pathIds.length === 1) ref = doc(db, `artifacts/${appId}/public/data/tutorials`, pathIds[0]);
-            else if(pathIds.length === 3) ref = doc(db, `artifacts/${appId}/public/data/tutorials/${pathIds[0]}/topics`, pathIds[1]);
-            else ref = doc(db, `artifacts/${appId}/public/data/tutorials/${pathIds[0]}/topics/${pathIds[1]}/videos`, pathIds[3]);
-
-            await deleteDoc(ref);
-            
-            // Refresh
-            if(pathIds.length === 1) refreshTree();
-            else if(pathIds.length === 3) { document.getElementById(`sub-${pathIds[0]}`).classList.remove('expanded'); toggleSubject(pathIds[0]); }
-            else { document.getElementById(`top-${pathIds[1]}`).classList.remove('open'); toggleTopic(pathIds[0], pathIds[1]); }
-        };
-
-        // --- MODAL HELPER ---
-        const modal = document.getElementById('modal-container');
-        const mBody = document.getElementById('modal-body');
-        const mTitle = document.getElementById('modal-heading');
-
-        function showFormModal(title, fields, onSubmit) {
-            mTitle.textContent = title;
-            mBody.innerHTML = '';
-            
-            const form = document.createElement('form');
-            form.onsubmit = (e) => { e.preventDefault(); const res={}; fields.forEach(f => res[f.id] = document.getElementById('in-'+f.id).value); onSubmit(res); modal.style.display='none'; };
-            
-            fields.forEach(f => {
-                const div = document.createElement('div'); div.className='form-group';
-                const label = document.createElement('label'); label.textContent = f.label;
-                let input;
-                if(f.type === 'textarea') {
-                    input = document.createElement('textarea');
-                } else if(f.type === 'select') {
-                    input = document.createElement('select'); input.className='form-select';
-                    f.opts.forEach(o => { 
-                        const op = document.createElement('option'); op.value=o; op.textContent=o; 
-                        if(f.val === o) op.selected = true;
-                        input.appendChild(op); 
-                    });
-                } else {
-                    input = document.createElement('input'); input.type = 'text'; input.className='form-input';
-                }
-                input.id = 'in-' + f.id;
-                if(f.val && f.type !== 'select') input.value = f.val;
-                
-                div.appendChild(label); div.appendChild(input); form.appendChild(div);
-            });
-            
-            const btns = document.createElement('div'); btns.style.display='flex'; btns.style.gap='1rem'; btns.style.marginTop='1.5rem';
-            btns.innerHTML = `<button type="submit" class="btn btn-primary">SAVE</button><button type="button" class="btn" id="cancel-modal">CANCEL</button>`;
-            
-            form.appendChild(btns);
-            mBody.appendChild(form);
-            
-            document.getElementById('cancel-modal').onclick = () => modal.style.display = 'none';
-            modal.style.display = 'flex';
-        }
     </script>
 </body>
 </html>
