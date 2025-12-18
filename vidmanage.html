@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>darStudy | Core Controller</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #050505;
+            --surface-hover: #111;
+            --border: #1a1a1a;
+            --text: #ffffff;
+            --text-dim: #666666;
+            --font-tech: 'Syncopate', sans-serif;
+            --font-main: 'Space+Grotesk', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg);
+            color: var(--text);
+            padding: 4rem;
+        }
+
+        h1, h2 { font-family: var(--font-tech); letter-spacing: 0.3rem; margin-bottom: 2rem; }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        .btn {
+            background: none; border: 1px solid var(--border); color: #fff;
+            padding: 0.8rem 1.5rem; cursor: pointer; font-family: var(--font-tech);
+            font-size: 0.6rem; transition: 0.3s;
+        }
+        .btn:hover { background: #fff; color: #000; }
+        .btn-danger:hover { background: #ff4444; border-color: #ff4444; color: #fff; }
+
+        .card { 
+            background: var(--surface); border: 1px solid var(--border); padding: 2rem; 
+            margin-bottom: 2rem; position: relative;
+        }
+
+        .item-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem; border-bottom: 1px solid var(--border); transition: 0.3s;
+        }
+        .item-row:hover { background: var(--surface-hover); }
+
+        input, textarea, select {
+            width: 100%; background: #000; border: 1px solid var(--border);
+            color: #fff; padding: 1rem; margin-bottom: 1rem; font-family: inherit;
+        }
+
+        .modal { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 100; align-items: center; justify-content: center;
+        }
+        .modal-content { background: #000; border: 1px solid var(--border); padding: 3rem; width: 500px; }
+
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-bar">
+            <h1>CONTROL_PANEL</h1>
+            <a href="tutorials.html" style="color: var(--text-dim); text-decoration: none; font-family: var(--font-tech); font-size: 0.6rem;">&larr; BACK_TO_USER_VIEW</a>
+        </div>
+
+        <div class="card">
+            <h2>ACCESS_KEY</h2>
+            <div style="display: flex; gap: 1rem;">
+                <input type="text" id="accessCode" placeholder="SET_TEACHER_CODE">
+                <button id="saveCode" class="btn">ENCRYPT</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>MODULE_HIERARCHY</h2>
+                <button id="addSubject" class="btn">+ ADD_SUBJECT</button>
+            </div>
+            <div id="hierarchyList"></div>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <h2 id="vmTitle">ADD_VIDEO</h2>
+            <input type="hidden" id="vId">
+            <input type="text" id="vTitle" placeholder="TITLE">
+            <input type="text" id="vLink" placeholder="LINK (YT/VIMEO)">
+            <textarea id="vNotes" placeholder="DATA_LOGS"></textarea>
+            <select id="vDiff">
+                <option value="U">UNSPECIFIED</option>
+                <option value="1/5">RANK 1 (LOW)</option>
+                <option value="3/5">RANK 3 (MID)</option>
+                <option value="5/5">RANK 5 (HIGH)</option>
+            </select>
+            <div style="display: flex; gap: 1rem;">
+                <button id="saveVideo" class="btn">STORE_ENTRY</button>
+                <button onclick="document.getElementById('videoModal').style.display='none'" class="btn btn-danger">ABORT</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsJCaGD3ElBb_xQXd7pQgLBAgEwa2poKI", authDomain: "ai-grading-9bb30.firebaseapp.com",
+            projectId: "ai-grading-9bb30", storageBucket: "ai-grading-9bb30.appspot.com",
+            messagingSenderId: "298162112230", appId: "1:298162112230:web:529d3f95536991be685d27"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let user = null;
+        let profile = null;
+
+        onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                user = u;
+                const snap = await getDoc(doc(db, `artifacts/${appId}/users/${u.uid}/profile/data`));
+                profile = snap.data();
+                if (profile?.role !== 'teacher') {
+                    alert("AUTHORIZATION_FAILURE: TEACHER_PRIVILEGES_REQUIRED");
+                    window.location.href = "tutorials.html";
+                } else {
+                    initManager();
+                }
+            } else { window.location.href = "tutorials.html"; }
+        });
+
+        async function initManager() {
+            if (profile.contentAccessCode) document.getElementById('accessCode').value = profile.contentAccessCode;
+            document.getElementById('saveCode').onclick = async () => {
+                const c = document.getElementById('accessCode').value;
+                await setDoc(doc(db, `artifacts/${appId}/public/data/teacherAccessCodes`, user.uid), { code: c, teacherName: profile.name });
+                await updateDoc(doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`), { contentAccessCode: c });
+                alert("CODE_ENCRYPTED");
+            };
+            refreshList();
+        }
+
+        async function refreshList() {
+            const list = document.getElementById('hierarchyList');
+            list.innerHTML = 'SYNCING_ARCHIVE...';
+            const snap = await getDocs(query(collection(db, `artifacts/${appId}/public/data/tutorials`), where('teacherId', '==', user.uid)));
+            list.innerHTML = '';
+            snap.forEach(d => {
+                const subj = d.data();
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>${subj.name.toUpperCase()}</h3>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn" onclick="addTopic('${d.id}')">+ TOPIC</button>
+                            <button class="btn btn-danger" onclick="delItem('subj', '${d.id}')">DEL</button>
+                        </div>
+                    </div>
+                    <div id="top-${d.id}" style="margin-top:2rem; padding-left:2rem; border-left:1px solid var(--border);"></div>
+                `;
+                list.appendChild(div);
+                loadTopics(d.id);
+            });
+        }
+
+        window.addTopic = async (sId) => {
+            const n = prompt("TOPIC_NAME:");
+            if (!n) return;
+            await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics`), { name: n, createdAt: Date.now() });
+            loadTopics(sId);
+        };
+
+        async function loadTopics(sId) {
+            const cont = document.getElementById(`top-${sId}`);
+            const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics`));
+            cont.innerHTML = '';
+            snap.forEach(d => {
+                const t = d.data();
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <div class="item-row">
+                        <span>NODE: ${t.name.toUpperCase()}</span>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn" onclick="openVidModal('${sId}', '${d.id}')">+ VID</button>
+                            <button class="btn btn-danger" onclick="delItem('topic', '${d.id}', '${sId}')">DEL</button>
+                        </div>
+                    </div>
+                    <div id="vid-${d.id}" style="padding-left:2rem;"></div>
+                `;
+                cont.appendChild(div);
+                loadVideos(sId, d.id);
+            });
+        }
+
+        async function loadVideos(sId, tId) {
+            const cont = document.getElementById(`vid-${tId}`);
+            const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics/${tId}/videos`));
+            cont.innerHTML = '';
+            snap.forEach(d => {
+                const v = d.data();
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                div.style.fontSize = '0.7rem';
+                div.innerHTML = `
+                    <span style="color:var(--text-dim)">STREAM: ${v.title}</span>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="btn" onclick="openVidModal('${sId}', '${tId}', '${d.id}', ${JSON.stringify(v).replace(/"/g, '&quot;')})">EDIT</button>
+                        <button class="btn btn-danger" onclick="delItem('vid', '${d.id}', '${sId}', '${tId}')">DEL</button>
+                    </div>
+                `;
+                cont.appendChild(div);
+            });
+        }
+
+        window.openVidModal = (sId, tId, vId = null, data = null) => {
+            const m = document.getElementById('videoModal');
+            m.style.display = 'flex';
+            document.getElementById('vmTitle').textContent = vId ? 'UPDATE_ENTRY' : 'NEW_ENTRY';
+            document.getElementById('vId').value = vId || '';
+            document.getElementById('vTitle').value = data?.title || '';
+            document.getElementById('vLink').value = data?.link || '';
+            document.getElementById('vNotes').value = data?.notes || '';
+            document.getElementById('vDiff').value = data?.difficulty || 'U';
+
+            document.getElementById('saveVideo').onclick = async () => {
+                const payload = {
+                    title: document.getElementById('vTitle').value,
+                    link: document.getElementById('vLink').value,
+                    notes: document.getElementById('vNotes').value,
+                    difficulty: document.getElementById('vDiff').value
+                };
+                const path = `artifacts/${appId}/public/data/tutorials/${sId}/topics/${tId}/videos`;
+                if (vId) await updateDoc(doc(db, path, vId), payload);
+                else await addDoc(collection(db, path), payload);
+                m.style.display = 'none';
+                loadVideos(sId, tId);
+            };
+        };
+
+        window.delItem = async (type, id, p1, p2) => {
+            if (!confirm("PURGE_DATA?")) return;
+            let path = `artifacts/${appId}/public/data/tutorials`;
+            if (type === 'topic') path += `/${p1}/topics`;
+            if (type === 'vid') path += `/${p1}/topics/${p2}/videos`;
+            await deleteDoc(doc(db, path, id));
+            if (type === 'subj') refreshList();
+            else if (type === 'topic') loadTopics(p1);
+            else loadVideos(p1, p2);
+        };
+
+        document.getElementById('addSubject').onclick = async () => {
+            const n = prompt("SUBJECT_NAME:");
+            if (!n) return;
+            await addDoc(collection(db, `artifacts/${appId}/public/data/tutorials`), { name: n, teacherId: user.uid, createdAt: Date.now() });
+            refreshList();
+        };
+
+    </script>
+</body>
+</html>
