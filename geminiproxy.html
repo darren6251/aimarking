@@ -1,0 +1,477 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Menu, 
+  Plus, 
+  MessageSquare, 
+  MoreVertical, 
+  Settings, 
+  Activity, 
+  HelpCircle, 
+  Send, 
+  Image as ImageIcon, 
+  Mic, 
+  X, 
+  Bot, 
+  User, 
+  Sparkles,
+  Code,
+  Copy,
+  Check
+} from 'lucide-react';
+
+// --- Markdown / Text Formatting Helper ---
+// Since we are in a single file without a heavy markdown library, 
+// we use a robust regex-based parser for the essentials: Code blocks, Bold, and Paragraphs.
+const FormattedText = ({ text }) => {
+  if (!text) return null;
+
+  // Split by code blocks first
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div className="text-sm md:text-base leading-relaxed space-y-4">
+      {parts.map((part, index) => {
+        if (part.startsWith('```')) {
+          // Code Block
+          const content = part.slice(3, -3).replace(/^.*\n/, ''); // Remove language line if exists
+          const language = part.match(/^```(\w+)/)?.[1] || 'Code';
+          return (
+            <div key={index} className="bg-[#1E1F20] rounded-lg overflow-hidden my-2 border border-gray-700">
+              <div className="flex items-center justify-between px-4 py-2 bg-[#2D2E30] text-xs text-gray-400 font-mono">
+                <span>{language}</span>
+                <button 
+                  onClick={() => navigator.clipboard.writeText(content)}
+                  className="hover:text-white flex items-center gap-1 transition-colors"
+                >
+                  <Copy size={12} /> Copy
+                </button>
+              </div>
+              <div className="p-4 overflow-x-auto">
+                <pre className="font-mono text-blue-300 whitespace-pre-wrap">{content}</pre>
+              </div>
+            </div>
+          );
+        }
+
+        // Regular text processing
+        // 1. Split paragraphs
+        const paragraphs = part.split(/\n\n+/);
+        
+        return (
+          <div key={index}>
+            {paragraphs.map((para, pIndex) => {
+              // 2. Process Bold (**text**)
+              const boldParts = para.split(/(\*\*.*?\*\*)/g);
+              return (
+                <p key={pIndex} className="mb-2 last:mb-0">
+                  {boldParts.map((bp, bIndex) => {
+                    if (bp.startsWith('**') && bp.endsWith('**')) {
+                      return <strong key={bIndex} className="font-bold text-white">{bp.slice(2, -2)}</strong>;
+                    }
+                    return bp;
+                  })}
+                </p>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default function GeminiClone() {
+  const [input, setInput] = useState('');
+  const [image, setImage] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [model, setModel] = useState('gemini-1.5-pro'); // Defaulting to the big brain
+
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Auto-scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = () => {
+    setImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSend = async () => {
+    if ((!input.trim() && !image) || isLoading) return;
+
+    const userMsg = {
+      role: 'user',
+      text: input,
+      image: image,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setImage(null);
+    setIsLoading(true);
+
+    try {
+      // Constructing the payload for the proxy
+      // Assuming the proxy acts like the standard Gemini API or a close wrapper
+      const contents = messages.concat(userMsg).map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [
+          { text: msg.text },
+          ...(msg.image ? [{ inline_data: { mime_type: "image/jpeg", data: msg.image.split(',')[1] } }] : [])
+        ]
+      }));
+      
+      // Just sending the last message + context if needed, but for simplicity/token limits 
+      // in this demo, let's send the whole history formatted for Gemini.
+      
+      const payload = {
+        contents: contents,
+        model: model, // "default pro" as requested
+        generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+        }
+      };
+
+      const response = await fetch("https://gemini-proxy-513372702506.us-central1.run.app/proxy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Proxy hiccup! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Parse standard Gemini API response structure
+      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm speechless (literally, the API returned no text).";
+
+      const botMsg = {
+        role: 'model',
+        text: botText,
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, botMsg]);
+
+    } catch (error) {
+      console.error("Error:", error);
+      setMessages(prev => [...prev, {
+        role: 'model',
+        text: `**Error:** I tripped over a virtual wire. \n\nDebug details: ${error.message}`,
+        isError: true
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-[#131314] text-[#E3E3E3] font-sans overflow-hidden">
+      
+      {/* Sidebar */}
+      <div 
+        className={`${sidebarOpen ? 'w-72' : 'w-0'} bg-[#1E1F20] transition-all duration-300 ease-in-out flex flex-col border-r border-gray-800 absolute md:relative z-20 h-full overflow-hidden`}
+      >
+        <div className="p-4">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="p-2 hover:bg-[#333537] rounded-full mb-4 md:hidden"
+          >
+            <Menu size={20} />
+          </button>
+          
+          <button 
+            onClick={() => { setMessages([]); setInput(''); setImage(null); }}
+            className="flex items-center gap-3 bg-[#1A1A1C] hover:bg-[#28292C] text-[#E3E3E3] px-4 py-3 rounded-full transition-colors w-full mb-6 cursor-pointer"
+          >
+            <Plus size={18} className="text-gray-400" />
+            <span className="text-sm font-medium">New chat</span>
+          </button>
+
+          <div className="text-sm font-medium text-gray-400 mb-2 px-3">Recent</div>
+          <div className="flex-1 overflow-y-auto space-y-1">
+            <div className="group flex items-center gap-3 px-3 py-2 rounded-full hover:bg-[#333537] cursor-pointer text-sm truncate">
+              <MessageSquare size={16} />
+              <span className="truncate">React Component Help</span>
+            </div>
+            <div className="group flex items-center gap-3 px-3 py-2 rounded-full hover:bg-[#333537] cursor-pointer text-sm truncate">
+              <MessageSquare size={16} />
+              <span className="truncate">Explain Quantum Physics</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-2 mt-auto border-t border-gray-800">
+           <button className="flex items-center gap-3 px-4 py-2 hover:bg-[#333537] rounded-lg w-full text-sm text-left">
+              <HelpCircle size={18} className="text-gray-400" />
+              Help
+           </button>
+           <button className="flex items-center gap-3 px-4 py-2 hover:bg-[#333537] rounded-lg w-full text-sm text-left">
+              <Activity size={18} className="text-gray-400" />
+              Activity
+           </button>
+           <button className="flex items-center gap-3 px-4 py-2 hover:bg-[#333537] rounded-lg w-full text-sm text-left">
+              <Settings size={18} className="text-gray-400" />
+              Settings
+           </button>
+           <div className="flex items-center gap-2 px-4 py-3 mt-1">
+             <div className="w-2 h-2 rounded-full bg-green-500"></div>
+             <span className="text-xs text-gray-400">Incheon, South Korea (Based on IP)</span>
+           </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col h-full relative w-full">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 bg-[#131314] z-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-[#28292C] rounded-full text-gray-400">
+              <Menu size={20} />
+            </button>
+            <div className="flex items-center gap-1 cursor-pointer group">
+               <span className="text-lg font-medium text-white">Gemini</span>
+               <span className="text-xs px-2 py-0.5 bg-[#2D2E30] rounded text-gray-300 group-hover:bg-[#38393C] transition-colors">Advanced</span>
+               <MoreVertical size={16} className="text-gray-400" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
+               U
+             </div>
+          </div>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-0 scrollbar-thin scrollbar-thumb-gray-700">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto opacity-0 animate-[fadeIn_0.5s_ease-in_forwards]" style={{animationFillMode: 'forwards'}}>
+              <div className="mb-8">
+                <h1 className="text-4xl md:text-5xl font-medium bg-gradient-to-r from-blue-400 via-purple-400 to-red-400 bg-clip-text text-transparent mb-2">Hello, Human.</h1>
+                <h2 className="text-4xl md:text-5xl font-medium text-[#444746]">How can I help you today?</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-4">
+                {['Plan a trip', 'Write code', 'Explain a concept', 'Brainstorm ideas'].map((suggestion, i) => (
+                  <div key={i} className="bg-[#1E1F20] p-4 rounded-xl hover:bg-[#2D2E30] cursor-pointer transition-colors h-40 relative group">
+                    <p className="text-sm font-medium">{suggestion}</p>
+                    <div className="absolute bottom-4 right-4 bg-[#131314] p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Sparkles size={16} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto py-6 space-y-8 pb-32">
+              {messages.map((msg, idx) => (
+                <div key={idx} className="flex gap-4 animate-[slideUp_0.3s_ease-out]">
+                  <div className="flex-shrink-0 mt-1">
+                    {msg.role === 'user' ? (
+                       <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                          <User size={18} />
+                       </div>
+                    ) : (
+                       <div className="w-8 h-8 rounded-full overflow-hidden shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+                          {/* Gemini Icon SVG */}
+                          <svg viewBox="0 0 24 24" className="w-full h-full bg-white">
+                             <path fill="url(#gemini-gradient)" d="M12,22 C12,18 8,14 4,12 C8,10 12,6 12,2 C12,6 16,10 20,12 C16,14 12,18 12,22 Z" />
+                             <defs>
+                                <linearGradient id="gemini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                   <stop offset="0%" stopColor="#4E84FA" />
+                                   <stop offset="100%" stopColor="#D94C69" />
+                                </linearGradient>
+                             </defs>
+                          </svg>
+                       </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">{msg.role === 'user' ? 'You' : 'Gemini'}</span>
+                      <span className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    
+                    {msg.image && (
+                      <div className="mb-3">
+                         <img src={msg.image} alt="Uploaded" className="max-w-xs max-h-60 rounded-lg border border-gray-700" />
+                      </div>
+                    )}
+
+                    <div className="text-[#E3E3E3]">
+                      {msg.role === 'model' ? (
+                         <FormattedText text={msg.text} />
+                      ) : (
+                         <p className="whitespace-pre-wrap">{msg.text}</p>
+                      )}
+                    </div>
+
+                    {msg.role === 'model' && (
+                       <div className="flex items-center gap-2 mt-2">
+                          <button className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2D2E30] rounded transition-colors" title="Copy">
+                             <Copy size={16} onClick={() => navigator.clipboard.writeText(msg.text)} />
+                          </button>
+                          <button className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2D2E30] rounded transition-colors" title="Good response">
+                             <Check size={16} />
+                          </button>
+                       </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                 <div className="flex gap-4">
+                    <div className="w-8 h-8 flex-shrink-0 animate-spin">
+                       <svg viewBox="0 0 24 24" className="w-full h-full">
+                           <path fill="url(#gemini-loading)" d="M12,22 C12,18 8,14 4,12 C8,10 12,6 12,2 C12,6 16,10 20,12 C16,14 12,18 12,22 Z" />
+                           <defs>
+                              <linearGradient id="gemini-loading" x1="0%" y1="0%" x2="100%" y2="100%">
+                                 <stop offset="0%" stopColor="#4E84FA" />
+                                 <stop offset="100%" stopColor="#D94C69" />
+                              </linearGradient>
+                           </defs>
+                       </svg>
+                    </div>
+                    <div className="flex flex-col gap-2 mt-2 w-full">
+                       <div className="h-4 bg-[#2D2E30] rounded animate-pulse w-3/4"></div>
+                       <div className="h-4 bg-[#2D2E30] rounded animate-pulse w-1/2"></div>
+                    </div>
+                 </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="absolute bottom-0 w-full bg-[#131314] pt-2 pb-6 px-4">
+           <div className="max-w-3xl mx-auto relative">
+              {/* Image Preview */}
+              {image && (
+                <div className="absolute bottom-full left-0 mb-2 p-2 bg-[#1E1F20] rounded-xl border border-gray-700 flex items-start gap-2 animate-[slideUp_0.2s_ease-out]">
+                   <img src={image} alt="Preview" className="h-20 w-auto rounded-lg" />
+                   <button onClick={clearImage} className="bg-gray-700 rounded-full p-1 hover:bg-gray-600 text-white">
+                      <X size={14} />
+                   </button>
+                </div>
+              )}
+
+              <div className={`bg-[#1E1F20] rounded-[28px] flex flex-col transition-all border border-gray-700 focus-within:border-gray-500 focus-within:bg-[#28292C]`}>
+                 <div className="flex items-end gap-2 p-2">
+                    <button 
+                       onClick={() => fileInputRef.current?.click()} 
+                       className="p-3 text-[#E3E3E3] hover:bg-[#333537] rounded-full transition-colors flex-shrink-0"
+                       title="Upload Image"
+                    >
+                       <ImageIcon size={22} />
+                       <span className="sr-only">Upload image</span>
+                    </button>
+                    <input 
+                       type="file" 
+                       ref={fileInputRef} 
+                       className="hidden" 
+                       accept="image/*" 
+                       onChange={handleImageUpload} 
+                    />
+                    
+                    <button className="p-3 text-[#E3E3E3] hover:bg-[#333537] rounded-full transition-colors flex-shrink-0 md:hidden">
+                       <Mic size={22} />
+                    </button>
+
+                    <textarea 
+                       value={input}
+                       onChange={(e) => setInput(e.target.value)}
+                       onKeyDown={handleKeyDown}
+                       placeholder="Enter a prompt here"
+                       className="w-full bg-transparent text-[#E3E3E3] placeholder-gray-400 border-none focus:ring-0 resize-none py-3 max-h-64 overflow-y-auto"
+                       rows={1}
+                       style={{ minHeight: '48px' }}
+                    />
+
+                    {input || image ? (
+                      <button 
+                         onClick={handleSend}
+                         disabled={isLoading}
+                         className={`p-3 rounded-full transition-all flex-shrink-0 ${isLoading ? 'bg-gray-600 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'}`}
+                      >
+                         <Send size={20} className={isLoading ? 'opacity-50' : ''} />
+                      </button>
+                    ) : (
+                      <button className="p-3 text-[#E3E3E3] hover:bg-[#333537] rounded-full transition-colors flex-shrink-0 md:flex hidden">
+                         <Mic size={22} />
+                      </button>
+                    )}
+                 </div>
+              </div>
+              <div className="text-center mt-2">
+                 <p className="text-xs text-gray-500">Gemini may display inaccurate info, including about people, so double-check its responses.</p>
+              </div>
+           </div>
+        </div>
+
+      </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #444746; 
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #5e5e5e; 
+        }
+      `}</style>
+    </div>
+  );
+}
