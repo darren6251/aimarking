@@ -3,478 +3,603 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>darStudy | Neural Link</title>
-    <!-- PDF.js & HLS.js -->
+    <title>darStudy</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- YouTube API -->
-    <script>function onYouTubeIframeAPIReady(){window.isYouTubeApiReady=true;}</script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://player.vimeo.com/api/player.js"></script>
     
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 'cyber-black': '#050505' },
-                    fontFamily: { mono: ['"JetBrains Mono"', 'monospace'], sans: ['"Inter"', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-
     <style>
-        body {
-            background-color: #050505; color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, transparent 70%);
+        /* --- HIGH-TECH BLACK & WHITE THEME --- */
+        :root {
+            --bg-deep: #000000;
+            --bg-panel: rgba(20, 20, 20, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-subtle: rgba(255, 255, 255, 0.15);
+            --border-glow: rgba(255, 255, 255, 0.5);
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-glow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
-        .glass-panel { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .tech-btn { border: 1px solid rgba(255,255,255,0.3); color: #fff; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
-        .tech-btn:hover { background: rgba(255,255,255,0.1); border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
-        .loader { width: 40px; height: 40px; border: 2px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        select option { background: #000; color: white; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px; /* Tech Grid Background */
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Typography */
+        h1, h2, h3, .tech-font { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Layout */
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+
+        /* Header */
+        header {
+            height: 70px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .brand { font-size: 1.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        
+        .nav-items { display: flex; gap: 2rem; align-items: center; }
+        .nav-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-link:hover, .nav-link.active { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+        
+        .user-badge { border: 1px solid var(--border-subtle); padding: 5px 15px; border-radius: 4px; font-size: 0.8rem; background: var(--bg-glass); }
+
+        /* Main Area */
+        main { flex: 1; padding: 2rem; overflow-y: auto; position: relative; }
+
+        /* Filter Bar */
+        .filter-hud {
+            display: flex; gap: 1rem; padding: 1.5rem;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .hud-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 0.5rem; }
+        .hud-label { color: var(--text-muted); font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; }
+        
+        select {
+            background: #000; color: #fff; border: 1px solid var(--border-subtle);
+            padding: 10px; border-radius: 4px; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: 0.3s;
+        }
+        select:hover, select:focus { border-color: #fff; box-shadow: var(--accent-glow); outline: none; }
+        select:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Grid */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+        
+        .video-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+        }
+        .video-card:hover { transform: translateY(-5px); border-color: #fff; box-shadow: 0 10px 40px rgba(255,255,255,0.1); }
+        
+        .thumb-wrapper { position: relative; aspect-ratio: 16/9; overflow: hidden; background: #111; }
+        .thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.3s; }
+        .video-card:hover .thumb-wrapper img { opacity: 1; transform: scale(1.05); }
+        
+        .card-info { padding: 1.2rem; }
+        .card-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; line-height: 1.4; color: #fff; }
+        .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); }
+        .difficulty { border: 1px solid var(--border-subtle); padding: 2px 6px; border-radius: 3px; }
+        
+        .status-indicator {
+            position: absolute; top: 10px; right: 10px;
+            background: #000; border: 1px solid #fff; color: #fff;
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Video Player Mode */
+        #player-overlay {
+            position: fixed; top: 70px; left: 0; width: 100vw; height: calc(100vh - 70px);
+            background: var(--bg-deep); z-index: 200; display: none;
+            flex-direction: row; animation: fadeIn 0.4s ease;
+        }
+
+        .theater-mode { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border-subtle); }
+        .screen-container { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        
+        .control-bar {
+            padding: 1rem 2rem; border-top: 1px solid var(--border-subtle);
+            display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel);
+        }
+        
+        .btn-tech {
+            background: transparent; border: 1px solid var(--border-subtle); color: #fff;
+            padding: 8px 20px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;
+            cursor: pointer; transition: 0.3s; font-family: 'Orbitron', sans-serif;
+        }
+        .btn-tech:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
+        .btn-tech.glow { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.4); border-color: #fff; }
+
+        /* Sidebar (Info + Chat) */
+        .sidebar-hud { width: 400px; background: var(--bg-panel); display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .sidebar-section { padding: 1.5rem; border-bottom: 1px solid var(--border-subtle); }
+        .sidebar-title { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .video-desc { font-size: 0.9rem; line-height: 1.6; color: #ddd; white-space: pre-wrap; }
+
+        /* AI Chat */
+        .chat-container { flex: 1; display: flex; flex-direction: column; min-height: 400px; }
+        .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        
+        .msg { padding: 10px 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; max-width: 90%; }
+        .msg.ai { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); color: #ccc; }
+        .msg.user { align-self: flex-end; background: #fff; color: #000; border: 1px solid #fff; }
+        
+        .chat-input-box { padding: 1rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.5rem; }
+        .chat-input {
+            flex: 1; background: #000; border: 1px solid var(--border-subtle); color: #fff;
+            padding: 10px; border-radius: 4px; resize: none; font-family: 'Inter', sans-serif;
+        }
+        .chat-input:focus { border-color: #fff; outline: none; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Auth Overlay */
+        #auth-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            background: var(--bg-panel); border: 1px solid var(--border-subtle);
+            padding: 3rem; text-align: center; width: 100%; max-width: 400px;
+            box-shadow: 0 0 50px rgba(255,255,255,0.05);
+        }
+        
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col">
+<body>
 
-    <!-- Auth Wrapper (Exact same logic as before) -->
-    <div id="authWrapper" class="fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-500">
-        <div class="glass-panel p-8 rounded-2xl max-w-md w-full text-center border border-white/10 relative">
-            <h1 class="text-4xl font-bold font-mono tracking-tighter mb-2">dar<span class="text-gray-400">Study</span></h1>
-            <p class="text-sm text-gray-500 font-mono mb-8 uppercase tracking-widest">Authentication Required</p>
-            
-            <div id="authContainer" class="flex flex-col gap-4">
-                <!-- Content injected by JS -->
-                <div class="loader mx-auto"></div>
+    <!-- AUTHENTICATION -->
+    <div id="auth-overlay">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">darStudy</h1>
+        <div class="auth-card" id="auth-box">
+            <h2 style="margin-bottom: 2rem;">IDENTIFICATION REQUIRED</h2>
+            <div id="loading-auth">Initializing Security Protocols...</div>
+            <div id="login-forms" style="display:none;">
+                <button class="btn-tech glow" id="google-login-btn" style="width:100%; padding: 15px; font-size: 1rem;">
+                    GOOGLE SIGN IN
+                </button>
+                <div style="margin-top: 20px; color: #666; font-size: 0.8rem;">SECURE CONNECTION</div>
             </div>
         </div>
     </div>
 
-    <!-- App UI -->
-    <div id="appSection" class="flex-col min-h-screen hidden">
-        <!-- Header -->
-        <header class="h-16 border-b border-white/10 bg-black/80 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between px-6">
-            <div class="flex items-center gap-4">
-                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <h1 class="text-xl font-bold font-mono tracking-tighter">dar<span class="text-gray-500">Study</span>_VIEWER</h1>
-            </div>
-            
-            <div class="flex items-center gap-6">
-                <nav class="hidden md:flex gap-1">
-                    <a href="home.html" class="px-4 py-2 text-sm font-mono text-gray-400 hover:text-white transition-colors">/HOME</a>
-                    <a href="#" class="px-4 py-2 text-sm font-mono text-white border-b border-white">/TUTORIALS</a>
-                </nav>
-                <div class="h-4 w-px bg-white/20"></div>
-                <div class="flex items-center gap-3">
-                    <span id="userDisplayName" class="text-xs font-mono text-gray-400 uppercase hidden sm:block"></span>
-                    <button id="logoutButton" class="text-xs font-mono text-red-400 hover:text-red-300 border border-red-900/50 px-3 py-1 rounded bg-red-900/10 hover:bg-red-900/20 transition">LOGOUT</button>
-                </div>
+    <!-- MAIN APP -->
+    <div class="app-container" id="app-main" style="display:none;">
+        <header>
+            <div class="brand">NEXUS <span style="font-weight:300; opacity:0.7;">// LEARNING</span></div>
+            <div class="nav-items">
+                <a href="#" class="nav-link active">Library</a>
+                <span class="user-badge" id="user-display">USER</span>
+                <button class="btn-tech" id="logout-btn">Log Out</button>
             </div>
         </header>
 
-        <main class="flex-1 relative container mx-auto p-6 max-w-7xl">
-            <!-- Viewer Section -->
-            <div id="tutorialSection" class="w-full">
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold mb-2 tracking-tight">System Modules</h2>
-                    <p class="text-gray-500 text-sm font-mono">SELECT PARAMETERS TO INITIATE DATA STREAM</p>
+        <main>
+            <!-- Filters -->
+            <div class="filter-hud">
+                <div class="hud-group">
+                    <label class="hud-label">01 // INSTRUCTOR</label>
+                    <select id="sel-teacher"><option value="">SELECT SOURCE</option></select>
                 </div>
-
-                <!-- Filters -->
-                <div class="glass-panel p-6 rounded-xl mb-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-mono text-gray-400 uppercase tracking-wider">01 // Instructor</label>
-                        <select id="teacher-tutorials-filter" class="w-full bg-black/50 border border-white/10 text-white rounded p-3 text-sm focus:border-white focus:outline-none transition-colors">
-                            <option value="">-- SELECT SOURCE --</option>
-                        </select>
-                        <button id="unlockTeacherBtn" class="text-xs text-left text-gray-500 hover:text-white mt-1 underline decoration-dotted">Unlock New Source [+]</button>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-mono text-gray-400 uppercase tracking-wider">02 // Subject</label>
-                        <select id="level1-tutorials-filter" disabled class="w-full bg-black/50 border border-white/10 text-white rounded p-3 text-sm focus:border-white focus:outline-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed"></select>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-mono text-gray-400 uppercase tracking-wider">03 // Topic</label>
-                        <select id="level2-tutorials-filter" disabled class="w-full bg-black/50 border border-white/10 text-white rounded p-3 text-sm focus:border-white focus:outline-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed"></select>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-mono text-gray-400 uppercase tracking-wider">04 // Sort Order</label>
-                        <select id="sort-tutorials-filter" disabled class="w-full bg-black/50 border border-white/10 text-white rounded p-3 text-sm focus:border-white focus:outline-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                            <option value="name-asc">Alphabetical [A-Z]</option>
-                            <option value="diff-asc">Difficulty [Low-High]</option>
-                        </select>
-                    </div>
+                <div class="hud-group">
+                    <label class="hud-label">02 // SUBJECT</label>
+                    <select id="sel-subject" disabled><option value="">AWAITING INPUT</option></select>
                 </div>
-
-                <!-- Grid -->
-                <div id="level3-tutorials-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                <div class="hud-group">
+                    <label class="hud-label">03 // TOPIC</label>
+                    <select id="sel-topic" disabled><option value="">AWAITING INPUT</option></select>
+                </div>
+                <div class="hud-group">
+                    <label class="hud-label">04 // ACCESS</label>
+                    <button class="btn-tech" id="unlock-btn" style="text-align:center;">UNLOCK NEW TEACHER</button>
+                </div>
             </div>
 
-            <!-- Player Section -->
-            <div id="videoPlayerSection" class="hidden fixed inset-0 z-50 bg-black flex flex-col md:flex-row">
-                <!-- Main Video Area -->
-                <div class="flex-1 flex flex-col relative h-full">
-                    <div class="absolute top-4 left-4 z-10">
-                        <button id="backToTutorialsBtn" class="glass-panel px-4 py-2 rounded-full text-sm font-mono hover:bg-white hover:text-black transition-all flex items-center gap-2">
-                            <span>←</span> RETURN
-                        </button>
-                    </div>
-                    <div id="videoPlayerContainer" class="w-full h-full bg-black flex items-center justify-center"></div>
-                </div>
-
-                <!-- Sidebar -->
-                <div class="w-full md:w-[400px] bg-[#0a0a0a] border-l border-white/10 flex flex-col h-[50vh] md:h-full">
-                    <div class="p-6 border-b border-white/10">
-                        <h2 id="videoInfoTitle" class="text-xl font-bold mb-2"></h2>
-                        <p id="videoInfoDescription" class="text-sm text-gray-400 font-mono whitespace-pre-wrap"></p>
-                        <div class="mt-4 flex gap-2">
-                            <a id="materialsLink" href="#" target="_blank" class="hidden flex-1 text-center py-2 text-xs font-bold bg-white text-black rounded hover:bg-gray-200 transition">DOWNLOAD_ASSETS</a>
-                            <button id="completionToggleButton" class="flex-1 py-2 text-xs font-bold border border-white/20 rounded hover:border-white transition">MARK_COMPLETE</button>
-                        </div>
-                    </div>
-                    <div class="flex-1 overflow-y-auto p-4 border-b border-white/10">
-                        <h3 class="text-xs font-mono text-gray-500 uppercase mb-3">Sequence Queue</h3>
-                        <div id="topicPlaylist" class="flex flex-col gap-1"></div>
-                    </div>
-                    <!-- AI Chat -->
-                    <div id="aiChatWidget" class="h-1/2 flex flex-col bg-[#050505]">
-                        <div class="p-3 border-b border-white/10 flex justify-between items-center bg-[#0a0a0a]">
-                            <span class="text-xs font-mono text-green-400">● AI_TUTOR_ONLINE</span>
-                            <button id="clearChatBtn" class="text-[10px] border border-white/20 px-2 py-1 rounded hover:bg-white/10">RESET</button>
-                        </div>
-                        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm"></div>
-                        <div class="p-3 border-t border-white/10">
-                            <div id="imagePreviewContainer" class="hidden mb-2 bg-[#111] p-2 rounded border border-white/10 flex justify-between items-center">
-                                <div class="flex items-center gap-2"><img id="chatImagePreview" class="h-8 w-8 object-cover rounded border border-white/20"><span class="text-xs text-gray-400">Image Loaded</span></div>
-                                <button id="removeImageBtn" class="text-gray-500 hover:text-red-400">×</button>
-                            </div>
-                            <div class="flex gap-2 items-end">
-                                <input type="file" id="chatFileInput" accept="image/*" class="hidden">
-                                <button id="attachBtn" class="h-10 w-10 flex items-center justify-center rounded-lg border border-white/10 hover:border-white/50 text-gray-400 hover:text-white transition">📎</button>
-                                <textarea id="chatInput" placeholder="Enter command..." rows="1" class="flex-1 bg-[#111] border border-white/10 rounded-lg p-2 text-sm focus:border-white/50 focus:outline-none text-white resize-none h-10 py-2.5"></textarea>
-                                <button id="chatSendBtn" class="h-10 w-10 flex items-center justify-center rounded-lg bg-white text-black hover:bg-gray-200 transition font-bold">➤</button>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Grid -->
+            <div id="content-grid" class="video-grid">
+                <!-- Cards injected here -->
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); margin-top: 3rem;">
+                    SELECT FILTERS TO INITIALIZE FEED
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- VIDEO PLAYER OVERLAY -->
+    <div id="player-overlay">
+        <div class="theater-mode">
+            <div class="screen-container" id="video-embed">
+                <!-- Iframe here -->
+            </div>
+            <div class="control-bar">
+                <button class="btn-tech" id="close-player">← Return to Grid</button>
+                <h3 id="player-title" style="font-size: 1rem;">Video Title</h3>
+                <button class="btn-tech" id="mark-complete">Mark Complete</button>
+            </div>
+        </div>
+        <div class="sidebar-hud">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Data Packet</div>
+                <div id="player-notes" class="video-desc">No additional data.</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Related Sequences</div>
+                <div id="playlist-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div class="chat-container">
+                <div class="sidebar-section" style="border:none; padding-bottom:0.5rem;">
+                    <div class="sidebar-title">AI ASSISTANT // ONLINE</div>
+                </div>
+                <div class="chat-messages" id="chat-feed">
+                    <div class="msg ai">Systems online. I am ready to analyze this content with you.</div>
+                </div>
+                <div class="chat-input-box">
+                    <textarea id="chat-input" rows="1" class="chat-input" placeholder="Transmit query..."></textarea>
+                    <button class="btn-tech" id="chat-send">></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, orderBy, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // CONFIG
         const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+        // STATE
         let currentUser = null;
-        let currentUserProfile = null;
-        
-        // --- AUTH FLOW (RESTORED TO ORIGINAL) ---
+        let unlockedTeachers = [];
+        let currentVideo = null;
+
+        // --- AUTH FLOW ---
+        const authOverlay = document.getElementById('auth-overlay');
+        const appMain = document.getElementById('app-main');
+        const loginForms = document.getElementById('login-forms');
+        const loadingAuth = document.getElementById('loading-auth');
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+                // Fetch Profile
+                const docRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
                 try {
-                    const profileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
-                    const snap = await getDoc(profileRef);
-                    if (snap.exists() && snap.data().role) {
-                        currentUserProfile = snap.data();
-                        showApp(currentUserProfile);
+                    const pSnap = await getDoc(docRef);
+                    let data = {};
+                    if (pSnap.exists()) {
+                        data = pSnap.data();
+                        unlockedTeachers = data.unlockedTeachers || [];
+                        // Ensure self is unlocked if teacher
+                        if (data.role === 'teacher' && !unlockedTeachers.includes(user.uid)) {
+                            unlockedTeachers.push(user.uid);
+                        }
                     } else {
-                        // Logged in but no role -> Code Entry
-                        showCodeEntry();
+                        // Create basic profile if missing
+                        data = { name: user.displayName, email: user.email, role: 'student', unlockedTeachers: [], lastLogin: Date.now() };
+                        await setDoc(docRef, data);
                     }
-                } catch (e) { console.error(e); showLogin(); }
+                    
+                    document.getElementById('user-display').textContent = data.name || "STUDENT";
+                    initApp();
+                    
+                } catch(e) { console.error(e); initApp(); }
             } else {
-                currentUser = null;
                 showLogin();
             }
         });
 
-        // UI Functions
-        const authWrapper = document.getElementById('authWrapper');
-        const appSection = document.getElementById('appSection');
-        const authContainer = document.getElementById('authContainer');
-
         function showLogin() {
-            authWrapper.classList.remove('hidden');
-            appSection.classList.add('hidden');
-            authContainer.innerHTML = `
-                <button id="googleSignInButton" class="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 rounded hover:bg-gray-200 transition">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-                    <span>Sign in with Google</span>
-                </button>
-                <div id="authError" class="text-red-500 text-xs mt-2"></div>
-            `;
-            document.getElementById('googleSignInButton').onclick = async () => {
-                try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
-                catch(e) { document.getElementById('authError').textContent = e.message; }
-            };
+            authOverlay.style.display = 'flex';
+            appMain.style.display = 'none';
+            loadingAuth.style.display = 'none';
+            loginForms.style.display = 'block';
         }
 
-        function showCodeEntry() {
-            authWrapper.classList.remove('hidden');
-            appSection.classList.add('hidden');
-            authContainer.innerHTML = `
-                <p class="text-sm text-gray-300 mb-2">Please enter your access code.</p>
-                <input type="text" id="accessCodeInput" placeholder="Code" class="w-full bg-black border border-white/20 p-3 text-center text-white font-mono rounded focus:border-white outline-none">
-                <button id="submitCodeButton" class="tech-btn w-full py-3 rounded font-bold mt-2">SUBMIT</button>
-                <div id="codeError" class="text-red-500 text-xs mt-2 font-mono"></div>
-                <button id="backToLogin" class="text-xs text-gray-500 mt-4 underline">Back to Sign In</button>
-            `;
-            document.getElementById('submitCodeButton').onclick = handleCodeSubmit;
-            document.getElementById('backToLogin').onclick = () => signOut(auth);
+        function initApp() {
+            authOverlay.style.display = 'none';
+            appMain.style.display = 'flex';
+            loadTeachers();
         }
 
-        async function handleCodeSubmit() {
-            const code = document.getElementById('accessCodeInput').value.trim();
-            let role = null;
-            if(code === "Derren0625") role = 'teacher';
-            else if(code === "STUDENT456") role = 'student';
-            else { document.getElementById('codeError').textContent = 'Invalid Access Code'; return; }
+        document.getElementById('google-login-btn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+        
+        // --- DATA LOADING ---
+        const sTeacher = document.getElementById('sel-teacher');
+        const sSubject = document.getElementById('sel-subject');
+        const sTopic = document.getElementById('sel-topic');
+        const grid = document.getElementById('content-grid');
+
+        // Unlock Teacher
+        document.getElementById('unlock-btn').onclick = async () => {
+            const code = prompt("ENTER INSTRUCTOR ACCESS CODE:");
+            if(!code) return;
             
-            const p = { role, name: currentUser.displayName, email: currentUser.email, lastLogin: Date.now() };
-            if(role === 'student') p.unlockedTeachers = [];
+            const q = query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code", "==", code));
+            const snap = await getDocs(q);
             
-            await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`), p, { merge: true });
-            currentUserProfile = p;
-            showApp(p);
-        }
+            if(!snap.empty) {
+                const teacherId = snap.docs[0].id;
+                if(!unlockedTeachers.includes(teacherId)) {
+                    unlockedTeachers.push(teacherId);
+                    // Persist
+                    await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`), { unlockedTeachers }, { merge: true });
+                    alert("ACCESS GRANTED. REFRESHING DATA.");
+                    loadTeachers();
+                } else { alert("ALREADY UNLOCKED."); }
+            } else { alert("INVALID ACCESS CODE."); }
+        };
 
-        function showApp(profile) {
-            authWrapper.classList.add('hidden');
-            appSection.classList.remove('hidden');
-            appSection.classList.add('flex');
-            document.getElementById('userDisplayName').textContent = `USER: ${profile.name}`;
-            setupViewer();
-        }
-
-        document.getElementById('logoutButton').onclick = () => signOut(auth);
-
-        // --- VIEWER LOGIC ---
-        async function setupViewer() {
-            const tFilter = document.getElementById('teacher-tutorials-filter');
-            const l1Filter = document.getElementById('level1-tutorials-filter');
-            const l2Filter = document.getElementById('level2-tutorials-filter');
-
-            // Load Teachers
-            let unlocked = currentUserProfile?.unlockedTeachers || [];
-            if(currentUserProfile.role === 'teacher' && !unlocked.includes(currentUser.uid)) unlocked.push(currentUser.uid);
+        async function loadTeachers() {
+            sTeacher.innerHTML = '<option value="">SELECT SOURCE</option>';
+            if(unlockedTeachers.length === 0) return;
             
-            const subjectsSnap = await getDocs(query(collection(db, `artifacts/${appId}/public/data/tutorials`), orderBy('name')));
+            // Get teachers based on unlocked IDs
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials`));
+            const snap = await getDocs(q);
+            
             const teacherMap = new Map();
-            subjectsSnap.forEach(d => {
+            snap.forEach(d => {
                 const data = d.data();
-                if(data.teacherId && unlocked.includes(data.teacherId)) {
+                if(unlockedTeachers.includes(data.teacherId)) {
                     teacherMap.set(data.teacherId, data.teacherName);
                 }
             });
-
-            tFilter.innerHTML = '<option value="">-- SELECT SOURCE --</option>';
+            
             teacherMap.forEach((name, id) => {
                 const opt = document.createElement('option');
-                opt.value = name; opt.textContent = name;
-                tFilter.appendChild(opt);
+                opt.value = id; opt.textContent = name.toUpperCase();
+                sTeacher.appendChild(opt);
             });
-
-            tFilter.onchange = () => {
-                const tName = tFilter.value;
-                l1Filter.innerHTML = '<option value="">-- SELECT SUBJECT --</option>'; l1Filter.disabled = false;
-                l2Filter.innerHTML = ''; l2Filter.disabled = true;
-                const teacherSubjects = [];
-                subjectsSnap.forEach(d => { if(d.data().teacherName === tName) teacherSubjects.push({id: d.id, name: d.data().name}); });
-                teacherSubjects.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => l1Filter.add(new Option(s.name, s.id)));
-            };
-
-            l1Filter.onchange = async () => {
-                l2Filter.innerHTML = '<option value="">-- SELECT TOPIC --</option>'; l2Filter.disabled = false;
-                const snap = await getDocs(query(collection(db, `artifacts/${appId}/public/data/tutorials/${l1Filter.value}/topics`), orderBy('name')));
-                snap.forEach(d => l2Filter.add(new Option(d.data().name, d.id)));
-            };
-
-            l2Filter.onchange = () => { document.getElementById('sort-tutorials-filter').disabled = false; renderGrid(); };
-            document.getElementById('sort-tutorials-filter').onchange = renderGrid;
-
-            // Deep link
-            const p = new URLSearchParams(window.location.search);
-            if(p.get('v') && p.get('s') && p.get('t')) loadVideoByPath(p.get('s'), p.get('t'), p.get('v'));
         }
 
-        async function renderGrid() {
-            const l1 = document.getElementById('level1-tutorials-filter').value;
-            const l2 = document.getElementById('level2-tutorials-filter').value;
-            const sortVal = document.getElementById('sort-tutorials-filter').value;
-            const grid = document.getElementById('level3-tutorials-grid');
-
-            if(!l1 || !l2) return;
-            grid.innerHTML = '<div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>';
+        sTeacher.onchange = async () => {
+            sSubject.innerHTML = '<option value="">LOADING...</option>'; sSubject.disabled = true;
+            sTopic.innerHTML = '<option value="">AWAITING INPUT</option>'; sTopic.disabled = true;
+            grid.innerHTML = '';
             
-            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${l1}/topics/${l2}/videos`));
+            const tid = sTeacher.value;
+            if(!tid) return;
+
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials`), where("teacherId", "==", tid));
             const snap = await getDocs(q);
-            let items = []; snap.forEach(d => items.push({...d.data(), id: d.id, l1, l2}));
-
-            items.sort((a,b) => {
-                if(sortVal === 'name-asc') return a.title.localeCompare(b.title);
-                const da = parseInt(a.difficulty)||0; const db = parseInt(b.difficulty)||0;
-                return da - db;
+            
+            sSubject.innerHTML = '<option value="">SELECT SUBJECT</option>';
+            snap.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id; opt.textContent = d.data().name.toUpperCase();
+                sSubject.appendChild(opt);
             });
+            sSubject.disabled = false;
+        };
 
-            const statusSnap = await getDocs(collection(db, `artifacts/${appId}/users/${currentUser.uid}/videoStatus`));
-            const completedIds = new Set(); statusSnap.forEach(d => { if(d.data().completed) completedIds.add(d.id); });
+        sSubject.onchange = async () => {
+            sTopic.innerHTML = '<option value="">LOADING...</option>'; sTopic.disabled = true;
+            
+            const sid = sSubject.value;
+            if(!sid) return;
+
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${sid}/topics`));
+            const snap = await getDocs(q);
+            
+            sTopic.innerHTML = '<option value="">SELECT TOPIC</option>';
+            snap.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id; opt.textContent = d.data().name.toUpperCase();
+                sTopic.appendChild(opt);
+            });
+            sTopic.disabled = false;
+        };
+
+        sTopic.onchange = loadVideos;
+
+        async function loadVideos() {
+            const tid = sTopic.value;
+            const sid = sSubject.value;
+            if(!tid) return;
+
+            grid.innerHTML = '<div style="color:#fff;">RETRIEVING DATA STREAMS...</div>';
+            
+            // Get Videos
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${sid}/topics/${tid}/videos`));
+            const snap = await getDocs(q);
+            
+            // Get User Progress
+            const progRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/videoStatus`);
+            const progSnap = await getDocs(progRef);
+            const completedIds = new Set();
+            progSnap.forEach(d => { if(d.data().completed) completedIds.add(d.id); });
 
             grid.innerHTML = '';
-            items.forEach(item => {
+            
+            if(snap.empty) {
+                grid.innerHTML = '<div style="color:#888;">NO DATA FOUND.</div>';
+                return;
+            }
+
+            snap.forEach(d => {
+                const vid = d.data();
+                vid.id = d.id; vid.sid = sid; vid.tid = tid;
+                
+                // Card HTML
                 const card = document.createElement('div');
-                card.className = 'glass-panel rounded-lg overflow-hidden cursor-pointer hover:border-white/40 transition-all duration-300 group';
-                const vidId = item.videoId || item.youtubeId;
-                let thumb = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`;
-                if(item.videoType === 'vimeo') thumb = 'https://placehold.co/480x360/000/FFF?text=Vimeo';
-                const isComplete = completedIds.has(item.id);
+                card.className = 'video-card';
+                
+                let thumbUrl = 'https://placehold.co/600x400/000/FFF?text=VIDEO';
+                if(vid.videoType === 'youtube' || (!vid.videoType && vid.link.includes('youtu'))) {
+                     const yid = vid.videoId || vid.link.match(/v=([^&]+)/)?.[1] || vid.link.split('/').pop();
+                     thumbUrl = `https://img.youtube.com/vi/${yid}/mqdefault.jpg`;
+                }
 
                 card.innerHTML = `
-                    <div class="relative aspect-video bg-black">
-                        <img src="${thumb}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" onerror="this.src='https://placehold.co/480x360/000/FFF?text=No+Signal'">
-                        ${isComplete ? '<div class="absolute top-2 right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded">COMPLETED</div>' : ''}
-                        <div class="absolute bottom-2 right-2 border border-white/30 bg-black/50 backdrop-blur px-2 py-0.5 rounded text-[10px] text-gray-300 font-mono">${item.difficulty || 'N/A'}</div>
+                    <div class="thumb-wrapper">
+                        <img src="${thumbUrl}" loading="lazy">
+                        ${completedIds.has(vid.id) ? '<div class="status-indicator">✓</div>' : ''}
                     </div>
-                    <div class="p-4"><h3 class="text-sm font-bold leading-tight group-hover:text-white text-gray-200 transition-colors">${item.title}</h3></div>
+                    <div class="card-info">
+                        <div class="card-title">${vid.title}</div>
+                        <div class="card-meta">
+                            <span>DIFFICULTY</span>
+                            <span class="difficulty">${vid.difficulty || 'N/A'}</span>
+                        </div>
+                    </div>
                 `;
-                card.onclick = () => loadVideoByPath(item.l1, item.l2, item.id);
+                card.onclick = () => openPlayer(vid);
                 grid.appendChild(card);
             });
         }
 
-        let ytPlayer;
-        async function loadVideoByPath(sId, tId, vId) {
-            const d = await getDoc(doc(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics/${tId}/videos/${vId}`));
-            if(!d.exists()) return;
-            const item = d.data(); item.id = vId; item.l1 = sId; item.l2 = tId;
-
-            document.getElementById('tutorialSection').classList.add('hidden');
-            document.getElementById('videoPlayerSection').classList.remove('hidden');
-            document.getElementById('videoPlayerSection').classList.add('flex');
+        // --- PLAYER LOGIC ---
+        const playerOverlay = document.getElementById('player-overlay');
+        const embedContainer = document.getElementById('video-embed');
+        
+        function openPlayer(vid) {
+            currentVideo = vid;
+            playerOverlay.style.display = 'flex';
+            document.getElementById('player-title').textContent = vid.title.toUpperCase();
+            document.getElementById('player-notes').textContent = vid.notes || "No notes available.";
             
-            document.getElementById('videoInfoTitle').textContent = item.title;
-            document.getElementById('videoInfoDescription').textContent = item.notes || 'No notes.';
-            const mLink = document.getElementById('materialsLink');
-            if(item.materialsLink) { mLink.href = item.materialsLink; mLink.classList.remove('hidden'); } else { mLink.classList.add('hidden'); }
-
-            const container = document.getElementById('videoPlayerContainer');
-            container.innerHTML = '';
-            if(item.videoType === 'vimeo') {
-                container.innerHTML = `<iframe src="https://player.vimeo.com/video/${item.videoId}" class="w-full h-full border-0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+            // Build Player
+            embedContainer.innerHTML = '';
+            let vId = vid.videoId;
+            if(!vId && vid.link.includes('youtu')) vId = vid.link.match(/v=([^&]+)/)?.[1] || vid.link.split('/').pop();
+            
+            if (vid.videoType === 'vimeo' || vid.link.includes('vimeo')) {
+                 embedContainer.innerHTML = `<iframe src="https://player.vimeo.com/video/${vId}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
             } else {
-                const div = document.createElement('div'); div.id = 'yt-player-embed'; container.appendChild(div);
-                setTimeout(() => { ytPlayer = new YT.Player('yt-player-embed', { height: '100%', width: '100%', videoId: item.videoId, playerVars: { 'autoplay': 1, 'playsinline': 1, 'rel': 0, 'theme': 'dark' } }); }, 200);
+                 embedContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${vId}?autoplay=1&rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
             }
 
-            loadPlaylist(sId, tId, vId);
-            const statusRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/videoStatus/${vId}`);
-            let isComplete = (await getDoc(statusRef)).data()?.completed || false;
-            const btn = document.getElementById('completionToggleButton');
+            // Load Playlist (Siblings)
+            loadPlaylist(vid.sid, vid.tid);
             
-            const updateBtn = () => {
-                btn.textContent = isComplete ? '✓ COMPLETED' : 'MARK COMPLETE';
-                btn.className = isComplete ? 'flex-1 py-2 text-xs font-bold bg-green-500 text-black border border-green-500 rounded' : 'flex-1 py-2 text-xs font-bold border border-white/20 rounded hover:border-white transition';
-            };
-            updateBtn();
-            btn.onclick = async () => { isComplete = !isComplete; await setDoc(statusRef, { completed: isComplete, timestamp: Date.now() }); updateBtn(); };
-            setupChat(item);
+            // Reset Chat
+            document.getElementById('chat-feed').innerHTML = '<div class="msg ai">Systems online. I am ready to analyze this content with you.</div>';
         }
 
-        async function loadPlaylist(sId, tId, currentId) {
-            const list = document.getElementById('topicPlaylist'); list.innerHTML = '...';
-            const snap = await getDocs(query(collection(db, `artifacts/${appId}/public/data/tutorials/${sId}/topics/${tId}/videos`), orderBy('title')));
+        async function loadPlaylist(sid, tid) {
+            const list = document.getElementById('playlist-container');
+            list.innerHTML = 'Loading...';
+            const q = query(collection(db, `artifacts/${appId}/public/data/tutorials/${sid}/topics/${tid}/videos`));
+            const snap = await getDocs(q);
             list.innerHTML = '';
             snap.forEach(d => {
-                const active = d.id === currentId;
-                const el = document.createElement('div');
-                el.className = `p-3 rounded text-sm cursor-pointer transition ${active ? 'bg-white text-black font-bold' : 'hover:bg-white/10 text-gray-400'}`;
-                el.innerHTML = `<div class="flex justify-between"><span>${d.data().title}</span> ${active ? '<span>▶</span>' : ''}</div>`;
-                el.onclick = () => loadVideoByPath(sId, tId, d.id);
-                list.appendChild(el);
+                const v = d.data();
+                const btn = document.createElement('div');
+                btn.style.cssText = `padding:8px; font-size:0.8rem; color:${d.id === currentVideo.id ? '#fff' : '#888'}; cursor:pointer; border-left: 2px solid ${d.id === currentVideo.id ? '#fff' : 'transparent'}; background:${d.id === currentVideo.id ? 'rgba(255,255,255,0.05)' : 'transparent'};`;
+                btn.textContent = v.title;
+                btn.onclick = () => { v.id=d.id; v.sid=sid; v.tid=tid; openPlayer(v); };
+                list.appendChild(btn);
             });
         }
 
-        document.getElementById('backToTutorialsBtn').onclick = () => {
-             document.getElementById('videoPlayerSection').classList.add('hidden');
-             document.getElementById('videoPlayerSection').classList.remove('flex');
-             document.getElementById('tutorialSection').classList.remove('hidden');
-             document.getElementById('videoPlayerContainer').innerHTML = '';
-             window.history.pushState({}, '', 'tutorials.html');
+        document.getElementById('close-player').onclick = () => {
+            playerOverlay.style.display = 'none';
+            embedContainer.innerHTML = ''; // Stop video
+            loadVideos(); // Refresh grid (for completion status)
         };
 
-        // Chat Logic
-        function setupChat(videoItem) {
-            const chatContainer = document.getElementById('chatMessages');
-            chatContainer.innerHTML = `<div class="message ai-message bg-[#111] border border-white/5 p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl text-gray-300 text-xs">AI Online. Watching: "${videoItem.title}"</div>`;
-            const sendBtn = document.getElementById('chatSendBtn');
-            const input = document.getElementById('chatInput');
-            let currentImg = null;
+        document.getElementById('mark-complete').onclick = async () => {
+             if(!currentVideo) return;
+             await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/videoStatus/${currentVideo.id}`), {
+                 completed: true, timestamp: Date.now()
+             });
+             const btn = document.getElementById('mark-complete');
+             btn.textContent = "COMPLETED ✓";
+             setTimeout(() => btn.textContent = "MARK COMPLETE", 2000);
+        };
 
-            document.getElementById('attachBtn').onclick = () => document.getElementById('chatFileInput').click();
-            document.getElementById('chatFileInput').onchange = (e) => {
-                const f = e.target.files[0];
-                if(f) {
-                    const r = new FileReader();
-                    r.onload = () => { currentImg = r.result; document.getElementById('chatImagePreview').src = currentImg; document.getElementById('imagePreviewContainer').classList.remove('hidden'); document.getElementById('imagePreviewContainer').classList.add('flex'); };
-                    r.readAsDataURL(f);
-                }
-            };
-            document.getElementById('removeImageBtn').onclick = () => { currentImg = null; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('imagePreviewContainer').classList.remove('flex'); document.getElementById('chatFileInput').value = ''; };
+        // --- CHAT LOGIC ---
+        const chatInput = document.getElementById('chat-input');
+        document.getElementById('chat-send').onclick = sendChat;
+        chatInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }};
 
-            const send = async () => {
-                const txt = input.value.trim(); if(!txt && !currentImg) return;
-                const um = document.createElement('div');
-                um.className = 'bg-white/10 text-white p-3 rounded-tl-xl rounded-bl-xl rounded-br-xl self-end text-sm max-w-[90%] mb-2 border border-white/20';
-                if(currentImg) um.innerHTML += `<img src="${currentImg}" class="mb-2 rounded max-h-32">`;
-                um.innerText += txt; chatContainer.appendChild(um); chatContainer.scrollTop = chatContainer.scrollHeight;
-                input.value = ''; sendBtn.disabled = true; sendBtn.innerText = '...';
-                
-                try {
-                    const url = "https://gemini-proxy-513372702506.us-central1.run.app/proxy";
-                    const parts = [{ text: `User watching "${videoItem.title}". Notes: ${videoItem.notes}. Question: ${txt}` }];
-                    if(currentImg) parts.push({ inlineData: { mimeType: "image/png", data: currentImg.split(',')[1] } });
-                    const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ role: "user", parts }] }) });
-                    const data = await res.json();
-                    const aiTxt = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
-                    const am = document.createElement('div');
-                    am.className = 'bg-[#111] border border-white/5 p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl text-gray-300 text-sm mb-2 max-w-[90%]';
-                    am.innerHTML = typeof marked !== 'undefined' ? marked.parse(aiTxt) : aiTxt;
-                    chatContainer.appendChild(am);
-                } catch(e) { chatContainer.innerHTML += '<div class="text-red-500 text-xs">Error</div>'; }
-                
-                currentImg = null; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('imagePreviewContainer').classList.remove('flex'); sendBtn.disabled = false; sendBtn.innerText = '➤'; chatContainer.scrollTop = chatContainer.scrollHeight;
+        async function sendChat() {
+            const txt = chatInput.value.trim();
+            if(!txt) return;
+            
+            appendMsg(txt, 'user');
+            chatInput.value = '';
+            
+            // Proxy Call
+            const context = `You are an AI Tutor in a high-tech learning environment. Keep answers concise. Video: ${currentVideo.title}. Notes: ${currentVideo.notes || ''}.`;
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: context + "\n\nUser: " + txt }] }]
             };
-            sendBtn.onclick = send;
-            input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }};
-            document.getElementById('clearChatBtn').onclick = () => setupChat(videoItem);
+            
+            try {
+                const res = await fetch("https://gemini-proxy-513372702506.us-central1.run.app/proxy", {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Signal disrupted.";
+                appendMsg(reply, 'ai');
+            } catch(e) { appendMsg("Connection error.", 'ai'); }
         }
-        
-        document.getElementById('unlockTeacherBtn').onclick = () => {
-            const code = prompt("Enter Teacher Access Code:");
-            if(!code) return;
-            getDocs(query(collection(db, `artifacts/${appId}/public/data/teacherAccessCodes`), where("code", "==", code))).then(async (snap) => {
-                if(snap.empty) { alert("Invalid Code"); return; }
-                const tId = snap.docs[0].id;
-                let u = currentUserProfile.unlockedTeachers || [];
-                if(!u.includes(tId)) { u.push(tId); await updateDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`), { unlockedTeachers: u }); currentUserProfile.unlockedTeachers = u; alert("Unlocked."); setupViewer(); }
-            });
-        };
+
+        function appendMsg(txt, type) {
+            const d = document.createElement('div');
+            d.className = `msg ${type}`;
+            d.innerHTML = typeof marked !== 'undefined' ? marked.parse(txt) : txt;
+            const c = document.getElementById('chat-feed');
+            c.appendChild(d);
+            c.scrollTop = c.scrollHeight;
+        }
+
     </script>
 </body>
 </html>
